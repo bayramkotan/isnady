@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "isnady"
+dynamic = ["version"]
+description = "Hadith search with full isnad chains, narrator biographies, jarh wa ta'dil verdicts and reliability scores"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Bayram Kotan" }]
+requires-python = ">=3.10"
+dependencies = ["PySide6>=6.6"]
+keywords = ["hadith", "isnad", "rijal", "narrators", "jarh wa tadil", "islamic studies"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Natural Language :: Arabic",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Education",
+    "Topic :: Religion",
+]
+
+[project.urls]
+Homepage = "https://github.com/bayramkotan/isnady"
+Repository = "https://github.com/bayramkotan/isnady"
+Issues = "https://github.com/bayramkotan/isnady/issues"
+
+[project.gui-scripts]
+isnady = "isnady.main:main"
+
+[tool.hatch.version]
+path = "src/isnady/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/isnady"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["isnady_Handoff.md", "ISNADY_TODO.md"]

@@ -1,0 +1,23 @@
+# Local-only project notes — never pushed
+isnady_Handoff.md
+ISNADY_TODO.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Data built locally (the database will be shipped separately, not committed raw)
+*.sqlite
+*.sqlite3
+*.db
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
