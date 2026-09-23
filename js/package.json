@@ -1,0 +1,42 @@
+{
+  "name": "isnady",
+  "version": "0.0.1",
+  "description": "Hadith search with full isnad chains, narrator biographies, jarh wa ta'dil verdicts and reliability scores",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "hadith",
+    "isnad",
+    "rijal",
+    "narrators",
+    "jarh wa tadil",
+    "islamic studies"
+  ],
+  "author": "Bayram Kotan",
+  "license": "MIT",
+  "homepage": "https://github.com/bayramkotan/isnady/tree/main/js#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bayramkotan/isnady.git",
+    "directory": "js"
+  },
+  "bugs": {
+    "url": "https://github.com/bayramkotan/isnady/issues"
+  }
+}

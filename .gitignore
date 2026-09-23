@@ -16,6 +16,10 @@ venv/
 *.sqlite3
 *.db
 
+# Node / npm
+node_modules/
+*.tgz
+
 # Editors / OS
 .vscode/
 .idea/

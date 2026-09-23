@@ -41,4 +41,4 @@ path = "src/isnady/__init__.py"
 packages = ["src/isnady"]
 
 [tool.hatch.build.targets.sdist]
-exclude = ["isnady_Handoff.md", "ISNADY_TODO.md"]
+exclude = ["isnady_Handoff.md", "ISNADY_TODO.md", "js/"]
