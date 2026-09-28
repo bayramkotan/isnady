@@ -31,6 +31,9 @@ Homepage = "https://github.com/bayramkotan/isnady"
 Repository = "https://github.com/bayramkotan/isnady"
 Issues = "https://github.com/bayramkotan/isnady/issues"
 
+[project.scripts]
+isnady-cli = "isnady.cli:main"
+
 [project.gui-scripts]
 isnady = "isnady.main:main"
 
