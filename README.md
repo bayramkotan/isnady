@@ -38,3 +38,7 @@ isnady
 
 MIT for the application code. Hadith and narrator data will come from separate
 sources, each under its own license, listed here as they are added.
+
+The Arabic and reading typeface is [Amiri](https://github.com/aliftype/amiri) by
+Khaled Hosny, bundled under the SIL Open Font License 1.1
+(`src/isnady/assets/fonts/OFL.txt`).

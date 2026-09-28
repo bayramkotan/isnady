@@ -25,6 +25,7 @@ class SourceInfo:
     name: str | None = None
     license: str | None = None
     origin: str = "user"          # builtin | user
+    tier: str | None = None       # A | B | C; None = derive from the licence
     auth: Auth = field(default_factory=lambda: NO_AUTH)
 
 
@@ -32,7 +33,9 @@ class SourceInfo:
 class ImportReport:
     source_key: str
     editions: list[str] = field(default_factory=list)
-    hadiths: int = 0
+    skipped_editions: list[str] = field(default_factory=list)
+    texts: int = 0
+    new_hadiths: int = 0
     grades: int = 0
     warnings: list[str] = field(default_factory=list)
 

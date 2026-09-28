@@ -18,10 +18,19 @@ import os
 import sys
 
 from isnady import APP_NAME, __version__
+from isnady.core import search as core_search
 from isnady.data import db
 from isnady.data.fetch import Auth, ResourceError
 from isnady.data.importers import SourceInfo, get_importer, list_importers
 from isnady.data.paths import db_path
+
+
+def _connect():
+    try:
+        return db.connect(reset_old=True)
+    except db.SchemaReset as exc:
+        print(f"Note: {exc}", file=sys.stderr)
+        return db.connect()
 
 
 def _secret_from_env(name: str | None) -> str | None:
@@ -68,6 +77,7 @@ def cmd_import(args) -> int:
         name=args.name,
         license=args.license,
         origin="builtin" if args.builtin else "user",
+        tier=args.tier,
         auth=_auth_from_args(args),
     )
     options = {
@@ -76,27 +86,32 @@ def cmd_import(args) -> int:
         "languages": args.language,
         "all": args.all,
         "edition_key": args.edition_key,
+        "include_plain": args.include_plain,
     }
-    conn = db.connect()
+    conn = _connect()
     try:
         report = importer.run(conn, source, options, progress=lambda m: print(f"  {m}"))
+        db.cleanup(conn)
+        core_search.ensure_index(conn, progress=lambda m: print(f"  {m}"))
     except ResourceError as exc:
         print(f"Import failed: {exc}", file=sys.stderr)
         return 1
     finally:
         conn.close()
     print(f"Done: source '{report.source_key}' — {len(report.editions)} edition(s), "
-          f"{report.hadiths} hadith, {report.grades} grades")
+          f"{report.texts} texts, {report.new_hadiths} new hadith, {report.grades} new grades")
+    if report.skipped_editions:
+        print(f"  skipped diacritics-free copies (use --include-plain to keep): {', '.join(report.skipped_editions)}")
     for warning in report.warnings:
         print(f"  warning: {warning}")
     return 0
 
 
 def cmd_sources(_args) -> int:
-    conn = db.connect()
+    conn = _connect()
     rows = conn.execute(
-        """SELECT s.key, s.name, s.format, s.origin, s.auth_type, s.license, s.location, s.imported_at,
-                  COUNT(e.id) AS editions, COALESCE(SUM(e.hadith_count), 0) AS hadiths
+        """SELECT s.key, s.name, s.format, s.origin, s.tier, s.auth_type, s.license, s.location, s.imported_at,
+                  COUNT(e.id) AS editions, COALESCE(SUM(e.text_count), 0) AS texts
            FROM sources s LEFT JOIN editions e ON e.source_id = s.id
            GROUP BY s.id ORDER BY s.origin, s.key"""
     ).fetchall()
@@ -107,36 +122,77 @@ def cmd_sources(_args) -> int:
     for r in rows:
         label = "User Resource" if r["origin"] == "user" else "Built-in"
         print(f"[{label}] {r['key']}  —  {r['name']}")
-        print(f"    format {r['format']}, auth {r['auth_type']}, license {r['license'] or 'not stated'}")
-        print(f"    {r['editions']} edition(s), {r['hadiths']} hadith, imported {r['imported_at']}")
+        tier_note = {"A": "redistributable", "B": "redistributable with conditions", "C": "not redistributable"}[r["tier"]]
+        print(f"    format {r['format']}, auth {r['auth_type']}, license {r['license'] or 'not stated'}, "
+              f"tier {r['tier']} ({tier_note})")
+        print(f"    {r['editions']} edition(s), {r['texts']} texts, imported {r['imported_at']}")
         print(f"    last imported from {r['location']}")
     return 0
 
 
 def cmd_stats(_args) -> int:
-    conn = db.connect()
-    rows = conn.execute(
-        """SELECT c.name AS book, e.key, e.language, e.hadith_count,
+    conn = _connect()
+    books = conn.execute(
+        """SELECT c.id, c.name,
+                  (SELECT COUNT(*) FROM hadiths h WHERE h.collection_id = c.id) AS hadiths,
+                  (SELECT COUNT(DISTINCT g.hadith_id) FROM grades g JOIN hadiths h ON h.id = g.hadith_id
+                   WHERE h.collection_id = c.id) AS graded,
                   (SELECT COUNT(*) FROM grades g JOIN hadiths h ON h.id = g.hadith_id
-                   WHERE h.edition_id = e.id) AS grades
-           FROM editions e JOIN collections c ON c.id = e.collection_id
-           ORDER BY c.name, e.language, e.key"""
+                   WHERE h.collection_id = c.id) AS grades
+           FROM collections c ORDER BY c.name"""
     ).fetchall()
-    total = conn.execute("SELECT COUNT(*) FROM hadiths").fetchone()[0]
-    conn.close()
     print(f"Database: {db_path()}")
-    for r in rows:
-        print(f"  {r['book']:40} {r['key']:22} {r['language']:11} {r['hadith_count']:>6} hadith {r['grades']:>6} grades")
-    print(f"Total: {total} hadith in {len(rows)} edition(s)")
+    for b in books:
+        print(f"  {b['name']}: {b['hadiths']} hadith, {b['graded']} graded ({b['grades']} grades)")
+        for e in conn.execute(
+            "SELECT key, language, text_count FROM editions WHERE collection_id = ? ORDER BY language, key", (b["id"],)
+        ):
+            print(f"      {e['key']:22} {e['language']:11} {e['text_count']:>6} texts")
+    totals = conn.execute(
+        "SELECT (SELECT COUNT(*) FROM hadiths), (SELECT COUNT(*) FROM texts), (SELECT COUNT(*) FROM grades),"
+        " (SELECT COUNT(*) FROM persons), (SELECT COUNT(*) FROM isnads)"
+    ).fetchone()
+    conn.close()
+    print(f"Total: {totals[0]} hadith, {totals[1]} texts, {totals[2]} grades, "
+          f"{totals[3]} persons, {totals[4]} isnads")
+    return 0
+
+
+def cmd_search(args) -> int:
+    conn = _connect()
+    core_search.ensure_index(conn, progress=lambda m: print(m, file=sys.stderr))
+    q = core_search.SearchQuery(
+        text=" ".join(args.words), mode=args.mode, whole_words=args.whole_words,
+        collections=args.book or [], languages=args.language or [], limit=args.limit, offset=args.offset,
+    )
+    page = core_search.search(conn, q)
+    conn.close()
+    print(f"{page.total} hadith found in {page.elapsed_ms} ms"
+          f"{'' if page.used_index else ' (no FTS5 index available; slower scan)'}")
+    for r in page.results:
+        print(f"\n{r.collection_name} #{r.number}")
+        if r.grades:
+            print("  grades: " + "; ".join(f"{g}: {v}" for g, v in r.grades))
+        for t in r.texts:
+            if not t.matched and not args.all_texts:
+                continue
+            marked, last = [], 0
+            for a, b in t.spans:
+                marked.append(t.text[last:a] + "[" + t.text[a:b] + "]")
+                last = b
+            marked.append(t.text[last:])
+            body = "".join(marked)
+            if len(body) > args.width:
+                body = body[: args.width] + " ..."
+            print(f"  [{t.language}] {body}")
     return 0
 
 
 def cmd_remove(args) -> int:
-    conn = db.connect()
+    conn = _connect()
     with conn:
         cur = conn.execute("DELETE FROM sources WHERE key = ?", (args.key,))
-    conn.execute("DELETE FROM collections WHERE id NOT IN (SELECT collection_id FROM editions)")
-    conn.commit()
+    db.cleanup(conn)
     conn.close()
     if cur.rowcount == 0:
         print(f"No source with key '{args.key}'. See: isnady-cli sources", file=sys.stderr)
@@ -158,12 +214,16 @@ def build_parser() -> argparse.ArgumentParser:
     imp.add_argument("--name", help="display name of the source")
     imp.add_argument("--license", help="license of the data, e.g. Unlicense, CC-BY-4.0")
     imp.add_argument("--builtin", action="store_true", help="mark as built-in data instead of a User Resource")
+    imp.add_argument("--tier", choices=["A", "B", "C"],
+                     help="licence tier: A redistributable, B with conditions, C not (default: from --license, unknown = C)")
     sel = imp.add_argument_group("choosing editions from an index")
     sel.add_argument("--edition", action="append", help="edition name, e.g. tur-bukhari (repeatable)")
     sel.add_argument("--book", action="append", help="book key, e.g. bukhari (repeatable)")
     sel.add_argument("--language", action="append", help="language name or code, e.g. Turkish or tur (repeatable)")
     sel.add_argument("--all", action="store_true", help="import every edition in the index")
     sel.add_argument("--edition-key", help="edition name for a single file whose file name is not the edition name")
+    sel.add_argument("--include-plain", action="store_true",
+                     help="also import diacritics-free Arabic copies (skipped by default)")
     auth = imp.add_argument_group("authentication (credentials are never stored)")
     auth.add_argument("--user", help="username for HTTP Basic authentication; the password is asked")
     auth.add_argument("--password-env", help="read the Basic password from this environment variable instead")
@@ -174,6 +234,18 @@ def build_parser() -> argparse.ArgumentParser:
     auth.add_argument("--api-key-header", help="header name for the API key (default X-API-Key)")
     auth.add_argument("--api-key-param", help="send the API key as this query parameter instead of a header")
     imp.set_defaults(func=cmd_import)
+
+    se = sub.add_parser("search", help="search hadith text (same engine as the app)")
+    se.add_argument("words", nargs="+", help="words to search; Arabic diacritics and letter forms are ignored")
+    se.add_argument("--mode", choices=["all", "any", "phrase"], default="all")
+    se.add_argument("--whole-words", action="store_true", help="match whole words only")
+    se.add_argument("--book", action="append", help="collection key, e.g. bukhari (repeatable)")
+    se.add_argument("--language", action="append", help="language name, e.g. Turkish (repeatable)")
+    se.add_argument("--limit", type=int, default=10)
+    se.add_argument("--offset", type=int, default=0)
+    se.add_argument("--width", type=int, default=300, help="characters of text to show")
+    se.add_argument("--all-texts", action="store_true", help="also show texts that did not match")
+    se.set_defaults(func=cmd_search)
 
     sub.add_parser("sources", help="list imported sources").set_defaults(func=cmd_sources)
     sub.add_parser("stats", help="count what the database holds").set_defaults(func=cmd_stats)

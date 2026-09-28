@@ -7,7 +7,11 @@ Accepts either
   * the editions index: {"bukhari": {"name": ..., "collection": [ {edition}, ... ]}, ...}
     from which the chosen editions are downloaded through their own links.
 
-Each location may be a local file or a URL, with or without authentication.
+Schema 2 mapping: every edition adds TEXTS to shared HADITH rows
+(collection + hadithnumber). Grades are attached to the hadith once, whichever
+edition carries them. Diacritics-free Arabic copies ("ara-bukhari1") are
+skipped when chosen from the index, because search normalisation removes
+diacritics itself; --include-plain imports them anyway.
 """
 
 import json
@@ -16,7 +20,7 @@ import sqlite3
 from pathlib import PurePosixPath
 from urllib.parse import urlparse
 
-from isnady.data.db import now_iso
+from isnady.data.db import now_iso, tier_for_license
 from isnady.data.fetch import ResourceError, read_bytes, resolve
 from isnady.data.importers.base import (
     ImportReport,
@@ -52,6 +56,12 @@ def is_index(obj) -> bool:
         and bool(obj)
         and all(isinstance(v, dict) and isinstance(v.get("collection"), list) for v in obj.values())
     )
+
+
+def is_plain_copy(entry: dict) -> bool:
+    """A diacritics-free duplicate of an Arabic edition, e.g. 'ara-bukhari1'."""
+    comments = (entry.get("comments") or "").lower()
+    return "diacritics removed" in comments or bool(re.match(r"^ara-.*\d$", entry.get("name") or ""))
 
 
 def _edition_key_from_location(location: str) -> str:
@@ -112,7 +122,18 @@ class FawazahmedJsonImporter(Importer):
                     "No editions matched. Choose with --edition, --book or --language, "
                     "or pass --all to import every edition in the index."
                 )
-            say(f"{len(entries)} edition(s) selected from the index")
+            if not options.get("include_plain"):
+                explicit = {e.lower() for e in options.get("editions") or []}
+                kept = []
+                for entry in entries:
+                    if is_plain_copy(entry) and entry.get("name", "").lower() not in explicit:
+                        report.skipped_editions.append(entry["name"])
+                    else:
+                        kept.append(entry)
+                entries = kept
+            say(f"{len(entries)} edition(s) selected from the index"
+                + (f", {len(report.skipped_editions)} diacritics-free cop{'y' if len(report.skipped_editions) == 1 else 'ies'} skipped"
+                   if report.skipped_editions else ""))
             for entry in entries:
                 link = entry.get("linkmin") or entry.get("link")
                 if not link:
@@ -138,14 +159,15 @@ class FawazahmedJsonImporter(Importer):
     # --------------------------------------------------------------- helpers
     @staticmethod
     def _upsert_source(conn, key, name, source: SourceInfo) -> int:
+        tier = source.tier or tier_for_license(source.license)
         conn.execute(
-            """INSERT INTO sources (key, name, format, location, license, origin, auth_type, imported_at)
-               VALUES (?, ?, 'fawazahmed0', ?, ?, ?, ?, ?)
+            """INSERT INTO sources (key, name, format, location, license, tier, origin, auth_type, imported_at)
+               VALUES (?, ?, 'fawazahmed0', ?, ?, ?, ?, ?, ?)
                ON CONFLICT(key) DO UPDATE SET
                    name = excluded.name, location = excluded.location,
                    license = COALESCE(excluded.license, sources.license),
-                   origin = excluded.origin, auth_type = excluded.auth_type""",
-            (key, name, source.location, source.license, source.origin, source.auth.describe(), now_iso()),
+                   tier = excluded.tier, origin = excluded.origin, auth_type = excluded.auth_type""",
+            (key, name, source.location, source.license, tier, source.origin, source.auth.describe(), now_iso()),
         )
         return conn.execute("SELECT id FROM sources WHERE key = ?", (key,)).fetchone()[0]
 
@@ -189,7 +211,8 @@ class FawazahmedJsonImporter(Importer):
             )
             collection_id = conn.execute("SELECT id FROM collections WHERE key = ?", (book_key,)).fetchone()[0]
 
-            # Re-importing an edition replaces it completely (cascades to sections, hadiths, grades).
+            # Re-importing an edition replaces its texts and section titles; shared
+            # hadith rows stay, and orphans are removed by db.cleanup() afterwards.
             conn.execute("DELETE FROM editions WHERE source_id = ? AND key = ?", (source_id, key))
             edition_id = conn.execute(
                 """INSERT INTO editions (source_id, collection_id, key, language, direction, author,
@@ -208,44 +231,72 @@ class FawazahmedJsonImporter(Importer):
                     continue
                 d = details.get(number) or {}
                 conn.execute(
-                    "INSERT INTO sections (edition_id, number, title, first_number, last_number) VALUES (?, ?, ?, ?, ?)",
-                    (edition_id, num, title or None, d.get("hadithnumber_first"), d.get("hadithnumber_last")),
+                    """INSERT INTO sections (collection_id, number, first_number, last_number) VALUES (?, ?, ?, ?)
+                       ON CONFLICT(collection_id, number) DO NOTHING""",
+                    (collection_id, num, d.get("hadithnumber_first"), d.get("hadithnumber_last")),
                 )
+                if title:
+                    section_id = conn.execute(
+                        "SELECT id FROM sections WHERE collection_id = ? AND number = ?", (collection_id, num)
+                    ).fetchone()[0]
+                    conn.execute(
+                        "INSERT OR REPLACE INTO section_titles (section_id, edition_id, title) VALUES (?, ?, ?)",
+                        (section_id, edition_id, title),
+                    )
 
-            count = empty = grade_count = 0
+            texts = empty = new_hadiths = new_grades = 0
             for item in data["hadiths"]:
                 if not isinstance(item, dict):
                     continue
                 text = (item.get("text") or "").strip()
-                if not text:
-                    empty += 1
-                    continue
                 number, number_sort = _format_number(item.get("hadithnumber"))
-                arabic_number, _ = _format_number(item.get("arabicnumber"))
+                if not number:
+                    continue
                 ref = item.get("reference") or {}
+                section = ref.get("book") if isinstance(ref.get("book"), int) else None
+
+                cur = conn.execute(
+                    """INSERT INTO hadiths (collection_id, number, number_sort, section_number) VALUES (?, ?, ?, ?)
+                       ON CONFLICT(collection_id, number) DO NOTHING""",
+                    (collection_id, number, number_sort, section),
+                )
+                new_hadiths += cur.rowcount
                 hadith_id = conn.execute(
-                    """INSERT INTO hadiths (edition_id, number, number_sort, arabic_number, ref_book, ref_hadith, text)
-                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                    (edition_id, number, number_sort, arabic_number or None,
-                     ref.get("book"), ref.get("hadith"), text),
-                ).lastrowid
-                count += 1
+                    "SELECT id FROM hadiths WHERE collection_id = ? AND number = ?", (collection_id, number)
+                ).fetchone()[0]
+
+                arabic_number, _ = _format_number(item.get("arabicnumber"))
+                if arabic_number:
+                    conn.execute("INSERT OR IGNORE INTO hadith_refs VALUES (?, 'arabic', ?)", (hadith_id, arabic_number))
+                if ref.get("book") is not None and ref.get("hadith") is not None:
+                    conn.execute("INSERT OR IGNORE INTO hadith_refs VALUES (?, 'in-book', ?)",
+                                 (hadith_id, f"{ref['book']}:{ref['hadith']}"))
+
                 for grade in item.get("grades") or []:
                     if isinstance(grade, dict) and grade.get("grade"):
-                        conn.execute(
-                            "INSERT INTO grades (hadith_id, grader, grade) VALUES (?, ?, ?)",
-                            (hadith_id, (grade.get("name") or "Unknown").strip(), grade["grade"].strip()),
+                        cur = conn.execute(
+                            """INSERT OR IGNORE INTO grades (hadith_id, grader_name, grade, source_id)
+                               VALUES (?, ?, ?, ?)""",
+                            (hadith_id, (grade.get("name") or "Unknown").strip(), grade["grade"].strip(), source_id),
                         )
-                        grade_count += 1
+                        new_grades += cur.rowcount
 
-            conn.execute("UPDATE editions SET hadith_count = ? WHERE id = ?", (count, edition_id))
+                if not text:
+                    empty += 1  # the hadith exists, this edition just has no text for it
+                    continue
+                conn.execute("INSERT INTO texts (hadith_id, edition_id, text) VALUES (?, ?, ?)",
+                             (hadith_id, edition_id, text))
+                texts += 1
+
+            conn.execute("UPDATE editions SET text_count = ? WHERE id = ?", (texts, edition_id))
 
         report.editions.append(key)
-        report.hadiths += count
-        report.grades += grade_count
+        report.texts += texts
+        report.new_hadiths += new_hadiths
+        report.grades += new_grades
         if empty:
-            report.warnings.append(f"{key}: {empty} entr{'y' if empty == 1 else 'ies'} with empty text skipped")
-        say(f"{key}: {count} hadith, {grade_count} grades ({language})")
+            report.warnings.append(f"{key}: {empty} hadith without text in this edition")
+        say(f"{key}: {texts} texts ({language}), {new_hadiths} new hadith, {new_grades} new grades")
 
 
 register(FawazahmedJsonImporter())
