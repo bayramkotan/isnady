@@ -26,7 +26,7 @@ from pathlib import Path
 
 from isnady.data.paths import db_path
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 SCHEMA = """
 -- ------------------------------------------------------------------ sources
@@ -184,7 +184,10 @@ CREATE TABLE IF NOT EXISTS isnads (
     hadith_id INTEGER NOT NULL REFERENCES hadiths(id) ON DELETE CASCADE,
     ordinal   INTEGER NOT NULL DEFAULT 1,
     raw_text  TEXT,                            -- the chain as written in the source
-    source_id INTEGER REFERENCES sources(id) ON DELETE CASCADE
+    source_id INTEGER REFERENCES sources(id) ON DELETE CASCADE,
+    derived_by      TEXT,                      -- NULL: given by the source; else the parser that read it from the text
+    reaches_prophet INTEGER,                   -- 1 when the chain ends at the Prophet (marfu'), as read
+    problem         TEXT                       -- why the chain could not be split into links, if it could not
 );
 CREATE INDEX IF NOT EXISTS ix_isnads_hadith ON isnads(hadith_id);
 
@@ -227,6 +230,17 @@ DELETE FROM collections WHERE id NOT IN (SELECT collection_id FROM hadiths)
 """
 
 
+# Upgrades that keep existing data: version -> statements that lift it to version + 1.
+MIGRATIONS = {
+    2: [
+        "ALTER TABLE isnads ADD COLUMN derived_by TEXT",
+        "ALTER TABLE isnads ADD COLUMN reaches_prophet INTEGER",
+        "ALTER TABLE isnads ADD COLUMN problem TEXT",
+    ],
+}
+OLDEST_UPGRADABLE = 2
+
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
@@ -260,7 +274,8 @@ def _set_aside(path: Path, version: int) -> Path:
 def connect(path: Path | None = None, *, reset_old: bool = False) -> sqlite3.Connection:
     """Open (and create or upgrade) the database.
 
-    Pre-release schemas (below 2) are not migrated: with reset_old=True the old
+    Schema 2 and later are upgraded in place (MIGRATIONS). Pre-release schemas
+    below 2 are not migrated: with reset_old=True the old
     file is moved aside and SchemaReset is raised once, so the caller can tell
     the user; the next call opens a fresh database.
     """
@@ -273,10 +288,18 @@ def connect(path: Path | None = None, *, reset_old: bool = False) -> sqlite3.Con
             raise RuntimeError(
                 f"Database schema {version} is newer than this isnady supports ({SCHEMA_VERSION}). Update isnady."
             )
-        if 0 < version < SCHEMA_VERSION:
+        if 0 < version < OLDEST_UPGRADABLE:
             if not reset_old:
                 raise RuntimeError(f"Database schema {version} is outdated; open it with reset_old=True.")
             raise SchemaReset(_set_aside(path, version), version)
+        if OLDEST_UPGRADABLE <= version < SCHEMA_VERSION:
+            upgrade = sqlite3.connect(path)
+            with upgrade:
+                for v in range(version, SCHEMA_VERSION):
+                    for statement in MIGRATIONS[v]:
+                        upgrade.execute(statement)
+                upgrade.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+            upgrade.close()
 
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row

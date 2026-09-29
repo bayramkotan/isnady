@@ -7,9 +7,10 @@ from PySide6.QtWidgets import QLayout, QSizePolicy
 class FlowLayout(QLayout):
     """Lays items out left to right and wraps them onto new lines (Qt's flow layout example)."""
 
-    def __init__(self, parent=None, spacing: int = 6) -> None:
+    def __init__(self, parent=None, spacing: int = 6, rtl: bool = False) -> None:
         super().__init__(parent)
         self._items = []
+        self._rtl = rtl                      # lay items out from the right edge (Arabic reading order)
         self.setSpacing(spacing)
         self.setContentsMargins(0, 0, 0, 0)
 
@@ -60,7 +61,8 @@ class FlowLayout(QLayout):
                 next_x = x + hint.width() + space
                 line_height = 0
             if not test_only:
-                item.setGeometry(QRect(QPoint(x, y), hint))
+                left = rect.right() - (x - rect.x()) - hint.width() + 1 if self._rtl else x
+                item.setGeometry(QRect(QPoint(left, y), hint))
             x = next_x
             line_height = max(line_height, hint.height())
         return y + line_height - rect.y()

@@ -7,7 +7,7 @@ query, calls the core and renders the results as cards.
 import html
 import sqlite3
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -22,9 +22,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from isnady.core import isnad as core_isnad
 from isnady.core import search as core
 from isnady.data import db
 from isnady.gui import theme
+from isnady.gui.chain_widgets import ChainStrip
 from isnady.gui.widgets import FlowLayout, expanding_width_policy
 
 PAGE_SIZE = 25
@@ -58,7 +60,7 @@ def _label(text: str = "", name: str = "", wrap: bool = False, selectable: bool 
 
 
 class ResultCard(QFrame):
-    def __init__(self, result: core.SearchResult) -> None:
+    def __init__(self, result: core.SearchResult, chain: dict | None = None, open_chain=None) -> None:
         super().__init__()
         self.setObjectName("Card")
         t = theme.current()
@@ -74,7 +76,20 @@ class ResultCard(QFrame):
         head.addSpacing(8)
         head.addWidget(number, 0, Qt.AlignmentFlag.AlignBaseline)
         head.addStretch(1)
+        if open_chain is not None:
+            view = QPushButton("View chain")
+            view.setObjectName("Link")
+            view.setCursor(Qt.CursorShape.PointingHandCursor)
+            view.setToolTip("Open this hadith's chain of transmission")
+            view.clicked.connect(lambda: open_chain(result.hadith_id))
+            head.addWidget(view)
         box.addLayout(head)
+        if chain and chain["links"]:
+            box.addWidget(ChainStrip(chain))
+            box.addSpacing(6)
+        elif chain and chain["problem"]:
+            note = _label("Chain kept whole, not split: " + chain["problem"], "Caption", wrap=True)
+            box.addWidget(note)
 
         if result.grades:
             pills = FlowLayout(spacing=6)
@@ -114,6 +129,9 @@ class ResultCard(QFrame):
 
 
 class SearchPage(QWidget):
+    open_chain = Signal(int)          # hadith id; the main window shows it on the Isnad Chains page
+    data_changed = Signal()
+
     def __init__(self, status_message=None, parent=None) -> None:
         super().__init__(parent)
         self.setObjectName("Page")
@@ -206,12 +224,43 @@ class SearchPage(QWidget):
         except db.SchemaReset as exc:
             self._notice = str(exc)
             self._conn = db.connect()
-        except Exception as exc:  # shown to the user rather than crashing the window
+        except Exception as exc:  # shown to the user, in full, rather than crashing the window
             self._conn = None
-            self.summary.setText(f"Could not open the database: {exc}")
-            self.setEnabled(False)
+            self._show_error(exc)
             return
         self._sync_with_database(force=True)
+
+    def _show_error(self, exc: Exception) -> None:
+        """The database could not be opened: say why and what to do, in the middle of the page."""
+        from isnady import __version__
+        from isnady.data.paths import db_path
+
+        self.query_edit.setEnabled(False)
+        self.search_button.setEnabled(False)
+        for widget in (self.mode_combo, self.whole_words, self.book_combo, self.language_combo):
+            widget.setEnabled(False)
+        self._clear_body()
+        box_widget = QWidget()
+        box = QVBoxLayout(box_widget)
+        box.setContentsMargins(8, 40, 8, 8)
+        box.setSpacing(10)
+        title = _label("The database could not be opened", "Hero", wrap=True)
+        title.setFont(theme.reading_font(24, bold=True))
+        message = str(exc)
+        advice = ""
+        if "newer than this isnady supports" in message:
+            advice = ("The data was last opened by a newer isnady than the one running now "
+                      f"({__version__}). Nothing is lost: update isnady, or if you work from the source folder, "
+                      "reinstall it there with <code>pip install -e .</code>")
+        detail = _label(
+            f"{html.escape(message)}<br><br>{advice}<br><br>Database: <code>{html.escape(str(db_path()))}</code>",
+            "Lead", wrap=True, selectable=True)
+        detail.setTextFormat(Qt.TextFormat.RichText)
+        box.addWidget(title)
+        box.addWidget(detail)
+        self.body_layout.addWidget(box_widget)
+        self.body_layout.addStretch(1)
+        self._status("Database not opened")
 
     def _sync_with_database(self, force: bool = False) -> None:
         """Index new texts and refresh the filters when another program changed the data."""
@@ -223,9 +272,11 @@ class SearchPage(QWidget):
         QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             core.ensure_index(self._conn, progress=self._status)
+            core_isnad.ensure_isnads(self._conn, progress=self._status)
         finally:
             QGuiApplication.restoreOverrideCursor()
         self._data_version = self._conn.execute("PRAGMA data_version").fetchone()[0]
+        self.data_changed.emit()
         self._fill_filters()
         hadith = self._conn.execute("SELECT COUNT(*) FROM hadiths").fetchone()[0]
         books = self._conn.execute("SELECT COUNT(*) FROM collections").fetchone()[0]
@@ -390,7 +441,8 @@ class SearchPage(QWidget):
         if last >= 0 and self.body_layout.itemAt(last).spacerItem() is not None:
             self.body_layout.takeAt(last)
         for result in results:
-            self.body_layout.addWidget(ResultCard(result))
+            chains = core_isnad.chain(self._conn, result.hadith_id)
+            self.body_layout.addWidget(ResultCard(result, chains[0] if chains else None, self.open_chain.emit))
         remaining = self._page.total - len(self._results)
         if remaining > 0:
             self.more_button.setText(f"Show {min(PAGE_SIZE, remaining)} more ({remaining:,} left)")
@@ -434,6 +486,18 @@ class SearchPage(QWidget):
 
     def connection(self):
         return self._conn
+
+    def rebuild_chains(self) -> dict:
+        if self._conn is None:
+            return {}
+        QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            stats = core_isnad.ensure_isnads(self._conn, progress=self._status, rebuild=True)
+        finally:
+            QGuiApplication.restoreOverrideCursor()
+        self.data_changed.emit()
+        self.retheme()
+        return stats
 
     def closeEvent(self, event) -> None:  # noqa: N802 (Qt name)
         if self._conn is not None:

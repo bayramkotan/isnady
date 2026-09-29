@@ -18,6 +18,7 @@ import os
 import sys
 
 from isnady import APP_NAME, __version__
+from isnady.core import isnad as core_isnad
 from isnady.core import search as core_search
 from isnady.data import db
 from isnady.data.fetch import Auth, ResourceError
@@ -93,6 +94,7 @@ def cmd_import(args) -> int:
         report = importer.run(conn, source, options, progress=lambda m: print(f"  {m}"))
         db.cleanup(conn)
         core_search.ensure_index(conn, progress=lambda m: print(f"  {m}"))
+        core_isnad.ensure_isnads(conn, progress=lambda m: print(f"  {m}"))
     except ResourceError as exc:
         print(f"Import failed: {exc}", file=sys.stderr)
         return 1
@@ -188,6 +190,50 @@ def cmd_search(args) -> int:
     return 0
 
 
+def cmd_isnads(args) -> int:
+    conn = _connect()
+    stats = core_isnad.ensure_isnads(conn, progress=print, rebuild=args.rebuild)
+    if stats["parsed"] or stats["raw_only"]:
+        print(f"Read {stats['parsed'] + stats['raw_only']} chains now.")
+    print(f"Parser: {core_isnad.PARSER_ID}")
+    for b in core_isnad.book_stats(conn):
+        print(f"  {b['name']}: {b['chains']} chains, {b['split']} split into narrators "
+              f"({100 * b['split'] / b['chains']:.1f}%), {b['marfu']} reach the Prophet, {b['links']} links")
+        for problem, count in b["problems"]:
+            print(f"    {count:6}  not split: {problem}")
+    conn.close()
+    return 0
+
+
+def cmd_chain(args) -> int:
+    conn = _connect()
+    core_isnad.ensure_isnads(conn)
+    row = conn.execute(
+        """SELECT h.id, c.name FROM hadiths h JOIN collections c ON c.id = h.collection_id
+           WHERE c.key = ? AND h.number = ?""", (args.book, args.number)
+    ).fetchone()
+    if row is None:
+        print(f"No hadith {args.number} in '{args.book}'. See: isnady-cli stats", file=sys.stderr)
+        conn.close()
+        return 1
+    chains = core_isnad.chain(conn, row["id"])
+    conn.close()
+    print(f"{row['name']} {args.number}")
+    if not chains:
+        print("  no chain stored (no Arabic text for this hadith)")
+    for ch in chains:
+        if ch["problem"]:
+            print(f"  not split: {ch['problem']}")
+        for link in ch["links"]:
+            arabic, meaning, _why = core_isnad.term_label(link["transmission"])
+            print(f"  {link['position']:>2}. {arabic} ({meaning})  {link['raw_name']}")
+        if ch["links"]:
+            print("      -> the Prophet" if ch["reaches_prophet"] else "      (chain stops here)")
+        if args.raw and ch["raw"]:
+            print(f"  raw: {ch['raw']}")
+    return 0
+
+
 def cmd_remove(args) -> int:
     conn = _connect()
     with conn:
@@ -246,6 +292,15 @@ def build_parser() -> argparse.ArgumentParser:
     se.add_argument("--width", type=int, default=300, help="characters of text to show")
     se.add_argument("--all-texts", action="store_true", help="also show texts that did not match")
     se.set_defaults(func=cmd_search)
+
+    isn = sub.add_parser("isnads", help="read the chains of transmission from the Arabic texts and report")
+    isn.add_argument("--rebuild", action="store_true", help="read every chain again")
+    isn.set_defaults(func=cmd_isnads)
+    ch = sub.add_parser("chain", help="show the chain of one hadith")
+    ch.add_argument("book", help="collection key, e.g. bukhari")
+    ch.add_argument("number", help="hadith number, e.g. 1")
+    ch.add_argument("--raw", action="store_true", help="also print the chain as written")
+    ch.set_defaults(func=cmd_chain)
 
     sub.add_parser("sources", help="list imported sources").set_defaults(func=cmd_sources)
     sub.add_parser("stats", help="count what the database holds").set_defaults(func=cmd_stats)

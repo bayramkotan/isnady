@@ -210,6 +210,25 @@ def stylesheet(t: Tokens) -> str:
     QLabel#TranslationText {{ color: {t.ink}; }}
     QLabel#Caption {{ color: {t.muted}; font-size: 8.5pt; }}
 
+    /* chains */
+    QLabel#ChainChip {{ background: {t.lapis_soft}; color: {t.ink}; border: 1px solid {t.lapis_soft};
+                        border-radius: 8px; padding: 1px 9px; }}
+    QLabel#ChainChipProphet {{ background: {t.gilt}; color: {t.ink}; border: 1px solid {t.gold};
+                               border-radius: 8px; padding: 1px 9px; }}
+    QLabel#ChainArrow {{ color: {t.muted}; padding: 0 1px; }}
+    QFrame#Node {{ background: {t.surface}; border: 1px solid {t.border}; border-radius: 10px; }}
+    QFrame#NodeProphet {{ background: {t.gilt}; border: 1px solid {t.gold}; border-radius: 10px; }}
+    QLabel#NodeTerm {{ color: {t.gold}; font-size: 9pt; }}
+    QLabel#NodeName {{ color: {t.ink}; }}
+    QLabel#StatValue {{ color: {t.lapis}; font-size: 20pt; font-weight: 700; }}
+    QPushButton#Link {{ background: transparent; color: {t.lapis}; border: none; padding: 2px 4px;
+                        font-weight: 600; }}
+    QPushButton#Link:hover {{ color: {t.gold}; }}
+    QLineEdit#NumberField {{ background: {t.surface}; color: {t.ink}; border: 1px solid {t.border};
+                             border-radius: 7px; padding: 5px 10px; }}
+    QLineEdit#NumberField:focus {{ border-color: {t.lapis}; }}
+    QPushButton#Quiet:disabled {{ color: {t.muted}; border-color: {t.border}; }}
+
     /* start and placeholder pages */
     QLabel#Hero {{ color: {t.ink}; }}
     QLabel#HeroArabic {{ color: {t.gold}; }}

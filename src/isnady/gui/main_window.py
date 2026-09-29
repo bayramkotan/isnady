@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 from isnady import __version__
 from isnady.data.paths import data_dir
 from isnady.gui import dialogs, theme
+from isnady.gui.isnad_page import IsnadPage
 from isnady.gui.search_page import SearchPage
 
 # (key, sidebar label, description shown until the page is built)
@@ -104,14 +105,22 @@ class MainWindow(QMainWindow):
         side.addWidget(self.footer)
 
         self.pages = QStackedWidget()
+        self.search_page = SearchPage(status_message=self._set_footer)
+        self.isnad_page = IsnadPage(self.search_page.connection)
         for key, label, text in SECTIONS:
             self.nav.addItem(label)
             self.nav.item(self.nav.count() - 1).setSizeHint(QSize(0, 38))
             if key == "search":
-                page = SearchPage(status_message=self._set_footer)
+                page = self.search_page
+            elif key == "chains":
+                page = self.isnad_page
             else:
                 page = _placeholder(label, text)
             self.pages.addWidget(page)
+        self._chains_row = [k for k, _l, _t in SECTIONS].index("chains")
+        self.search_page.open_chain.connect(self._open_chain)
+        self.search_page.data_changed.connect(self.isnad_page.refresh)
+        self.isnad_page.refresh()
         self.nav.currentRowChanged.connect(self.pages.setCurrentIndex)
         self.nav.setCurrentRow(0)
 
@@ -172,6 +181,8 @@ class MainWindow(QMainWindow):
         tools_menu = bar.addMenu("&Tools")
         self._action(tools_menu, "Rebuild Search Index", lambda: search.rebuild_index(),
                      tip="Rebuild the search index from every imported text")
+        self._action(tools_menu, "Read Chains Again", lambda: search.rebuild_chains(),
+                     tip="Read every chain of transmission from the Arabic texts again")
 
         help_menu = bar.addMenu("&Help")
         self._action(help_menu, "Search Tips", lambda: dialogs.search_tips(self).exec())
@@ -182,6 +193,10 @@ class MainWindow(QMainWindow):
         self._action(help_menu, "Report an Issue", lambda: QDesktopServices.openUrl(QUrl(dialogs.ISSUES_URL)))
         help_menu.addSeparator()
         self._action(help_menu, "About isnady", lambda: dialogs.about(self).exec())
+
+    def _open_chain(self, hadith_id: int) -> None:
+        self.nav.setCurrentRow(self._chains_row)
+        self.isnad_page.show_hadith(hadith_id)
 
     def _open_data_folder(self) -> None:
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(data_dir())))
