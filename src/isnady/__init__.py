@@ -1,4 +1,4 @@
 """isnady — hadith search built around the isnad."""
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 APP_NAME = "isnady"

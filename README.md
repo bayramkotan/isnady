@@ -1,64 +1,336 @@
-# isnady
+<h1 align="center">📜 isnady &nbsp;<sub>إسناد</sub></h1>
 
-Hadith search built around the **isnad** — the chain of transmission.
+<p align="center">
+  <strong>Hadith search built around the isnad, the chain of transmission</strong><br>
+  <sub>Search the collections, read every chain narrator by narrator, and see how the scholars read it</sub>
+</p>
 
-isnady is a desktop application (PySide6, Windows and Linux) for searching hadith
-across the major collections and seeing *why* each report has the grade it has:
-every narrator in the chain, what the scholars of jarh wa ta'dil said about them,
-and how the chain holds together.
+<p align="center">
+  <a href="https://pypi.org/project/isnady/">
+    <img src="https://img.shields.io/pypi/v/isnady?style=for-the-badge&color=1D4777&logo=pypi&logoColor=white" alt="PyPI">
+  </a>
+  <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
+  <a href="https://www.npmjs.com/package/isnady">
+    <img src="https://img.shields.io/npm/v/isnady?style=for-the-badge&color=14304F&logo=npm&label=npm" alt="npm">
+  </a>
+  <img src="https://img.shields.io/badge/License-MIT-D6B25E?style=for-the-badge" alt="License">
+</p>
 
-> **Status: pre-alpha (0.0.4).** Search and chains of transmission work today on data you
-> import; narrators, scholars and the rest are being built.
+<p align="center">
+  <a href="#-why-isnady">Why</a> •
+  <a href="#-install">Install</a> •
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-search">Search</a> •
+  <a href="#-chains-of-transmission">Chains</a> •
+  <a href="#-educational-by-design">Educational</a> •
+  <a href="#-appearance">Appearance</a> •
+  <a href="#-data-and-licences">Data</a> •
+  <a href="#%EF%B8%8F-cli">CLI</a> •
+  <a href="#-screenshots">Screenshots</a> •
+  <a href="#%EF%B8%8F-roadmap">Roadmap</a>
+</p>
 
-## Works now
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
+</p>
 
-- **Search** across every imported edition. Arabic ignores diacritics and letter forms and
-  finds words with attached prefixes; Turkish and other Latin-script text ignores case and
-  accents. All words, any word or exact phrase; book and language filters.
-- **Chains of transmission** read from the Arabic text: each narrator, the words that link
-  them (haddathana, akhbarana, 'an ...) with what each means, and whether the chain reaches
-  the Prophet. Where the wording cannot be read with confidence the chain is kept whole,
-  never guessed.
-- **Desktop app and command line** with the same engine: `isnady` and `isnady-cli`.
+> **Pre-alpha (0.0.5).** Search and chains of transmission work today, on data you import
+> in one command. Narrators, scholars, gradings and the rest are being built, in the open.
 
-```
-isnady-cli import fawazahmed0 https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json \
-    --book bukhari --language ara --language tur --license Unlicense
-isnady-cli search النيات
-isnady-cli chain bukhari 1
-isnady
-```
+---
 
-## Planned
+## 🎯 Why isnady
 
-- **Search** — by text, book, chapter, narrator and grade: mutawatir, sahih, hasan,
-  da'if, mawdu' and the intermediate grades.
-- **Narrators** — biography, dates, teachers and students, number of narrations,
-  and every recorded verdict with its source.
-- **Narrators identified** — every name in a chain linked to its narrator, with each
-  narrator's standing and whether each link could have met the next.
-- **Reliability scores** — derived transparently from classical rankings (for example
-  Ibn Hajar's twelve grades in *Taqrib al-Tahdhib*), always shown with the verdicts
-  they come from. A score is a conversion of the scholars' judgement, never a new one.
-- **Shia rijal** — the primary grading follows the Sunni tradition; narrator verdicts
-  from Shia rijal works (al-Najashi, al-Tusi, al-Kashshi, al-Hilli, al-Khoei) are listed
-  per narrator beside the Sunni view.
-- **Statistics** — narrators, books and grades counted and compared.
-- **Learn** — the hadith sciences explained: terminology, grading, jarh wa ta'dil,
-  and the classical works.
+A hadith is two things: the text (*matn*) and the chain of people who passed it on
+(*isnad*). Most hadith sites let you search the text and show a grade. isnady is built
+the other way round: the chain comes first, because that is where the scholars of hadith
+did their work.
 
-## Install
+- **The chain is read, not typed in.** isnady reads the chain from the Arabic text itself:
+  who narrated to whom, with which words, and whether it reaches the Prophet.
+- **Nothing is guessed.** Where the wording cannot be read with confidence, the chain is
+  kept whole and marked, never split wrongly. A missing link is shown as missing.
+- **Every fact has a source.** Every hadith, text and grade records where it came from,
+  under which licence.
+- **Grades are shown as the scholars gave them.** Each grade keeps its scholar's name and
+  wording; isnady does not merge them or invent its own.
+- **Window and command line, same engine.** Everything the window does, the command line
+  does too, with the same results.
 
-```
+---
+
+## 📦 Install
+
+```bash
 pip install isnady
-isnady
+isnady            # or the short name:  iy
 ```
 
-## License
+The same program answers to several names: **`iy`** to type, **`isnady`** to read, and
+`isnady-cli` kept from the first releases. Without arguments it opens the window; with
+arguments it is the command line. On Windows, **`isnady-gui`** opens the window without a
+console.
 
-MIT for the application code. Hadith and narrator data will come from separate
-sources, each under its own license, listed here as they are added.
+<details>
+<summary><b>🐧 On Linux, pip may refuse to install</b></summary>
+<br>
 
-The Arabic and reading typeface is [Amiri](https://github.com/aliftype/amiri) by
-Khaled Hosny, bundled under the SIL Open Font License 1.1
-(`src/isnady/assets/fonts/OFL.txt`).
+Most current distributions mark the system Python as *externally managed* (PEP 668), so a
+plain `pip install` stops with `error: externally-managed-environment`. Two ways around it:
+
+```bash
+# Isolated — recommended, no system packages touched
+pipx install isnady
+
+# Into your user site — needs the override flag
+pip install isnady --break-system-packages --no-cache-dir -U
+```
+
+</details>
+
+### Upgrading
+
+```bash
+pip install -U isnady --no-cache-dir
+```
+
+Your data stays where it is; a newer isnady upgrades the database in place the first time
+it opens it.
+
+---
+
+## 🚀 Quick Start
+
+isnady ships without hadith data: you choose the sources. One command brings in Sahih
+al-Bukhari and Sunan Abi Dawud in Arabic and Turkish from the open
+[fawazahmed0/hadith-api](https://github.com/fawazahmed0/hadith-api) collection (public
+domain):
+
+```bash
+iy import fawazahmed0 https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json \
+   --book bukhari --book abudawud --language ara --language tur --license Unlicense
+```
+
+Then open the window with `iy`, or stay on the command line:
+
+```bash
+iy search النيات            # Arabic, with or without diacritics
+iy search "niyetlere göre"   # Turkish, English, any imported language
+iy chain bukhari 1           # one chain, narrator by narrator
+```
+
+Importing takes a minute or two; the search index and the chains are built as part of it.
+
+---
+
+## 🔎 Search
+
+| | |
+|:--|:--|
+| **Arabic without diacritics** | `الاعمال` finds `الأَعْمَالُ`. Alef forms, alef maqsura, hamza seats and ta marbuta are treated alike, so you type the way you normally write |
+| **Attached prefixes** | `النيات` finds `بالنيات`, because Arabic joins bi-, wa-, fa- and al- to the word. *Whole words only* turns this off |
+| **Latin-script text** | Case and accents are ignored: `NIYET`, `niyet` and `nîyet` are one word; `Muʿādh`, `Mu'adh` and `Muadh` too |
+| **Match** | All words, any word, or the exact phrase |
+| **Filters** | Book and language; the language filter also chooses which translations appear |
+| **Grades** | Shown under each hadith with the scholar's name, exactly as given |
+| **Highlighting** | On the original, diacritised text, diacritics included |
+
+Results appear at once and fill in as you read; the window never waits for them.
+
+---
+
+## 🔗 Chains of transmission
+
+Every Arabic text is read for its chain:
+
+```
+Sahih al Bukhari 1
+   1. حدثنا (narrated to us)  الْحُمَيْدِيُّ عَبْدُ اللَّهِ بْنُ الزُّبَيْرِ
+   2. حدثنا (narrated to us)  سُفْيَانُ
+   3. حدثنا (narrated to us)  يَحْيَى بْنُ سَعِيدٍ الْأَنْصَارِيُّ
+   4. أخبرني (informed me)    مُحَمَّدُ بْنُ إِبْرَاهِيمَ التَّيْمِيُّ
+   5. سمع (heard)            عَلْقَمَةَ بْنَ وَقَّاصٍ اللَّيْثِيَّ
+   6. سمعت (I heard)          عُمَرَ بْنَ الْخَطَّابِ
+      -> the Prophet
+```
+
+In the window, each result shows its chain as a row of names ending at the Prophet, and
+**View chain** opens it as a timeline from the book to the Prophet, with the Arabic text
+below: the chain in lighter ink, the text of the hadith in full ink.
+
+Names are kept exactly as written, with the clarifications the compilers added
+(*"— yaʿnī Ibn Muḥammad —"*, *"mawlā Ibn ʿAbbās"*), because identifying each narrator is
+a separate step that comes next.
+
+<details>
+<summary><b>📊 How well it reads today</b></summary>
+<br>
+
+Measured on Sahih al-Bukhari and Sunan Abi Dawud (12,852 chains):
+
+| | Bukhari | Abu Dawud | Both |
+|:--|:--:|:--:|:--:|
+| Split into narrators | 85.5% | 71.9% | 79.9% |
+| Of those, reaching the Prophet | | | 78.3% |
+| Narrators per chain | | | 5.0 |
+
+In a blind, hand-checked sample of 30 chains: **no wrong narrator**, 27 complete.
+
+The rest are kept whole, each with its reason: *tahwil* (ح, a second chain joining), two
+teachers at one link (*qiran*), a second chain after the first, or wording that could not be
+read with confidence. Abu Dawud uses *qiran* and *tahwil* far more often than Bukhari, which
+is why its share is lower. One known limit: a last narrator introduced only by *qāla*
+("قال قال عبد الله") is not added, because the same words also begin stories.
+
+</details>
+
+---
+
+## 🎓 Educational by Design
+
+isnady teaches the science it uses. Every transmission term in a chain explains itself:
+
+| Term | Reads | What the critics took it to mean |
+|:--:|:--|:--|
+| حدثنا | narrated to us | The teacher recited it to a group: heard directly |
+| حدثني | narrated to me | Recited to the narrator alone: heard directly |
+| أخبرنا | informed us | Often a text read back to the teacher (*ʿarḍ*) |
+| أنبأنا | told us | Later often transmission by permission (*ijāza*) |
+| سمعت | I heard | Direct hearing, stated explicitly |
+| قرأت على | I read to | The narrator read the text back to the teacher |
+| عن | from | Does not say how it was received (*ʿanʿana*); connected when the two could have met and the narrator is not known for *tadlīs* |
+| أن | that | Treated by most critics like ʿan (*muʾannan*) |
+
+The Learn section — hadith terminology, grading, *jarḥ wa taʿdīl* and the classical works,
+each shown on real hadith and real chains — is on the roadmap.
+
+---
+
+## 🎨 Appearance
+
+Every script has its own reading font, size, colour and line spacing — Arabic, Latin,
+Cyrillic, Bengali and Tamil today, more as sources in other scripts arrive. The light and
+the dark theme each keep their own colours, and the interface font can be changed too.
+**Edit → Preferences** (Ctrl + ,) applies every change at once; each row has its own
+Default button.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/preferences.png" alt="Preferences — font, size, line spacing and colour for each script" width="760">
+</p>
+
+The same settings from the command line:
+
+```bash
+iy config list --prefix text.arabic       # what is set, and what is changed
+iy config set text.arabic.size 22
+iy config set text.latin.family "Noto Serif"
+iy config set colors.dark.gilt "#5A4A1E"  # matched words in the dark theme
+iy config reset text.arabic               # back to the defaults
+```
+
+Settings live in `settings.json` in the isnady data folder, shared by the window and the
+command line.
+
+---
+
+## 📚 Data and licences
+
+isnady reads open formats and keeps the source of everything:
+
+- **Supported now:** the [fawazahmed0/hadith-api](https://github.com/fawazahmed0/hadith-api)
+  JSON format, from a file or a URL, with or without authentication (username and
+  password, bearer token, or API key; credentials are never stored).
+- **Coming:** CSV, SQL/SQLite, OpenITI mARkdown, REST APIs and Shamela, so any collection
+  you have can be brought in.
+
+Every source records a licence **tier**: **A** may be redistributed, **B** may be
+redistributed under its conditions, **C** may not. Sources you add yourself stay on your
+computer. **Help → Licences** lists every source in your database with its licence.
+
+---
+
+## ⌨️ CLI
+
+Everything the window does also works without it — on a server, over SSH, or in a
+script. The command line never loads Qt.
+
+| Short | Full | What it does |
+|:------|:-----|:-------------|
+| `iy` | `isnady` | Open the window |
+| `iy search WORDS` | `isnady search WORDS` | Search; `--mode all\|any\|phrase`, `--whole-words`, `--book`, `--language`, `--limit` |
+| `iy chain BOOK NUMBER` | `isnady chain bukhari 1` | One chain, narrator by narrator; `--raw` adds the wording |
+| `iy isnads` | `isnady isnads` | Read every chain and report per book; `--rebuild` reads them again |
+| `iy import FORMAT FILE-OR-URL` | `isnady import …` | Import a source; `--book`, `--language`, `--license`, `--user`, `--token-env`, `--api-key-env` |
+| `iy formats` | `isnady formats` | Formats that can be imported |
+| `iy sources` | `isnady sources` | Imported sources, their licence and tier |
+| `iy stats` | `isnady stats` | Hadith, texts, grades and chains per book |
+| `iy remove KEY` | `isnady remove KEY` | Remove a source and everything imported from it |
+| `iy config list\|get\|set\|reset` | `isnady config …` | Appearance and other settings — the same as Edit → Preferences |
+| `iy -V` | `isnady -V` | Show the version (also `-v`, `--version`, `version`) |
+| `iy -h` | `isnady -h` | Show help |
+
+```console
+$ iy search niyet --book abudawud --limit 1
+43 hadith found in 8 ms
+
+Sunan Abu Dawud #472
+  grades: Al-Albani: Hasan; Muhammad Muhyi Al-Din Abdul Hamid: Hasan; Shuaib Al Arnaut: Daif; Zubair Ali Zai: Daif
+  [Turkish] Ebu Hureyre (r.a.); Resulullah (Sallallahu aleyhi ve Sellem)'in şöyle buyurduğunu rivayet etmiştir: "Bir kimse mescid'e hangi [niyet]le gelirse nasibi ondan ibarettir"
+```
+
+---
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/chain.png" alt="Isnad Chains — the chain of Sahih al-Bukhari 1 as a timeline from the book to the Prophet" width="850">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-grades.png" alt="Search — Sunan Abi Dawud with each scholar's grade and the chain above the text" width="850">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/chain-dark.png" alt="Dark theme — a seven-narrator chain from Sunan Abi Dawud" width="850">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/chains-overview.png" alt="Chains overview — per-book statistics and what was kept whole" width="850">
+</p>
+
+---
+
+## 🗺️ Roadmap
+
+- **Narrators** — every name in a chain linked to its narrator: biography, teachers and
+  students, generation (Companion, Successor …), every verdict on them, and whether each
+  link could have met the next.
+- **Hadith scholars** — lives, books, teachers and students, and what their collections
+  contain.
+- **Shia rijal** — narrator verdicts from the Shia rijal works, beside the Sunni view.
+- **Learn** — the sciences of hadith, shown on real hadith and real chains.
+- **More sources and formats** — and adding your own from inside the window.
+- **Glossary** — every Arabic term of hadith and the Islamic sciences explained where it
+  appears: hover or click a term, read its meaning in the interface language.
+- **isnady.net** — the same engine on the web.
+
+---
+
+## 🏗️ Build from Source
+
+```bash
+git clone https://github.com/bayramkotan/isnady.git
+cd isnady
+pip install -e .
+iy
+```
+
+Python 3.10 or newer and PySide6. The command line alone needs no PySide6.
+
+---
+
+## 📝 License
+
+MIT for the application code. Hadith data comes from separate sources, each under its own
+licence, recorded with the data and listed under **Help → Licences**.
+
+The Arabic and reading typeface is [Amiri](https://github.com/aliftype/amiri) by Khaled
+Hosny, bundled under the SIL Open Font License 1.1 (`src/isnady/assets/fonts/OFL.txt`).

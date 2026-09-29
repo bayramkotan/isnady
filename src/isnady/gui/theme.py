@@ -9,8 +9,10 @@ Both a light and a dark theme are defined; the system colour scheme decides,
 and a change of scheme while the app runs is followed.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
+
+from isnady import config
 
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtGui import QColor, QFont, QFontDatabase, QGuiApplication, QPalette
@@ -55,40 +57,77 @@ DARK = Tokens(
 )
 
 _current: Tokens = LIGHT
+_SYSTEM_UI_FONT: QFont | None = None     # the platform's own UI font, before any user choice
+
+def current() -> Tokens:
+    return _current
+
 
 THEME_MODES = ("system", "light", "dark")
 TEXT_SCALE_MIN, TEXT_SCALE_MAX, TEXT_SCALE_STEP = 0.8, 1.6, 0.1
 
 
 def settings() -> QSettings:
+    """Kept only to carry settings over from 0.0.4 and earlier (see migrate_qsettings)."""
     return QSettings("isnady", "isnady")
 
 
+def migrate_qsettings() -> None:
+    """0.0.4 and earlier kept theme and text size in QSettings; move them to settings.json once."""
+    old = settings()
+    for old_key, new_key in (("view/theme", "view.theme"), ("view/text_scale", "view.text_scale")):
+        value = old.value(old_key)
+        if value not in (None, "") and config.get(new_key) == config.DEFAULTS[new_key]:
+            try:
+                config.set(new_key, value)
+            except config.ConfigError:
+                pass
+        old.remove(old_key)
+
+
 def theme_mode() -> str:
-    mode = str(settings().value("view/theme", "system"))
-    return mode if mode in THEME_MODES else "system"
+    return config.get("view.theme")
 
 
 def set_theme_mode(mode: str) -> None:
-    settings().setValue("view/theme", mode if mode in THEME_MODES else "system")
+    config.set("view.theme", mode if mode in THEME_MODES else "system")
 
 
 def text_scale() -> float:
-    try:
-        value = float(settings().value("view/text_scale", 1.0))
-    except (TypeError, ValueError):
-        value = 1.0
-    return min(max(value, TEXT_SCALE_MIN), TEXT_SCALE_MAX)
+    return float(config.get("view.text_scale"))
 
 
 def set_text_scale(value: float) -> float:
     value = round(min(max(value, TEXT_SCALE_MIN), TEXT_SCALE_MAX), 2)
-    settings().setValue("view/text_scale", value)
+    config.set("view.text_scale", value)
     return value
 
 
-def current() -> Tokens:
-    return _current
+# ------------------------------------------------------------ reading text by script
+def script_font(script: str, bold: bool = False, factor: float = 1.0) -> QFont:
+    """The reader's font for one script: family and size from the settings, times the text scale."""
+    script = script if script in config.SCRIPTS else "latin"
+    family = config.get(f"text.{script}.family")
+    font = QFont(family) if family else QFont(QApplication.font())
+    font.setPointSizeF(float(config.get(f"text.{script}.size")) * factor * text_scale())
+    font.setBold(bold)
+    return font
+
+
+def font_css(font: QFont) -> str:
+    """The font as style-sheet text. A widget with its own style sheet ignores setFont(),
+    so any widget that also sets a colour through a style sheet must carry its font here."""
+    weight = "700" if font.bold() else "400"
+    return f"font-family: '{font.family()}'; font-size: {font.pointSizeF():.1f}pt; font-weight: {weight};"
+
+
+def script_color(script: str) -> str:
+    color = config.get(f"text.{script}.color") if script in config.SCRIPTS else ""
+    return color or _current.ink
+
+
+def script_line_height(script: str) -> int:
+    return int(config.get(f"text.{script}.line_height")) if script in config.SCRIPTS else 115
 
 
 def load_fonts() -> bool:
@@ -144,7 +183,7 @@ def _icon(name: str, t: Tokens) -> str:
 
 
 def stylesheet(t: Tokens) -> str:
-    chevron, check = _icon("chevron", t), _icon("check", t)
+    chevron, check, up, down = _icon("chevron", t), _icon("check", t), _icon("up", t), _icon("down", t)
     return f"""
     QMainWindow, QWidget#Page {{ background: {t.window}; }}
     QMenuBar {{ background: {t.window}; color: {t.ink}; border-bottom: 1px solid {t.border}; padding: 2px 6px; }}
@@ -210,6 +249,22 @@ def stylesheet(t: Tokens) -> str:
     QLabel#TranslationText {{ color: {t.ink}; }}
     QLabel#Caption {{ color: {t.muted}; font-size: 8.5pt; }}
 
+    /* preferences */
+    QTabWidget::pane {{ border: none; }}
+    QTabBar::tab {{ background: transparent; color: {t.muted}; padding: 8px 16px; border: none;
+                    border-bottom: 2px solid transparent; }}
+    QTabBar::tab:selected {{ color: {t.ink}; border-bottom: 2px solid {t.gold}; }}
+    QTabBar::tab:hover {{ color: {t.ink}; }}
+    QSpinBox, QDoubleSpinBox, QFontComboBox {{ background: {t.surface}; color: {t.ink};
+        border: 1px solid {t.border}; border-radius: 7px; padding: 4px 8px; min-height: 20px; }}
+    QSpinBox:focus, QDoubleSpinBox:focus {{ border-color: {t.lapis}; }}
+    QSpinBox::up-button, QDoubleSpinBox::up-button {{ subcontrol-origin: border; subcontrol-position: top right;
+        width: 20px; border: none; background: transparent; }}
+    QSpinBox::down-button, QDoubleSpinBox::down-button {{ subcontrol-origin: border;
+        subcontrol-position: bottom right; width: 20px; border: none; background: transparent; }}
+    QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{ image: url("{up}"); width: 10px; height: 10px; }}
+    QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{ image: url("{down}"); width: 10px; height: 10px; }}
+
     /* chains */
     QLabel#ChainChip {{ background: {t.lapis_soft}; color: {t.ink}; border: 1px solid {t.lapis_soft};
                         border-radius: 8px; padding: 1px 9px; }}
@@ -245,16 +300,26 @@ def stylesheet(t: Tokens) -> str:
 
 def apply(app: QApplication, mode: str | None = None) -> Tokens:
     """Apply the chosen theme (system, light or dark; default: the saved choice)."""
-    global _current
+    global _current, _SYSTEM_UI_FONT
+    if _SYSTEM_UI_FONT is None:
+        _SYSTEM_UI_FONT = QFont(app.font())
     if "Fusion" in QStyleFactory.keys():
         app.setStyle("Fusion")
     mode = mode or theme_mode()
     if mode == "light":
-        _current = LIGHT
+        base = LIGHT
     elif mode == "dark":
-        _current = DARK
+        base = DARK
     else:
-        _current = DARK if _is_dark_scheme() else LIGHT
+        base = DARK if _is_dark_scheme() else LIGHT
+    which = "dark" if base.dark else "light"
+    overrides = {token: config.get(f"colors.{which}.{token}") for token in config.COLOR_TOKENS}
+    _current = replace(base, **{k: v for k, v in overrides.items() if v})
+    family, size = config.get("ui.family"), float(config.get("ui.size"))
+    ui_font = QFont(family) if family else QFont(_SYSTEM_UI_FONT or app.font())
+    if size:
+        ui_font.setPointSizeF(size)
+    app.setFont(ui_font)
     app.setPalette(_palette(_current))
     app.setStyleSheet(stylesheet(_current))
     return _current

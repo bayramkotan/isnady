@@ -159,6 +159,9 @@ class MainWindow(QMainWindow):
         edit_menu = bar.addMenu("&Edit")
         self._action(edit_menu, "Find", self._find, QKeySequence.StandardKey.Find)
         self._action(edit_menu, "Copy", self._copy, QKeySequence.StandardKey.Copy)
+        edit_menu.addSeparator()
+        self._action(edit_menu, "Preferences…", self._preferences, "Ctrl+,",
+                     tip="Fonts, sizes and colours for each script, theme colours, interface font")
 
         view_menu = bar.addMenu("&View")
         for i, (_key, label, _text) in enumerate(SECTIONS):
@@ -212,6 +215,17 @@ class MainWindow(QMainWindow):
         elif hasattr(widget, "selectedText") and widget.selectedText():
             QApplication.clipboard().setText(widget.selectedText())
 
+    def _preferences(self) -> None:
+        from isnady.gui.preferences import PreferencesDialog
+
+        dialog = PreferencesDialog(self)
+        dialog.changed.connect(self._apply_settings)
+        dialog.exec()
+
+    def _apply_settings(self) -> None:
+        theme.apply(QApplication.instance())
+        self.retheme()
+
     def _set_theme(self, mode: str) -> None:
         theme.set_theme_mode(mode)
         theme.apply(QApplication.instance(), mode)
@@ -231,7 +245,7 @@ class MainWindow(QMainWindow):
         self.footer.setText(f"{message}\nversion {__version__}")
 
     def retheme(self) -> None:
-        """Called when the system switches between light and dark."""
+        """Called when the theme, the text size or any appearance setting changes."""
         for i in range(self.pages.count()):
             page = self.pages.widget(i)
             if hasattr(page, "retheme"):

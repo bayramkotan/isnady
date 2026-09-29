@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from isnady import config
 from isnady.core import isnad as core_isnad
 from isnady.core import search as core
 from isnady.data import db
@@ -35,8 +36,6 @@ NEXT_BATCH = 3
 COLUMN_MAX = 1000   # reading column; keeps translation lines readable on wide windows
 MODE_LABELS = (("all", "All words"), ("any", "Any word"), ("phrase", "Exact phrase"))
 EXAMPLES = ("النيات", "الصلاة", "niyet", "komşu")
-ARABIC_PT = 20
-TRANSLATION_PT = 12.5
 
 
 def _highlight(text: str, spans: list[tuple[int, int]], gilt: str) -> str:
@@ -105,16 +104,18 @@ class ResultCard(QFrame):
 
         for text in result.texts:
             body = _highlight(text.text, text.spans, t.gilt)
+            script = config.script_for_language(text.language, text.direction)
+            style = (f"line-height:{theme.script_line_height(script)}%;"
+                     f"color:{theme.script_color(script)}")
             if text.direction == "rtl":
-                box.addWidget(TextBlock(f"<div dir='rtl' align='right' style='line-height:125%'>{body}</div>",
-                                        theme.reading_font(ARABIC_PT, scaled=True), rtl=True))
+                box.addWidget(TextBlock(f"<div dir='rtl' align='right' style='{style}'>{body}</div>",
+                                        theme.script_font(script), rtl=True))
             else:
                 frame = QFrame()
                 frame.setObjectName("Translation")
                 inner = QVBoxLayout(frame)
                 inner.setContentsMargins(16, 2, 0, 2)
-                inner.addWidget(TextBlock(f"<div style='line-height:115%'>{body}</div>",
-                                          theme.reading_font(TRANSLATION_PT, scaled=True)))
+                inner.addWidget(TextBlock(f"<div style='{style}'>{body}</div>", theme.script_font(script)))
                 box.addWidget(frame)
             caption = _label(f"{text.language}, {text.edition_key}", "Caption")
             if text.direction == "rtl":
@@ -380,7 +381,7 @@ class SearchPage(QWidget):
         if hadith == 0:
             lead = _label(
                 "The database is empty. Import a source from a terminal, for example:<br>"
-                "<code>isnady-cli import fawazahmed0 https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/"
+                "<code>iy import fawazahmed0 https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/"
                 "editions.json --book bukhari --language tur --language ara --license Unlicense</code><br>"
                 "Importing from inside the app arrives with User Resources.",
                 "Lead", wrap=True, selectable=True)

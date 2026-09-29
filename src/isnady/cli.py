@@ -1,18 +1,28 @@
-"""isnady-cli — command-line access to the data layer (no Qt needed).
+"""The isnady command line (no Qt needed).
+
+Every name runs it: `isnady ARGS`, `iy ARGS`, `isnady-cli ARGS`.
 
 Examples
-  isnady-cli formats
-  isnady-cli import fawazahmed0 ./tur-bukhari.json
-  isnady-cli import fawazahmed0 https://example.org/editions.json --book bukhari --language tur
-  isnady-cli import fawazahmed0 https://example.org/ed.json --user bayram          (password is asked)
-  isnady-cli import fawazahmed0 https://example.org/ed.json --token-env MY_TOKEN
-  isnady-cli import fawazahmed0 https://example.org/ed.json --api-key-env KEY --api-key-header X-API-Key
-  isnady-cli sources
-  isnady-cli stats
-  isnady-cli remove <source-key>
+  iy search niyet
+  iy search النيات --book bukhari
+  iy chain bukhari 1
+  iy isnads
+  iy import fawazahmed0 ./tur-bukhari.json
+  iy import fawazahmed0 https://example.org/editions.json --book bukhari --language tur
+  iy import fawazahmed0 https://example.org/ed.json --user bayram          (password is asked)
+  iy import fawazahmed0 https://example.org/ed.json --token-env MY_TOKEN
+  iy config list --prefix text.arabic
+  iy config set text.arabic.size 22
+  iy config set colors.dark.gilt "#5A4A1E"
+  iy config reset text.arabic
+  iy sources
+  iy stats
+  iy remove <source-key>
+  iy -V
 """
 
 import argparse
+import os.path
 import getpass
 import os
 import sys
@@ -59,6 +69,43 @@ def _auth_from_args(args) -> Auth:
             return Auth(kind="apikey", token=api_key, key_name=args.api_key_param, key_in="query")
         return Auth(kind="apikey", token=api_key, key_name=args.api_key_header or "X-API-Key", key_in="header")
     return Auth()
+
+
+def cmd_config(args) -> int:
+    from isnady import config
+
+    try:
+        if args.action == "list":
+            for key, value, default in config.all_values():
+                if args.prefix and not key.startswith(args.prefix):
+                    continue
+                mark = "" if value == default else "   (changed)"
+                shown = value if value != "" else "(default)"
+                print(f"{key:32} {shown}{mark}")
+            print(f"\nSaved in {config.settings_path()}")
+        elif args.action == "get":
+            if not args.key:
+                raise config.ConfigError("Give the setting: iy config get text.arabic.size")
+            config.validate(args.key, "")
+            print(config.get(args.key))
+        elif args.action == "set":
+            if not args.key or args.value is None:
+                raise config.ConfigError("Give the setting and the value: iy config set text.arabic.size 22")
+            config.set(args.key, args.value)
+            print(f"{args.key} = {config.get(args.key)}")
+        elif args.action == "reset":
+            removed = config.reset(args.key or "")
+            print(f"Reset {removed} setting{'s' if removed != 1 else ''} to the default"
+                  + (f" under {args.key}" if args.key else ""))
+    except config.ConfigError as exc:
+        print(exc, file=sys.stderr)
+        return 2
+    return 0
+
+
+def cmd_version(_args) -> int:
+    print(f"{APP_NAME} {__version__}")
+    return 0
 
 
 def cmd_formats(_args) -> int:
@@ -119,7 +166,7 @@ def cmd_sources(_args) -> int:
     ).fetchall()
     conn.close()
     if not rows:
-        print("No sources yet. Add one with: isnady-cli import <format> <file-or-url>")
+        print("No sources yet. Add one with: iy import <format> <file-or-url>")
         return 0
     for r in rows:
         label = "User Resource" if r["origin"] == "user" else "Built-in"
@@ -213,7 +260,7 @@ def cmd_chain(args) -> int:
            WHERE c.key = ? AND h.number = ?""", (args.book, args.number)
     ).fetchone()
     if row is None:
-        print(f"No hadith {args.number} in '{args.book}'. See: isnady-cli stats", file=sys.stderr)
+        print(f"No hadith {args.number} in '{args.book}'. See: iy stats", file=sys.stderr)
         conn.close()
         return 1
     chains = core_isnad.chain(conn, row["id"])
@@ -241,21 +288,35 @@ def cmd_remove(args) -> int:
     db.cleanup(conn)
     conn.close()
     if cur.rowcount == 0:
-        print(f"No source with key '{args.key}'. See: isnady-cli sources", file=sys.stderr)
+        print(f"No source with key '{args.key}'. See: iy sources", file=sys.stderr)
         return 1
     print(f"Removed source '{args.key}' and everything imported from it.")
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="isnady-cli", description=f"{APP_NAME} {__version__} data tools")
-    p.add_argument("--version", action="version", version=f"{APP_NAME} {__version__}")
+    prog = os.path.splitext(os.path.basename(sys.argv[0]))[0] or "isnady"
+    if prog in ("__main__", "main", "cli", "python", "python3"):
+        prog = "isnady"
+    p = argparse.ArgumentParser(
+        prog=prog,
+        description=f"{APP_NAME} {__version__}. Run it without arguments to open the window.",
+    )
+    p.add_argument("-v", "-V", "--version", "--v", "--V", action="version",
+                   version=f"{APP_NAME} {__version__}", help="show the version")
     sub = p.add_subparsers(dest="command", required=True)
 
+    sub.add_parser("version", help="show the version").set_defaults(func=cmd_version)
+    cfg = sub.add_parser("config", help="appearance and other settings (the same as Edit → Preferences)")
+    cfg.add_argument("action", choices=["list", "get", "set", "reset"])
+    cfg.add_argument("key", nargs="?", help="e.g. text.arabic.size, colors.dark.gilt, ui.family")
+    cfg.add_argument("value", nargs="?", help="value for set; an empty string restores the default")
+    cfg.add_argument("--prefix", default="", help="list only keys starting with this, e.g. text.arabic")
+    cfg.set_defaults(func=cmd_config)
     sub.add_parser("formats", help="list supported data formats").set_defaults(func=cmd_formats)
 
     imp = sub.add_parser("import", help="import a file or URL")
-    imp.add_argument("format", help="data format, see 'isnady-cli formats'")
+    imp.add_argument("format", help="data format, see 'iy formats'")
     imp.add_argument("location", help="local file path or http(s) URL")
     imp.add_argument("--name", help="display name of the source")
     imp.add_argument("--license", help="license of the data, e.g. Unlicense, CC-BY-4.0")
@@ -305,7 +366,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("sources", help="list imported sources").set_defaults(func=cmd_sources)
     sub.add_parser("stats", help="count what the database holds").set_defaults(func=cmd_stats)
     rm = sub.add_parser("remove", help="remove a source and everything imported from it")
-    rm.add_argument("key", help="source key, see 'isnady-cli sources'")
+    rm.add_argument("key", help="source key, see 'iy sources'")
     rm.set_defaults(func=cmd_remove)
     return p
 

@@ -284,10 +284,10 @@ class IsnadPage(QWidget):
                          else "The full wording as written; the chain was not separated from the text",
                          "Caption", wrap=True)
         body = TextBlock(
-            f"<div dir='rtl' align='right' style='line-height:125%'>"
+            f"<div dir='rtl' align='right' style='line-height:{theme.script_line_height('arabic')}%'>"
             f"<span style='color:{t.muted}'>{html.escape(isnad_part)}</span>"
-            f"<span style='color:{t.ink}'>{html.escape(matn)}</span></div>",
-            theme.reading_font(20, scaled=True), rtl=True)
+            f"<span style='color:{theme.script_color('arabic')}'>{html.escape(matn)}</span></div>",
+            theme.script_font("arabic"), rtl=True)
         box.addWidget(caption)
         box.addWidget(body)
         return card

@@ -20,7 +20,7 @@ PROPHET = "النبي ﷺ"
 def _chip(text: str, name: str, tip: str = "") -> QLabel:
     chip = QLabel(text)
     chip.setObjectName(name)
-    chip.setFont(theme.reading_font(12.5, scaled=True))
+    chip.setFont(theme.script_font("arabic", factor=0.625))
     if tip:
         chip.setToolTip(tip)
     return chip
@@ -108,7 +108,11 @@ class ChainNode(QWidget):
             box.addWidget(term_label)
         name = QLabel(title)
         name.setObjectName("NodeName")
-        name.setFont(theme.reading_font(17 if latin else 18, bold=prophet or latin, scaled=True))
+        if latin:
+            name.setFont(theme.reading_font(17, bold=True, scaled=True))
+        else:
+            name.setStyleSheet(f"color: {theme.script_color('arabic')}; "
+                               f"{theme.font_css(theme.script_font('arabic', bold=prophet, factor=0.9))}")
         side = Qt.AlignmentFlag.AlignLeft if latin else Qt.AlignmentFlag.AlignRight
         name.setAlignment(side | Qt.AlignmentFlag.AlignAbsolute | Qt.AlignmentFlag.AlignVCenter)
         name.setWordWrap(True)
