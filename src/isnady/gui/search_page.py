@@ -7,7 +7,7 @@ query, calls the core and renders the results as cards.
 import html
 import sqlite3
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -27,9 +27,11 @@ from isnady.core import search as core
 from isnady.data import db
 from isnady.gui import theme
 from isnady.gui.chain_widgets import ChainStrip
-from isnady.gui.widgets import FlowLayout, expanding_width_policy
+from isnady.gui.widgets import FlowLayout, TextBlock, expanding_width_policy
 
 PAGE_SIZE = 25
+FIRST_BATCH = 4     # cards shown at once; the rest follow in small batches
+NEXT_BATCH = 3
 COLUMN_MAX = 1000   # reading column; keeps translation lines readable on wide windows
 MODE_LABELS = (("all", "All words"), ("any", "Any word"), ("phrase", "Exact phrase"))
 EXAMPLES = ("النيات", "الصلاة", "niyet", "komşu")
@@ -104,23 +106,15 @@ class ResultCard(QFrame):
         for text in result.texts:
             body = _highlight(text.text, text.spans, t.gilt)
             if text.direction == "rtl":
-                label = _label(f"<div dir='rtl' align='right' style='line-height:125%'>{body}</div>",
-                               "ArabicText", wrap=True, selectable=True)
-                label.setTextFormat(Qt.TextFormat.RichText)
-                label.setFont(theme.reading_font(ARABIC_PT, scaled=True))
-                label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute
-                                   | Qt.AlignmentFlag.AlignTop)
-                box.addWidget(label)
+                box.addWidget(TextBlock(f"<div dir='rtl' align='right' style='line-height:125%'>{body}</div>",
+                                        theme.reading_font(ARABIC_PT, scaled=True), rtl=True))
             else:
                 frame = QFrame()
                 frame.setObjectName("Translation")
                 inner = QVBoxLayout(frame)
                 inner.setContentsMargins(16, 2, 0, 2)
-                label = _label(f"<div style='line-height:115%'>{body}</div>", "TranslationText",
-                               wrap=True, selectable=True)
-                label.setTextFormat(Qt.TextFormat.RichText)
-                label.setFont(theme.reading_font(TRANSLATION_PT, scaled=True))
-                inner.addWidget(label)
+                inner.addWidget(TextBlock(f"<div style='line-height:115%'>{body}</div>",
+                                          theme.reading_font(TRANSLATION_PT, scaled=True)))
                 box.addWidget(frame)
             caption = _label(f"{text.language}, {text.edition_key}", "Caption")
             if text.direction == "rtl":
@@ -351,6 +345,8 @@ class SearchPage(QWidget):
     # -------------------------------------------------------------- render
     def _clear_body(self) -> None:
         """Remove every card; the "more" button is kept and re-added, never deleted."""
+        self._batch_token = getattr(self, "_batch_token", 0) + 1     # cancels batches still queued
+        self._pending = []
         while self.body_layout.count():
             item = self.body_layout.takeAt(0)
             widget = item.widget()
@@ -435,14 +431,30 @@ class SearchPage(QWidget):
         self.scroll.verticalScrollBar().setValue(0)
 
     def _append_cards(self, results: list[core.SearchResult]) -> None:
-        # remove the trailing "more" button and stretch, add cards, put them back
+        """Queue cards; they are added a few at a time so the window never freezes."""
         self.more_button.setParent(None)
         last = self.body_layout.count() - 1
-        if last >= 0 and self.body_layout.itemAt(last).spacerItem() is not None:
-            self.body_layout.takeAt(last)
-        for result in results:
+        if last < 0 or self.body_layout.itemAt(last).spacerItem() is None:
+            self.body_layout.addStretch(1)
+        self._pending = list(results)
+        self._batch_token = getattr(self, "_batch_token", 0) + 1
+        self._add_batch(self._batch_token, FIRST_BATCH)
+
+    def _add_batch(self, token: int, count: int) -> None:
+        """Add a few cards, then let the window breathe before adding more."""
+        if token != self._batch_token or self._conn is None:
+            return                                   # a newer search replaced this one
+        stretch = self.body_layout.takeAt(self.body_layout.count() - 1)   # trailing stretch
+        self.more_button.setParent(None)
+        for result in self._pending[:count]:
             chains = core_isnad.chain(self._conn, result.hadith_id)
             self.body_layout.addWidget(ResultCard(result, chains[0] if chains else None, self.open_chain.emit))
+        self._pending = self._pending[count:]
+        if self._pending:
+            if stretch is not None:
+                self.body_layout.addItem(stretch)
+            QTimer.singleShot(0, lambda: self._add_batch(token, NEXT_BATCH))
+            return
         remaining = self._page.total - len(self._results)
         if remaining > 0:
             self.more_button.setText(f"Show {min(PAGE_SIZE, remaining)} more ({remaining:,} left)")

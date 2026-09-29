@@ -7,7 +7,7 @@ across the major collections and seeing *why* each report has the grade it has:
 every narrator in the chain, what the scholars of jarh wa ta'dil said about them,
 and how the chain holds together.
 
-> **Status: pre-alpha (0.0.3).** Search and chains of transmission work today on data you
+> **Status: pre-alpha (0.0.4).** Search and chains of transmission work today on data you
 > import; narrators, scholars and the rest are being built.
 
 ## Works now

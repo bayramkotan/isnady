@@ -18,6 +18,7 @@ is rebuilt when it does.
 """
 
 import unicodedata
+from functools import lru_cache
 
 NORMALIZER_VERSION = 1
 
@@ -38,6 +39,7 @@ _MAP.update({chr(0x0660 + d): str(d) for d in range(10)})  # ٠..٩
 _MAP.update({chr(0x06F0 + d): str(d) for d in range(10)})  # ۰..۹
 
 
+@lru_cache(maxsize=4096)
 def _fold_char(ch: str) -> str:
     if ch in _REMOVE:
         return ""

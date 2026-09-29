@@ -1,7 +1,7 @@
 """Small reusable widgets."""
 
 from PySide6.QtCore import QPoint, QRect, QSize, Qt
-from PySide6.QtWidgets import QLayout, QSizePolicy
+from PySide6.QtWidgets import QLayout, QSizePolicy, QWidget
 
 
 class FlowLayout(QLayout):
@@ -72,3 +72,72 @@ def expanding_width_policy() -> QSizePolicy:
     policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
     policy.setHeightForWidth(True)
     return policy
+
+
+class TextBlock(QWidget):
+    """Rich text that is laid out once per width and then reused.
+
+    QLabel re-shapes its text every time a layout asks for its height, and a
+    layout asks many times; with long Arabic text in Amiri that made a page of
+    results take over a second. This widget keeps one QTextDocument and caches
+    the height for each width it has been asked about.
+    """
+
+    def __init__(self, html: str, font, rtl: bool = False, parent=None) -> None:
+        super().__init__(parent)
+        from PySide6.QtGui import QTextDocument, QTextOption
+
+        self._doc = QTextDocument(self)
+        self._doc.setDefaultFont(font)
+        self._doc.setDocumentMargin(0)
+        option = QTextOption()
+        option.setWrapMode(QTextOption.WrapMode.WordWrap)
+        if rtl:
+            option.setTextDirection(Qt.LayoutDirection.RightToLeft)
+            option.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
+        self._doc.setDefaultTextOption(option)
+        self._doc.setHtml(html)
+        self._heights: dict[int, int] = {}
+        self.setSizePolicy(expanding_width_policy())
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
+        from PySide6.QtGui import QAction
+
+        copy = QAction("Copy text", self)
+        copy.triggered.connect(self.copy)
+        self.addAction(copy)
+
+    def plain_text(self) -> str:
+        return self._doc.toPlainText()
+
+    def copy(self) -> None:
+        from PySide6.QtWidgets import QApplication
+
+        QApplication.clipboard().setText(self.plain_text())
+
+    def hasHeightForWidth(self) -> bool:  # noqa: N802
+        return True
+
+    def heightForWidth(self, width: int) -> int:  # noqa: N802
+        width = max(width, 1)
+        height = self._heights.get(width)
+        if height is None:
+            self._doc.setTextWidth(width)
+            height = int(self._doc.size().height() + 0.999)
+            self._heights[width] = height
+        return height
+
+    def sizeHint(self) -> QSize:  # noqa: N802
+        width = self.width() if self.width() > 50 else 600
+        return QSize(width, self.heightForWidth(width))
+
+    def minimumSizeHint(self) -> QSize:  # noqa: N802
+        return QSize(80, self.heightForWidth(self.width() if self.width() > 50 else 600))
+
+    def paintEvent(self, _event) -> None:  # noqa: N802
+        from PySide6.QtGui import QPainter
+
+        if self._doc.textWidth() != self.width():
+            self._doc.setTextWidth(self.width())
+        painter = QPainter(self)
+        self._doc.drawContents(painter)
+        painter.end()

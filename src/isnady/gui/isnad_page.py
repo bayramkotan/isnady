@@ -24,7 +24,7 @@ from isnady.core import isnad as core_isnad
 from isnady.core import search as core_search
 from isnady.gui import theme
 from isnady.gui.chain_widgets import PROPHET, ChainNode
-from isnady.gui.widgets import expanding_width_policy
+from isnady.gui.widgets import TextBlock, expanding_width_policy
 
 COLUMN_MAX = 1000
 
@@ -283,14 +283,11 @@ class IsnadPage(QWidget):
         caption = _label("The chain in lighter ink, the text of the hadith (matn) in full ink" if split_known
                          else "The full wording as written; the chain was not separated from the text",
                          "Caption", wrap=True)
-        body = _label(
+        body = TextBlock(
             f"<div dir='rtl' align='right' style='line-height:125%'>"
             f"<span style='color:{t.muted}'>{html.escape(isnad_part)}</span>"
-            f"<span style='color:{t.ink}'>{html.escape(matn)}</span></div>", "ArabicText", wrap=True)
-        body.setTextFormat(Qt.TextFormat.RichText)
-        body.setFont(theme.reading_font(20, scaled=True))
-        body.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute | Qt.AlignmentFlag.AlignTop)
-        body.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            f"<span style='color:{t.ink}'>{html.escape(matn)}</span></div>",
+            theme.reading_font(20, scaled=True), rtl=True)
         box.addWidget(caption)
         box.addWidget(body)
         return card
