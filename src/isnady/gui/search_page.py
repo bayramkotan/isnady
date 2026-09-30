@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 
 from isnady import config
 from isnady.core import isnad as core_isnad
+from isnady.core import narrators as core_narrators
 from isnady.core import search as core
 from isnady.data import db
 from isnady.gui import theme
@@ -61,7 +62,8 @@ def _label(text: str = "", name: str = "", wrap: bool = False, selectable: bool 
 
 
 class ResultCard(QFrame):
-    def __init__(self, result: core.SearchResult, chain: dict | None = None, open_chain=None) -> None:
+    def __init__(self, result: core.SearchResult, chain: dict | None = None, open_chain=None,
+                 people: dict | None = None) -> None:
         super().__init__()
         self.setObjectName("Card")
         t = theme.current()
@@ -86,7 +88,7 @@ class ResultCard(QFrame):
             head.addWidget(view)
         box.addLayout(head)
         if chain and chain["links"]:
-            box.addWidget(ChainStrip(chain))
+            box.addWidget(ChainStrip(chain, people))
             box.addSpacing(6)
         elif chain and chain["problem"]:
             note = _label("Chain kept whole, not split: " + chain["problem"], "Caption", wrap=True)
@@ -268,9 +270,11 @@ class SearchPage(QWidget):
         try:
             core.ensure_index(self._conn, progress=self._status)
             core_isnad.ensure_isnads(self._conn, progress=self._status)
+            core_narrators.link_narrators(self._conn, progress=self._status)
         finally:
             QGuiApplication.restoreOverrideCursor()
         self._data_version = self._conn.execute("PRAGMA data_version").fetchone()[0]
+        self.__dict__.pop("_person_cache", None)
         self.data_changed.emit()
         self._fill_filters()
         hadith = self._conn.execute("SELECT COUNT(*) FROM hadiths").fetchone()[0]
@@ -449,7 +453,9 @@ class SearchPage(QWidget):
         self.more_button.setParent(None)
         for result in self._pending[:count]:
             chains = core_isnad.chain(self._conn, result.hadith_id)
-            self.body_layout.addWidget(ResultCard(result, chains[0] if chains else None, self.open_chain.emit))
+            chain = chains[0] if chains else None
+            people = self._people(chain)
+            self.body_layout.addWidget(ResultCard(result, chain, self.open_chain.emit, people))
         self._pending = self._pending[count:]
         if self._pending:
             if stretch is not None:
@@ -499,6 +505,31 @@ class SearchPage(QWidget):
 
     def connection(self):
         return self._conn
+
+    def _people(self, chain: dict | None) -> dict:
+        """Descriptions of the identified narrators of a chain, cached for the session."""
+        cache = self.__dict__.setdefault("_person_cache", {})
+        out = {}
+        for link in (chain or {}).get("links", []):
+            pid = link.get("person_id")
+            if pid:
+                if pid not in cache:
+                    cache[pid] = core_narrators.describe(self._conn, pid)
+                out[pid] = cache[pid]
+        return out
+
+    def identify_narrators(self) -> dict:
+        if self._conn is None:
+            return {}
+        QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            stats = core_narrators.link_narrators(self._conn, progress=self._status, rebuild=True)
+        finally:
+            QGuiApplication.restoreOverrideCursor()
+        self.__dict__.pop("_person_cache", None)
+        self.data_changed.emit()
+        self.retheme()
+        return stats
 
     def rebuild_chains(self) -> dict:
         if self._conn is None:

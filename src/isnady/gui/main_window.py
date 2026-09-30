@@ -151,6 +151,8 @@ class MainWindow(QMainWindow):
         search = self.pages.widget(0)
 
         file_menu = bar.addMenu("&File")
+        self._action(file_menu, "Data Sources…", lambda: self._preferences("sources"), "Ctrl+Shift+I",
+                     tip="Import built-in sources with one click, or add your own")
         self._action(file_menu, "Open Data Folder", self._open_data_folder,
                      tip="Open the folder that holds the isnady database")
         file_menu.addSeparator()
@@ -160,7 +162,7 @@ class MainWindow(QMainWindow):
         self._action(edit_menu, "Find", self._find, QKeySequence.StandardKey.Find)
         self._action(edit_menu, "Copy", self._copy, QKeySequence.StandardKey.Copy)
         edit_menu.addSeparator()
-        self._action(edit_menu, "Preferences…", self._preferences, "Ctrl+,",
+        self._action(edit_menu, "Preferences…", lambda: self._preferences(), "Ctrl+,",
                      tip="Fonts, sizes and colours for each script, theme colours, interface font")
 
         view_menu = bar.addMenu("&View")
@@ -186,6 +188,8 @@ class MainWindow(QMainWindow):
                      tip="Rebuild the search index from every imported text")
         self._action(tools_menu, "Read Chains Again", lambda: search.rebuild_chains(),
                      tip="Read every chain of transmission from the Arabic texts again")
+        self._action(tools_menu, "Identify Narrators Again", lambda: search.identify_narrators(),
+                     tip="Match every name in the chains against the imported rijal works again")
 
         help_menu = bar.addMenu("&Help")
         self._action(help_menu, "Search Tips", lambda: dialogs.search_tips(self).exec())
@@ -215,12 +219,18 @@ class MainWindow(QMainWindow):
         elif hasattr(widget, "selectedText") and widget.selectedText():
             QApplication.clipboard().setText(widget.selectedText())
 
-    def _preferences(self) -> None:
+    def _preferences(self, tab: str = "") -> None:
         from isnady.gui.preferences import PreferencesDialog
 
-        dialog = PreferencesDialog(self)
+        dialog = PreferencesDialog(self, start_tab=tab)
         dialog.changed.connect(self._apply_settings)
+        dialog.data_imported.connect(self._data_imported)
         dialog.exec()
+
+    def _data_imported(self) -> None:
+        """A source was imported or removed from Data sources: bring every page up to date."""
+        self.search_page._sync_with_database(force=True)
+        self.isnad_page.refresh()
 
     def _apply_settings(self) -> None:
         theme.apply(QApplication.instance())

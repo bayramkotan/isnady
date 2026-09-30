@@ -68,23 +68,33 @@ def _default_button() -> QPushButton:
 class PreferencesDialog(QDialog):
     changed = Signal()          # the main window redraws on this
 
-    def __init__(self, parent=None) -> None:
+    data_imported = Signal()   # a source was imported or removed; the main window refreshes its pages
+
+    def __init__(self, parent=None, start_tab: str = "") -> None:
         super().__init__(parent)
         self.setWindowTitle("Preferences")
-        self.resize(860, 640)
+        self.resize(900, 700)
         self._rows = []           # callables that refresh a row from the settings
 
+        from isnady.gui.sources_page import SourcesPage
+
+        self.sources = SourcesPage()
+        self.sources.data_imported.connect(self.data_imported)
         tabs = QTabWidget()
         tabs.addTab(self._scroll(self._reading_tab()), "Reading text")
         tabs.addTab(self._scroll(self._colors_tab()), "Colours")
         tabs.addTab(self._scroll(self._interface_tab()), "Interface")
+        tabs.addTab(self._scroll(self.sources), "Data sources")
+        if start_tab == "sources":
+            tabs.setCurrentIndex(tabs.count() - 1)
 
-        reset_all = QPushButton("Reset everything")
+        reset_all = QPushButton("Reset appearance")
         reset_all.setObjectName("Quiet")
         reset_all.clicked.connect(self._reset_all)
         close = QPushButton("Close")
         close.setObjectName("Primary")
         close.clicked.connect(self.accept)
+        self._close = close
         where = QLabel(f"Saved in {config.settings_path()}  ·  also:  iy config list")
         where.setObjectName("Caption")
         where.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -115,6 +125,16 @@ class PreferencesDialog(QDialog):
             return
         self.changed.emit()
         self._refresh()
+
+    def reject(self) -> None:          # Escape / window close
+        if self.sources.busy():
+            return                     # an import is running; its own thread finishes it
+        super().reject()
+
+    def accept(self) -> None:
+        if self.sources.busy():
+            return
+        super().accept()
 
     def _refresh(self) -> None:
         for refresh in self._rows:

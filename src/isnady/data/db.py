@@ -26,7 +26,7 @@ from pathlib import Path
 
 from isnady.data.paths import db_path
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 SCHEMA = """
 -- ------------------------------------------------------------------ sources
@@ -75,6 +75,14 @@ CREATE TABLE IF NOT EXISTS person_names (
     source_id INTEGER REFERENCES sources(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS ix_person_names_name ON person_names(name);
+
+-- Where a rijal work says a person's hadith appear (Ibn Hajar's marks: خ م د ت س ق ع 4 ...).
+CREATE TABLE IF NOT EXISTS person_marks (
+    person_id INTEGER NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+    mark      TEXT NOT NULL,
+    source_id INTEGER REFERENCES sources(id) ON DELETE CASCADE,
+    PRIMARY KEY (person_id, mark)
+);
 
 CREATE TABLE IF NOT EXISTS person_roles (
     person_id INTEGER NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
@@ -197,6 +205,7 @@ CREATE TABLE IF NOT EXISTS isnad_links (
     raw_name         TEXT NOT NULL,            -- name exactly as in the chain
     person_id        INTEGER REFERENCES persons(id) ON DELETE SET NULL,
     match_confidence REAL,                     -- 0..1, how sure the identification is
+    candidates       INTEGER,                  -- how many persons the name could be (NULL = not tried)
     transmission     TEXT,                     -- haddathana, akhbarana, 'an, sami'tu ...
     PRIMARY KEY (isnad_id, position)
 );
@@ -236,6 +245,14 @@ MIGRATIONS = {
         "ALTER TABLE isnads ADD COLUMN derived_by TEXT",
         "ALTER TABLE isnads ADD COLUMN reaches_prophet INTEGER",
         "ALTER TABLE isnads ADD COLUMN problem TEXT",
+    ],
+    3: [
+        """CREATE TABLE IF NOT EXISTS person_marks (
+               person_id INTEGER NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+               mark TEXT NOT NULL,
+               source_id INTEGER REFERENCES sources(id) ON DELETE CASCADE,
+               PRIMARY KEY (person_id, mark))""",
+        "ALTER TABLE isnad_links ADD COLUMN candidates INTEGER",
     ],
 }
 OLDEST_UPGRADABLE = 2

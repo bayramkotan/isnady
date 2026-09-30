@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from isnady.core import isnad as core_isnad
+from isnady.core import narrators as core_narrators
 from isnady.core import search as core_search
 from isnady.gui import theme
 from isnady.gui.chain_widgets import PROPHET, ChainNode
@@ -187,8 +188,16 @@ class IsnadPage(QWidget):
         split_pct = 100 * b["split"] / b["chains"] if b["chains"] else 0
         marfu_pct = 100 * b["marfu"] / b["split"] if b["split"] else 0
         avg = b["links"] / b["split"] if b["split"] else 0
-        for value, caption in ((f"{b['chains']:,}", "chains read"), (f"{split_pct:.1f}%", "split into narrators"),
-                               (f"{marfu_pct:.1f}%", "of those reach the Prophet"), (f"{avg:.1f}", "narrators per chain")):
+        cells = [(f"{b['chains']:,}", "chains read"), (f"{split_pct:.1f}%", "split into narrators"),
+                 (f"{marfu_pct:.1f}%", "of those reach the Prophet"), (f"{avg:.1f}", "narrators per chain")]
+        known = self.conn.execute(
+            """SELECT COUNT(*), SUM(l.person_id IS NOT NULL), SUM(l.candidates IS NOT NULL) FROM isnad_links l
+               JOIN isnads i ON i.id = l.isnad_id JOIN hadiths h ON h.id = i.hadith_id
+               JOIN collections c ON c.id = h.collection_id WHERE c.key = ? AND i.problem IS NULL""", (b["key"],)
+        ).fetchone()
+        if known and known[2]:
+            cells.append((f"{100 * (known[1] or 0) / known[0]:.1f}%", "narrators identified"))
+        for value, caption in cells:
             cell = QVBoxLayout()
             cell.setSpacing(0)
             v = _label(value, "StatValue")
@@ -244,8 +253,10 @@ class IsnadPage(QWidget):
             self.body_layout.addWidget(ChainNode(info["book_name"], "The compiler's book, where the chain begins",
                                                  first=True, latin=True))
             for link in chain["links"]:
+                person = core_narrators.describe(self.conn, link["person_id"]) if link.get("person_id") else None
                 self.body_layout.addWidget(ChainNode(core_isnad.short_name(link["raw_name"]), "",
-                                                     link["transmission"], full_name=link["raw_name"]))
+                                                     link["transmission"], full_name=link["raw_name"],
+                                                     person=person, candidates=link.get("candidates")))
             if chain["reaches_prophet"]:
                 self.body_layout.addWidget(ChainNode(PROPHET, "The Messenger of God", None, last=True, prophet=True))
         self.body_layout.addSpacing(18)
@@ -264,7 +275,10 @@ class IsnadPage(QWidget):
                     "The full wording is shown below.")
         elif chain["reaches_prophet"]:
             n = len(chain["links"])
+            known = sum(1 for link in chain["links"] if link.get("person_id"))
             text = f"{n} narrator{'s' if n != 1 else ''} between the compiler and the Prophet, as read from the text."
+            if any(link.get("candidates") is not None for link in chain["links"]):
+                text += f" {known} of them identified in Ibn Hajar's Taqrib al-Tahdhib."
         else:
             text = ("The chain as read stops before the Prophet: the report may be from a Companion or a later "
                     "narrator, or the last link could not be read with confidence.")

@@ -35,7 +35,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.0.5).** Search and chains of transmission work today, on data you import
+> **Pre-alpha (0.0.6).** Search and chains of transmission work today, on data you import
 > in one command. Narrators, scholars, gradings and the rest are being built, in the open.
 
 ---
@@ -112,7 +112,13 @@ iy import fawazahmed0 https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editi
    --book bukhari --book abudawud --language ara --language tur --license Unlicense
 ```
 
-Then open the window with `iy`, or stay on the command line:
+Or open the window with `iy` and choose **File → Data Sources**: every built-in collection
+(al-Bukhari, Muslim, Abu Dawud, al-Tirmidhi, al-Nasa'i, Ibn Maja, the Muwatta and three
+forty-hadith books) and the Taqrib import with one click — or **Import all** — in the
+languages you tick. You can add your own files or links there too, and move the data
+folder anywhere you like.
+
+On the command line:
 
 ```bash
 iy search النيات            # Arabic, with or without diacritics
@@ -121,6 +127,14 @@ iy chain bukhari 1           # one chain, narrator by narrator
 ```
 
 Importing takes a minute or two; the search index and the chains are built as part of it.
+
+To identify the narrators in those chains, add Ibn Hajar's *Taqrib al-Tahdhib* — 8,824
+narrators with his verdict on each — from the [OpenITI](https://github.com/OpenITI) corpus:
+
+```bash
+iy import taqrib https://raw.githubusercontent.com/OpenITI/0875AH/master/data/0852IbnHajarCasqalani/0852IbnHajarCasqalani.TaqribTahdhib/0852IbnHajarCasqalani.TaqribTahdhib.JK000121-ara1.completed
+iy narrator الزهري
+```
 
 ---
 
@@ -158,6 +172,20 @@ Sahih al Bukhari 1
 In the window, each result shows its chain as a row of names ending at the Prophet, and
 **View chain** opens it as a timeline from the book to the Prophet, with the Arabic text
 below: the chain in lighter ink, the text of the hadith in full ink.
+
+### 👤 Who each narrator is
+
+With Ibn Hajar's *Taqrib al-Tahdhib* imported, every name in a chain is matched to a
+narrator, and the chain shows what Ibn Hajar says of him: his verdict in his own words, its
+rank on Ibn Hajar's twelve-step scale, the narrator's *tabaqa* (generation) and his death
+year.
+
+A name is linked only when the evidence leaves one person: the words of the name, the book
+marks (a narrator in al-Bukhari must be one Ibn Hajar marks خ), the order of generations
+along the chain, and the last link before the Prophet being a Companion. When several
+narrators remain — "Sufyan" can be al-Thawri or Ibn 'Uyayna — the chain says so and names
+how many, rather than choosing one. Today about half of all names are identified; in blind,
+hand-checked samples of the identified ones, the last fifty were all correct.
 
 Names are kept exactly as written, with the clarifications the compilers added
 (*"— yaʿnī Ibn Muḥammad —"*, *"mawlā Ibn ʿAbbās"*), because identifying each narrator is
@@ -241,6 +269,11 @@ isnady reads open formats and keeps the source of everything:
 - **Supported now:** the [fawazahmed0/hadith-api](https://github.com/fawazahmed0/hadith-api)
   JSON format, from a file or a URL, with or without authentication (username and
   password, bearer token, or API key; credentials are never stored).
+- **Rijal:** Ibn Hajar's *Taqrib al-Tahdhib* in OpenITI mARkdown — each narrator's name,
+  kunya, verdict, rank, tabaqa, death year and book marks, read by the rules Ibn Hajar sets
+  out in his own introduction. The OpenITI release does not state its licence in the
+  repository, so it is kept as tier C (used on your computer, never redistributed) until
+  it is confirmed.
 - **Coming:** CSV, SQL/SQLite, OpenITI mARkdown, REST APIs and Shamela, so any collection
   you have can be brought in.
 
@@ -259,9 +292,14 @@ script. The command line never loads Qt.
 |:------|:-----|:-------------|
 | `iy` | `isnady` | Open the window |
 | `iy search WORDS` | `isnady search WORDS` | Search; `--mode all\|any\|phrase`, `--whole-words`, `--book`, `--language`, `--limit` |
-| `iy chain BOOK NUMBER` | `isnady chain bukhari 1` | One chain, narrator by narrator; `--raw` adds the wording |
+| `iy chain BOOK NUMBER` | `isnady chain bukhari 1` | One chain, narrator by narrator, with who each one is; `--raw` adds the wording |
 | `iy isnads` | `isnady isnads` | Read every chain and report per book; `--rebuild` reads them again |
+| `iy narrator NAME` | `isnady narrator الزهري` | A narrator: Ibn Hajar's verdict and rank, tabaqa, death year, books, other names |
 | `iy import FORMAT FILE-OR-URL` | `isnady import …` | Import a source; `--book`, `--language`, `--license`, `--user`, `--token-env`, `--api-key-env` |
+| `iy catalog list` | `isnady catalog list` | Built-in sources and your own, with what is imported — the same as File → Data Sources |
+| `iy catalog import ID` | `isnady catalog import fawaz-muslim --language tur` | Import a listed source; `remove`, `add`, `delete` manage the list |
+| `iy catalog import --all` | `isnady catalog import --all --language ara` | Every built-in source at once |
+| `iy datadir [FOLDER]` | `isnady datadir /data/isnady` | Show or change where the database and settings live; `--as-is`, `--default` |
 | `iy formats` | `isnady formats` | Formats that can be imported |
 | `iy sources` | `isnady sources` | Imported sources, their licence and tier |
 | `iy stats` | `isnady stats` | Hadith, texts, grades and chains per book |
@@ -300,9 +338,9 @@ Sunan Abu Dawud #472
 
 ## 🗺️ Roadmap
 
-- **Narrators** — every name in a chain linked to its narrator: biography, teachers and
-  students, generation (Companion, Successor …), every verdict on them, and whether each
-  link could have met the next.
+- **Narrators** — the other half of the names identified through teachers and students
+  (al-Mizzi's *Tahdhib al-Kamal*), a page for every narrator, the verdicts of other critics
+  beside Ibn Hajar's, and whether each link could have met the next.
 - **Hadith scholars** — lives, books, teachers and students, and what their collections
   contain.
 - **Shia rijal** — narrator verdicts from the Shia rijal works, beside the Sunni view.

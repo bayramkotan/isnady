@@ -59,6 +59,20 @@ DARK = Tokens(
 _current: Tokens = LIGHT
 _SYSTEM_UI_FONT: QFont | None = None     # the platform's own UI font, before any user choice
 
+# Ibn Hajar's twelve ranks, grouped for a small colour mark next to the verdict (the words themselves are
+# always shown; the colour only helps the eye): Companions, praised, truthful, acceptable, weak, rejected.
+RANK_COLORS = {
+    "light": {1: "#A47E24", 2: "#2E7D4F", 3: "#2E7D4F", 4: "#1D4777", 5: "#1D4777", 6: "#8A6D1F", 7: "#8A6D1F",
+              8: "#B4552D", 9: "#B4552D", 10: "#A33A3A", 11: "#A33A3A", 12: "#A33A3A"},
+    "dark": {1: "#D6B25E", 2: "#6FC08F", 3: "#6FC08F", 4: "#7FAEE0", 5: "#7FAEE0", 6: "#D9B866", 7: "#D9B866",
+             8: "#E08A64", 9: "#E08A64", 10: "#E07A7A", 11: "#E07A7A", 12: "#E07A7A"},
+}
+
+
+def rank_color(rank: int | None) -> str:
+    return RANK_COLORS["dark" if _current.dark else "light"].get(rank or 0, _current.muted)
+
+
 def current() -> Tokens:
     return _current
 
@@ -216,6 +230,7 @@ def stylesheet(t: Tokens) -> str:
     QPushButton#Primary {{ background: {t.lapis}; color: {t.surface if not t.dark else t.window}; border: none;
                            border-radius: 10px; padding: 10px 22px; font-weight: 600; font-size: 11pt; }}
     QPushButton#Primary:hover {{ background: {t.gold}; }}
+    QPushButton#Primary:disabled {{ background: {t.border}; color: {t.muted}; }}
     QPushButton#Quiet {{ background: {t.surface}; color: {t.lapis}; border: 1px solid {t.border};
                          border-radius: 8px; padding: 7px 16px; }}
     QPushButton#Quiet:hover {{ border-color: {t.lapis}; }}
@@ -265,12 +280,23 @@ def stylesheet(t: Tokens) -> str:
     QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{ image: url("{up}"); width: 10px; height: 10px; }}
     QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{ image: url("{down}"); width: 10px; height: 10px; }}
 
+    QProgressBar {{ background: {t.lapis_soft}; border: none; border-radius: 3px; }}
+    QProgressBar::chunk {{ background: {t.gold}; border-radius: 3px; }}
+    QLineEdit {{ background: {t.surface}; color: {t.ink}; border: 1px solid {t.border}; border-radius: 7px;
+                 padding: 5px 8px; }}
+    QLineEdit:focus {{ border-color: {t.lapis}; }}
+
     /* chains */
     QLabel#ChainChip {{ background: {t.lapis_soft}; color: {t.ink}; border: 1px solid {t.lapis_soft};
                         border-radius: 8px; padding: 1px 9px; }}
     QLabel#ChainChipProphet {{ background: {t.gilt}; color: {t.ink}; border: 1px solid {t.gold};
                                border-radius: 8px; padding: 1px 9px; }}
     QLabel#ChainArrow {{ color: {t.muted}; padding: 0 1px; }}
+    QLabel#ChainChipUnknown {{ background: transparent; color: {t.muted}; border: 1px dashed {t.border};
+                               border-radius: 8px; padding: 1px 9px; }}
+    QLabel#NodeFacts {{ color: {t.muted}; font-size: 9pt; }}
+    QLabel#NodeVerdict {{ color: {t.ink}; }}
+    QLabel#NodeUnknown {{ color: {t.muted}; font-size: 9pt; font-style: italic; }}
     QFrame#Node {{ background: {t.surface}; border: 1px solid {t.border}; border-radius: 10px; }}
     QFrame#NodeProphet {{ background: {t.gilt}; border: 1px solid {t.gold}; border-radius: 10px; }}
     QLabel#NodeTerm {{ color: {t.gold}; font-size: 9pt; }}

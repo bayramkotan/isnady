@@ -254,7 +254,8 @@ def chain(conn: sqlite3.Connection, hadith_id: int) -> list[dict]:
         (hadith_id,),
     ):
         links = conn.execute(
-            "SELECT position, raw_name, transmission, person_id FROM isnad_links WHERE isnad_id = ? ORDER BY position",
+            "SELECT position, raw_name, transmission, person_id, match_confidence, candidates "
+            "FROM isnad_links WHERE isnad_id = ? ORDER BY position",
             (isnad["id"],),
         ).fetchall()
         out.append({"raw": isnad["raw_text"], "reaches_prophet": bool(isnad["reaches_prophet"]),
