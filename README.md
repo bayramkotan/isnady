@@ -35,7 +35,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.0.6).** Search and chains of transmission work today, on data you import
+> **Pre-alpha (0.0.7).** Search and chains of transmission work today, on data you import
 > in one command. Narrators, scholars, gradings and the rest are being built, in the open.
 
 ---
@@ -62,10 +62,28 @@ did their work.
 
 ## 📦 Install
 
+One line, on any system — it removes earlier copies first, installs one, puts its commands on
+PATH and checks the result:
+
+```bash
+# Linux and macOS
+curl -fsSL https://raw.githubusercontent.com/bayramkotan/isnady/main/install.sh | bash
+```
+
+```powershell
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/bayramkotan/isnady/main/install.ps1 | iex
+```
+
+Or with pip:
+
 ```bash
 pip install isnady
 isnady            # or the short name:  iy
 ```
+
+Run inside a clone of this repository, the installer makes an editable (developer) install of
+that clone instead.
 
 The same program answers to several names: **`iy`** to type, **`isnady`** to read, and
 `isnady-cli` kept from the first releases. Without arguments it opens the window; with
@@ -88,6 +106,13 @@ pip install isnady --break-system-packages --no-cache-dir -U
 ```
 
 </details>
+
+### Something not right?
+
+`iy doctor` lists every copy of isnady on the computer and which one each command really
+starts — an older copy in the user folder can hide a newer one — and `iy doctor --fix` removes
+the extras. The same report is under **Help → Check Installation**. If an old copy starts even
+for `iy doctor`, run `python3 -s -m isnady doctor --fix` (Windows: `py -s -m isnady doctor --fix`).
 
 ### Upgrading
 
@@ -305,6 +330,7 @@ script. The command line never loads Qt.
 | `iy stats` | `isnady stats` | Hadith, texts, grades and chains per book |
 | `iy remove KEY` | `isnady remove KEY` | Remove a source and everything imported from it |
 | `iy config list\|get\|set\|reset` | `isnady config …` | Appearance and other settings — the same as Edit → Preferences |
+| `iy doctor` | `isnady doctor --fix` | Every copy of isnady on this computer; `--fix` removes the extras |
 | `iy -V` | `isnady -V` | Show the version (also `-v`, `--version`, `version`) |
 | `iy -h` | `isnady -h` | Show help |
 

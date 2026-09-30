@@ -43,6 +43,7 @@ def gui_main() -> int:
         hints.colorSchemeChanged.connect(_follow_scheme)
 
     window.show()
+    window.check_installation_later()
     return app.exec()
 
 

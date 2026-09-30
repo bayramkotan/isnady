@@ -6,6 +6,7 @@ Sections without their own page yet show a short description.
 from PySide6.QtCore import QSize, Qt, QUrl
 from PySide6.QtGui import QAction, QActionGroup, QDesktopServices, QKeySequence
 from PySide6.QtWidgets import (
+    QPushButton,
     QApplication,
     QFrame,
     QHBoxLayout,
@@ -98,6 +99,13 @@ class MainWindow(QMainWindow):
         self.nav.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         side.addWidget(self.nav, 1)
 
+        # shown only when the check at start finds another copy of isnady (see check_installation_later)
+        self.install_notice = QPushButton("⚠  Check installation")
+        self.install_notice.setObjectName("SidebarNotice")
+        self.install_notice.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.install_notice.clicked.connect(self._check_installation)
+        self.install_notice.hide()
+        side.addWidget(self.install_notice)
         self.footer = QLabel(f"version {__version__}")
         self.footer.setObjectName("SidebarFooter")
         self.footer.setContentsMargins(26, 0, 26, 0)
@@ -195,6 +203,8 @@ class MainWindow(QMainWindow):
         self._action(help_menu, "Search Tips", lambda: dialogs.search_tips(self).exec())
         self._action(help_menu, "Keyboard Shortcuts", lambda: dialogs.shortcuts(self).exec())
         help_menu.addSeparator()
+        self._action(help_menu, "Check Installation…", self._check_installation,
+                     tip="Every copy of isnady on this computer, and which one really runs")
         self._action(help_menu, "Licences", lambda: dialogs.licenses(self, search.connection()).exec())
         self._action(help_menu, "isnady on GitHub", lambda: QDesktopServices.openUrl(QUrl(dialogs.REPO_URL)))
         self._action(help_menu, "Report an Issue", lambda: QDesktopServices.openUrl(QUrl(dialogs.ISSUES_URL)))
@@ -218,6 +228,41 @@ class MainWindow(QMainWindow):
             widget.copy()
         elif hasattr(widget, "selectedText") and widget.selectedText():
             QApplication.clipboard().setText(widget.selectedText())
+
+    def check_installation_later(self) -> None:
+        """At start, quietly look for other copies of isnady; show the notice only if something is wrong.
+
+        A newer isnady cannot be shadowed while it runs, but it CAN see an older copy that would start
+        from another command (an old ~/.local copy after a system-wide upgrade, 2026-09-30).
+        """
+        from PySide6.QtCore import QThread, Signal
+
+        from isnady import doctor
+
+        class _Quiet(QThread):
+            done = Signal(object)
+
+            def run(self) -> None:
+                try:
+                    self.done.emit(doctor.diagnose(check_pypi=False))
+                except Exception:      # a check that fails must never disturb the window
+                    pass
+
+        worker = _Quiet()
+        self._install_check = worker            # kept until Qt reports it finished
+        worker.finished.connect(lambda: setattr(self, "_install_check", None))
+        worker.done.connect(self._install_checked)
+        worker.start()
+
+    def _install_checked(self, report) -> None:
+        if report.problems:
+            self.install_notice.setToolTip("\n".join(report.problems) + "\n\nClick for the report and the fix.")
+            self.install_notice.show()
+
+    def _check_installation(self) -> None:
+        from isnady.gui.install_dialog import InstallDialog
+
+        InstallDialog(self).exec()
 
     def _preferences(self, tab: str = "") -> None:
         from isnady.gui.preferences import PreferencesDialog

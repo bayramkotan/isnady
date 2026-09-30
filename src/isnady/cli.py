@@ -22,6 +22,8 @@ Examples
   iy catalog import taqrib
   iy catalog import --all --language ara --language tur
   iy datadir
+  iy doctor
+  iy doctor --fix
   iy datadir /data/isnady
   iy sources
   iy stats
@@ -30,6 +32,7 @@ Examples
 """
 
 import argparse
+import subprocess
 import os.path
 import getpass
 import os
@@ -127,6 +130,30 @@ def cmd_datadir(args) -> int:
     how = "used as it is" if args.as_is else "your data was copied there; the old folder is kept"
     print(f"isnady now uses {target} ({how}).")
     return 0
+
+
+def cmd_doctor(args) -> int:
+    from isnady import doctor
+
+    report = doctor.diagnose(check_pypi=not args.offline)
+    print(doctor.as_text(report))
+    if not args.fix or not report.fixes:
+        return 1 if report.problems else 0
+    print()
+    for argv in report.fixes:
+        shown = " ".join(argv)
+        if argv[0] == "sudo" and not args.yes:
+            answer = input(f"Run with administrator rights: {shown}  [y/N] ").strip().lower()
+            if answer not in ("y", "yes", "e", "evet"):
+                print("  skipped")
+                continue
+        print(f"$ {shown}")
+        subprocess.run(argv, check=False)
+    print("\nAfter the fixes:")
+    after = doctor.diagnose(check_pypi=False)
+    print(doctor.as_text(after))
+    print("\nIf the shell still starts an old copy, run: hash -r   (or open a new terminal)")
+    return 1 if after.problems else 0
 
 
 def cmd_version(_args) -> int:
@@ -457,6 +484,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
 
     sub.add_parser("version", help="show the version").set_defaults(func=cmd_version)
+    doc = sub.add_parser("doctor", help="find every isnady installation and fix duplicates or an old copy that hides the new one")
+    doc.add_argument("--fix", action="store_true", help="uninstall the extra copies (asks before using sudo)")
+    doc.add_argument("--yes", action="store_true", help="with --fix: do not ask")
+    doc.add_argument("--offline", action="store_true", help="do not ask PyPI for the latest version")
+    doc.set_defaults(func=cmd_doctor)
     dd = sub.add_parser("datadir", help="show or change the data folder (database, settings, your sources)")
     dd.add_argument("path", nargs="?", help="new folder; without it the current one is shown")
     dd.add_argument("--as-is", action="store_true", help="use the folder as it is instead of copying your data there")
@@ -546,7 +578,15 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except BrokenPipeError:
+        # the output was cut short by the reader ("iy search … | head"): not an error
+        import os
+
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        return 0
 
 
 if __name__ == "__main__":

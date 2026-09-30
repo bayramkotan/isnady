@@ -292,6 +292,9 @@ def stylesheet(t: Tokens) -> str:
     QLabel#ChainChipProphet {{ background: {t.gilt}; color: {t.ink}; border: 1px solid {t.gold};
                                border-radius: 8px; padding: 1px 9px; }}
     QLabel#ChainArrow {{ color: {t.muted}; padding: 0 1px; }}
+    QPushButton#SidebarNotice {{ background: transparent; color: {t.gold}; border: 1px solid {t.gold};
+        border-radius: 8px; padding: 6px 10px; margin: 0 18px 8px 18px; text-align: left; font-weight: 600; }}
+    QPushButton#SidebarNotice:hover {{ background: {t.sidebar_selected}; }}
     QLabel#ChainChipUnknown {{ background: transparent; color: {t.muted}; border: 1px dashed {t.border};
                                border-radius: 8px; padding: 1px 9px; }}
     QLabel#NodeFacts {{ color: {t.muted}; font-size: 9pt; }}
