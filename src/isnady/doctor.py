@@ -1,4 +1,10 @@
-"""Find every isnady installation on this machine and say which one really runs.
+"""Find every isnady installation on this machine and keep every one of them up to date, IN PLACE.
+
+Rule (Bayram, 2026-09-30): isnady may be installed anywhere — for all users (as administrator), for one
+user, in any virtual environment, with pipx, or editable from a clone. Nothing is ever removed or moved;
+updating updates each copy where it is (with sudo or the Windows administrator prompt when needed).
+Once every copy is the same version it no longer matters which one starts first.
+
 
 Why: a copy installed earlier in the user folder (~/.local) is found BEFORE a newer
 one in the system folder, both by Python and by the shell (~/.local/bin comes first
@@ -73,6 +79,16 @@ def _site_dirs() -> list[Path]:
     return dirs
 
 
+def path_from_file_url(url: str) -> Path:
+    """file:///home/x/isnady -> /home/x/isnady ; file:///C:/Github/isnady -> C:/Github/isnady (not /C:/...)."""
+    from urllib.parse import unquote, urlparse
+
+    path = unquote(urlparse(url).path)
+    if re.match(r"^/[A-Za-z]:[/\\]", path):
+        path = path[1:]
+    return Path(path)
+
+
 def find_installs() -> list[Install]:
     user_site = Path(site.getusersitepackages())
     found, seen = [], set()
@@ -91,7 +107,7 @@ def find_installs() -> list[Install]:
                 try:
                     info = json.loads(direct)
                     if info.get("dir_info", {}).get("editable"):
-                        editable = Path(info["url"].replace("file://", "", 1))
+                        editable = path_from_file_url(info["url"])
                 except (ValueError, KeyError):
                     pass
             if editable:
@@ -119,12 +135,16 @@ def find_installs() -> list[Install]:
 
 
 def _interpreter_of(path: Path) -> str | None:
+    """The Python a command starts. Scripts begin with "#!python"; pip's Windows .exe launchers carry the
+    same line near their END, often quoted ("#!"C:\\Program Files\\Python314\\python.exe"")."""
     try:
-        head = path.read_bytes()[:4096] if path.suffix.lower() == ".exe" else path.read_bytes()[:256]
+        data = path.read_bytes() if path.suffix.lower() == ".exe" else path.read_bytes()[:512]
     except OSError:
         return None
-    m = re.search(rb"#!\s*([^\r\n\"]+?python[^\r\n\"]*)", head)
-    return m.group(1).decode(errors="replace").strip() if m else None
+    found = None
+    for m in re.finditer(rb'#!\s*"?([^"\r\n]*?python[\w.]*?)"?[ \t]*\r?\n', data):
+        found = m.group(1)          # the last one is the launcher's own
+    return found.decode(errors="replace").strip() if found else None
 
 
 def find_commands() -> list[Command]:
@@ -141,9 +161,10 @@ def find_commands() -> list[Command]:
                 seen.add(real)
                 interp = _interpreter_of(p)
                 version = None
-                if interp and Path(interp.split()[0]).exists():
+                exe = interp if interp and Path(interp).exists() else (interp.split()[0] if interp else None)
+                if exe and Path(exe).exists():
                     try:
-                        r = subprocess.run([interp.split()[0], "-c", "import isnady; print(isnady.__version__)"],
+                        r = subprocess.run([exe, "-c", "import isnady; print(isnady.__version__)"],
                                            capture_output=True, text=True, timeout=15)
                         version = r.stdout.strip() or None
                     except (OSError, subprocess.SubprocessError):
@@ -168,18 +189,52 @@ def latest_on_pypi(timeout: float = 5.0) -> str | None:
         return None
 
 
-def uninstall_argv(inst: Install) -> list[str]:
+def user_scripts_dir() -> Path:
+    """Where a user install puts its commands: ~/.local/bin, or %APPDATA%\\Python\\Python3XX\\Scripts."""
+    try:
+        return Path(sysconfig.get_path("scripts", f"{os.name}_user"))
+    except KeyError:
+        return Path(site.getuserbase()) / ("Scripts" if os.name == "nt" else "bin")
+
+
+def _writable(folder: Path) -> bool:
+    """os.access ignores Windows permissions (Program Files reports writable); really try."""
+    import tempfile
+
+    try:
+        with tempfile.TemporaryFile(dir=folder):
+            return True
+    except OSError:
+        return False
+
+
+def needs_admin(inst: Install) -> bool:
+    return inst.kind == "system" and not _writable(inst.location)
+
+
+def _as_admin(argv: list[str]) -> list[str]:
+    if os.name == "nt":
+        # Windows has no sudo: PowerShell opens the administrator prompt and waits for the result
+        args = ", ".join(f"'{a}'" for a in argv[1:])
+        return ["powershell", "-NoProfile", "-Command",
+                f"Start-Process -FilePath '{argv[0]}' -ArgumentList {args} -Verb RunAs -Wait"]
+    return ["sudo"] + argv
+
+
+def upgrade_argv(inst: Install) -> list[str]:
+    """Update this copy where it is installed."""
     extra = ["--break-system-packages"] if _externally_managed() else []
+    if inst.kind == "editable" and inst.editable_path:
+        return ["git", "-C", str(inst.editable_path), "pull", "--ff-only"]
     if inst.kind == "pipx":
-        return ["pipx", "uninstall", PACKAGE]
-    if inst.kind == "system":
-        # pip removes the FIRST copy it finds, and the user folder comes first: "-s" hides the user folder
-        # so the system copy is the one removed
-        argv = [sys.executable, "-s", "-m", "pip", "uninstall", "-y", PACKAGE] + extra
-        if os.name != "nt" and not os.access(inst.location, os.W_OK):
-            return ["sudo"] + argv
-        return argv
-    return [sys.executable, "-m", "pip", "uninstall", "-y", PACKAGE] + extra
+        return ["pipx", "upgrade", PACKAGE]
+    if inst.kind == "user":
+        return [sys.executable, "-m", "pip", "install", "--user", "-U", PACKAGE] + extra
+    if inst.kind == "venv":
+        return [sys.executable, "-m", "pip", "install", "-U", PACKAGE]
+    # system: "-s" so pip looks at the system copy, not the user folder in front of it
+    argv = [sys.executable, "-s", "-m", "pip", "install", "-U", PACKAGE] + extra
+    return _as_admin(argv) if needs_admin(inst) else argv
 
 
 def diagnose(check_pypi: bool = True) -> Report:
@@ -194,28 +249,37 @@ def diagnose(check_pypi: bool = True) -> Report:
     rep.latest = latest_on_pypi() if check_pypi else None
 
     installs = rep.installs
-    keep = next((i for i in installs if i.kind == "editable"), None) or \
-        max(installs, key=lambda i: _vkey(i.version), default=None)
-    if len(installs) > 1:
-        rep.problems.append(f"{len(installs)} installations of isnady for this Python; only one should exist.")
-        for inst in installs:
-            if inst is not keep:
-                rep.fixes.append(uninstall_argv(inst))
-    active = next((i for i in installs if i.active), None)
-    if active and keep and active is not keep:
-        rep.problems.append(f"Python imports isnady {active.version} from {active.location}, "
-                            f"which hides {keep.version} ({keep.kind}).")
+    released = [i for i in installs if i.kind != "editable"]
+    newest = max([i.version for i in installs] + ([rep.latest] if rep.latest else []), key=_vkey, default=None)
+    versions = sorted({i.version for i in installs}, key=_vkey)
+    if len(versions) > 1:
+        rep.problems.append("isnady is installed in more than one place with different versions ("
+                            + ", ".join(f"{i.version} {i.kind}" for i in installs) + "); updating brings every copy "
+                            "to the same version, where it is.")
     for c in rep.commands:
-        if c.first and keep and c.version and c.version != keep.version:
-            rep.problems.append(f"The command '{c.path.name}' starts isnady {c.version} ({c.path}), "
-                                f"not {keep.version}.")
-    if keep and keep.editable_path and not Path(keep.editable_path).exists():
-        rep.problems.append(f"The editable installation points to {keep.editable_path}, which no longer exists.")
-    if rep.latest and keep and not keep.editable_path and _vkey(rep.latest) > _vkey(keep.version):
-        rep.problems.append(f"isnady {rep.latest} is on PyPI; this installation is {keep.version}.")
-        rep.fixes.append(install_argv(keep.kind))
-    user_bin = Path(site.getuserbase()) / ("Scripts" if os.name == "nt" else "bin")
-    if keep and keep.kind in ("user", "editable") and str(user_bin) not in os.environ.get("PATH", ""):
+        if c.first and c.version and newest and _vkey(c.version) < _vkey(newest):
+            rep.problems.append(f"The command '{c.path.name}' starts isnady {c.version} ({c.path}).")
+    for inst in installs:
+        if inst.kind == "editable" and inst.editable_path and not Path(inst.editable_path).exists():
+            rep.problems.append(f"The editable installation points to {inst.editable_path}, which no longer exists.")
+    if rep.latest and any(_vkey(i.version) < _vkey(rep.latest) for i in released):
+        rep.problems.append(f"isnady {rep.latest} is on PyPI.")
+    # the plan: every copy that is behind is updated in place (editable clones: git pull)
+    for inst in installs:
+        behind = newest and _vkey(inst.version) < _vkey(newest)
+        if behind or (inst.kind == "editable" and rep.latest):
+            rep.fixes.append(upgrade_argv(inst))
+    # commands from ANOTHER Python (another virtual environment) that start an older copy
+    for c in rep.commands:
+        exe = c.interpreter
+        if c.version and newest and _vkey(c.version) < _vkey(newest) and exe and Path(exe).exists() \
+                and Path(exe).resolve() != Path(sys.executable).resolve():
+            argv = [exe, "-m", "pip", "install", "-U", PACKAGE]
+            if argv not in rep.fixes:
+                rep.fixes.append(argv)
+    user_bin = user_scripts_dir()
+    if any(i.kind in ("user", "editable") for i in installs) and str(user_bin) not in os.environ.get("PATH", "") \
+            and not rep.commands:
         rep.problems.append(f"{user_bin} is not in PATH, so the isnady commands may not be found.")
     return rep
 
@@ -227,7 +291,7 @@ def install_argv(kind: str = "user") -> list[str]:
     return [sys.executable, "-m", "pip", "install", "--user", "-U", PACKAGE] + extra
 
 
-RESCUE = "python3 -s -m isnady doctor --fix" if os.name != "nt" else "py -s -m isnady doctor --fix"
+RESCUE = "python3 -s -m isnady update" if os.name != "nt" else "py -s -m isnady update"
 
 
 def as_text(rep: Report) -> str:
@@ -250,9 +314,9 @@ def as_text(rep: Report) -> str:
         lines.append("Problems:")
         lines += [f"  - {p}" for p in rep.problems]
         if rep.fixes:
-            lines.append("\nTo fix (iy doctor --fix runs these):")
+            lines.append("\nTo update every copy where it is (iy update runs these):")
             lines += ["  " + " ".join(f'"{a}"' if " " in a else a for a in f) for f in rep.fixes]
-        lines.append(f"\nIf 'iy doctor' itself does not start because an old copy runs instead: {RESCUE}")
+        lines.append(f"\nIf 'iy update' itself does not start because an old copy runs instead: {RESCUE}")
     else:
         lines.append("No problems found.")
     return "\n".join(lines)

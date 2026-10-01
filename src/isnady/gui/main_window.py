@@ -256,7 +256,8 @@ class MainWindow(QMainWindow):
 
     def _install_checked(self, report) -> None:
         if report.problems:
-            self.install_notice.setToolTip("\n".join(report.problems) + "\n\nClick for the report and the fix.")
+            self.install_notice.setToolTip("\n".join(report.problems) + "\n\nClick for the report; 'iy update' updates "
+                                           "every copy where it is installed.")
             self.install_notice.show()
 
     def _check_installation(self) -> None:

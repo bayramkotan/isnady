@@ -23,7 +23,7 @@ Examples
   iy catalog import --all --language ara --language tur
   iy datadir
   iy doctor
-  iy doctor --fix
+  iy update
   iy datadir /data/isnady
   iy sources
   iy stats
@@ -132,6 +132,19 @@ def cmd_datadir(args) -> int:
     return 0
 
 
+def _run_plan(plan: list[list[str]], yes: bool) -> None:
+    for argv in plan:
+        shown = " ".join(argv)
+        if argv[0] in ("sudo", "powershell") and not yes:
+            how = "a Windows prompt will ask for administrator rights" if argv[0] == "powershell" else "sudo"
+            answer = input(f"Update a copy that needs administrator rights ({how})?\n  {shown}\n[y/N] ").strip().lower()
+            if answer not in ("y", "yes", "e", "evet"):
+                print("  skipped")
+                continue
+        print(f"$ {shown}")
+        subprocess.run(argv, check=False)
+
+
 def cmd_doctor(args) -> int:
     from isnady import doctor
 
@@ -140,19 +153,26 @@ def cmd_doctor(args) -> int:
     if not args.fix or not report.fixes:
         return 1 if report.problems else 0
     print()
-    for argv in report.fixes:
-        shown = " ".join(argv)
-        if argv[0] == "sudo" and not args.yes:
-            answer = input(f"Run with administrator rights: {shown}  [y/N] ").strip().lower()
-            if answer not in ("y", "yes", "e", "evet"):
-                print("  skipped")
-                continue
-        print(f"$ {shown}")
-        subprocess.run(argv, check=False)
-    print("\nAfter the fixes:")
+    _run_plan(report.fixes, args.yes)
     after = doctor.diagnose(check_pypi=False)
-    print(doctor.as_text(after))
-    print("\nIf the shell still starts an old copy, run: hash -r   (or open a new terminal)")
+    print("\nAfter updating:\n" + doctor.as_text(after))
+    return 1 if after.problems else 0
+
+
+def cmd_update(args) -> int:
+    """Update every copy of isnady where it is installed. Nothing is removed or moved."""
+    from isnady import doctor
+
+    report = doctor.diagnose(check_pypi=True)
+    if not report.fixes:
+        print(f"isnady {report.running_version} is up to date"
+              + (f" (latest on PyPI: {report.latest})." if report.latest else " (PyPI could not be reached)."))
+        return 0
+    print("Updating every copy of isnady where it is installed:")
+    _run_plan(report.fixes, args.yes)
+    after = doctor.diagnose(check_pypi=False)
+    print("\n" + doctor.as_text(after))
+    print("\nIf the shell still starts an old copy, open a new terminal (or run: hash -r).")
     return 1 if after.problems else 0
 
 
@@ -484,8 +504,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
 
     sub.add_parser("version", help="show the version").set_defaults(func=cmd_version)
-    doc = sub.add_parser("doctor", help="find every isnady installation and fix duplicates or an old copy that hides the new one")
-    doc.add_argument("--fix", action="store_true", help="uninstall the extra copies (asks before using sudo)")
+    up = sub.add_parser("update", help="update every copy of isnady where it is installed (system, user, venv, pipx, clone)")
+    up.add_argument("--yes", action="store_true", help="do not ask before using sudo / the administrator prompt")
+    up.set_defaults(func=cmd_update)
+    doc = sub.add_parser("doctor", help="every isnady installation, which one each command starts, and what is out of date")
+    doc.add_argument("--fix", action="store_true", help="update the copies that are behind, where they are")
     doc.add_argument("--yes", action="store_true", help="with --fix: do not ask")
     doc.add_argument("--offline", action="store_true", help="do not ask PyPI for the latest version")
     doc.set_defaults(func=cmd_doctor)
@@ -576,7 +599,19 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _utf8_output() -> None:
+    """Windows prints to a pipe or file in the old code page (cp1252/cp1254), which has no Arabic:
+    "iy -h | more" or "iy narrator الزهري > out.txt" crashed. Always write UTF-8."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            if (stream.encoding or "").lower().replace("-", "") != "utf8":
+                stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _utf8_output()
     args = build_parser().parse_args(argv)
     try:
         return args.func(args)

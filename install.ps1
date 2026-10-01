@@ -1,88 +1,143 @@
-# isnady installer for Windows (Windows PowerShell 5.1 and PowerShell 7)
+# isnady installer and updater for Windows (Windows PowerShell 5.1 and PowerShell 7)
 #
 #   irm https://raw.githubusercontent.com/bayramkotan/isnady/main/install.ps1 | iex
-#   .\install.ps1            inside a clone of the repository: editable (developer) install of that clone
-#   $env:ISNADY_INSTALL = "pypi"; .\install.ps1     the PyPI release even inside a clone
+#   .\install.ps1 in an administrator PowerShell   install or update for every user of this computer
+#   .\install.ps1 inside a clone of the repository  editable install of that clone
 #
-# Removes every earlier copy first (an older copy found first hides a newer one), installs one copy,
-# makes sure its commands are on PATH, then checks the result with `iy doctor`.
+# isnady may be installed anywhere: for all users (Program Files), for one user, in any virtual
+# environment, with pipx, or editable from a clone. Nothing is removed or moved: every copy found is
+# UPDATED WHERE IT IS (with the Windows administrator prompt when needed). When there is no copy yet,
+# it is installed the way this script is run.
 
 # "Continue", not "Stop": in Windows PowerShell 5.1 a native program writing to a redirected stderr
 # would stop the script; every step checks $LASTEXITCODE instead
 $ErrorActionPreference = "Continue"
 function Say($m)  { Write-Host "==> $m" -ForegroundColor Cyan }
 function Warn($m) { Write-Host "!!  $m" -ForegroundColor Yellow }
-function Ask($q)  { $a = Read-Host "$q [y/N]"; return @("y", "yes", "e", "evet") -contains $a.Trim().ToLower() }
+function Ask($q)  { $a = Read-Host "$q [y/N]"; return @("y", "yes", "e", "evet") -contains "$a".Trim().ToLower() }
 
 # ---------------------------------------------------------------- Python
 $Py = $null; $PyArgs = @()
-if (Get-Command py -ErrorAction SilentlyContinue) { $Py = "py"; $PyArgs = @("-3") }
+if ($env:VIRTUAL_ENV -and (Test-Path "$env:VIRTUAL_ENV\Scripts\python.exe")) { $Py = "$env:VIRTUAL_ENV\Scripts\python.exe" }
+elseif (Get-Command py -ErrorAction SilentlyContinue) { $Py = "py"; $PyArgs = @("-3") }
 elseif (Get-Command python -ErrorAction SilentlyContinue) { $Py = "python" }
 if (-not $Py) { Warn "Python 3.10 or newer was not found. Install it from https://www.python.org/downloads/ first."; return }
 # a SIMPLE function (no param block): an advanced one would take -c / -m as its own parameters
 function RunPy { & $Py @PyArgs @args }
 RunPy -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)"
 if ($LASTEXITCODE -ne 0) { Warn "isnady needs Python 3.10 or newer ($(RunPy -V 2>&1))."; return }
-
-$UserFlag = @("--user")
-if ($env:VIRTUAL_ENV) { $UserFlag = @() }      # inside a virtual environment there is no user folder
-
-$Mode = "pypi"; $Src = ""
+$PyExe = "$(RunPy -c "import sys; print(sys.executable)")".Trim()
+$InVenv = "$(RunPy -c "import sys; print(1 if sys.prefix != sys.base_prefix else 0)")".Trim() -eq "1"
+$IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator)
+$Clone = ""
 if ($env:ISNADY_INSTALL -ne "pypi" -and (Test-Path pyproject.toml) -and (Select-String -Path pyproject.toml -Pattern '^name = "isnady"' -Quiet)) {
-    $Mode = "dev"; $Src = (Get-Location).Path
-} elseif (Get-Command pipx -ErrorAction SilentlyContinue) {
-    $Mode = "pipx"
+    $Clone = (Get-Location).Path
 }
-Say "Python: $(RunPy -V 2>&1); mode: $Mode $Src"
+Say "Python: $PyExe ($(RunPy -V 2>&1))$(if ($Clone) { "; clone: $Clone" })"
 
-# ---------------------------------------------------------------- 1. remove earlier copies
-Say "Looking for earlier installations"
-if (Get-Command pipx -ErrorAction SilentlyContinue) {
-    $listed = (pipx list --short 2>$null) -join "`n"
-    if ($listed -match "(?m)^isnady ") { Say "Removing the pipx copy"; pipx uninstall isnady | Out-Null }
-}
-$UserSite = (RunPy -c "import site; print(site.getusersitepackages())").Trim()
-for ($i = 0; $i -lt 4; $i++) {
-    $where = (RunPy -c "import isnady, os; print(os.path.dirname(os.path.dirname(isnady.__file__)))" 2>$null)
-    if ($LASTEXITCODE -ne 0 -or -not $where) { break }
-    $where = "$where".Trim()
-    Say "Removing isnady from $where"
-    if ($where -eq $UserSite) { RunPy -m pip uninstall -y isnady | Out-Null }
-    else { RunPy -s -m pip uninstall -y isnady | Out-Null }
-    if ($LASTEXITCODE -ne 0) {
-        Warn "Could not remove the copy in $where. If it is under Program Files, run this installer once in an administrator PowerShell."
-        break
+# ---------------------------------------------------------------- every copy this Python can see
+$Lister = @'
+import json, site, sys
+from importlib import metadata
+from pathlib import Path
+from urllib.parse import unquote, urlparse
+user = Path(site.getusersitepackages())
+dirs = []
+for p in sys.path + list(getattr(site, "getsitepackages", lambda: [])()) + [str(user)]:
+    if p and Path(p).is_dir() and Path(p) not in dirs:
+        dirs.append(Path(p))
+seen = set()
+for d in dirs:
+    for dist in metadata.distributions(path=[str(d)]):
+        if (dist.metadata["Name"] or "").lower() != "isnady" or (str(d), dist.version) in seen:
+            continue
+        seen.add((str(d), dist.version))
+        where = str(d)
+        try:
+            info = json.loads(dist.read_text("direct_url.json") or "{}")
+        except ValueError:
+            info = {}
+        if info.get("dir_info", {}).get("editable"):
+            kind, where = "editable", unquote(urlparse(info["url"]).path)
+            if len(where) > 2 and where[0] == "/" and where[2] == ":":
+                where = where[1:]
+            where = str(Path(where))
+        elif "pipx" in str(d):
+            kind = "pipx"
+        elif str(d).startswith(str(user)):
+            kind = "user"
+        elif sys.prefix != sys.base_prefix and str(d).startswith(sys.prefix):
+            kind = "venv"
+        else:
+            kind = "system"
+        print(f"{kind}|{where}|{dist.version}")
+'@
+$ListerFile = Join-Path ([IO.Path]::GetTempPath()) "isnady_list_copies.py"
+[IO.File]::WriteAllText($ListerFile, $Lister, (New-Object System.Text.UTF8Encoding $false))
+$Copies = @(RunPy $ListerFile 2>$null | Where-Object { $_ -match "\|" })
+Remove-Item $ListerFile -ErrorAction SilentlyContinue
+
+function Update-Copy($kind, $where, $version) {
+    switch ($kind) {
+        "user"     { Say "Updating the copy for this user ($where, $version)"; RunPy -m pip install -q --user -U isnady }
+        "venv"     { Say "Updating the copy in this virtual environment ($where, $version)"; RunPy -m pip install -q -U isnady }
+        "pipx"     { Say "Updating the pipx copy ($version)"; pipx upgrade isnady }
+        "editable" {
+            if ($Clone -and ((Resolve-Path $where -ErrorAction SilentlyContinue).Path -eq $Clone)) { return }   # reinstalled below
+            Say "Refreshing the editable install of $where ($version); update that clone with git pull"
+            $scope = @(); if (-not $InVenv) { $scope = @("--user") }
+            RunPy -m pip install -q @scope -e $where
+        }
+        "system"   {
+            Say "Updating the copy for all users ($where, $version)"
+            RunPy -s -m pip install -q -U isnady 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                # under Program Files only an administrator may write; Windows asks through its own prompt
+                Warn "isnady $version is installed for all users in $where; updating it there needs administrator rights."
+                if (Ask "Update it there now? (Windows will show a prompt)") {
+                    Start-Process -FilePath $PyExe -ArgumentList "-s", "-m", "pip", "install", "-U", "isnady" -Verb RunAs -Wait
+                } else {
+                    Warn "Not updated; it stays at $version."
+                }
+            }
+        }
     }
 }
 
-# ---------------------------------------------------------------- 2. install one copy
-switch ($Mode) {
-    "dev"  { Say "Installing the clone in $Src (editable: every git pull is live)"; RunPy -m pip install -q @UserFlag -e $Src }
-    "pipx" { Say "Installing with pipx"; pipx install --force isnady }
-    default { Say "Installing the latest release from PyPI"; RunPy -m pip install -q @UserFlag -U isnady }
+foreach ($line in $Copies) {
+    $kind, $where, $version = "$line".Trim().Split("|")
+    Update-Copy $kind $where $version
 }
-if ($LASTEXITCODE -ne 0) { Warn "The installation failed; see the messages above."; return }
+if ($Clone) {
+    Say "Installing the clone in $Clone (editable: every git pull is live)"
+    $scope = @(); if (-not $InVenv) { $scope = @("--user") }
+    RunPy -m pip install -q @scope -e $Clone
+} elseif ($Copies.Count -eq 0) {
+    # nothing yet: install the way this script is run
+    if ($InVenv) { Say "Installing into this virtual environment"; RunPy -m pip install -q -U isnady }
+    elseif ($IsAdmin) { Say "Installing for all users"; RunPy -m pip install -q -U isnady }
+    elseif (Get-Command pipx -ErrorAction SilentlyContinue) { Say "Installing with pipx"; pipx install isnady }
+    else { Say "Installing for this user"; RunPy -m pip install -q --user -U isnady }
+}
 
-# ---------------------------------------------------------------- 3. commands on PATH
-if ($Mode -eq "pipx") { $Bin = (pipx environment --value PIPX_BIN_DIR 2>$null); if (-not $Bin) { $Bin = "$HOME\.local\bin" } }
-elseif ($UserFlag.Count) { $Bin = (RunPy -c "import sysconfig; print(sysconfig.get_path('scripts', 'nt_user'))").Trim() }
-else { $Bin = (RunPy -c "import sysconfig; print(sysconfig.get_path('scripts'))").Trim() }
-$UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if (-not (($env:Path -split ";") -contains $Bin)) {
-    Warn "$Bin is not in PATH, so the isnady commands would not be found."
-    if (Ask "Add it to your user PATH?") {
-        [Environment]::SetEnvironmentVariable("Path", (($UserPath, $Bin) -join ";").Trim(";"), "User")
-        Say "Added. New terminals will find the commands."
+# ---------------------------------------------------------------- commands on PATH, then a check
+if (-not $InVenv -and -not $IsAdmin) {
+    $Bin = "$(RunPy -c "import sysconfig; print(sysconfig.get_path('scripts', 'nt_user'))")".Trim()
+    if ((Test-Path (Join-Path $Bin "iy.exe")) -and -not (($env:Path -split ";") -contains $Bin)) {
+        Warn "$Bin is not in PATH, so the isnady commands would not be found."
+        if (Ask "Add it to your user PATH?") {
+            $UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+            [Environment]::SetEnvironmentVariable("Path", (($UserPath, $Bin) -join ";").Trim(";"), "User")
+            Say "Added. New terminals will find the commands."
+        }
+        $env:Path = "$Bin;$env:Path"
     }
-    $env:Path = "$Bin;$env:Path"
 }
-
-# ---------------------------------------------------------------- 4. check
 Say "Checking"
-& (Join-Path $Bin "iy.exe") -V
-$help = (& (Join-Path $Bin "iy.exe") -h 2>$null) -join "`n"
-if ($help -match "doctor") {       # iy doctor exists from 0.0.7 on
-    & (Join-Path $Bin "iy.exe") doctor --offline
-    if ($LASTEXITCODE -ne 0) { Warn "iy doctor reported something above; 'iy doctor --fix' can repair it." }
+if (Get-Command iy -ErrorAction SilentlyContinue) {
+    iy -V
+    $help = (iy -h 2>$null) -join "`n"
+    if ($help -match "doctor") { iy doctor --offline }
 }
 Say "Done. Start isnady with: isnady-gui   (or iy in a terminal)"

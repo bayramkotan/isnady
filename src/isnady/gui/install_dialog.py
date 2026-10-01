@@ -29,8 +29,8 @@ class InstallDialog(QDialog):
         mono = QFont("monospace")
         mono.setStyleHint(QFont.StyleHint.Monospace)
         self.text.setFont(mono)
-        note = QLabel("To repair, run in a terminal:  iy doctor --fix      If an old copy starts instead of this "
-                      f"one:  {doctor.RESCUE}")
+        note = QLabel("To update every copy where it is installed (nothing is removed), run in a terminal:  iy update"
+                      f"      If an old copy starts even for that:  {doctor.RESCUE}")
         note.setObjectName("Caption")
         note.setWordWrap(True)
         copy = QPushButton("Copy report")
@@ -58,8 +58,8 @@ class InstallDialog(QDialog):
     def _show(self, report) -> None:
         self.text.setPlainText(doctor.as_text(report))
         if report.problems:
-            self.summary.setText(f"{len(report.problems)} problem(s) found; see below. The fix commands are listed "
-                                 "at the end of the report.")
+            self.summary.setText(f"{len(report.problems)} thing(s) to update; see below. 'iy update' updates every "
+                                 "copy where it is installed.")
         else:
             latest = f" The latest on PyPI is {report.latest}." if report.latest else ""
             commands = ("every isnady command on PATH starts it." if report.commands else

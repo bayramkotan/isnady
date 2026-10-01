@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# isnady installer for Linux and macOS
+# isnady installer and updater for Linux and macOS
 #
 #   curl -fsSL https://raw.githubusercontent.com/bayramkotan/isnady/main/install.sh | bash
-#   ./install.sh            inside a clone of the repository: editable (developer) install of that clone
-#   ISNADY_INSTALL=pypi ./install.sh   the PyPI release even inside a clone
+#   sudo bash install.sh        install or update for every user of this computer
+#   ./install.sh                inside a clone of the repository: editable install of that clone
 #
-# Removes every earlier copy first (an old copy in ~/.local hides a newer one elsewhere), installs one
-# copy, makes sure its commands are on PATH, then checks the result with `iy doctor`.
+# isnady may be installed anywhere: for all users, for one user, in any virtual environment, with pipx,
+# or editable from a clone. Nothing is removed or moved: every copy found is UPDATED WHERE IT IS (with
+# sudo when needed). When there is no copy yet, it is installed the way this script is run.
 set -eu
 
 say()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
@@ -27,71 +28,116 @@ fi
 
 BREAK=""
 if "$PY" -c 'import os, sys, sysconfig; sys.exit(0 if os.path.exists(os.path.join(sysconfig.get_path("stdlib"), "EXTERNALLY-MANAGED")) else 1)'; then
-    BREAK="--break-system-packages"        # PEP 668: the distribution manages its Python; a user install is still fine
+    BREAK="--break-system-packages"        # PEP 668: the distribution manages its Python
 fi
-USER_FLAG="--user"
-[ -n "${VIRTUAL_ENV:-}" ] && USER_FLAG=""  # inside a virtual environment there is no user folder
-
-MODE=pypi; SRC=""
+IN_VENV="$("$PY" -c 'import sys; print(1 if sys.prefix != sys.base_prefix else 0)')"
+CLONE=""
 if [ "${ISNADY_INSTALL:-}" != "pypi" ] && [ -f pyproject.toml ] && grep -q '^name = "isnady"' pyproject.toml; then
-    MODE=dev; SRC="$(pwd)"
-elif command -v pipx > /dev/null 2>&1; then
-    MODE=pipx
+    CLONE="$(pwd)"
 fi
-say "Python: $PY ($("$PY" -V 2>&1)); mode: $MODE${SRC:+ ($SRC)}"
+say "Python: $PY ($("$PY" -V 2>&1))${CLONE:+; clone: $CLONE}"
 
-# ---------------------------------------------------------------- 1. remove earlier copies
-say "Looking for earlier installations"
-if command -v pipx > /dev/null 2>&1 && pipx list --short 2>/dev/null | grep -q '^isnady '; then
-    say "Removing the pipx copy"; pipx uninstall isnady || true
+# ---------------------------------------------------------------- every copy this Python can see
+COPIES="$("$PY" - << 'PYEOF'
+import json, site, sys
+from importlib import metadata
+from pathlib import Path
+from urllib.parse import unquote, urlparse
+user = Path(site.getusersitepackages())
+dirs = []
+for p in sys.path + list(getattr(site, "getsitepackages", lambda: [])()) + [str(user)]:
+    if p and Path(p).is_dir() and Path(p) not in dirs:
+        dirs.append(Path(p))
+seen = set()
+for d in dirs:
+    for dist in metadata.distributions(path=[str(d)]):
+        if (dist.metadata["Name"] or "").lower() != "isnady" or (str(d), dist.version) in seen:
+            continue
+        seen.add((str(d), dist.version))
+        where = str(d)
+        try:
+            info = json.loads(dist.read_text("direct_url.json") or "{}")
+        except ValueError:
+            info = {}
+        if info.get("dir_info", {}).get("editable"):
+            kind, where = "editable", unquote(urlparse(info["url"]).path)
+        elif "pipx" in str(d):
+            kind = "pipx"
+        elif str(d).startswith(str(user)):
+            kind = "user"
+        elif sys.prefix != sys.base_prefix and str(d).startswith(sys.prefix):
+            kind = "venv"
+        else:
+            kind = "system"
+        print(f"{kind}|{where}|{dist.version}")
+PYEOF
+)"
+
+update_copy() {   # kind where version
+    case "$1" in
+        user)     say "Updating the copy for this user ($2, $3)"
+                  "$PY" -m pip install -q --user -U isnady $BREAK ;;
+        venv)     say "Updating the copy in this virtual environment ($2, $3)"
+                  "$PY" -m pip install -q -U isnady ;;
+        pipx)     say "Updating the pipx copy ($3)"; pipx upgrade isnady || true ;;
+        editable) if [ -n "$CLONE" ] && [ "$2" = "$CLONE" ]; then
+                      : # this clone is (re)installed below
+                  else
+                      say "Refreshing the editable install of $2 ($3); update that clone with git pull"
+                      ( cd "$2" && "$PY" -m pip install -q $([ "$IN_VENV" = 0 ] && echo --user) -e . $BREAK ) || true
+                  fi ;;
+        system)   if [ -w "$2" ]; then
+                      say "Updating the copy for all users ($2, $3)"
+                      "$PY" -s -m pip install -q -U isnady $BREAK
+                  else
+                      warn "isnady $3 is installed for all users in $2."
+                      if ask "Update it there with sudo?"; then
+                          sudo "$PY" -s -m pip install -q -U isnady $BREAK || warn "That update failed."
+                      else
+                          warn "Not updated; it stays at $3."
+                      fi
+                  fi ;;
+    esac
+}
+
+if [ -n "$COPIES" ]; then
+    printf '%s\n' "$COPIES" | while IFS='|' read -r kind where version; do
+        update_copy "$kind" "$where" "$version" < /dev/null
+    done
 fi
-for _ in 1 2 3 4; do
-    # which copy would Python import now? (user folder first, like the shell)
-    WHERE="$("$PY" -c 'import isnady, os; print(os.path.dirname(os.path.dirname(isnady.__file__)))' 2>/dev/null || true)"
-    [ -n "$WHERE" ] || break
-    USER_SITE="$("$PY" -c 'import site; print(site.getusersitepackages())')"
-    if [ "$WHERE" = "$USER_SITE" ] || [ -w "$WHERE" ]; then
-        say "Removing isnady from $WHERE"
-        if [ "$WHERE" = "$USER_SITE" ]; then "$PY" -m pip uninstall -y isnady $BREAK > /dev/null || break
-        else "$PY" -s -m pip uninstall -y isnady $BREAK > /dev/null || break; fi
+if [ -n "$CLONE" ]; then
+    say "Installing the clone in $CLONE (editable: every git pull is live)"
+    "$PY" -m pip install -q $([ "$IN_VENV" = 0 ] && echo --user) -e "$CLONE" $BREAK
+elif [ -z "$COPIES" ]; then
+    # nothing yet: install the way this script is run
+    if [ "$IN_VENV" = 1 ]; then
+        say "Installing into this virtual environment"; "$PY" -m pip install -q -U isnady
+    elif [ "$(id -u)" = 0 ]; then
+        say "Installing for all users"; "$PY" -m pip install -q -U isnady $BREAK
+    elif command -v pipx > /dev/null 2>&1; then
+        say "Installing with pipx"; pipx install isnady
     else
-        warn "A copy of isnady is installed for the whole system in $WHERE."
-        if ask "Remove it with sudo (recommended)?"; then
-            sudo "$PY" -s -m pip uninstall -y isnady $BREAK > /dev/null || break
-        else
-            warn "Kept. It may hide the copy installed now."; break
-        fi
+        say "Installing for this user"; "$PY" -m pip install -q --user -U isnady $BREAK
     fi
-done
+fi
 
-# ---------------------------------------------------------------- 2. install one copy
-case "$MODE" in
-    dev)  say "Installing the clone in $SRC (editable: every git pull is live)"
-          "$PY" -m pip install -q $USER_FLAG -e "$SRC" $BREAK ;;
-    pipx) say "Installing with pipx"; pipx install --force isnady ;;
-    pypi) say "Installing the latest release from PyPI"
-          "$PY" -m pip install -q $USER_FLAG -U isnady $BREAK ;;
-esac
-
-# ---------------------------------------------------------------- 3. commands on PATH
-if [ "$MODE" = pipx ]; then BIN="$(pipx environment --value PIPX_BIN_DIR 2>/dev/null || echo "$HOME/.local/bin")"
-elif [ -n "$USER_FLAG" ]; then BIN="$("$PY" -m site --user-base)/bin"
-else BIN="$(dirname "$PY")"; fi
-case ":$PATH:" in
-    *":$BIN:"*) ;;
-    *)  warn "$BIN is not in PATH, so the isnady commands would not be found."
-        RC="$HOME/.bashrc"; [ "${SHELL##*/}" = zsh ] && RC="$HOME/.zshrc"
-        if ask "Add it to $RC?"; then
-            printf '\n# isnady\nexport PATH="%s:$PATH"\n' "$BIN" >> "$RC"; say "Added. Open a new terminal, or run: source $RC"
-        fi
-        export PATH="$BIN:$PATH" ;;
-esac
+# ---------------------------------------------------------------- commands on PATH, then a check
+USER_BIN="$("$PY" -m site --user-base)/bin"
+if [ "$IN_VENV" = 0 ] && [ "$(id -u)" != 0 ] && [ -x "$USER_BIN/iy" ]; then
+    case ":$PATH:" in
+        *":$USER_BIN:"*) ;;
+        *)  warn "$USER_BIN is not in PATH, so the isnady commands would not be found."
+            RC="$HOME/.bashrc"; [ "${SHELL##*/}" = zsh ] && RC="$HOME/.zshrc"
+            if ask "Add it to $RC?"; then
+                printf '\n# isnady\nexport PATH="%s:$PATH"\n' "$USER_BIN" >> "$RC"; say "Added. Open a new terminal, or run: source $RC"
+            fi
+            export PATH="$USER_BIN:$PATH" ;;
+    esac
+fi
 hash -r 2>/dev/null || true
-
-# ---------------------------------------------------------------- 4. check
 say "Checking"
-"$BIN/iy" -V
-if "$BIN/iy" -h 2>/dev/null | grep -q doctor; then   # iy doctor exists from 0.0.7 on
-    "$BIN/iy" doctor --offline || warn "iy doctor reported something above; 'iy doctor --fix' can repair it."
+if command -v iy > /dev/null 2>&1; then
+    iy -V
+    if iy -h 2>/dev/null | grep -q doctor; then iy doctor --offline || true; fi
 fi
 say "Done. Start isnady with: iy   (or isnady-gui)"

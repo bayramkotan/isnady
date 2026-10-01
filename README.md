@@ -35,7 +35,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.0.7).** Search and chains of transmission work today, on data you import
+> **Pre-alpha (0.0.8).** Search and chains of transmission work today, on data you import
 > in one command. Narrators, scholars, gradings and the rest are being built, in the open.
 
 ---
@@ -62,8 +62,9 @@ did their work.
 
 ## 📦 Install
 
-One line, on any system — it removes earlier copies first, installs one, puts its commands on
-PATH and checks the result:
+One line, on any system. Install isnady wherever you like — for all users, for yourself, in a
+virtual environment, with pipx: the same line installs it, and later updates every copy where it
+is, asking for administrator rights only when a copy needs them. Nothing is ever removed.
 
 ```bash
 # Linux and macOS
@@ -109,15 +110,16 @@ pip install isnady --break-system-packages --no-cache-dir -U
 
 ### Something not right?
 
-`iy doctor` lists every copy of isnady on the computer and which one each command really
-starts — an older copy in the user folder can hide a newer one — and `iy doctor --fix` removes
-the extras. The same report is under **Help → Check Installation**. If an old copy starts even
-for `iy doctor`, run `python3 -s -m isnady doctor --fix` (Windows: `py -s -m isnady doctor --fix`).
+`iy update` updates every copy of isnady where it is installed. `iy doctor` lists every copy and
+which one each command really starts — an older copy in the user folder can start before a newer
+one elsewhere, so every copy is kept at the same version. The same report is under
+**Help → Check Installation**. If an old copy starts even for `iy update`, run
+`python3 -s -m isnady update` (Windows: `py -s -m isnady update`).
 
 ### Upgrading
 
 ```bash
-pip install -U isnady --no-cache-dir
+iy update
 ```
 
 Your data stays where it is; a newer isnady upgrades the database in place the first time
@@ -330,7 +332,8 @@ script. The command line never loads Qt.
 | `iy stats` | `isnady stats` | Hadith, texts, grades and chains per book |
 | `iy remove KEY` | `isnady remove KEY` | Remove a source and everything imported from it |
 | `iy config list\|get\|set\|reset` | `isnady config …` | Appearance and other settings — the same as Edit → Preferences |
-| `iy doctor` | `isnady doctor --fix` | Every copy of isnady on this computer; `--fix` removes the extras |
+| `iy update` | `isnady update` | Update every copy of isnady where it is installed (system, user, venv, pipx, clone) |
+| `iy doctor` | `isnady doctor` | Every copy of isnady on this computer and which one each command starts |
 | `iy -V` | `isnady -V` | Show the version (also `-v`, `--version`, `version`) |
 | `iy -h` | `isnady -h` | Show help |
 
