@@ -35,7 +35,7 @@ PAGE_SIZE = 25
 FIRST_BATCH = 4     # cards shown at once; the rest follow in small batches
 NEXT_BATCH = 3
 COLUMN_MAX = 1000   # reading column; keeps translation lines readable on wide windows
-MODE_LABELS = (("all", "All words"), ("any", "Any word"), ("phrase", "Exact phrase"))
+MODE_LABELS = (("all", "All words"), ("any", "Any word"), ("phrase", "Exact phrase"), ("meaning", "By meaning (AI)"))
 EXAMPLES = ("النيات", "الصلاة", "niyet", "komşu")
 
 
@@ -63,7 +63,7 @@ def _label(text: str = "", name: str = "", wrap: bool = False, selectable: bool 
 
 class ResultCard(QFrame):
     def __init__(self, result: core.SearchResult, chain: dict | None = None, open_chain=None,
-                 people: dict | None = None) -> None:
+                 people: dict | None = None, score: float | None = None) -> None:
         super().__init__()
         self.setObjectName("Card")
         t = theme.current()
@@ -78,6 +78,13 @@ class ResultCard(QFrame):
         head.addWidget(title)
         head.addSpacing(8)
         head.addWidget(number, 0, Qt.AlignmentFlag.AlignBaseline)
+        if score is not None:
+            meaning = _label(f"meaning {score:.2f}", "CardNumber")
+            meaning.setToolTip("How close this hadith is in meaning to the search, from 0 to 1: shared words "
+                               "and shared concepts learnt from the Arabic texts and their translations.\n"
+                               "A measure of closeness, not of authenticity.")
+            head.addSpacing(10)
+            head.addWidget(meaning, 0, Qt.AlignmentFlag.AlignBaseline)
         head.addStretch(1)
         if open_chain is not None:
             view = QPushButton("View chain")
@@ -154,6 +161,8 @@ class SearchPage(QWidget):
         self.mode_combo = QComboBox()
         for key, label in MODE_LABELS:
             self.mode_combo.addItem(label, key)
+        self.mode_combo.currentIndexChanged.connect(
+            lambda _i: self.whole_words.setEnabled(self.mode_combo.currentData() != "meaning"))
         self.whole_words = QCheckBox("Whole words only")
         self.whole_words.setToolTip(
             "Off: النيات also finds بالنيات, because Arabic words carry attached prefixes.\n"
@@ -310,6 +319,96 @@ class SearchPage(QWidget):
             limit=PAGE_SIZE, offset=offset,
         )
 
+    def _fetch(self, offset: int):
+        """One page of results: word search, or search by meaning (YZ1)."""
+        query = self._query(offset)
+        if query.mode != "meaning":
+            return core.search(self._conn, query)
+        from isnady.core import semantic
+
+        try:
+            meaning = semantic.search(self._conn, query)
+        except semantic.NotAvailable as exc:
+            self._page = None
+            self._show_meaning_notice(str(exc))
+            return None
+        for result, score in zip(meaning.results, meaning.scores):
+            self._scores[result.hadith_id] = score
+        self._meaning_stale = semantic.status(self._conn).get("stale", False)
+        return core.SearchPage(query, [], meaning.total, meaning.results, True, meaning.elapsed_ms)
+
+    def _show_meaning_notice(self, message: str) -> None:
+        """Meaning search cannot run yet: say why, and offer to build the index when that is the reason."""
+        from PySide6.QtWidgets import QPushButton
+
+        self._clear_body()
+        box_widget = QWidget()
+        box = QVBoxLayout(box_widget)
+        box.setContentsMargins(8, 40, 8, 8)
+        box.setSpacing(10)
+        title = _label("Search by meaning", "Hero", wrap=True)
+        title.setFont(theme.reading_font(24, bold=True))
+        text = _label(message + "\n\nSearch by meaning finds hadith that say the same thing in other words or in "
+                      "another language. It learns from the texts imported here; building it takes a few seconds "
+                      "to a minute.", "Lead", wrap=True)
+        box.addWidget(title)
+        box.addWidget(text)
+        if "not built" in message:
+            build = QPushButton("Build the meaning index now")
+            build.setObjectName("Primary")
+            build.clicked.connect(self.build_meaning_index)
+            row = QHBoxLayout()
+            row.addWidget(build)
+            row.addStretch(1)
+            box.addLayout(row)
+        self.body_layout.addWidget(box_widget)
+        self.body_layout.addStretch(1)
+        self.summary.setText("")
+
+    def build_meaning_index(self) -> None:
+        """Build the meaning index in the background (its own database connection)."""
+        from PySide6.QtCore import QThread, Signal
+
+        from isnady.core import semantic
+
+        missing = semantic.requirements_message()
+        if missing:
+            self._show_meaning_notice(missing)
+            return
+        if getattr(self, "_meaning_worker", None) is not None:
+            return
+
+        class _Build(QThread):
+            progress = Signal(str)
+            done = Signal(bool, str)
+
+            def run(self) -> None:
+                from isnady.data import db as _db
+
+                conn = _db.connect()
+                try:
+                    meta = semantic.build(conn, progress=self.progress.emit)
+                    self.done.emit(True, f"Meaning index ready: {meta['documents']:,} hadith, {meta['dims']} concepts, "
+                                         f"{meta['seconds']} s")
+                except Exception as exc:  # shown to the user, never lost
+                    self.done.emit(False, f"Meaning index failed: {exc}")
+                finally:
+                    conn.close()
+
+        worker = _Build()
+        self._meaning_worker = worker                   # kept until Qt reports it finished
+        worker.progress.connect(self._status)
+        worker.done.connect(self._meaning_built)
+        worker.finished.connect(lambda: setattr(self, "_meaning_worker", None))
+        self._status("Building the meaning index…")
+        worker.start()
+
+    def _meaning_built(self, ok: bool, message: str) -> None:
+        self._status(message)
+        semantic_mode = self.mode_combo.currentData() == "meaning"
+        if ok and semantic_mode and self.query_edit.text().strip():
+            self.run_search()
+
     def _rerun_if_searched(self, *_args) -> None:
         if self._page is not None and self.query_edit.text().strip():
             self.run_search()
@@ -328,7 +427,11 @@ class SearchPage(QWidget):
             return
         QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
-            self._page = core.search(self._conn, self._query(0))
+            self._scores = {}
+            page = self._fetch(0)
+            if page is None:
+                return
+            self._page = page
             self._results = list(self._page.results)
             self._render()
         finally:
@@ -339,7 +442,9 @@ class SearchPage(QWidget):
             return
         QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
-            page = core.search(self._conn, self._query(len(self._results)))
+            page = self._fetch(len(self._results))
+            if page is None:
+                return
             self._page = page
             self._results.extend(page.results)
             self._append_cards(page.results)
@@ -455,7 +560,8 @@ class SearchPage(QWidget):
             chains = core_isnad.chain(self._conn, result.hadith_id)
             chain = chains[0] if chains else None
             people = self._people(chain)
-            self.body_layout.addWidget(ResultCard(result, chain, self.open_chain.emit, people))
+            self.body_layout.addWidget(ResultCard(result, chain, self.open_chain.emit, people,
+                                                  getattr(self, "_scores", {}).get(result.hadith_id)))
         self._pending = self._pending[count:]
         if self._pending:
             if stretch is not None:
@@ -474,6 +580,9 @@ class SearchPage(QWidget):
             self.summary.setText("")
             return
         note = "" if page.used_index else ", index unavailable"
+        if page.query.mode == "meaning":
+            note = " by meaning" + (" · index older than the data (Tools → Build Meaning Index)"
+                                    if getattr(self, "_meaning_stale", False) else "")
         self.summary.setText(f"{page.total:,} hadith, {page.elapsed_ms} ms{note}")
 
     def retheme(self) -> None:

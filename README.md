@@ -22,6 +22,7 @@
   <a href="#-install">Install</a> •
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-search">Search</a> •
+  <a href="#-search-by-meaning-ai">Meaning (AI)</a> •
   <a href="#-chains-of-transmission">Chains</a> •
   <a href="#-educational-by-design">Educational</a> •
   <a href="#-appearance">Appearance</a> •
@@ -35,7 +36,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.0.8).** Search and chains of transmission work today, on data you import
+> **Pre-alpha (0.0.9).** Search and chains of transmission work today, on data you import
 > in one command. Narrators, scholars, gradings and the rest are being built, in the open.
 
 ---
@@ -179,6 +180,27 @@ iy narrator الزهري
 
 Results appear at once and fill in as you read; the window never waits for them.
 
+### 🧠 Search by meaning (AI)
+
+Choose **Match → By meaning (AI)** to find hadith that say the same thing in other words or in
+another language: `komşu hakları` finds the hadith on the neighbour's rights, a Turkish sentence
+finds its Arabic original, and `إنما الأعمال بالنيات` gathers the narrations of the hadith on
+intentions from every imported book. Each result shows how close it is in meaning (0–1), which
+says nothing about authenticity.
+
+The model is learnt on your computer from the texts you imported — Arabic beside its
+translations is a parallel corpus, and cross-lingual latent semantic analysis learns the
+concepts the languages share. Nothing is downloaded and no outside model is used. Measured on
+al-Bukhari and Abu Dawud: for hadith the model never saw while learning, a Turkish translation
+finds its Arabic original first 68% of the time and among the first ten 93% of the time (chance:
+0.8%). For an exact quotation the ordinary word search stays the better tool.
+
+```bash
+pip install "isnady[ai]"        # numpy and scipy
+iy ai build                     # a few seconds; or Tools → Build Meaning Index
+iy search --mode meaning "komşu hakları"
+```
+
 ---
 
 ## 🔗 Chains of transmission
@@ -321,6 +343,8 @@ script. The command line never loads Qt.
 | `iy search WORDS` | `isnady search WORDS` | Search; `--mode all\|any\|phrase`, `--whole-words`, `--book`, `--language`, `--limit` |
 | `iy chain BOOK NUMBER` | `isnady chain bukhari 1` | One chain, narrator by narrator, with who each one is; `--raw` adds the wording |
 | `iy isnads` | `isnady isnads` | Read every chain and report per book; `--rebuild` reads them again |
+| `iy ai build` | `isnady ai build` | Learn the meaning index from the imported texts (`iy ai status` to check) |
+| `iy search --mode meaning WORDS` | `isnady search --mode meaning "komşu hakları"` | Search by meaning and across languages |
 | `iy narrator NAME` | `isnady narrator الزهري` | A narrator: Ibn Hajar's verdict and rank, tabaqa, death year, books, other names |
 | `iy import FORMAT FILE-OR-URL` | `isnady import …` | Import a source; `--book`, `--language`, `--license`, `--user`, `--token-env`, `--api-key-env` |
 | `iy catalog list` | `isnady catalog list` | Built-in sources and your own, with what is imported — the same as File → Data Sources |

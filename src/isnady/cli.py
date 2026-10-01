@@ -9,6 +9,8 @@ Examples
   iy isnads
   iy import taqrib https://raw.githubusercontent.com/OpenITI/0875AH/master/data/0852IbnHajarCasqalani/0852IbnHajarCasqalani.TaqribTahdhib/0852IbnHajarCasqalani.TaqribTahdhib.JK000121-ara1.completed
   iy narrator الزهري
+  iy ai build
+  iy search --mode meaning "komşu hakları"
   iy import fawazahmed0 ./tur-bukhari.json
   iy import fawazahmed0 https://example.org/editions.json --book bukhari --language tur
   iy import fawazahmed0 https://example.org/ed.json --user bayram          (password is asked)
@@ -356,6 +358,8 @@ def cmd_stats(_args) -> int:
 
 def cmd_search(args) -> int:
     conn = _connect()
+    if args.mode == "meaning":
+        return _search_meaning(conn, args)
     core_search.ensure_index(conn, progress=lambda m: print(m, file=sys.stderr))
     q = core_search.SearchQuery(
         text=" ".join(args.words), mode=args.mode, whole_words=args.whole_words,
@@ -381,6 +385,58 @@ def cmd_search(args) -> int:
             if len(body) > args.width:
                 body = body[: args.width] + " ..."
             print(f"  [{t.language}] {body}")
+    return 0
+
+
+def _search_meaning(conn, args) -> int:
+    from isnady.core import semantic
+
+    q = core_search.SearchQuery(text=" ".join(args.words), collections=args.book or [],
+                                languages=args.language or [], limit=args.limit, offset=args.offset)
+    try:
+        st = semantic.status(conn)
+        page = semantic.search(conn, q)
+    except semantic.NotAvailable as exc:
+        print(exc, file=sys.stderr)
+        conn.close()
+        return 2
+    conn.close()
+    stale = "  (the meaning index is older than the data: iy ai build)" if st.get("stale") else ""
+    print(f"{page.total} hadith by meaning in {page.elapsed_ms} ms{stale}")
+    if page.unknown_words:
+        print(f"  no imported text uses: {', '.join(page.unknown_words)}")
+    for r, score in zip(page.results, page.scores):
+        print(f"\n{r.collection_name} #{r.number}   meaning {score:.2f}")
+        for t in r.texts:
+            body = " ".join(t.text.split())
+            print(f"  [{t.language}] {body[: args.width] + (' ...' if len(body) > args.width else '')}")
+    return 0
+
+
+def cmd_ai(args) -> int:
+    from isnady.core import semantic
+
+    conn = _connect()
+    try:
+        if args.action == "build":
+            meta = semantic.build(conn, dims=args.dims, progress=lambda m: print(f"  {m}"))
+            print(f"Done in {meta['seconds']} s: {meta['documents']:,} hadith, {meta['terms']:,} words, "
+                  f"{meta['dims']} concepts.")
+        else:
+            missing = semantic.requirements_message()
+            st = semantic.status(conn)
+            if missing:
+                print(missing)
+            elif not st.get("built"):
+                print("Meaning index: not built yet. Build it with: iy ai build")
+            else:
+                print(f"Meaning index: {st['documents']:,} hadith, {st['terms']:,} words, {st['dims']} concepts, "
+                      f"built {st['built_at']} ({st['method']})" + ("; OLDER than the data: iy ai build" if st["stale"] else ""))
+    except semantic.NotAvailable as exc:
+        print(exc, file=sys.stderr)
+        return 2
+    finally:
+        conn.close()
     return 0
 
 
@@ -568,7 +624,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     se = sub.add_parser("search", help="search hadith text (same engine as the app)")
     se.add_argument("words", nargs="+", help="words to search; Arabic diacritics and letter forms are ignored")
-    se.add_argument("--mode", choices=["all", "any", "phrase"], default="all")
+    se.add_argument("--mode", choices=["all", "any", "phrase", "meaning"], default="all",
+                    help="meaning: by meaning and across languages (needs: pip install \"isnady[ai]\" and iy ai build)")
     se.add_argument("--whole-words", action="store_true", help="match whole words only")
     se.add_argument("--book", action="append", help="collection key, e.g. bukhari (repeatable)")
     se.add_argument("--language", action="append", help="language name, e.g. Turkish (repeatable)")
@@ -581,6 +638,10 @@ def build_parser() -> argparse.ArgumentParser:
     isn = sub.add_parser("isnads", help="read the chains of transmission from the Arabic texts and report")
     isn.add_argument("--rebuild", action="store_true", help="read every chain again")
     isn.set_defaults(func=cmd_isnads)
+    ai = sub.add_parser("ai", help="artificial-intelligence features: build or check the meaning index")
+    ai.add_argument("action", choices=["build", "status"])
+    ai.add_argument("--dims", type=int, default=200, help="build: number of concepts (default 200)")
+    ai.set_defaults(func=cmd_ai)
     nr = sub.add_parser("narrator", help="look up a narrator: verdict, rank, tabaqa, death, books")
     nr.add_argument("words", nargs="+", help="part of the name, e.g. الزهري, 'سفيان بن عيينة', 'ابو هريرة'")
     nr.add_argument("--limit", type=int, default=5)

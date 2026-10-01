@@ -198,6 +198,9 @@ class MainWindow(QMainWindow):
                      tip="Read every chain of transmission from the Arabic texts again")
         self._action(tools_menu, "Identify Narrators Again", lambda: search.identify_narrators(),
                      tip="Match every name in the chains against the imported rijal works again")
+        tools_menu.addSeparator()
+        self._action(tools_menu, "Build Meaning Index (AI)", lambda: search.build_meaning_index(),
+                     tip="Learn the meaning index from the imported texts, for Match → By meaning (AI)")
 
         help_menu = bar.addMenu("&Help")
         self._action(help_menu, "Search Tips", lambda: dialogs.search_tips(self).exec())

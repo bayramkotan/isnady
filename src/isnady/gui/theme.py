@@ -231,6 +231,8 @@ def stylesheet(t: Tokens) -> str:
                            border-radius: 10px; padding: 10px 22px; font-weight: 600; font-size: 11pt; }}
     QPushButton#Primary:hover {{ background: {t.gold}; }}
     QPushButton#Primary:disabled {{ background: {t.border}; color: {t.muted}; }}
+    QCheckBox:disabled {{ color: {t.muted}; }}
+    QCheckBox::indicator:disabled {{ background: {t.window}; border-color: {t.border}; }}
     QPushButton#Quiet {{ background: {t.surface}; color: {t.lapis}; border: 1px solid {t.border};
                          border-radius: 8px; padding: 7px 16px; }}
     QPushButton#Quiet:hover {{ border-color: {t.lapis}; }}

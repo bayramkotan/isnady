@@ -12,6 +12,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "Bayram Kotan" }]
 requires-python = ">=3.10"
 dependencies = ["PySide6>=6.6"]
+
 keywords = ["hadith", "isnad", "rijal", "narrators", "jarh wa tadil", "islamic studies"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -25,6 +26,10 @@ classifiers = [
     "Topic :: Education",
     "Topic :: Religion",
 ]
+
+[project.optional-dependencies]
+# YZ (artificial intelligence) features, e.g. search by meaning: pip install "isnady[ai]"
+ai = ["numpy>=1.24", "scipy>=1.10"]
 
 [project.urls]
 Homepage = "https://github.com/bayramkotan/isnady"
