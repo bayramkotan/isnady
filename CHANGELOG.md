@@ -1,0 +1,72 @@
+# Changelog
+
+Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
+is taken from its section here.
+
+## [0.1.1] — 2026-10-04
+
+**Desktop applications, one release for every place, and two new sections.**
+
+- **Desktop applications** on every GitHub Release: a Windows installer (`.exe`), a Linux `AppImage`, and
+  macOS apps (`.dmg`, Apple silicon and Intel) — isnady with everything it needs, including the AI features.
+  The application has its own icon.
+- **One release, everywhere at once**: a version tag builds the Python package and the three applications
+  first; only when every build succeeds is anything published — PyPI, then the GitHub Release with all files
+  and their checksums. A check stops the release if the version differs anywhere. The npm README is now made
+  from this README, so GitHub, PyPI and npm say the same.
+- **Books**: open every imported work and read it in its own order — a hadith collection chapter by chapter,
+  each hadith with its card; Ibn Hajar's *Taqrib* letter by letter. Previous / next, find in a chapter,
+  languages, isnady remembers where you were. *In its book* on every search result opens the hadith in its
+  chapter. Works are general (any depth, any kind of book), the shape of isnady's own exchange format.
+- **Shia Rijal**: al-Najashi's *Rijal* — 1,266 narrators — read on the Imami scale: reliability (thiqa,
+  praised, weak) and creed (Imami, Waqifi, Fathi, Zaydi, 'ammi …), giving the classical four (thiqa, mamduh,
+  muwaththaq, da'if); the critic's words always shown; checked on four blind samples. Shia narrators are never
+  matched to the (Sunni) chains. *Open his entry in the book* on both Narrators pages.
+- Command line: `iy book`, `iy import najashi`.
+- Database schema 7, upgraded in place. Re-import the Taqrib (Data Sources → Update) to read it as a book.
+
+## [0.1.0] — 2026-10-04
+
+- **Narrators** page: every narrator of the Taqrib, searchable in Arabic or Latin letters, filtered by tabaqa,
+  rank and book; Ibn Hajar's verdict, tabaqa, death year, teachers and students in the chains.
+- **Hadith Scholars** page: compilers, graders and critics measured from the data — agreement between graders,
+  Cohen's kappa, a strictness index (the classical mutashaddid / mutasahil), with plain explanations.
+- **Takhrij**: the other narrations of each hadith across the imported books ("Also narrated in").
+- Names in Latin letters, Turkish and English. The Taqrib reader identifies 52.1% of the names in the chains.
+- Pages follow the window's width; Qt's harmless font messages are silenced.
+
+## [0.0.9] — 2026-10-01
+
+- **Search by meaning (AI)**: cross-lingual latent semantic analysis learnt from the imported texts — a Turkish
+  query finds its Arabic original (92.8% in the first ten for hadith never seen while learning).
+  `pip install "isnady[ai]"`, `iy ai build`, `iy search --mode meaning`.
+
+## [0.0.8] — 2026-10-01
+
+- `iy update` updates every copy of isnady **where it is installed** (system, user, virtual environment, pipx,
+  clone); nothing is ever removed or moved. The one-line installers follow the same rule.
+
+## [0.0.7] — 2026-09-30
+
+- `iy doctor`, one-line installers (`install.sh`, `install.ps1`), a quiet installation check at start.
+
+## [0.0.6] — 2026-09-30
+
+- Narrators identified in the chains from Ibn Hajar's *Taqrib al-Tahdhib*; data sources inside the application
+  with *Import all*; a movable data folder.
+
+## [0.0.5] — 2026-09-29
+
+- Appearance settings (fonts, sizes, colours per script); one command under several names (`isnady`, `iy`).
+
+## [0.0.4] — 2026-09-29
+
+- Search no longer freezes the window: results are drawn in steps, Arabic text is shaped once.
+
+## [0.0.3] — 2026-09-29
+
+- A database that cannot be opened is explained on the page, with the way to repair it.
+
+## [0.0.1] – [0.0.2] — 2026-09
+
+- First releases: search across hadith collections in Arabic and translations; chains of transmission.

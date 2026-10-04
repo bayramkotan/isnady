@@ -1,12 +1,33 @@
-name: Publish to PyPI
+# One release, everywhere at once (REL1). A tag v* → check → build everything → publish.
+# Nothing is published unless every build succeeds, so GitHub, PyPI and the applications never differ.
+# The file name (publish.yml) and the "pypi" environment are what PyPI's trusted publishing is tied to: keep them.
+name: Release
 
 on:
   push:
     tags:
       - "v*"
 
+permissions:
+  contents: read
+
 jobs:
-  build:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: One version everywhere, npm README in step, CHANGELOG ready
+        run: python tools/release_check.py "${GITHUB_REF_NAME}" --notes release-notes.md
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-notes
+          path: release-notes.md
+
+  python:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -20,8 +41,40 @@ jobs:
           name: dist
           path: dist/
 
+  desktop:
+    needs: check
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: windows-latest
+            kind: windows
+          - os: ubuntu-22.04          # an older glibc: the AppImage then runs on older and newer Linux alike
+            kind: linux
+          - os: macos-15              # Apple silicon
+            kind: macos
+          - os: macos-15-intel        # Intel
+            kind: macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: isnady with its AI extra, and PyInstaller
+        run: python -m pip install ".[ai]" pyinstaller
+      - name: Inno Setup (Windows installer)
+        if: matrix.kind == 'windows'
+        run: choco install innosetup -y --no-progress
+      - name: Build the application
+        run: python packaging/build_app.py ${{ matrix.kind }} ${{ github.ref_name }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: app-${{ matrix.os }}
+          path: dist-app/*
+
   publish:
-    needs: build
+    needs: [python, desktop]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -32,3 +85,26 @@ jobs:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts/
+      - name: Gather the files and their checksums
+        run: |
+          mkdir release
+          find artifacts -type f \( -name '*.exe' -o -name '*.AppImage' -o -name '*.dmg' -o -name '*.whl' -o -name '*.tar.gz' \) -exec cp {} release/ \;
+          cd release && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" release/* \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "isnady ${GITHUB_REF_NAME#v}" \
+            --notes-file artifacts/release-notes/release-notes.md

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=isnady
+GenericName=Hadith search and chains of transmission
+Comment=Search hadith, follow their chains of transmission, read the books
+Exec=isnady %F
+Icon=isnady
+Terminal=false
+Categories=Education;Literature;
+Keywords=hadith;isnad;rijal;Arabic;

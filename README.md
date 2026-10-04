@@ -24,6 +24,8 @@
   <a href="#-search">Search</a> •
   <a href="#-narrators">Narrators</a> •
   <a href="#-hadith-scholars">Scholars</a> •
+  <a href="#-books">Books</a> •
+  <a href="#-shia-rijal">Shia Rijal</a> •
   <a href="#-search-by-meaning-ai">Meaning (AI)</a> •
   <a href="#-chains-of-transmission">Chains</a> •
   <a href="#-educational-by-design">Educational</a> •
@@ -38,7 +40,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.1.0).** Search and chains of transmission work today, on data you import
+> **Pre-alpha (0.1.1).** Search and chains of transmission work today, on data you import
 > in one command. Narrators, scholars, gradings and the rest are being built, in the open.
 
 ---
@@ -64,6 +66,19 @@ did their work.
 ---
 
 ## 📦 Install
+
+### Desktop application
+
+Download isnady for your system from the **[latest release](https://github.com/bayramkotan/isnady/releases/latest)** —
+everything included, the AI features too:
+
+| System | File |
+|---|---|
+| Windows 10/11 | `isnady-<version>-windows-setup.exe` — Windows may say the publisher is unknown (the app is not signed): *More info → Run anyway* |
+| Linux | `isnady-<version>-linux-x86_64.AppImage` — make it executable (`chmod +x`) and run it |
+| macOS, Apple silicon / Intel | `isnady-<version>-macos-arm64.dmg` / `…-macos-x86_64.dmg` — the first time, right-click the app and choose *Open* (it is not notarized) |
+
+### With Python
 
 One line, on any system. Install isnady wherever you like — for all users, for yourself, in a
 virtual environment, with pipx: the same line installs it, and later updates every copy where it
@@ -210,6 +225,48 @@ them independent.
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/scholars.png" alt="Hadith Scholars — al-Albani: his grades on Sunan Abi Dawud and his agreement with the other graders" width="850">
 </p>
+
+### 📚 Books
+
+isnady is not only for searching: the **Books** section opens every imported work and reads it in
+its own order. A hadith collection reads chapter by chapter, each hadith with its card (chain,
+narrators, other narrations, grades) and the languages you choose; Ibn Hajar's *Taqrib* reads
+letter by letter and name by name, each entry with its narrator a click away. Find within a
+chapter, go to the previous or next one, and isnady remembers where you were. From any search
+result, **In its book** opens the hadith where it stands, among the hadith of its chapter.
+
+Books are not tied to hadith collections: a work is a tree of any depth (volume, book, chapter,
+section) whose leaves are hadith, narrators' entries or paragraphs — so the commentaries, manuals
+of fiqh and other works of the scholars can be read the same way as they are added.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/books.png" alt="Books — reading Sahih al-Bukhari chapter by chapter, Arabic and Turkish, each hadith with its chain" width="850">
+</p>
+
+```bash
+iy book                      # the books
+iy book bukhari              # its chapters
+iy book bukhari 2 --language Turkish
+iy book taqrib 1
+```
+
+### 🕌 Shia Rijal
+
+The Imami tradition's judgments on narrators, on its own terms: al-Najashi's *Rijal* — 1,266
+authors and narrators — read along the two axes of the Imami critics, **reliability** (thiqa;
+praised — *jalil*, *wajh*, *'ayn*; weak) and **creed** (Imami, or Waqifi, Fathi, Zaydi, *'ammi* …),
+which together give the classical four: an Imami *thiqa*, a praised narrator (*mamduh*), a *thiqa*
+of another school (*muwaththaq*), a weak one. The critic's own words are always shown; a creed he
+does not state stays unknown; nothing is mapped onto Ibn Hajar's twelve ranks. Checked on four
+blind samples of entries, each round's misses corrected. The book itself reads in **Books**, and
+the Shia narrators are kept apart from the (Sunni) chains: no chain link is matched to them.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/shia-rijal.png" alt="Shia Rijal — al-Najashi on 'Ali b. al-Husayn b. Babawayh: his words and their reading on the Imami scale" width="850">
+</p>
+
+Next: al-Tusi's *Rijal* and *Fihrist*, al-'Allama al-Hilli's *Khulasat al-aqwal*, Ibn Dawud's
+*Rijal*, al-Kashshi's reports, and the Four Books with their chains.
 
 ### 🧠 Search by meaning (AI)
 
@@ -383,6 +440,8 @@ script. The command line never loads Qt.
 | `iy chain BOOK NUMBER` | `isnady chain bukhari 1` | One chain, narrator by narrator, with who each one is; `--raw` adds the wording |
 | `iy isnads` | `isnady isnads` | Read every chain and report per book; `--rebuild` reads them again |
 | `iy ai build` | `isnady ai build` | Learn the meaning index from the imported texts (`iy ai status` to check) |
+| `iy import najashi FILE` | `isnady catalog import najashi` | al-Najashi's Rijal: Shia narrators read on the Imami scale, and the book |
+| `iy book [KEY [CHAPTER]]` | `isnady book bukhari 2` | The books; a book's chapters; a chapter read in order |
 | `iy scholar [NAME]` | `isnady scholar albani` | The scholars in the data, or one of them with his measured statistics |
 | `iy tahric BOOK NUMBER` | `isnady tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |
 | `iy search --mode meaning WORDS` | `isnady search --mode meaning "komşu hakları"` | Search by meaning and across languages |
@@ -446,6 +505,14 @@ Sunan Abu Dawud #472
 
 ---
 
+## 🔁 Versions and releases
+
+One version number on GitHub, PyPI and npm, always. A release builds the Python package and the Windows,
+Linux and macOS applications first; only when every build succeeds is anything published — PyPI, then the
+[GitHub Release](https://github.com/bayramkotan/isnady/releases) with every file and its checksum. What each
+version brought is in the [CHANGELOG](https://github.com/bayramkotan/isnady/blob/main/CHANGELOG.md). The
+README on npm is made from this one.
+
 ## 🏗️ Build from Source
 
 ```bash
@@ -458,6 +525,10 @@ iy
 Python 3.10 or newer and PySide6. The command line alone needs no PySide6.
 
 ---
+
+
+The desktop application of your own system: `pip install ".[ai]" pyinstaller`, then
+`python packaging/build_app.py linux|windows|macos VERSION` (Windows also needs Inno Setup).
 
 ## 📝 License
 

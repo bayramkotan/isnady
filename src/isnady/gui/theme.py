@@ -234,6 +234,9 @@ def stylesheet(t: Tokens) -> str:
     QCheckBox:disabled {{ color: {t.muted}; }}
     QListWidget#NarratorList {{ background: transparent; border: none; outline: none; }}
     QLabel#RowLatin {{ color: {t.lapis}; font-weight: 600; }}
+    QTreeWidget#Contents {{ background: transparent; border: none; outline: none; color: {t.ink}; }}
+    QTreeWidget#Contents::item {{ padding: 4px 2px; }}
+    QTreeWidget#Contents::item:selected {{ background: {t.lapis_soft}; color: {t.ink}; }}
     QLabel#RowTitle {{ color: {t.ink}; font-weight: 700; }}
     QFrame#Help {{ background: {t.lapis_soft}; border-radius: 10px; }}
     QListWidget#NarratorList::item {{ border-bottom: 1px solid {t.border}; }}

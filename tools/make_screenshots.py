@@ -38,6 +38,12 @@ w.nav.setCurrentRow(w._narrators_row); w.narrators_page.query.setText("Ibn Umar"
 w.narrators_page.list.setCurrentRow(0); settle(); w.grab().save(D + "narrators.png")
 w.nav.setCurrentRow([k for k, *_ in __import__("isnady.gui.main_window", fromlist=["SECTIONS"]).SECTIONS].index("scholars"))
 w.scholars_page.select("albani"); settle(); w.grab().save(D + "scholars.png")
+w.nav.setCurrentRow(w._books_row); settle(1500)
+w.books_page.select_work("bukhari"); settle(); w.books_page.open_chapter(w.books_page._order[1]); settle(1500)
+w.grab().save(D + "books.png")
+w.books_page.select_work("taqrib"); settle(1500); w.grab().save(D + "books-taqrib.png")
+w.nav.setCurrentRow(w._shia_row); w.shia_page.query.setText("بابويه"); settle(1200)
+w.shia_page.list.setCurrentRow(0); settle(); w.grab().save(D + "shia-rijal.png")
 from isnady.gui.preferences import PreferencesDialog
 d = PreferencesDialog(w); d.resize(900, 660); d.show(); settle(); d.grab().save(D + "preferences.png"); d.close()
 theme.set_theme_mode("system")

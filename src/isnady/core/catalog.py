@@ -24,6 +24,8 @@ from isnady.data.paths import data_dir
 FAWAZ_INDEX = "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json"
 FAWAZ_SOURCE = "fawazahmed0/hadith-api"
 FAWAZ_KEY = "fawazahmed0-hadith-api"
+NAJASHI_URL = ("https://raw.githubusercontent.com/OpenITI/0450AH/master/data/0450Najashi/0450Najashi.Rijal/"
+               "0450Najashi.Rijal.Shia002931-ara1.mARkdown")
 TAQRIB_URL = ("https://raw.githubusercontent.com/OpenITI/0875AH/master/data/0852IbnHajarCasqalani/"
               "0852IbnHajarCasqalani.TaqribTahdhib/0852IbnHajarCasqalani.TaqribTahdhib.JK000121-ara1.completed")
 TAQRIB_SOURCE = "Ibn Hajar, Taqrib al-Tahdhib (OpenITI)"
@@ -81,6 +83,13 @@ def builtin_entries() -> list[Entry]:
                     "marks; identifies the narrators in every chain. From the OpenITI corpus (licence not stated "
                     "there, so kept on this computer only).",
         license=None, source_name=TAQRIB_SOURCE, source_key="openiti-taqrib"))
+    out.append(Entry(
+        id="najashi", title="Rijal al-Najashi — al-Najashi (Shia)", kind="rijal", format_id="najashi",
+        location=NAJASHI_URL,
+        description="1,266 authors and narrators with al-Najashi's words, read on the Shia scale (thiqa, praised, "
+                    "muwaththaq, weak; creed: Imami, Waqifi, Fathi, Zaydi …); readable in Books. From the OpenITI "
+                    "corpus (licence not stated there, so kept on this computer only).",
+        license=None, source_name="al-Najashi, Rijal (OpenITI)", source_key="openiti-najashi"))
     return out
 
 

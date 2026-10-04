@@ -50,12 +50,15 @@ class Index:
         self.tabaqa, self.marks, self.full = {}, defaultdict(set), {}
         self.names: dict[str, list[tuple[int, list[str], bool]]] = defaultdict(list)   # first token -> entries
         self.exact: dict[str, set[int]] = defaultdict(set)
-        for pid, tabaqa, name in conn.execute("SELECT id, tabaqa, name_ar FROM persons"):
+        # only narrators of the chains' own tradition: every imported chain is Sunni, and a Shia rijal work's
+        # narrator with the same name is a different source's judgment, not a candidate for these links
+        for pid, tabaqa, name in conn.execute("SELECT id, tabaqa, name_ar FROM persons WHERE COALESCE(tradition, 'sunni') = 'sunni'"):
             self.tabaqa[pid] = tabaqa
             self.full[pid] = tokens(name)
         for pid, mark in conn.execute("SELECT person_id, mark FROM person_marks"):
             self.marks[pid].add(mark)
-        for pid, name, kind in conn.execute("SELECT person_id, name, kind FROM person_names"):
+        for pid, name, kind in conn.execute("SELECT n.person_id, n.name, n.kind FROM person_names n JOIN persons p ON p.id = n.person_id "
+                                            "WHERE COALESCE(p.tradition, 'sunni') = 'sunni'"):
             toks = tokens(name)
             if toks:
                 self.names[toks[0]].append((pid, toks, kind != "full"))
@@ -229,16 +232,23 @@ def describe(conn: sqlite3.Connection, person_id: int) -> dict | None:
 
     p = conn.execute(
         """SELECT p.id, p.key, p.name_ar, p.kunya, p.tabaqa, p.generation, p.death_year_ah, p.death_year_note,
-                  s.name AS source FROM persons p LEFT JOIN sources s ON s.id = p.source_id WHERE p.id = ?""",
+                  p.tradition, s.name AS source FROM persons p LEFT JOIN sources s ON s.id = p.source_id WHERE p.id = ?""",
         (person_id,),
     ).fetchone()
     if p is None:
         return None
     verdicts = [dict(v) for v in conn.execute(
-        "SELECT critic_name, work, phrase, rank_scheme, rank FROM verdicts WHERE person_id = ? ORDER BY id",
+        "SELECT critic_name, work, phrase, rank_scheme, rank, tradition, madhhab FROM verdicts WHERE person_id = ? ORDER BY id",
         (person_id,))]
+    from isnady.core import shia_rijal
+
     for v in verdicts:
-        v["rank_label"] = RANK_LABELS.get(v["rank"], ("", ""))[1] if v["rank"] else ""
+        if v["rank_scheme"] == "shia":
+            v["rank_label"] = shia_rijal.RANKS[v["rank"]][1] if v["rank"] else ""
+            v["madhhab_label"] = shia_rijal.MADHHAB_LABELS.get(v["madhhab"] or "", "")
+        else:
+            v["rank_label"] = RANK_LABELS.get(v["rank"], ("", ""))[1] if v["rank"] else ""
+            v["madhhab_label"] = ""
     marks = [m[0] for m in conn.execute("SELECT mark FROM person_marks WHERE person_id = ?", (person_id,))]
     names = [n[0] for n in conn.execute(
         "SELECT name FROM person_names WHERE person_id = ? AND kind != 'full' ORDER BY kind, name", (person_id,))]
@@ -394,20 +404,21 @@ def search_persons(conn: sqlite3.Connection, text: str, limit: int = 20) -> list
 
 
 # ------------------------------------------------------------------ the Narrators page
-def overview(conn: sqlite3.Connection) -> dict:
-    persons = conn.execute("SELECT COUNT(*) FROM persons").fetchone()[0]
+def overview(conn: sqlite3.Connection, tradition: str = "sunni") -> dict:
+    persons = conn.execute("SELECT COUNT(*) FROM persons WHERE COALESCE(tradition, 'sunni') = ?", (tradition,)).fetchone()[0]
     links = conn.execute("SELECT COUNT(*), SUM(person_id IS NOT NULL) FROM isnad_links").fetchone()
     works = [r[0] for r in conn.execute(
-        "SELECT DISTINCT s.name FROM persons p JOIN sources s ON s.id = p.source_id ORDER BY s.name")]
+        "SELECT DISTINCT s.name FROM persons p JOIN sources s ON s.id = p.source_id WHERE COALESCE(p.tradition, 'sunni') = ? "
+        "ORDER BY s.name", (tradition,))]
     return {"persons": persons, "links": links[0] or 0, "identified": links[1] or 0, "works": works}
 
 
 def browse(conn: sqlite3.Connection, text: str = "", tabaqa: int | None = None, rank: int | None = None,
-           book: str | None = None, limit: int = 300) -> tuple[list[dict], int]:
+           book: str | None = None, limit: int = 300, tradition: str = "sunni") -> tuple[list[dict], int]:
     """Narrators for the list: (rows, total before the limit), most often in the chains first."""
     from isnady.core.rijal import COLLECTION_MARKS, display_name
 
-    where, args = [], []
+    where, args = ["COALESCE(p.tradition, 'sunni') = ?"], [tradition]
     if text.strip():
         ids = [pid for pid, _n in search_persons(conn, text, limit=5000)]
         if not ids:
@@ -416,7 +427,9 @@ def browse(conn: sqlite3.Connection, text: str = "", tabaqa: int | None = None, 
     if tabaqa:
         where.append("p.tabaqa = ?")
         args.append(tabaqa)
-    if rank:
+    if rank == -1:
+        where.append("v.rank IS NULL")                 # "no judgment" (a Shia rijal work silent on him)
+    elif rank:
         where.append("v.rank = ?")
         args.append(rank)
     if book and book in COLLECTION_MARKS:
@@ -424,7 +437,7 @@ def browse(conn: sqlite3.Connection, text: str = "", tabaqa: int | None = None, 
         where.append(f"EXISTS (SELECT 1 FROM person_marks m WHERE m.person_id = p.id AND m.mark IN "
                      f"({','.join('?' * len(marks))}))")
         args.extend(marks)
-    sql = f"""SELECT p.id, p.name_ar, p.tabaqa, p.death_year_ah, v.phrase, v.rank,
+    sql = f"""SELECT p.id, p.name_ar, p.tabaqa, p.death_year_ah, v.phrase, v.rank, v.madhhab,
                      (SELECT COUNT(*) FROM isnad_links l WHERE l.person_id = p.id) AS in_chains
               FROM persons p LEFT JOIN verdicts v ON v.id = (SELECT MIN(id) FROM verdicts WHERE person_id = p.id)
               {'WHERE ' + ' AND '.join(where) if where else ''}
@@ -435,7 +448,7 @@ def browse(conn: sqlite3.Connection, text: str = "", tabaqa: int | None = None, 
         rank_of_id = {pid: i for i, pid in enumerate(ids)}
         rows.sort(key=lambda r: rank_of_id.get(r[0], len(ids)))
     out = [{"id": r[0], "name": display_name(r[1]), "tabaqa": r[2], "death": r[3], "verdict": r[4] or "",
-            "rank": r[5], "in_chains": r[6]} for r in rows[:limit]]
+            "rank": r[5], "madhhab": r[6], "in_chains": r[7]} for r in rows[:limit]]
     return out, len(rows)
 
 

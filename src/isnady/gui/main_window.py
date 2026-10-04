@@ -118,7 +118,12 @@ class MainWindow(QMainWindow):
         from isnady.gui.narrators_page import NarratorsPage
 
         self.narrators_page = NarratorsPage(self.search_page.connection)
+        self.shia_page = NarratorsPage(self.search_page.connection, tradition="shia")
+        from isnady.gui.books_page import BooksPage
         from isnady.gui.scholars_page import ScholarsPage
+
+        self.books_page = BooksPage(self.search_page.connection, self.search_page.make_card)
+        self._books_loaded = False
 
         self.scholars_page = ScholarsPage(self.search_page.connection)
         for key, label, text in SECTIONS:
@@ -132,6 +137,10 @@ class MainWindow(QMainWindow):
                 page = self.narrators_page
             elif key == "scholars":
                 page = self.scholars_page
+            elif key == "books":
+                page = self.books_page
+            elif key == "shia_rijal":
+                page = self.shia_page
             else:
                 page = _placeholder(label, text)
             self.pages.addWidget(page)
@@ -149,6 +158,18 @@ class MainWindow(QMainWindow):
         self.scholars_page.open_chain.connect(self._open_chain)
         self.search_page.data_changed.connect(self.scholars_page.refresh)
         self.scholars_page.refresh()
+        self._books_row = [k for k, _l, _t in SECTIONS].index("books")
+        self.books_page.open_chain.connect(self._open_chain)
+        self.books_page.open_narrator.connect(self._open_narrator)
+        self.search_page.open_book.connect(self._open_in_book)
+        self.search_page.data_changed.connect(lambda: setattr(self, "_books_loaded", False))
+        self.nav.currentRowChanged.connect(self._load_books_when_shown)
+        self._shia_row = [k for k, _l, _t in SECTIONS].index("shia_rijal")
+        self.shia_page.open_sources.connect(lambda: self._preferences("sources"))
+        self.search_page.data_changed.connect(self.shia_page.refresh)
+        for page in (self.narrators_page, self.shia_page):
+            page.open_in_book.connect(self._open_person_in_book)
+        self.shia_page.refresh()
         self.nav.currentRowChanged.connect(self.pages.setCurrentIndex)
         self.nav.setCurrentRow(0)
 
@@ -234,6 +255,22 @@ class MainWindow(QMainWindow):
         self._action(help_menu, "Report an Issue", lambda: QDesktopServices.openUrl(QUrl(dialogs.ISSUES_URL)))
         help_menu.addSeparator()
         self._action(help_menu, "About isnady", lambda: dialogs.about(self).exec())
+
+    def _load_books_when_shown(self, row: int) -> None:
+        """The Books section reads its first chapter only when it is opened, not at start."""
+        if row == self._books_row and not self._books_loaded:
+            self._books_loaded = True
+            self.books_page.refresh()
+
+    def _open_person_in_book(self, person_id: int) -> None:
+        self._books_loaded = True
+        self.nav.setCurrentRow(self._books_row)
+        self.books_page.show_person(person_id)
+
+    def _open_in_book(self, hadith_id: int) -> None:
+        self._books_loaded = True
+        self.nav.setCurrentRow(self._books_row)
+        self.books_page.show_hadith(hadith_id)
 
     def _open_narrator(self, person_id: int) -> None:
         self.nav.setCurrentRow(self._narrators_row)

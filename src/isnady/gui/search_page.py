@@ -62,7 +62,8 @@ def _label(text: str = "", name: str = "", wrap: bool = False, selectable: bool 
 
 class ResultCard(QFrame):
     def __init__(self, result: core.SearchResult, chain: dict | None = None, open_chain=None,
-                 people: dict | None = None, score: float | None = None, related: list | None = None) -> None:
+                 people: dict | None = None, score: float | None = None, related: list | None = None,
+                 open_book=None) -> None:
         super().__init__()
         self.setObjectName("Card")
         t = theme.current()
@@ -85,6 +86,14 @@ class ResultCard(QFrame):
             head.addSpacing(10)
             head.addWidget(meaning, 0, Qt.AlignmentFlag.AlignBaseline)
         head.addStretch(1)
+        if open_book is not None:
+            book = QPushButton("In its book")
+            book.setObjectName("Link")
+            book.setCursor(Qt.CursorShape.PointingHandCursor)
+            book.setToolTip("Read this hadith where it stands in its book, among the hadith of its chapter")
+            book.clicked.connect(lambda: open_book(result.hadith_id))
+            head.addWidget(book)
+            head.addSpacing(14)
         if open_chain is not None:
             view = QPushButton("View chain")
             view.setObjectName("Link")
@@ -155,6 +164,7 @@ class ResultCard(QFrame):
 
 class SearchPage(QWidget):
     open_chain = Signal(int)          # hadith id; the main window shows it on the Isnad Chains page
+    open_book = Signal(int)           # hadith id; the main window opens its book at its chapter (Books)
     data_changed = Signal()
 
     def __init__(self, status_message=None, parent=None) -> None:
@@ -589,12 +599,7 @@ class SearchPage(QWidget):
         stretch = self.body_layout.takeAt(self.body_layout.count() - 1)   # trailing stretch
         self.more_button.setParent(None)
         for result in self._pending[:count]:
-            chains = core_isnad.chain(self._conn, result.hadith_id)
-            chain = chains[0] if chains else None
-            people = self._people(chain)
-            self.body_layout.addWidget(ResultCard(result, chain, self.open_chain.emit, people,
-                                                  getattr(self, "_scores", {}).get(result.hadith_id),
-                                                  self._related(result.hadith_id)))
+            self.body_layout.addWidget(self.make_card(result, getattr(self, "_scores", {}).get(result.hadith_id)))
         self._pending = self._pending[count:]
         if self._pending:
             if stretch is not None:
@@ -647,6 +652,16 @@ class SearchPage(QWidget):
 
     def connection(self):
         return self._conn
+
+    def make_card(self, result: core.SearchResult, score: float | None = None, in_book: bool = False) -> "ResultCard":
+        """The card of one hadith — its chain, identified narrators, other narrations — as every page shows it.
+        in_book: the card is already in its book (the reader), so it has no "In its book" link."""
+        chains = core_isnad.chain(self._conn, result.hadith_id)
+        chain = chains[0] if chains else None
+        card = ResultCard(result, chain, self.open_chain.emit, self._people(chain), score, self._related(result.hadith_id),
+                          None if in_book else self.open_book.emit)
+        card.setProperty("hadith_id", result.hadith_id)
+        return card
 
     def _people(self, chain: dict | None) -> dict:
         """Descriptions of the identified narrators of a chain, cached for the session."""

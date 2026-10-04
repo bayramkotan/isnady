@@ -163,3 +163,36 @@ def script_for_language(language: str | None, direction: str | None = None) -> s
     if script:
         return script
     return "arabic" if direction == "rtl" else "latin"
+
+
+# ------------------------------------------------------------------ state (not settings)
+# Where the reader was, which languages it showed: remembered between runs, never validated, never listed by
+# `iy config` — so settings.json stays a clean list of the user's choices.
+STATE_FILE = "state.json"
+
+
+def _state_path() -> Path:
+    return settings_path().with_name(STATE_FILE)
+
+
+def state_get(key: str, default=None):
+    try:
+        return json.loads(_state_path().read_text(encoding="utf-8")).get(key, default)
+    except (OSError, ValueError):
+        return default
+
+
+def state_set(key: str, value) -> None:
+    path = _state_path()
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        data = {}
+    data[key] = value
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+        tmp.replace(path)
+    except OSError:
+        pass                      # remembering a position must never stop reading

@@ -36,6 +36,15 @@ def gui_main() -> int:
         # category is silenced; every other Qt warning still shows. A user's own QT_LOGGING_RULES wins.
         QLoggingCategory.setFilterRules("qt.text.font.db=false")
     app = QApplication(sys.argv[:1])
+    from importlib import resources
+
+    from PySide6.QtGui import QIcon
+
+    icon = resources.files("isnady") / "assets" / "icons" / "isnady.png"
+    if icon.is_file():
+        app.setWindowIcon(QIcon(str(icon)))        # the window, the taskbar and the dock
+    app.setApplicationName("isnady")
+    app.setDesktopFileName("isnady")
     app.setApplicationName(APP_NAME)
     app.setApplicationVersion(__version__)
     theme.load_fonts()

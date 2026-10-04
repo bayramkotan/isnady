@@ -13,6 +13,7 @@ Examples
   iy search --mode meaning "komşu hakları"
   iy tahric bukhari 1
   iy scholar albani
+  iy book bukhari 2
   iy import fawazahmed0 ./tur-bukhari.json
   iy import fawazahmed0 https://example.org/editions.json --book bukhari --language tur
   iy import fawazahmed0 https://example.org/ed.json --user bayram          (password is asked)
@@ -451,6 +452,52 @@ def cmd_ai(args) -> int:
     return 0
 
 
+def cmd_book(args) -> int:
+    from isnady.core import works
+
+    conn = _connect()
+    works.ensure_collection_works(conn)
+    if not args.key:
+        for w in works.list_works(conn):
+            print(f"  {w['key']:12} {w['title']:32} {w['kind']:8} {w['leaves']:6,} items, {w['chapters']} chapters")
+        conn.close()
+        return 0
+    work = works.find_work(conn, args.key)
+    if work is None:
+        print(f"No book '{args.key}'. See: iy book", file=sys.stderr)
+        conn.close()
+        return 1
+    order = works.reading_order(conn, work["id"])
+    if args.chapter is None:
+        for i, cid in enumerate(order, 1):
+            trail = " › ".join((p["title"] or "") for p in works.path(conn, cid))
+            print(f"  {i:4}  {trail}  ({works.leaves(conn, cid, 0, 0)[1]})")
+        conn.close()
+        return 0
+    if not 1 <= args.chapter <= len(order):
+        print(f"Chapter {args.chapter} does not exist: 1 to {len(order)}", file=sys.stderr)
+        conn.close()
+        return 1
+    cid = order[args.chapter - 1]
+    items, total = works.leaves(conn, cid, 0, args.limit)
+    print(" › ".join([work["title"]] + [(p["title"] or "") for p in works.path(conn, cid)]) + f"   ({total} items)")
+    query = core_search.SearchQuery(text="", languages=args.language or [])
+    for it in items:
+        if it["kind"] == "hadith":
+            r = core_search._load_result(conn, it["hadith_id"], [], query)
+            print(f"\n#{r.number}")
+            for t in r.texts:
+                body = " ".join(t.text.split())
+                print(f"  [{t.language}] {body[: args.width] + (' ...' if len(body) > args.width else '')}")
+        else:
+            body = " ".join((it["text"] or it["title"] or "").split())
+            print(f"\n{('#' + it['label']) if it['label'] else '→'} {body[: args.width] + (' ...' if len(body) > args.width else '')}")
+    if total > len(items):
+        print(f"\n… {total - len(items)} more (--limit)")
+    conn.close()
+    return 0
+
+
 def cmd_scholar(args) -> int:
     from isnady.core import scholars as S
 
@@ -722,6 +769,13 @@ def build_parser() -> argparse.ArgumentParser:
     ai.add_argument("action", choices=["build", "status"])
     ai.add_argument("--dims", type=int, default=200, help="build: number of concepts (default 200)")
     ai.set_defaults(func=cmd_ai)
+    bk = sub.add_parser("book", help="read a book in its own order: the list, a book's chapters, or a chapter")
+    bk.add_argument("key", nargs="?", help="e.g. bukhari, abudawud, taqrib; none = the list")
+    bk.add_argument("chapter", nargs="?", type=int, help="chapter number in reading order (see: iy book KEY)")
+    bk.add_argument("--language", action="append", help="show only this language (repeatable)")
+    bk.add_argument("--limit", type=int, default=20)
+    bk.add_argument("--width", type=int, default=160)
+    bk.set_defaults(func=cmd_book)
     sc = sub.add_parser("scholar", help="the hadith scholars in the data: compilers, graders, critics, with measured statistics")
     sc.add_argument("name", nargs="*", help="part of a name, e.g. albani, bukhari; none = the list")
     sc.set_defaults(func=cmd_scholar)

@@ -149,6 +149,13 @@ WORDS = {
     "المدائني": ("el-Medâinî", "al-Mada'ini"), "الإفريقي": ("el-İfrîkî", "al-Ifriqi"),
     "الخزرجي": ("el-Hazrecî", "al-Khazraji"), "الأوسي": ("el-Evsî", "al-Awsi"), "الترمذي": ("et-Tirmizî", "al-Tirmidhi"),
     "النسائي": ("en-Nesâî", "al-Nasa'i"), "القزويني": ("el-Kazvînî", "al-Qazwini"), "القطان": ("el-Kattân", "al-Qattan"),
+    # frequent in the Shia rijal works (al-Najashi …)
+    "بابويه": ("Bâbeveyh", "Babawayh"), "القمي": ("el-Kummî", "al-Qummi"), "أعين": ("A'yen", "A'yan"),
+    "البرقي": ("el-Berkî", "al-Barqi"), "فضال": ("Faddâl", "Faddal"), "محبوب": ("Mahbûb", "Mahbub"),
+    "البزنطي": ("el-Bezantî", "al-Bazanti"), "الكليني": ("el-Küleynî", "al-Kulayni"), "النجاشي": ("en-Necâşî", "al-Najashi"),
+    "الطوسي": ("et-Tûsî", "al-Tusi"), "المفيد": ("el-Müfîd", "al-Mufid"), "الكشي": ("el-Keşşî", "al-Kashshi"),
+    "الصفار": ("es-Saffâr", "al-Saffar"), "النوفلي": ("en-Nevfelî", "al-Nawfali"), "تغلب": ("Taglib", "Taghlib"),
+    "الأشعري": ("el-Eş'arî", "al-Ash'ari"), "الأحمر": ("el-Ahmer", "al-Ahmar"),
 }
 
 # words where a Latin name stops (notes, alternatives, "client of", reading notes): the name before them is complete

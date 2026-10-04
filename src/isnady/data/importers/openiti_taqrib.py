@@ -124,6 +124,80 @@ def parse_entry(number: int, text: str) -> dict:
             "kunya": kunya, "kunyas": kunyas, "marks": marks, "text": body}
 
 
+_OUTLINE = re.compile(r"^### (\|{1,3}|\${1,3}|\$DIC_NIS\$)\s*(.*)$")
+
+
+def read_outline(text: str) -> list[tuple]:
+    """The book as Ibn Hajar ordered it, from the OpenITI markers: ("h", level, title) for "### |" … "### |||"
+    headings (letters, then the names under each), ("e", number) for an entry ("### $" / "### $$"), and
+    ("x", text) for a cross-reference ("### $$$")."""
+    out = []
+    for line in text.split("\n"):
+        m = _OUTLINE.match(line)
+        if not m:
+            continue
+        mark, rest = m.group(1), m.group(2).strip()
+        if mark.startswith("|"):
+            title = rest.strip(" ()")
+            if title:
+                out.append(("h", len(mark), title))
+        elif mark in ("$", "$$"):
+            n = re.search(r"\d+", rest)
+            if n:
+                out.append(("e", int(n.group(0))))
+        elif mark == "$$$" and rest:
+            out.append(("x", rest))
+    return out
+
+
+def write_work(conn: sqlite3.Connection, outline: list[tuple], entries: list[dict], person_of: dict, source_id: int,
+               key: str = "taqrib", title: str = "Taqrib al-Tahdhib", title_ar: str = "تقريب التهذيب",
+               author: str = "ibnhajar", stamp: str | None = None) -> int:
+    """The Taqrib as a readable work (core.works): its headings as chapters, each entry with its text and its
+    narrator, each cross-reference as it stands. Replaces the work's earlier tree."""
+    conn.execute("DELETE FROM works WHERE key = ?", (key,))
+    wid = conn.execute("INSERT INTO works (key, kind, title, title_ar, author, source_id, stamp) VALUES (?, 'rijal', ?, ?, ?, ?, ?)",
+                       (key, title, title_ar, author, source_id, stamp or f"{key}|{len(entries)}")).lastrowid
+    texts: dict = {}
+    for e in entries:
+        texts.setdefault(e["number"], []).append(e)
+    stack: list[tuple[int, int]] = []          # (level, node id)
+    ordinals: dict = {}
+    current = None
+
+    def add(parent, kind, label=None, title=None, person=None, text=None):
+        ordinals[parent] = ordinals.get(parent, 0) + 1
+        return conn.execute("INSERT INTO work_nodes (work_id, parent_id, ordinal, kind, label, title, person_id, text) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                            (wid, parent, ordinals[parent], kind, label, title, person, text)).lastrowid
+
+    for item in outline:
+        if item[0] == "h":
+            _h, level, heading = item
+            while stack and stack[-1][0] >= level:
+                stack.pop()
+            parent = stack[-1][1] if stack else None
+            node_id = add(parent, "kitab" if level == 1 else "bab", title=heading)
+            stack.append((level, node_id))
+            current = node_id
+        elif item[0] == "e":
+            # one entry per marker: the edition gives four numbers to two narrators each (622, 2518, 4391, 6508)
+            waiting = texts.get(item[1])
+            if waiting:
+                e = waiting.pop(0)
+                if current is None:
+                    current = add(None, "kitab", title="Introduction")
+                add(current, "entry", label=str(e["number"]), title=e["name"], person=person_of.get(id(e)), text=e["text"])
+        elif item[0] == "x" and current is not None:
+            add(current, "reference", text=item[1])
+    for rest in texts.values():                 # entries the outline did not place (none expected)
+        for e in rest:
+            if current is None:
+                current = add(None, "kitab", title="Entries")
+            add(current, "entry", label=str(e["number"]), title=e["name"], person=person_of.get(id(e)), text=e["text"])
+    return wid
+
+
 def read_entries(text: str) -> tuple[list[dict], list[str]]:
     lines = text.split("\n")
     try:
@@ -250,7 +324,7 @@ class TaqribImporter(Importer):
             source_id = conn.execute("SELECT id FROM sources WHERE key = ?", (key,)).fetchone()[0]
             conn.execute("DELETE FROM persons WHERE source_id = ?", (source_id,))   # re-import replaces
 
-            by_number, token_index, used, token_of = {}, [], set(), {}
+            by_number, token_index, used, token_of, person_of = {}, [], set(), {}, {}
             for e in entries:
                 # the edition gives four numbers to two different narrators each (622, 2518, 4391, 6508)
                 person_key, suffix = f"taqrib:{e['number']}", "b"
@@ -264,6 +338,7 @@ class TaqribImporter(Importer):
                      rijal.generation(e["tabaqa"]), e["tabaqa"], source_id),
                 ).lastrowid
                 by_number[e["number"]] = pid
+                person_of[id(e)] = pid
                 conn.execute("INSERT INTO person_names (person_id, name, kind, source_id) VALUES (?, ?, 'full', ?)",
                              (pid, e["name"], source_id))
                 for kunya in e["kunyas"]:
@@ -311,6 +386,8 @@ class TaqribImporter(Importer):
                     conn.execute("INSERT INTO person_names (person_id, name, kind, source_id) VALUES (?, ?, 'variant', ?)",
                                  (pid, alias, source_id))
                 linked += bool(persons)
+            # the book itself, readable in the Books section (core.works)
+            write_work(conn, read_outline(text), entries, person_of, source_id)
 
         ranked = sum(1 for e in entries if e["rank"])
         report.editions.append(WORK)

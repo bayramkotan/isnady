@@ -16,7 +16,7 @@ def _tables():
     return words, compounds, stops
 
 
-def latin(name: str, language: str = "tr", max_words: int = 6) -> str | None:
+def latin(name: str, language: str = "tr", max_words: int = 8) -> str | None:
     """'tr' or 'en' form of an Arabic name, or None when its first words are not all known.
     At least the first name and, if the Arabic has one, the father ("X b. Y") must be readable."""
     words, compounds, stops = _tables()
