@@ -226,6 +226,34 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
 
 
 # ------------------------------------------------------------------ reading
+_alias_cache: dict = {}
+
+
+def known_aliases(conn: sqlite3.Connection, person_id: int) -> list[str]:
+    """The aliases that may name this person by themselves. An alias of one narrator is his; an alias shared by
+    several (التيمي: 7, بن عمر: 7) only for the one the chains cite most, at least twice as often as the next —
+    "Ibn 'Umar" is the Companion, as the classical usage has it; the others are shown by their own names."""
+    stamp = tuple(conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM person_names").fetchone()) + \
+        tuple(conn.execute("SELECT COUNT(*), SUM(person_id IS NOT NULL) FROM isnad_links").fetchone())
+    if _alias_cache.get("stamp") != stamp:
+        uses = dict(conn.execute("SELECT person_id, COUNT(*) FROM isnad_links WHERE person_id IS NOT NULL "
+                                 "GROUP BY person_id").fetchall())
+        owners: dict = {}
+        for pid, name in conn.execute("SELECT person_id, name FROM person_names WHERE kind = 'variant'"):
+            owners.setdefault(name, []).append(pid)
+        allowed: dict = {}
+        for name, pids in owners.items():
+            pids = sorted(set(pids), key=lambda p: -uses.get(p, 0))
+            if len(pids) == 1:
+                allowed.setdefault(pids[0], []).append(name)
+            else:
+                first, second = uses.get(pids[0], 0), uses.get(pids[1], 0)
+                if first >= 10 and first >= 2 * second:
+                    allowed.setdefault(pids[0], []).append(name)
+        _alias_cache.update(stamp=stamp, allowed=allowed)
+    return _alias_cache["allowed"].get(person_id, [])
+
+
 def describe(conn: sqlite3.Connection, person_id: int) -> dict | None:
     """Everything the rijal works say about one person, for display."""
     from isnady.core.rijal import BOOK_MARKS, RANK_LABELS, TABAQA_LABELS
@@ -258,7 +286,11 @@ def describe(conn: sqlite3.Connection, person_id: int) -> dict | None:
     from isnady.core.names import latin
 
     shown = display_name(p["name_ar"])
+    from isnady.core import name_parts
+
+    view = name_parts.present(name_parts.parse(shown, p["kunya"], known_aliases(conn, person_id), p["name_ar"]))
     return {**dict(p), "display_name": shown, "latin_tr": latin(shown, "tr"), "latin_en": latin(shown, "en"),
+            "name_view": view,
             "tabaqa_label": TABAQA_LABELS.get(p["tabaqa"], ""), "verdicts": verdicts,
             "marks": [(m, BOOK_MARKS.get(m, m)) for m in marks], "other_names": names,
             "in_chains": narrations}
@@ -447,8 +479,15 @@ def browse(conn: sqlite3.Connection, text: str = "", tabaqa: int | None = None, 
         # a search keeps its own order (best match first), not "most often in the chains"
         rank_of_id = {pid: i for i, pid in enumerate(ids)}
         rows.sort(key=lambda r: rank_of_id.get(r[0], len(ids)))
-    out = [{"id": r[0], "name": display_name(r[1]), "tabaqa": r[2], "death": r[3], "verdict": r[4] or "",
-            "rank": r[5], "madhhab": r[6], "in_chains": r[7]} for r in rows[:limit]]
+    from isnady.core import name_parts
+
+    out = []
+    for r in rows[:limit]:
+        shown = display_name(r[1])
+        kunya, = conn.execute("SELECT kunya FROM persons WHERE id = ?", (r[0],)).fetchone()
+        view = name_parts.present(name_parts.parse(shown, kunya, known_aliases(conn, r[0]), r[1]))
+        out.append({"id": r[0], "name": shown, "tabaqa": r[2], "death": r[3], "verdict": r[4] or "", "rank": r[5],
+                    "madhhab": r[6], "in_chains": r[7], "view": view})
     return out, len(rows)
 
 

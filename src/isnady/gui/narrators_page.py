@@ -26,6 +26,7 @@ from isnady.core import shia_rijal
 from isnady.core.names import latin
 from isnady.core.rijal import BOOK_MARKS, RANK_LABELS, TABAQA_LABELS, display_name, short_name
 from isnady.gui import theme
+from isnady.gui.name_card import NameCard
 from isnady.gui.widgets import FlowLayout
 
 LIST_LIMIT = 200
@@ -197,13 +198,25 @@ class NarratorsPage(QWidget):
             box = QVBoxLayout(widget)
             box.setContentsMargins(8, 6, 8, 6)
             box.setSpacing(1)
-            name = _arabic("", 0.72)
-            name.setWordWrap(False)
-            # one line that fits the row: the start of the name is kept, the end is cut with "…"
-            # (a long name used to widen the list and push short right-aligned names out of sight)
-            fm = QFontMetrics(theme.script_font("arabic", factor=0.72))
-            name.setText(fm.elidedText(r["name"], Qt.TextElideMode.ElideRight, ROW_TEXT_WIDTH))
-            name.setMaximumWidth(ROW_TEXT_WIDTH + 8)
+            view = r["view"]
+            top = QHBoxLayout()
+            top.setSpacing(10)
+            fm_ui = QFontMetrics(self.list.font())
+            known = view["reading"] or view["full_reading"]
+            if known:
+                title = _label(fm_ui.elidedText(known, Qt.TextElideMode.ElideRight, 190), "RowTitle", wrap=False)
+                title.setToolTip(f"{view['full_reading']}\nknown by {view['how']}" if view["how"] else view["full_reading"])
+                top.addWidget(title, 1)
+            arabic_known = _arabic("", 0.7, bold=not known)
+            arabic_known.setWordWrap(False)
+            fm_ar = QFontMetrics(theme.script_font("arabic", factor=0.7))
+            arabic_known.setText(fm_ar.elidedText(view["arabic"] or r["name"], Qt.TextElideMode.ElideRight,
+                                                  ROW_TEXT_WIDTH - (200 if known else 0)))
+            top.addWidget(arabic_known, 0 if known else 1)
+            box.addLayout(top)
+            if known and view["full_reading"] and view["full_reading"] != known:
+                box.addWidget(_label(fm_ui.elidedText(view["full_reading"], Qt.TextElideMode.ElideRight, ROW_TEXT_WIDTH),
+                                     "Caption", wrap=False))
             dot = theme.rank_color(SHIA_COLOR.get(r["rank"]) if self.tradition == "shia" else r["rank"])
             facts = []
             if self.tradition == "shia":
@@ -222,13 +235,6 @@ class NarratorsPage(QWidget):
             if self.tradition != "shia":
                 facts.append(f"{r['in_chains']:,} in chains")
             caption = _label(" · ".join(facts), "Caption", wrap=False, rich=True)
-            box.addWidget(name)
-            reading = latin(r["name"], "tr")
-            if reading:
-                roman = _label(QFontMetrics(self.list.font()).elidedText(reading, Qt.TextElideMode.ElideRight, ROW_TEXT_WIDTH),
-                               "RowLatin", wrap=False)
-                roman.setToolTip(f"Türkçe: {reading}\nEnglish: {latin(r['name'], 'en')}")
-                box.addWidget(roman)
             box.addWidget(caption)
             item.setSizeHint(widget.sizeHint())
             self.list.addItem(item)
@@ -302,29 +308,29 @@ class NarratorsPage(QWidget):
         self._clear()
         t = theme.current()
 
-        # name, other names
-        card, box = self._card()
-        box.addWidget(_arabic(who["display_name"], 1.15, bold=True))
-        if who.get("latin_tr"):
-            readings = _label(f"<b>Türkçe:</b> {html.escape(who['latin_tr'])} &nbsp;&nbsp;·&nbsp;&nbsp; "
-                              f"<b>English:</b> {html.escape(who['latin_en'] or '')}", "Lead", rich=True)
-            readings.setToolTip("Read from a hand-written list of name words (Turkish as in the TDV İslâm "
-                                "Ansiklopedisi, English in plain academic spelling). Only the part of the name whose "
-                                "words are all known is given.")
-            box.addWidget(readings)
-        else:
-            box.addWidget(_label("No Latin reading yet: a word of this name is not in isnady's name list.", "Caption"))
-        if who["other_names"]:
-            box.addWidget(_arabic("، ".join(who["other_names"][:10]), 0.62, muted=True))
-        if who["name_ar"].strip() != who["display_name"].strip():
-            # the entry as Ibn Hajar wrote it, with his notes on how to read the name
-            full = _arabic(who["name_ar"], 0.6, muted=True)
-            full.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            full.setToolTip("The entry as written in the rijal work, with its notes on how to read the name")
-            box.addWidget(full)
+        # the name: known-as, full name, the parts (NM1)
+        self.detail_box.addWidget(NameCard(who["name_view"]))
 
         # verdicts, tabaqa, death
         card, box = self._card("What the critics say")
+        if who["name_ar"].strip() != who["display_name"].strip() or self.tradition == "shia":
+            # the entry as the critic wrote it: folded away, one click to read
+            entry = _arabic(who["name_ar"], 0.62, muted=True)
+            entry.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            entry.hide()
+            toggle = QPushButton("Show the entry as the critic wrote it")
+            toggle.setObjectName("Link")
+            toggle.setCursor(Qt.CursorShape.PointingHandCursor)
+
+            def _flip(_c=False, e=entry, b=toggle):
+                e.setVisible(not e.isVisible())
+                b.setText("Hide the entry" if e.isVisible() else "Show the entry as the critic wrote it")
+            toggle.clicked.connect(_flip)
+            row = QHBoxLayout()
+            row.addWidget(toggle)
+            row.addStretch(1)
+            box.addLayout(row)
+            box.addWidget(entry)
         for v in who["verdicts"]:
             if v["rank_scheme"] == "shia":
                 dot = theme.rank_color(SHIA_COLOR.get(v["rank"]))

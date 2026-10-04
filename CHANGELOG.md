@@ -3,6 +3,27 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.1.2] — 2026-10-04
+
+**Names that can be read, and a desktop shortcut.**
+
+- **Names, redesigned**: every narrator and scholar is shown by the name he is **known by** — al-A'mash,
+  Ibn 'Umar, Abu Hurayra, al-Zuhri, al-Bukhari, Ibn Hajar — large, in Arabic and in Latin letters, with his
+  full name and *how* he is known (by-name, kunya, nisba, an ancestor's name) beneath. Below, each part of the
+  name on its own line: name (ism), lineage (nasab), kunya, by-name (laqab), nisbas (places marked), client
+  of (wala'), other names — the part he is known by marked ★, with a one-line explanation of what the parts
+  are. The same card on the Narrators, Shia Rijal and Hadith Scholars pages; the lists, the chains and the
+  books use the same known-as names. The entry as the critic wrote it is folded into the critics' card.
+- Which name a person is known by is taken only from what the sources say: Ibn Hajar's cross-references, an
+  entry that opens with the kunya, or "known as …" in the entry. A name shared by several narrators names only
+  the one the chains cite far more often ("Ibn 'Umar" is the Companion); a by-name inside someone else's name
+  ("… bint Abi Bakr al-Siddiq") is not taken as hers. Checked on blind samples of the most-cited narrators.
+  Readings are in English for now; Turkish and other languages come with the interface language.
+- **Create Desktop Shortcut** (Tools menu, `iy shortcut`): isnady on the desktop and in the applications menu,
+  with its own icon, starting isnady the way it is installed (AppImage, application, or `isnady-gui`). The
+  Desktop folder is the system's own (e.g. "Masaüstü"); on Windows the shortcut and the taskbar show isnady's
+  icon, not Python's.
+
 ## [0.1.1] — 2026-10-04
 
 **Desktop applications, one release for every place, and two new sections.**

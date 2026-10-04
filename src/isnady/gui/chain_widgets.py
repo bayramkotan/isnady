@@ -179,11 +179,14 @@ class ChainNode(QWidget):
             box.addWidget(who)
             from isnady.core.names import latin
 
-            reading = latin(person["display_name"], "tr")
+            view = person.get("name_view") or {}
+            reading = view.get("reading") or latin(person["display_name"], "en")
             if reading:
-                roman = QLabel(reading)
+                roman = QLabel(f"<b>{reading}</b>" + (f" &nbsp;·&nbsp; {view['full_reading']}"
+                                                      if view.get("full_reading") and view["full_reading"] != reading else ""))
                 roman.setObjectName("NodeFacts")
-                roman.setToolTip(f"Türkçe: {reading}\nEnglish: {latin(person['display_name'], 'en')}")
+                roman.setTextFormat(Qt.TextFormat.RichText)
+                roman.setToolTip(f"known by {view['how']}" if view.get("how") else "")
                 box.addWidget(roman)
             v = person["verdicts"][0] if person.get("verdicts") else None
             if v:

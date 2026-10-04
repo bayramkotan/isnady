@@ -35,6 +35,14 @@ def gui_main() -> int:
         # Tamil, … — "OpenType support missing for …, script 12"): hundreds of harmless lines. Only that
         # category is silenced; every other Qt warning still shows. A user's own QT_LOGGING_RULES wins.
         QLoggingCategory.setFilterRules("qt.text.font.db=false")
+    if sys.platform == "win32":
+        # without its own id, Windows groups the window under python(w).exe and shows Python's icon in the taskbar
+        try:
+            import ctypes
+
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("bayramkotan.isnady")
+        except (AttributeError, OSError):
+            pass
     app = QApplication(sys.argv[:1])
     from importlib import resources
 

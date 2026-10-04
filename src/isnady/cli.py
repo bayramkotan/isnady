@@ -14,6 +14,7 @@ Examples
   iy tahric bukhari 1
   iy scholar albani
   iy book bukhari 2
+  iy shortcut
   iy import fawazahmed0 ./tur-bukhari.json
   iy import fawazahmed0 https://example.org/editions.json --book bukhari --language tur
   iy import fawazahmed0 https://example.org/ed.json --user bayram          (password is asked)
@@ -452,6 +453,21 @@ def cmd_ai(args) -> int:
     return 0
 
 
+def cmd_shortcut(args) -> int:
+    from isnady.core import shortcut
+
+    program, extra, how = shortcut.launch_command()
+    try:
+        made = shortcut.create(desktop=not args.no_desktop, menu=not args.no_menu)
+    except OSError as exc:
+        print(f"The shortcut could not be created: {exc}", file=sys.stderr)
+        return 1
+    for what, path in made:
+        print(f"  {what:8} {path}")
+    print(f"It starts {how}: {' '.join([program, *extra])}")
+    return 0
+
+
 def cmd_book(args) -> int:
     from isnady.core import works
 
@@ -769,6 +785,10 @@ def build_parser() -> argparse.ArgumentParser:
     ai.add_argument("action", choices=["build", "status"])
     ai.add_argument("--dims", type=int, default=200, help="build: number of concepts (default 200)")
     ai.set_defaults(func=cmd_ai)
+    sh = sub.add_parser("shortcut", help="put isnady on the desktop and in the applications menu, with its icon")
+    sh.add_argument("--no-desktop", action="store_true", help="only the applications menu")
+    sh.add_argument("--no-menu", action="store_true", help="only the desktop")
+    sh.set_defaults(func=cmd_shortcut)
     bk = sub.add_parser("book", help="read a book in its own order: the list, a book's chapters, or a chapter")
     bk.add_argument("key", nargs="?", help="e.g. bukhari, abudawud, taqrib; none = the list")
     bk.add_argument("chapter", nargs="?", type=int, help="chapter number in reading order (see: iy book KEY)")

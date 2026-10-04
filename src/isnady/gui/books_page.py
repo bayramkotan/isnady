@@ -364,7 +364,10 @@ class BooksPage(QWidget):
         head = QHBoxLayout()
         head.addWidget(_label(f"#{item['label']}" if item["label"] else "", "CardNumber", wrap=False))
         if item["person_id"]:
-            reading = latin((item.get("title") or "").strip(), "tr")
+            from isnady.core import name_parts
+
+            view = name_parts.present(name_parts.parse((item.get("title") or "").strip()))
+            reading = view["full_reading"] or latin((item.get("title") or "").strip(), "en")
             if reading:
                 head.addWidget(_label(reading, "RowLatin", wrap=False))
             head.addStretch(1)

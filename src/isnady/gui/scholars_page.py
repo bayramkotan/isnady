@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 from isnady.core import scholars as core_scholars
 from isnady.core.rijal import short_name
 from isnady.gui import theme
+from isnady.gui.name_card import NameCard
 
 ROLE_TEXT = {"compiler": "compiler of a collection", "grader": "grades hadith", "critic": "judges narrators"}
 HIGH_AGREEMENT = 0.95       # above this between two independent graders, the source data is suspected
@@ -226,16 +227,9 @@ class ScholarsPage(QWidget):
         self._clear()
         t = theme.current()
 
+        # the name (NM1), as for every narrator: known-as, full name, the parts
+        self.box.addWidget(NameCard(core_scholars.name_view(scholar)))
         card, box = self._card()
-        name = _label(scholar["full"], "Hero")
-        name.setFont(theme.reading_font(22, bold=True))
-        box.addWidget(name)
-        if scholar.get("tr"):
-            box.addWidget(_label(f"<b>Türkçe:</b> {html.escape(scholar['tr'])}", "Lead", rich=True))
-        arabic = QLabel(scholar["arabic"])
-        arabic.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
-        arabic.setStyleSheet(f"color: {theme.script_color('arabic')}; {theme.font_css(theme.script_font('arabic', factor=0.9))}")
-        box.addWidget(arabic)
         facts = [scholar["dates"]] if scholar["dates"] else []
         facts.append(", ".join(ROLE_TEXT[r] for r in roles))
         box.addWidget(_label(" · ".join(f for f in facts if f), "Lead"))

@@ -40,7 +40,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.1.1).** Search and chains of transmission work today, on data you import
+> **Pre-alpha (0.1.2).** Search and chains of transmission work today, on data you import
 > in one command. Narrators, scholars, gradings and the rest are being built, in the open.
 
 ---
@@ -77,6 +77,10 @@ everything included, the AI features too:
 | Windows 10/11 | `isnady-<version>-windows-setup.exe` — Windows may say the publisher is unknown (the app is not signed): *More info → Run anyway* |
 | Linux | `isnady-<version>-linux-x86_64.AppImage` — make it executable (`chmod +x`) and run it |
 | macOS, Apple silicon / Intel | `isnady-<version>-macos-arm64.dmg` / `…-macos-x86_64.dmg` — the first time, right-click the app and choose *Open* (it is not notarized) |
+
+Put isnady on the desktop and in the applications menu with **Tools → Create Desktop Shortcut** (or
+`iy shortcut`): the shortcut starts isnady the way it is installed — the AppImage, the application, or the
+`isnady-gui` command of a Python install.
 
 ### With Python
 
@@ -206,6 +210,10 @@ tabaqa and death year, the books his hadith appear in, **whom he narrates from a
 narrates from him** in the imported chains, the compilers who narrate from him directly, and
 every hadith whose chain includes him. On the Isnad Chains page a click on a narrator's name
 opens him here.
+
+Each narrator — and each scholar — is shown by the name he is **known by** (al-A'mash, Ibn 'Umar,
+Abu Hurayra), with his full name and every part of it laid out: name, lineage, kunya, by-name,
+nisbas, client of; the part he is known by is marked ★.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/narrators.png" alt="Narrators — 'Abdullah b. 'Umar: Ibn Hajar's verdict, tabaqa, death year, teachers and students in the chains" width="850">
@@ -441,6 +449,7 @@ script. The command line never loads Qt.
 | `iy isnads` | `isnady isnads` | Read every chain and report per book; `--rebuild` reads them again |
 | `iy ai build` | `isnady ai build` | Learn the meaning index from the imported texts (`iy ai status` to check) |
 | `iy import najashi FILE` | `isnady catalog import najashi` | al-Najashi's Rijal: Shia narrators read on the Imami scale, and the book |
+| `iy shortcut` | `isnady shortcut --no-desktop` | A desktop and applications-menu shortcut, with isnady's icon |
 | `iy book [KEY [CHAPTER]]` | `isnady book bukhari 2` | The books; a book's chapters; a chapter read in order |
 | `iy scholar [NAME]` | `isnady scholar albani` | The scholars in the data, or one of them with his measured statistics |
 | `iy tahric BOOK NUMBER` | `isnady tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |

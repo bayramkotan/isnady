@@ -240,6 +240,9 @@ class MainWindow(QMainWindow):
         self._action(tools_menu, "Identify Narrators Again", lambda: search.identify_narrators(),
                      tip="Match every name in the chains against the imported rijal works again")
         tools_menu.addSeparator()
+        self._action(tools_menu, "Create Desktop Shortcut…", self._create_shortcut,
+                     tip="Put isnady on the desktop and in the applications menu, with its icon")
+        tools_menu.addSeparator()
         self._action(tools_menu, "Build AI Indexes (Meaning, Takhrij)", lambda: search.build_meaning_index(),
                      tip="Learn the meaning index (Match → By meaning) and find the narrations of each hadith "
                          "across the books (Also narrated in)")
@@ -255,6 +258,31 @@ class MainWindow(QMainWindow):
         self._action(help_menu, "Report an Issue", lambda: QDesktopServices.openUrl(QUrl(dialogs.ISSUES_URL)))
         help_menu.addSeparator()
         self._action(help_menu, "About isnady", lambda: dialogs.about(self).exec())
+
+    def _create_shortcut(self) -> None:
+        import html as _html
+
+        from PySide6.QtWidgets import QMessageBox
+
+        from isnady.core import shortcut
+
+        program, args, how = shortcut.launch_command()
+        try:
+            made = shortcut.create()
+        except OSError as exc:
+            QMessageBox.warning(self, "Create Desktop Shortcut", f"The shortcut could not be created.\n\n{exc}")
+            return
+        where = {"desktop": "On the desktop", "menu": "In the applications menu"}
+        lines = "".join(f"<li><b>{where.get(w, w)}</b>: <code>{_html.escape(str(p))}</code></li>" for w, p in made)
+        command = _html.escape(" ".join([program, *args]))
+        box = QMessageBox(self)
+        box.setWindowTitle("Create Desktop Shortcut")
+        box.setTextFormat(Qt.TextFormat.RichText)
+        box.setText(f"<p>isnady now has a shortcut, with its own icon:</p><ul>{lines}</ul>"
+                    f"<p>It starts {_html.escape(how)}:<br><code>{command}</code></p>"
+                    "<p style='color:gray'>Making it again replaces it, so after moving isnady or changing how it is "
+                    "installed, create it once more.</p>")
+        box.exec()
 
     def _load_books_when_shown(self, row: int) -> None:
         """The Books section reads its first chapter only when it is opened, not at start."""

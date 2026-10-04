@@ -15,45 +15,45 @@ from collections import Counter, defaultdict
 from isnady.core.grades import GROUP_LABELS, group
 
 SCHOLARS = [
-    {"id": "bukhari", "tr": "Buhârî (Muhammed b. İsmâil)", "name": "al-Bukhari", "full": "Muhammad b. Isma'il al-Bukhari",
-     "arabic": "محمد بن إسماعيل البخاري", "dates": "194–256 AH (810–870 CE)",
+    {"id": "bukhari", "known_ar": "البخاري", "tr": "Buhârî (Muhammed b. İsmâil)", "name": "al-Bukhari", "full": "Muhammad b. Isma'il al-Bukhari",
+     "arabic": "محمد بن إسماعيل بن إبراهيم البخاري", "dates": "194–256 AH (810–870 CE)",
      "works": ["al-Jami' al-Sahih"], "compiler_of": ["bukhari"], "taqrib": "محمد بن إسماعيل بن إبراهيم بن المغيرة"},
-    {"id": "muslim", "tr": "Müslim b. Haccâc", "name": "Muslim", "full": "Muslim b. al-Hajjaj al-Naysaburi",
+    {"id": "muslim", "known_ar": "مسلم", "tr": "Müslim b. Haccâc", "name": "Muslim", "full": "Muslim b. al-Hajjaj al-Naysaburi",
      "arabic": "مسلم بن الحجاج النيسابوري", "dates": "d. 261 AH (875 CE)",
      "works": ["al-Sahih"], "compiler_of": ["muslim"], "taqrib": "مسلم بن الحجاج"},
-    {"id": "abudawud", "tr": "Ebû Dâvûd es-Sicistânî", "name": "Abu Dawud", "full": "Abu Dawud Sulayman b. al-Ash'ath al-Sijistani",
+    {"id": "abudawud", "known_ar": "أبو داود", "tr": "Ebû Dâvûd es-Sicistânî", "name": "Abu Dawud", "full": "Abu Dawud Sulayman b. al-Ash'ath al-Sijistani",
      "arabic": "أبو داود سليمان بن الأشعث السجستاني", "dates": "202–275 AH (817–889 CE)",
      "works": ["al-Sunan", "al-Marasil"], "compiler_of": ["abudawud"], "taqrib": "سليمان بن الأشعث"},
-    {"id": "tirmidhi", "tr": "Tirmizî", "name": "al-Tirmidhi", "full": "Muhammad b. 'Isa al-Tirmidhi",
+    {"id": "tirmidhi", "known_ar": "الترمذي", "tr": "Tirmizî", "name": "al-Tirmidhi", "full": "Muhammad b. 'Isa al-Tirmidhi",
      "arabic": "محمد بن عيسى الترمذي", "dates": "d. 279 AH (892 CE)",
      "works": ["al-Jami'", "al-Shama'il"], "compiler_of": ["tirmidhi"], "taqrib": "محمد بن عيسى بن سورة"},
-    {"id": "nasai", "tr": "Nesâî", "name": "al-Nasa'i", "full": "Ahmad b. Shu'ayb al-Nasa'i",
+    {"id": "nasai", "known_ar": "النسائي", "tr": "Nesâî", "name": "al-Nasa'i", "full": "Ahmad b. Shu'ayb al-Nasa'i",
      "arabic": "أحمد بن شعيب النسائي", "dates": "d. 303 AH (915 CE)",
      "works": ["al-Sunan"], "compiler_of": ["nasai"], "taqrib": "أحمد بن شعيب بن علي"},
-    {"id": "ibnmajah", "tr": "İbn Mâce", "name": "Ibn Maja", "full": "Muhammad b. Yazid Ibn Maja al-Qazwini",
-     "arabic": "محمد بن يزيد ابن ماجه القزويني", "dates": "d. 273 AH (887 CE)",
+    {"id": "ibnmajah", "known_ar": "ابن ماجه", "tr": "İbn Mâce", "name": "Ibn Maja", "full": "Muhammad b. Yazid Ibn Maja al-Qazwini",
+     "arabic": "محمد بن يزيد القزويني", "dates": "d. 273 AH (887 CE)",
      "works": ["al-Sunan"], "compiler_of": ["ibnmajah"], "taqrib": "محمد بن يزيد الربعي"},
-    {"id": "malik", "tr": "Mâlik b. Enes", "name": "Malik", "full": "Malik b. Anas", "arabic": "مالك بن أنس",
+    {"id": "malik", "known_ar": "مالك", "tr": "Mâlik b. Enes", "name": "Malik", "full": "Malik b. Anas", "arabic": "مالك بن أنس",
      "dates": "d. 179 AH (795 CE)", "works": ["al-Muwatta'"], "compiler_of": ["malik"], "taqrib": "مالك بن أنس بن مالك"},
-    {"id": "nawawi", "tr": "Nevevî", "name": "al-Nawawi", "full": "Yahya b. Sharaf al-Nawawi", "arabic": "يحيى بن شرف النووي",
+    {"id": "nawawi", "known_ar": "النووي", "tr": "Nevevî", "name": "al-Nawawi", "full": "Yahya b. Sharaf al-Nawawi", "arabic": "يحيى بن شرف النووي",
      "dates": "631–676 AH (1233–1277 CE)", "works": ["al-Arba'un", "Riyad al-Salihin", "Sharh Sahih Muslim"],
      "compiler_of": ["nawawi"]},
-    {"id": "dehlawi", "tr": "Şah Veliyyullah ed-Dihlevî", "name": "Shah Waliullah al-Dihlawi", "full": "Shah Waliullah al-Dihlawi",
+    {"id": "dehlawi", "known_ar": "الدهلوي", "tr": "Şah Veliyyullah ed-Dihlevî", "name": "Shah Waliullah al-Dihlawi", "full": "Shah Waliullah al-Dihlawi",
      "arabic": "شاه ولي الله الدهلوي", "dates": "1114–1176 AH (1703–1762 CE)", "works": ["al-Arba'un", "Hujjat Allah al-Baligha"],
      "compiler_of": ["dehlawi"]},
-    {"id": "ibnhajar", "tr": "İbn Hacer el-Askalânî", "name": "Ibn Hajar al-'Asqalani", "full": "Ahmad b. 'Ali Ibn Hajar al-'Asqalani",
+    {"id": "ibnhajar", "known_ar": "ابن حجر", "tr": "İbn Hacer el-Askalânî", "name": "Ibn Hajar al-'Asqalani", "full": "Ahmad b. 'Ali Ibn Hajar al-'Asqalani",
      "arabic": "أحمد بن علي بن حجر العسقلاني", "dates": "773–852 AH (1372–1449 CE)",
      "works": ["Taqrib al-Tahdhib", "Tahdhib al-Tahdhib", "Fath al-Bari", "al-Isaba"],
      "critic_names": ["Ibn Hajar al-'Asqalani"]},
-    {"id": "albani", "tr": "Nâsırüddîn el-Elbânî", "name": "al-Albani", "full": "Muhammad Nasir al-Din al-Albani", "arabic": "محمد ناصر الدين الألباني",
+    {"id": "albani", "known_ar": "الألباني", "tr": "Nâsırüddîn el-Elbânî", "name": "al-Albani", "full": "Muhammad Nasir al-Din al-Albani", "arabic": "محمد ناصر الدين الألباني",
      "dates": "1333–1420 AH (1914–1999 CE)", "works": ["Silsilat al-Ahadith al-Sahiha", "Silsilat al-Ahadith al-Da'ifa",
                                                    "Sahih / Da'if Sunan Abi Dawud"], "grader_names": ["Al-Albani"]},
-    {"id": "arnaut", "tr": "Şuayb el-Arnaût", "name": "Shu'ayb al-Arna'ut", "full": "Shu'ayb al-Arna'ut", "arabic": "شعيب الأرناؤوط",
+    {"id": "arnaut", "known_ar": "الأرناؤوط", "tr": "Şuayb el-Arnaût", "name": "Shu'ayb al-Arna'ut", "full": "Shu'ayb al-Arna'ut", "arabic": "شعيب الأرناؤوط",
      "dates": "1928–2016 CE", "works": ["editions of the Sunan and the Musnad of Ahmad with grading"],
      "grader_names": ["Shuaib Al Arnaut"]},
-    {"id": "zubairalizai", "tr": "Zübeyr Ali Zaî", "name": "Zubair 'Ali Za'i", "full": "Hafiz Zubair 'Ali Za'i", "arabic": "زبير علي زئي",
+    {"id": "zubairalizai", "known_ar": "زبير علي زئي", "tr": "Zübeyr Ali Zaî", "name": "Zubair 'Ali Za'i", "full": "Hafiz Zubair 'Ali Za'i", "arabic": "زبير علي زئي",
      "dates": "1957–2013 CE", "works": ["grading of the Sunan (Urdu editions)"], "grader_names": ["Zubair Ali Zai"]},
-    {"id": "muhyialdin", "tr": "Muhammed Muhyiddin Abdülhamîd", "name": "Muhammad Muhyi al-Din 'Abd al-Hamid",
+    {"id": "muhyialdin", "known_ar": "محمد محيي الدين عبد الحميد", "tr": "Muhammed Muhyiddin Abdülhamîd", "name": "Muhammad Muhyi al-Din 'Abd al-Hamid",
      "full": "Muhammad Muhyi al-Din 'Abd al-Hamid", "arabic": "محمد محيي الدين عبد الحميد", "dates": "",
      "works": ["edition of Sunan Abi Dawud"], "grader_names": ["Muhammad Muhyi Al-Din Abdul Hamid"]},
 ]
@@ -80,6 +80,13 @@ MEASURE_HELP = {
                   "fabricated = 0). Below zero he is stricter (classically mutashaddid), above zero more lenient "
                   "(mutasahil), near zero moderate (mu'tadil).",
 }
+
+
+def name_view(scholar: dict) -> dict:
+    """The scholar's name laid out like a narrator's (core.name_parts): known-as, reading, the parts."""
+    from isnady.core import name_parts
+
+    return name_parts.present(name_parts.parse(scholar["arabic"], known_as=scholar.get("known_ar") or None))
 
 
 def find(scholar_id: str) -> dict | None:
