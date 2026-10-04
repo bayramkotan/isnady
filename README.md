@@ -22,6 +22,8 @@
   <a href="#-install">Install</a> •
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-search">Search</a> •
+  <a href="#-narrators">Narrators</a> •
+  <a href="#-hadith-scholars">Scholars</a> •
   <a href="#-search-by-meaning-ai">Meaning (AI)</a> •
   <a href="#-chains-of-transmission">Chains</a> •
   <a href="#-educational-by-design">Educational</a> •
@@ -36,7 +38,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.0.9).** Search and chains of transmission work today, on data you import
+> **Pre-alpha (0.1.0).** Search and chains of transmission work today, on data you import
 > in one command. Narrators, scholars, gradings and the rest are being built, in the open.
 
 ---
@@ -180,6 +182,35 @@ iy narrator الزهري
 
 Results appear at once and fill in as you read; the window never waits for them.
 
+### 👥 Narrators
+
+The **Narrators** page lists every narrator of the imported rijal work — 8,824 from Ibn
+Hajar's *Taqrib* — searchable in Arabic or in Latin letters (`Abu Hurayra`, `Zuhri`, `Ibn Umar`),
+and filtered by tabaqa, rank and book. For each narrator: Ibn Hajar's verdict and its rank, the
+tabaqa and death year, the books his hadith appear in, **whom he narrates from and who
+narrates from him** in the imported chains, the compilers who narrate from him directly, and
+every hadith whose chain includes him. On the Isnad Chains page a click on a narrator's name
+opens him here.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/narrators.png" alt="Narrators — 'Abdullah b. 'Umar: Ibn Hajar's verdict, tabaqa, death year, teachers and students in the chains" width="850">
+</p>
+
+### 🎓 Hadith Scholars
+
+The scholars whose work is in the imported data, and what the data measures of it:
+**compilers** (their collection, the teachers their chains begin with, the Companions they end
+with), **graders** (how they grade, and how far they agree with each other on the same hadith —
+agreement, Cohen's kappa, and a strictness index: the classical *mutashaddid* / *mutasahil*,
+measured), and **critics** of narrators (Ibn Hajar's twelve ranks). On Sunan Abi Dawud, for
+example, Zubair 'Ali Za'i grades most strictly (−0.21) and agrees with al-Albani on 70% of the
+hadith; the page also flags a pair of graders whose 98% agreement suggests the source did not keep
+them independent.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/scholars.png" alt="Hadith Scholars — al-Albani: his grades on Sunan Abi Dawud and his agreement with the other graders" width="850">
+</p>
+
 ### 🧠 Search by meaning (AI)
 
 Choose **Match → By meaning (AI)** to find hadith that say the same thing in other words or in
@@ -195,10 +226,18 @@ al-Bukhari and Abu Dawud: for hadith the model never saw while learning, a Turki
 finds its Arabic original first 68% of the time and among the first ten 93% of the time (chance:
 0.8%). For an exact quotation the ordinary word search stays the better tool.
 
+The same step finds the **other narrations of each hadith** across the imported books
+(takhrij): every result card says where else it is narrated — *Also narrated in: Sahih
+al-Bukhari 5070 · 6689 · 6953 | Sunan Abi Dawud 2201* — and each number opens that hadith.
+Only the texts are compared, never the chains; upright numbers share the text, italic ones
+probably report the same event from the same Companion. In blind, hand-checked samples 34 of
+35 pairs of the first kind and 18 of 20 of the second were right.
+
 ```bash
 pip install "isnady[ai]"        # numpy and scipy
-iy ai build                     # a few seconds; or Tools → Build Meaning Index
+iy ai build                     # a few seconds; or Tools → Build AI Indexes
 iy search --mode meaning "komşu hakları"
+iy tahric bukhari 1             # the other narrations of a hadith
 ```
 
 ---
@@ -344,8 +383,10 @@ script. The command line never loads Qt.
 | `iy chain BOOK NUMBER` | `isnady chain bukhari 1` | One chain, narrator by narrator, with who each one is; `--raw` adds the wording |
 | `iy isnads` | `isnady isnads` | Read every chain and report per book; `--rebuild` reads them again |
 | `iy ai build` | `isnady ai build` | Learn the meaning index from the imported texts (`iy ai status` to check) |
+| `iy scholar [NAME]` | `isnady scholar albani` | The scholars in the data, or one of them with his measured statistics |
+| `iy tahric BOOK NUMBER` | `isnady tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |
 | `iy search --mode meaning WORDS` | `isnady search --mode meaning "komşu hakları"` | Search by meaning and across languages |
-| `iy narrator NAME` | `isnady narrator الزهري` | A narrator: Ibn Hajar's verdict and rank, tabaqa, death year, books, other names |
+| `iy narrator NAME` | `isnady narrator "Ibn Umar"` | A narrator: Ibn Hajar's verdict and rank, tabaqa, death year, books, other names; with `--limit 1` also teachers, students and hadith |
 | `iy import FORMAT FILE-OR-URL` | `isnady import …` | Import a source; `--book`, `--language`, `--license`, `--user`, `--token-env`, `--api-key-env` |
 | `iy catalog list` | `isnady catalog list` | Built-in sources and your own, with what is imported — the same as File → Data Sources |
 | `iy catalog import ID` | `isnady catalog import fawaz-muslim --language tur` | Import a listed source; `remove`, `add`, `delete` manage the list |
@@ -392,10 +433,10 @@ Sunan Abu Dawud #472
 ## 🗺️ Roadmap
 
 - **Narrators** — the other half of the names identified through teachers and students
-  (al-Mizzi's *Tahdhib al-Kamal*), a page for every narrator, the verdicts of other critics
-  beside Ibn Hajar's, and whether each link could have met the next.
-- **Hadith scholars** — lives, books, teachers and students, and what their collections
-  contain.
+  (al-Mizzi's *Tahdhib al-Kamal*), the verdicts of other critics beside Ibn Hajar's, and
+  whether each link could have met the next.
+- **Hadith scholars** — their lives in full, and more scholars as more collections and grades
+  are imported.
 - **Shia rijal** — narrator verdicts from the Shia rijal works, beside the Sunni view.
 - **Learn** — the sciences of hadith, shown on real hadith and real chains.
 - **More sources and formats** — and adding your own from inside the window.

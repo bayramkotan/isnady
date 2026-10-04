@@ -245,24 +245,229 @@ def describe(conn: sqlite3.Connection, person_id: int) -> dict | None:
     narrations = conn.execute("SELECT COUNT(*) FROM isnad_links WHERE person_id = ?", (person_id,)).fetchone()[0]
     from isnady.core.rijal import display_name
 
-    return {**dict(p), "display_name": display_name(p["name_ar"]),
+    from isnady.core.names import latin
+
+    shown = display_name(p["name_ar"])
+    return {**dict(p), "display_name": shown, "latin_tr": latin(shown, "tr"), "latin_en": latin(shown, "en"),
             "tabaqa_label": TABAQA_LABELS.get(p["tabaqa"], ""), "verdicts": verdicts,
             "marks": [(m, BOOK_MARKS.get(m, m)) for m in marks], "other_names": names,
             "in_chains": narrations}
 
 
+# Latin letters → the consonant skeleton of an Arabic name, so "Abu Hurayra" finds أبو هريرة (b·hrr) and
+# "Bukhari" finds البخاري (bkhr). Vowels, long vowels (ا و ي), hamza, ʿayn and tā' marbūṭa are left out on
+# both sides; letters a Latin spelling does not tell apart are merged (ح ه → h, ص س → s, ط ت → t, ض د → d,
+# ظ ز → z, ق ك → k).
+_AR_SKELETON = {"ب": "b", "ت": "t", "ط": "t", "ث": "th", "ج": "j", "ح": "h", "ه": "h", "خ": "kh", "د": "d",
+                "ض": "d", "ذ": "dh", "ر": "r", "ز": "z", "ظ": "z", "س": "s", "ص": "s", "ش": "sh", "غ": "gh",
+                "ف": "f", "ق": "k", "ك": "k", "ل": "l", "م": "m", "ن": "n"}
+_LATIN_DIGRAPHS = (("th", "\x01"), ("kh", "\x02"), ("dh", "\x03"), ("sh", "\x04"), ("gh", "\x05"))
+_ARABIC_LETTER = re.compile(r"[\u0600-\u06FF]")
+
+
+def arabic_skeleton(word: str) -> str:
+    """Consonants of an Arabic word. Long-vowel letters (ا, medial و ي) carry no consonant, EXCEPT a word-initial
+    ي/و (يعمر Ya'mar is not عمر Umar) and a final ي, the nisba ending (الزهري zhry, not زهير zhr). A final ى
+    (يحيى) and the tā' marbūṭa (هريرة) add nothing. Doubled letters are kept: Arabic writes them on purpose."""
+    original = word.strip()
+    w = normalize(original)
+    if w.startswith("ال") and len(w) > 3:
+        w = w[2:]
+        original = original[2:] if original.startswith("ال") else original
+    if original.endswith("ة") and w.endswith("ه"):
+        w = w[:-1]
+    out = []
+    for i, ch in enumerate(w):
+        if i == 0 and ch in ("ي", "و"):
+            out.append("y" if ch == "ي" else "w")
+        else:
+            out.append(_AR_SKELETON.get(ch, ""))
+    nisba = original.endswith("ي") and len(w) > 2
+    return "".join(out) + ("y" if nisba else "")
+
+
+def latin_skeleton(word: str) -> str:
+    """Consonants of a Latin spelling, comparable with arabic_skeleton: the shadda written twice ("Abbas",
+    "Musaddad") counts once, a word-initial y/w is a consonant, a final -i is the nisba ending."""
+    import unicodedata
+
+    w = "".join(c for c in unicodedata.normalize("NFKD", word.lower()) if not unicodedata.combining(c))
+    w = re.sub(r"^(al|el|ad|an|ar|as|at|az|ash|adh)-", "", w)
+    w = re.sub(r"[^a-z]", "", w)
+    w = re.sub(r"(.)\1+", r"\1", w)                          # the shadda, written twice in Latin
+    if not w:
+        return ""
+    nisba = w.endswith(("i", "iy"))
+    initial = w[0] if w[0] in "yw" else ""
+    body = w[1:] if initial else w
+    for digraph, mark in _LATIN_DIGRAPHS:
+        body = body.replace(digraph, mark)
+    body = body.replace("q", "k").replace("c", "k")
+    body = re.sub(r"[aeiouyw]", "", body)
+    for digraph, mark in _LATIN_DIGRAPHS:
+        body = body.replace(mark, digraph)
+    return initial + body + ("y" if nisba and (initial + body) else "")
+
+
+_skeleton_cache: dict = {}
+
+
+def _skeleton_index(conn: sqlite3.Connection) -> list[tuple[int, list[str]]]:
+    stamp = conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM person_names").fetchone()[:]
+    if _skeleton_cache.get("stamp") != tuple(stamp):
+        rows = []
+        for pid, name in conn.execute("SELECT person_id, name FROM person_names"):
+            words = name.split()
+            rows.append((pid, [arabic_skeleton(w) for w in words]))
+            # an entry that begins with its kunya ("أبو هريرة الدوسي") is also known by the kunya alone
+            if len(words) > 2 and normalize(words[0]) in ("ابو", "ام", "ابي", "ابا"):
+                kunya_words = words[:3] if normalize(words[1]) == "عبد" else words[:2]
+                rows.append((pid, [arabic_skeleton(w) for w in kunya_words]))
+        _skeleton_cache.update(stamp=tuple(stamp), rows=rows)
+    return _skeleton_cache["rows"]
+
+
+def _token_index(conn: sqlite3.Connection) -> list[tuple[int, list[str]]]:
+    """Every name as normalized words, plus the kunya alone of an entry that begins with it."""
+    stamp = tuple(conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM person_names").fetchone()[:])
+    if _skeleton_cache.get("token_stamp") != stamp:
+        rows = []
+        for pid, name in conn.execute("SELECT person_id, name FROM person_names"):
+            words = tokens(name)
+            rows.append((pid, words))
+            if len(words) > 2 and words[0] in ("ابو", "ام"):
+                rows.append((pid, words[:3] if words[1] == "عبد" else words[:2]))
+        _skeleton_cache.update(token_stamp=stamp, token_rows=rows)
+    return _skeleton_cache["token_rows"]
+
+
+def _ordered_score(wanted: list[str], name: list[str], whole: list[str], full_name: list[str]) -> int | None:
+    """None when the query words do not occur IN ORDER in the name (each as a word or the start of one);
+    otherwise a score: one point per whole word, two when the name begins with the query's first word,
+    a hundred when the query is the whole name ("Ibn Umar" = بن عمر, "Zuhri" = الزهري).
+    "Anas ibn Malik" is not "Malik ibn Anas", and "سعيد … والد سفيان" is not "سفيان بن سعيد"."""
+    i, score = 0, 0
+    for q in wanted:
+        while i < len(name) and not name[i].startswith(q):
+            i += 1
+        if i == len(name):
+            return None
+        score += name[i] == q
+        i += 1
+    if name and wanted and name[0].startswith(wanted[0]):
+        score += 2
+    if full_name == whole:
+        score += 100
+    return score
+
+
 def search_persons(conn: sqlite3.Connection, text: str, limit: int = 20) -> list[tuple[int, str]]:
-    """Persons whose names contain every word typed (diacritics and letter forms ignored)."""
-    words = tokens(text)
-    if not words:
+    """Persons whose names contain the words typed, in that order (diacritics and letter forms ignored).
+    Latin letters are matched on the consonant skeleton ("Abu Hurayra", "Zuhri", "Ibn Abbas")."""
+    if not text.strip():
         return []
-    seen, out = set(), []
-    for pid, name in conn.execute("SELECT person_id, name FROM person_names"):
-        if pid in seen:
-            continue
-        toks = tokens(name)
-        if all(any(w == t or (len(w) > 2 and t.startswith(w)) for t in toks) for w in words):
-            seen.add(pid)
-            out.append(pid)
-    out.sort(key=lambda pid: -conn.execute("SELECT COUNT(*) FROM isnad_links WHERE person_id = ?", (pid,)).fetchone()[0])
-    return [(pid, conn.execute("SELECT name_ar FROM persons WHERE id = ?", (pid,)).fetchone()[0]) for pid in out[:limit]]
+    best: dict[int, int] = {}
+    if not _ARABIC_LETTER.search(text):
+        whole = [latin_skeleton(w) for w in text.split() if latin_skeleton(w)]
+        wanted = [w for w in whole if w not in ("bn", "bnt")]          # "ibn", "bint" carry nothing here
+        if not wanted:
+            return []
+        for pid, words in _skeleton_index(conn):
+            core = [w for w in words if w not in ("bn", "bnt")]
+            score = _ordered_score(wanted, core, whole, words)
+            if score is not None:
+                best[pid] = max(best.get(pid, -1), score)
+    else:
+        whole = tokens(text)
+        wanted = [w for w in whole if w != "بن"]
+        if not wanted:
+            return []
+        for pid, words in _token_index(conn):
+            core = [w for w in words if w != "بن"]
+            score = _ordered_score(wanted, core, whole, words)
+            if score is not None:
+                best[pid] = max(best.get(pid, -1), score)
+    uses = dict(conn.execute("SELECT person_id, COUNT(*) FROM isnad_links WHERE person_id IS NOT NULL "
+                             "GROUP BY person_id").fetchall())
+    order = sorted(best, key=lambda pid: (-best[pid], -uses.get(pid, 0)))[:limit]
+    return [(pid, conn.execute("SELECT name_ar FROM persons WHERE id = ?", (pid,)).fetchone()[0]) for pid in order]
+
+
+# ------------------------------------------------------------------ the Narrators page
+def overview(conn: sqlite3.Connection) -> dict:
+    persons = conn.execute("SELECT COUNT(*) FROM persons").fetchone()[0]
+    links = conn.execute("SELECT COUNT(*), SUM(person_id IS NOT NULL) FROM isnad_links").fetchone()
+    works = [r[0] for r in conn.execute(
+        "SELECT DISTINCT s.name FROM persons p JOIN sources s ON s.id = p.source_id ORDER BY s.name")]
+    return {"persons": persons, "links": links[0] or 0, "identified": links[1] or 0, "works": works}
+
+
+def browse(conn: sqlite3.Connection, text: str = "", tabaqa: int | None = None, rank: int | None = None,
+           book: str | None = None, limit: int = 300) -> tuple[list[dict], int]:
+    """Narrators for the list: (rows, total before the limit), most often in the chains first."""
+    from isnady.core.rijal import COLLECTION_MARKS, display_name
+
+    where, args = [], []
+    if text.strip():
+        ids = [pid for pid, _n in search_persons(conn, text, limit=5000)]
+        if not ids:
+            return [], 0
+        where.append(f"p.id IN ({','.join(str(i) for i in ids)})")
+    if tabaqa:
+        where.append("p.tabaqa = ?")
+        args.append(tabaqa)
+    if rank:
+        where.append("v.rank = ?")
+        args.append(rank)
+    if book and book in COLLECTION_MARKS:
+        marks = sorted(COLLECTION_MARKS[book])
+        where.append(f"EXISTS (SELECT 1 FROM person_marks m WHERE m.person_id = p.id AND m.mark IN "
+                     f"({','.join('?' * len(marks))}))")
+        args.extend(marks)
+    sql = f"""SELECT p.id, p.name_ar, p.tabaqa, p.death_year_ah, v.phrase, v.rank,
+                     (SELECT COUNT(*) FROM isnad_links l WHERE l.person_id = p.id) AS in_chains
+              FROM persons p LEFT JOIN verdicts v ON v.id = (SELECT MIN(id) FROM verdicts WHERE person_id = p.id)
+              {'WHERE ' + ' AND '.join(where) if where else ''}
+              ORDER BY in_chains DESC, p.name_ar"""
+    rows = conn.execute(sql, args).fetchall()
+    if text.strip():
+        # a search keeps its own order (best match first), not "most often in the chains"
+        rank_of_id = {pid: i for i, pid in enumerate(ids)}
+        rows.sort(key=lambda r: rank_of_id.get(r[0], len(ids)))
+    out = [{"id": r[0], "name": display_name(r[1]), "tabaqa": r[2], "death": r[3], "verdict": r[4] or "",
+            "rank": r[5], "in_chains": r[6]} for r in rows[:limit]]
+    return out, len(rows)
+
+
+def relations(conn: sqlite3.Connection, person_id: int, limit: int = 12) -> dict:
+    """Teachers and students as the imported chains show them: the identified narrator one link closer
+    to the Prophet (he narrates FROM him) and one link further (he narrated TO him), with how often."""
+    from isnady.core.rijal import display_name
+
+    def side(offset: int) -> list[dict]:
+        rows = conn.execute(
+            """SELECT o.person_id, p.name_ar, COUNT(*) AS n FROM isnad_links l
+               JOIN isnad_links o ON o.isnad_id = l.isnad_id AND o.position = l.position + ?
+               JOIN persons p ON p.id = o.person_id
+               WHERE l.person_id = ? AND o.person_id IS NOT NULL
+               GROUP BY o.person_id ORDER BY n DESC LIMIT ?""", (offset, person_id, limit)).fetchall()
+        return [{"id": r[0], "name": display_name(r[1]), "count": r[2]} for r in rows]
+
+    # the first link of a chain is the compiler's own teacher: the compiler is his student
+    compilers = [{"book": r[0], "key": r[1], "count": r[2]} for r in conn.execute(
+        """SELECT c.name, c.key, COUNT(DISTINCT i.hadith_id) FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id
+           JOIN hadiths h ON h.id = i.hadith_id JOIN collections c ON c.id = h.collection_id
+           WHERE l.person_id = ? AND l.position = 1 GROUP BY c.id ORDER BY 3 DESC""", (person_id,))]
+    return {"teachers": side(+1), "students": side(-1), "compilers": compilers}
+
+
+def hadiths_of(conn: sqlite3.Connection, person_id: int, limit: int = 60) -> tuple[list[dict], int]:
+    """The hadith whose chains include this narrator: (rows, total)."""
+    total = conn.execute("SELECT COUNT(DISTINCT i.hadith_id) FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id "
+                         "WHERE l.person_id = ?", (person_id,)).fetchone()[0]
+    rows = conn.execute(
+        """SELECT DISTINCT i.hadith_id, c.name, h.number, h.number_sort, c.key FROM isnad_links l
+           JOIN isnads i ON i.id = l.isnad_id JOIN hadiths h ON h.id = i.hadith_id
+           JOIN collections c ON c.id = h.collection_id
+           WHERE l.person_id = ? ORDER BY c.key, h.number_sort LIMIT ?""", (person_id, limit)).fetchall()
+    return [{"hadith_id": r[0], "book": r[1], "number": r[2]} for r in rows], total

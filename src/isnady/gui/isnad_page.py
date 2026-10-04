@@ -7,7 +7,7 @@ Every fact shown comes from isnady.core.isnad.
 import html
 import sqlite3
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import (
     QComboBox,
     QFrame,
@@ -27,7 +27,6 @@ from isnady.gui import theme
 from isnady.gui.chain_widgets import PROPHET, ChainNode
 from isnady.gui.widgets import TextBlock, expanding_width_policy
 
-COLUMN_MAX = 1000
 
 
 def _label(text: str = "", name: str = "", wrap: bool = False) -> QLabel:
@@ -41,6 +40,8 @@ def _label(text: str = "", name: str = "", wrap: bool = False) -> QLabel:
 
 
 class IsnadPage(QWidget):
+    open_narrator = Signal(int)      # person id → Narrators page
+
     def __init__(self, connection_getter, parent=None) -> None:
         super().__init__(parent)
         self.setObjectName("Page")
@@ -91,7 +92,7 @@ class IsnadPage(QWidget):
         self.scroll = scroll
 
         column = QWidget()
-        column.setMaximumWidth(COLUMN_MAX)
+        # the column follows the window (Bayram, 2026-10-04: like the Narrators page), with margins only
         inner = QVBoxLayout(column)
         inner.setContentsMargins(0, 0, 0, 0)
         inner.setSpacing(14)
@@ -99,7 +100,7 @@ class IsnadPage(QWidget):
         inner.addWidget(scroll, 1)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(36, 28, 28, 12)
-        layout.addWidget(column, 1, Qt.AlignmentFlag.AlignHCenter)
+        layout.addWidget(column, 1)          # no alignment: an aligned widget keeps its own width and does not follow the window
 
     # ------------------------------------------------------------- helpers
     @property
@@ -256,7 +257,8 @@ class IsnadPage(QWidget):
                 person = core_narrators.describe(self.conn, link["person_id"]) if link.get("person_id") else None
                 self.body_layout.addWidget(ChainNode(core_isnad.short_name(link["raw_name"]), "",
                                                      link["transmission"], full_name=link["raw_name"],
-                                                     person=person, candidates=link.get("candidates")))
+                                                     person=person, candidates=link.get("candidates"),
+                                                     on_person=self.open_narrator.emit))
             if chain["reaches_prophet"]:
                 self.body_layout.addWidget(ChainNode(PROPHET, "The Messenger of God", None, last=True, prophet=True))
         self.body_layout.addSpacing(18)

@@ -34,7 +34,6 @@ from isnady.gui.widgets import FlowLayout, TextBlock, expanding_width_policy
 PAGE_SIZE = 25
 FIRST_BATCH = 4     # cards shown at once; the rest follow in small batches
 NEXT_BATCH = 3
-COLUMN_MAX = 1000   # reading column; keeps translation lines readable on wide windows
 MODE_LABELS = (("all", "All words"), ("any", "Any word"), ("phrase", "Exact phrase"), ("meaning", "By meaning (AI)"))
 EXAMPLES = ("النيات", "الصلاة", "niyet", "komşu")
 
@@ -63,7 +62,7 @@ def _label(text: str = "", name: str = "", wrap: bool = False, selectable: bool 
 
 class ResultCard(QFrame):
     def __init__(self, result: core.SearchResult, chain: dict | None = None, open_chain=None,
-                 people: dict | None = None, score: float | None = None) -> None:
+                 people: dict | None = None, score: float | None = None, related: list | None = None) -> None:
         super().__init__()
         self.setObjectName("Card")
         t = theme.current()
@@ -94,6 +93,28 @@ class ResultCard(QFrame):
             view.clicked.connect(lambda: open_chain(result.hadith_id))
             head.addWidget(view)
         box.addLayout(head)
+        if related:
+            # other narrations of the same hadith (YZ2, takhrij); each number opens that hadith's chain
+            groups: dict = {}
+            for r in related:
+                groups.setdefault(r["book_name"], []).append(r)
+            t = theme.current()
+            parts = []
+            for book, items in groups.items():
+                links = []
+                for r in items:
+                    style = "" if r["kind"] == "same" else "font-style:italic;"
+                    links.append(f"<a href='{r['hadith_id']}' style='color:{t.lapis};text-decoration:none;{style}'>"
+                                 f"{html.escape(r['number'])}</a>")
+                parts.append(f"{html.escape(book)} " + " · ".join(links))
+            also = _label("Also narrated in: " + "&nbsp;&nbsp;|&nbsp;&nbsp;".join(parts), "Caption", wrap=True)
+            also.setTextFormat(Qt.TextFormat.RichText)
+            also.setToolTip("Other narrations of this hadith found by comparing the texts (takhrij).\n"
+                            "Upright numbers: the same text. Italic: probably the same report "
+                            "(the texts overlap and the same Companion narrates both).\nClick a number to open it.")
+            if open_chain is not None:
+                also.linkActivated.connect(lambda hid: open_chain(int(hid)))
+            box.addWidget(also)
         if chain and chain["links"]:
             box.addWidget(ChainStrip(chain, people))
             box.addSpacing(6)
@@ -209,7 +230,7 @@ class SearchPage(QWidget):
         filters.addWidget(self.summary)
 
         column = QWidget()
-        column.setMaximumWidth(COLUMN_MAX)
+        # the column follows the window (Bayram, 2026-10-04: like the Narrators page), with margins only
         inner = QVBoxLayout(column)
         inner.setContentsMargins(0, 0, 0, 0)
         inner.setSpacing(12)
@@ -219,7 +240,7 @@ class SearchPage(QWidget):
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(36, 28, 28, 12)
-        layout.addWidget(column, 1, Qt.AlignmentFlag.AlignHCenter)
+        layout.addWidget(column, 1)          # no alignment: an aligned widget keeps its own width and does not follow the window
 
         self._open_database()
 
@@ -319,6 +340,14 @@ class SearchPage(QWidget):
             limit=PAGE_SIZE, offset=offset,
         )
 
+    def _related(self, hadith_id: int) -> list:
+        from isnady.core import takhrij
+
+        try:
+            return takhrij.related(self._conn, hadith_id)
+        except Exception:      # an older database without the table: no line, never an error
+            return []
+
     def _fetch(self, offset: int):
         """One page of results: word search, or search by meaning (YZ1)."""
         query = self._query(offset)
@@ -387,9 +416,12 @@ class SearchPage(QWidget):
 
                 conn = _db.connect()
                 try:
+                    from isnady.core import takhrij
+
                     meta = semantic.build(conn, progress=self.progress.emit)
-                    self.done.emit(True, f"Meaning index ready: {meta['documents']:,} hadith, {meta['dims']} concepts, "
-                                         f"{meta['seconds']} s")
+                    found = takhrij.build(conn, progress=self.progress.emit)
+                    self.done.emit(True, f"AI indexes ready: meaning ({meta['documents']:,} hadith, {meta['dims']} "
+                                         f"concepts); takhrij ({found['same']:,} + {found['same_report']:,} pairs)")
                 except Exception as exc:  # shown to the user, never lost
                     self.done.emit(False, f"Meaning index failed: {exc}")
                 finally:
@@ -400,13 +432,13 @@ class SearchPage(QWidget):
         worker.progress.connect(self._status)
         worker.done.connect(self._meaning_built)
         worker.finished.connect(lambda: setattr(self, "_meaning_worker", None))
-        self._status("Building the meaning index…")
+        self._status("Building the AI indexes (meaning, takhrij)…")
         worker.start()
 
     def _meaning_built(self, ok: bool, message: str) -> None:
         self._status(message)
         semantic_mode = self.mode_combo.currentData() == "meaning"
-        if ok and semantic_mode and self.query_edit.text().strip():
+        if ok and self.query_edit.text().strip() and (semantic_mode or self._results):
             self.run_search()
 
     def _rerun_if_searched(self, *_args) -> None:
@@ -561,7 +593,8 @@ class SearchPage(QWidget):
             chain = chains[0] if chains else None
             people = self._people(chain)
             self.body_layout.addWidget(ResultCard(result, chain, self.open_chain.emit, people,
-                                                  getattr(self, "_scores", {}).get(result.hadith_id)))
+                                                  getattr(self, "_scores", {}).get(result.hadith_id),
+                                                  self._related(result.hadith_id)))
         self._pending = self._pending[count:]
         if self._pending:
             if stretch is not None:

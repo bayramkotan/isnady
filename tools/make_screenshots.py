@@ -34,6 +34,10 @@ hid = w.isnad_page.conn.execute("select h.id from hadiths h join collections c o
 w.isnad_page.show_hadith(hid); settle(); w.grab().save(D + "chain-dark.png")
 w.nav.setCurrentRow(0); p.search_for("namaz"); settle(); w.grab().save(D + "search-dark.png")
 w._set_theme("light")
+w.nav.setCurrentRow(w._narrators_row); w.narrators_page.query.setText("Ibn Umar"); settle(1200)
+w.narrators_page.list.setCurrentRow(0); settle(); w.grab().save(D + "narrators.png")
+w.nav.setCurrentRow([k for k, *_ in __import__("isnady.gui.main_window", fromlist=["SECTIONS"]).SECTIONS].index("scholars"))
+w.scholars_page.select("albani"); settle(); w.grab().save(D + "scholars.png")
 from isnady.gui.preferences import PreferencesDialog
 d = PreferencesDialog(w); d.resize(900, 660); d.show(); settle(); d.grab().save(D + "preferences.png"); d.close()
 theme.set_theme_mode("system")

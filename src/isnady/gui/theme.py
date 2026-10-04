@@ -232,6 +232,13 @@ def stylesheet(t: Tokens) -> str:
     QPushButton#Primary:hover {{ background: {t.gold}; }}
     QPushButton#Primary:disabled {{ background: {t.border}; color: {t.muted}; }}
     QCheckBox:disabled {{ color: {t.muted}; }}
+    QListWidget#NarratorList {{ background: transparent; border: none; outline: none; }}
+    QLabel#RowLatin {{ color: {t.lapis}; font-weight: 600; }}
+    QLabel#RowTitle {{ color: {t.ink}; font-weight: 700; }}
+    QFrame#Help {{ background: {t.lapis_soft}; border-radius: 10px; }}
+    QListWidget#NarratorList::item {{ border-bottom: 1px solid {t.border}; }}
+    QListWidget#NarratorList::item:selected {{ background: {t.lapis_soft}; }}
+    QListWidget#NarratorList::item:hover {{ background: {t.lapis_soft}; }}
     QCheckBox::indicator:disabled {{ background: {t.window}; border-color: {t.border}; }}
     QPushButton#Quiet {{ background: {t.surface}; color: {t.lapis}; border: 1px solid {t.border};
                          border-radius: 8px; padding: 7px 16px; }}

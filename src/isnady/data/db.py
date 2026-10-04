@@ -26,7 +26,7 @@ from pathlib import Path
 
 from isnady.data.paths import db_path
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 SCHEMA = """
 -- ------------------------------------------------------------------ sources
@@ -75,6 +75,20 @@ CREATE TABLE IF NOT EXISTS person_names (
     source_id INTEGER REFERENCES sources(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS ix_person_names_name ON person_names(name);
+
+-- Narrations of the same hadith found across and within the collections (YZ2, isnady.core.takhrij).
+-- kind: 'same' (the texts overlap strongly) or 'same_report' (they overlap and the same Companion narrates
+-- both). Derived data: rebuilt from the texts, never imported.
+CREATE TABLE IF NOT EXISTS hadith_relations (
+    hadith_a INTEGER NOT NULL REFERENCES hadiths(id) ON DELETE CASCADE,
+    hadith_b INTEGER NOT NULL REFERENCES hadiths(id) ON DELETE CASCADE,
+    kind     TEXT NOT NULL,
+    score    REAL NOT NULL,
+    method   TEXT NOT NULL,
+    PRIMARY KEY (hadith_a, hadith_b)
+);
+CREATE INDEX IF NOT EXISTS ix_hadith_relations_b ON hadith_relations(hadith_b);
+CREATE INDEX IF NOT EXISTS ix_isnad_links_person ON isnad_links(person_id);
 
 -- Where a rijal work says a person's hadith appear (Ibn Hajar's marks: خ م د ت س ق ع 4 ...).
 CREATE TABLE IF NOT EXISTS person_marks (
@@ -253,6 +267,15 @@ MIGRATIONS = {
                source_id INTEGER REFERENCES sources(id) ON DELETE CASCADE,
                PRIMARY KEY (person_id, mark))""",
         "ALTER TABLE isnad_links ADD COLUMN candidates INTEGER",
+    ],
+    4: [
+        """CREATE TABLE IF NOT EXISTS hadith_relations (
+               hadith_a INTEGER NOT NULL REFERENCES hadiths(id) ON DELETE CASCADE,
+               hadith_b INTEGER NOT NULL REFERENCES hadiths(id) ON DELETE CASCADE,
+               kind TEXT NOT NULL, score REAL NOT NULL, method TEXT NOT NULL,
+               PRIMARY KEY (hadith_a, hadith_b))""",
+        "CREATE INDEX IF NOT EXISTS ix_hadith_relations_b ON hadith_relations(hadith_b)",
+        "CREATE INDEX IF NOT EXISTS ix_isnad_links_person ON isnad_links(person_id)",
     ],
 }
 OLDEST_UPGRADABLE = 2

@@ -40,9 +40,11 @@ _TABAQA_WORD = re.compile(
     r"الثامنة|التاسعة|العاشرة)(?!\w)")
 _DEATH = re.compile(r"(?<!\w)(?:مات|قتل|استشهد|توفي)(?: سنة| في سنة)? (.+)$")
 _VERDICT_START = re.compile(
-    r"(?<!\w)(أم المؤمنين|الصحابي|الصحابية|صحابي|صحابية|له صحبة|لها صحبة|له رؤية|لها رؤية|ثقة|صدوق|مقبول|مستور|مجهول|ضعيف|متروك|كذاب|"
+    r"(?<!\w)(أم المؤمنين|الصحابي|الصحابية|صحابي|صحابية|له صحبة|لها صحبة|له رؤية|لها رؤية|ثقة|"
+    r"صدوقة|صدوقا|صدوق|مقبولة|مقبول|مستورة|مستور|مجهولة|مجهول|ضعيفة|ضعيفا|ضعيف|متروكة|متروكا|متروك|لا يعرف|كذاب|"
     r"متهم|لين الحديث|لا بأس به|ليس به بأس|واه|ساقط|أمير المؤمنين)(?!\w)")
 # a kunya is "أبو X" / "أم X" standing on its own, or "يكنى أبا X"; "بن أبي X" is lineage, not a kunya
+_LIFE_START = re.compile(r"\s(?:ولد|وهو|كان|أسلم|اسلم|شهد|استصغر|قدم|نزل|سكن|روى|هاجر|أحد|من السابقين)(?!\w)")
 _KUNYA = re.compile(r"(?<!بن )(?<!بنت )(?<!\w)(أبو|أم) (عبد \S+|\S+)|(?:يكنى|تكنى|كنيته) (أبا|أم) (عبد \S+|\S+)")
 _XREF_SPLIT = re.compile(r"\s(?:هو|هي|اسمه|اسمها|صوابه|صوابها)\s")
 
@@ -89,6 +91,12 @@ def parse_entry(number: int, text: str) -> dict:
         name, verdict = head[:verdict_at.start()].strip(" ،,"), head[verdict_at.start():].strip(" ،,")
     else:
         name, verdict = head.strip(" ،,"), ""
+    # some Companions are introduced by their life, not a verdict: "عبد الله بن عمر … ولد بعد المبعث … وهو أحد
+    # المكثرين من الصحابة". The name ends where the life begins; "من الصحابة" says Companion.
+    if not verdict:
+        life = _LIFE_START.search(name)
+        if life and life.start() > 0:
+            name, verdict = name[:life.start()].strip(" ،,"), name[life.start():].strip(" ،,")
 
     rank = rijal.rank_of(verdict) if verdict else None
     if tabaqa is None and rank == 1:
@@ -284,10 +292,18 @@ class TaqribImporter(Importer):
                 for target_tokens in targets:
                     hits = [pid for pid, toks in token_index
                             if toks[:1] == target_tokens[:1] and _is_subsequence(target_tokens, toks)]
+                    if len(hits) > _MAX_ALIAS_TARGETS:
+                        # too many with words in between: keep those whose name BEGINS with the target
+                        # ("بن عمر هو عبد الله" → the 7 entries beginning عبد الله بن عمر, the Companion among them)
+                        hits = [pid for pid, toks in token_index if toks[:len(target_tokens)] == target_tokens] or hits
                     if len(hits) > 1 and distinctive:
-                        # narrow with the alias's own words: "الزهري" is the Muhammad b. Muslim called al-Zuhri
-                        narrowed = [pid for pid in hits if all(w in token_of[pid] for w in distinctive)]
-                        hits = narrowed or hits
+                        # narrow with the alias's own words: "الزهري" is the Muhammad b. Muslim called al-Zuhri.
+                        # All of them, else any of them; when NONE of the candidates carries any, the alias is not
+                        # linked at all (it once fell back to every candidate: "بن غانم الإفريقي" landed on the
+                        # Companion 'Abdullah b. 'Umar)
+                        every = [pid for pid in hits if all(w in token_of[pid] for w in distinctive)]
+                        some = [pid for pid in hits if any(w in token_of[pid] for w in distinctive)]
+                        hits = every or some
                     if 1 <= len(hits) <= _MAX_ALIAS_TARGETS:
                         persons.extend(h for h in hits if h not in persons)
                 # more than one person: the chain decides (tabaqa, book marks); nothing is picked here

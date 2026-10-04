@@ -11,6 +11,8 @@ Examples
   iy narrator الزهري
   iy ai build
   iy search --mode meaning "komşu hakları"
+  iy tahric bukhari 1
+  iy scholar albani
   iy import fawazahmed0 ./tur-bukhari.json
   iy import fawazahmed0 https://example.org/editions.json --book bukhari --language tur
   iy import fawazahmed0 https://example.org/ed.json --user bayram          (password is asked)
@@ -419,9 +421,14 @@ def cmd_ai(args) -> int:
     conn = _connect()
     try:
         if args.action == "build":
+            from isnady.core import takhrij
+
             meta = semantic.build(conn, dims=args.dims, progress=lambda m: print(f"  {m}"))
-            print(f"Done in {meta['seconds']} s: {meta['documents']:,} hadith, {meta['terms']:,} words, "
+            print(f"Meaning index in {meta['seconds']} s: {meta['documents']:,} hadith, {meta['terms']:,} words, "
                   f"{meta['dims']} concepts.")
+            found = takhrij.build(conn, progress=lambda m: print(f"  {m}"))
+            print(f"Takhrij in {found['seconds']} s: {found['same']:,} pairs of the same hadith, "
+                  f"{found['same_report']:,} probably the same report.")
         else:
             missing = semantic.requirements_message()
             st = semantic.status(conn)
@@ -430,13 +437,74 @@ def cmd_ai(args) -> int:
             elif not st.get("built"):
                 print("Meaning index: not built yet. Build it with: iy ai build")
             else:
+                from isnady.core import takhrij
+
                 print(f"Meaning index: {st['documents']:,} hadith, {st['terms']:,} words, {st['dims']} concepts, "
                       f"built {st['built_at']} ({st['method']})" + ("; OLDER than the data: iy ai build" if st["stale"] else ""))
+                tk = takhrij.status(conn)
+                print(f"Takhrij: {tk['same']:,} pairs of the same hadith, {tk['same_report']:,} probably the same report")
     except semantic.NotAvailable as exc:
         print(exc, file=sys.stderr)
         return 2
     finally:
         conn.close()
+    return 0
+
+
+def cmd_scholar(args) -> int:
+    from isnady.core import scholars as S
+
+    conn = _connect()
+    people = S.present(conn)
+    if not args.name:
+        for s in people:
+            print(f"  {s['id']:13} {s['name']:38} {', '.join(s['roles'])}")
+        conn.close()
+        return 0
+    want = " ".join(args.name).lower()
+    s = next((p for p in people if want in (p["id"] + " " + p["name"] + " " + p["full"]).lower()), None)
+    if s is None:
+        print("No such scholar in the imported data. See: iy scholar", file=sys.stderr)
+        conn.close()
+        return 1
+    print(f"{s['full']}  ({s['arabic']})  {s['dates']}\n  roles: {', '.join(s['roles'])}; works: {'; '.join(s['works'])}")
+    for st in S.compiler_stats(conn, s):
+        print(f"\n  {st['book']}: {st['hadith']:,} hadith, {st['chains']:,} chains, {st['identified']:,} of {st['links']:,} narrators identified")
+        print("  teachers: " + "; ".join(f"{t['name']} ({t['count']})" for t in st["teachers"][:6]))
+    g = S.grader_stats(conn, s)
+    if g:
+        print(f"\n  grades: {g['graded']:,} hadith — " + ", ".join(f"{k} {v:,}" for k, v in g["distribution"].items()))
+        for other, a in g["agreement"].items():
+            k = f"{a['kappa']:.2f}" if a["kappa"] is not None else "-"
+            flag = "   (unusually high: possibly not independent in the source)" if a["agree"] >= 0.95 else ""
+            print(f"  vs {other}: agree {100 * a['agree']:.1f}% of {a['common']:,}, kappa {k}, mean difference {a['difference']:+.2f}{flag}")
+        if g["strictness"] is not None:
+            print(f"  strictness index {g['strictness']:+.2f} (negative = stricter than the others)")
+    cr = S.critic_stats(conn, s)
+    if cr:
+        print(f"\n  verdicts on narrators: {cr['verdicts']:,} — " + ", ".join(f"{r}:{n}" for r, _l, n in cr["ranks"]))
+    conn.close()
+    return 0
+
+
+def cmd_tahric(args) -> int:
+    from isnady.core import takhrij
+
+    conn = _connect()
+    hid = core_isnad.hadith_id(conn, args.book, args.number)
+    if hid is None:
+        print(f"No hadith {args.number} in '{args.book}'. See: iy stats", file=sys.stderr)
+        conn.close()
+        return 1
+    found = takhrij.related(conn, hid)
+    conn.close()
+    if not found:
+        print("No other narration found (or not built yet: iy ai build).")
+        return 0
+    print(f"Other narrations of {args.book} {args.number}:")
+    for r in found:
+        level = "same text" if r["kind"] == "same" else "probably the same report (same Companion)"
+        print(f"  {r['book_name']:22} {r['number']:>6}   overlap {r['score']:.2f}   {level}")
     return 0
 
 
@@ -530,6 +598,18 @@ def cmd_narrator(args) -> int:
         if who["marks"]:
             print("  books: " + ", ".join(f"{m} {meaning}" for m, meaning in who["marks"]))
         print(f"  identified in {who['in_chains']} chain link{'s' if who['in_chains'] != 1 else ''} of the imported collections")
+        if args.limit == 1 or len(found) == 1:
+            rel = core_narrators.relations(conn, pid, limit=8)
+            if rel["teachers"]:
+                print("  narrates from: " + "; ".join(f"{r['name']} ({r['count']})" for r in rel["teachers"]))
+            if rel["students"]:
+                print("  narrated to:   " + "; ".join(f"{r['name']} ({r['count']})" for r in rel["students"]))
+            if rel["compilers"]:
+                print("  compilers who narrate from him directly: " + "; ".join(f"{c['book']} ({c['count']})" for c in rel["compilers"]))
+            hadith, total = core_narrators.hadiths_of(conn, pid, limit=12)
+            if hadith:
+                print(f"  in the chains of {total} hadith: " + ", ".join(f"{h['book']} {h['number']}" for h in hadith)
+                      + (" …" if total > len(hadith) else ""))
     conn.close()
     return 0
 
@@ -638,10 +718,17 @@ def build_parser() -> argparse.ArgumentParser:
     isn = sub.add_parser("isnads", help="read the chains of transmission from the Arabic texts and report")
     isn.add_argument("--rebuild", action="store_true", help="read every chain again")
     isn.set_defaults(func=cmd_isnads)
-    ai = sub.add_parser("ai", help="artificial-intelligence features: build or check the meaning index")
+    ai = sub.add_parser("ai", help="artificial-intelligence features: build or check the meaning index and takhrij")
     ai.add_argument("action", choices=["build", "status"])
     ai.add_argument("--dims", type=int, default=200, help="build: number of concepts (default 200)")
     ai.set_defaults(func=cmd_ai)
+    sc = sub.add_parser("scholar", help="the hadith scholars in the data: compilers, graders, critics, with measured statistics")
+    sc.add_argument("name", nargs="*", help="part of a name, e.g. albani, bukhari; none = the list")
+    sc.set_defaults(func=cmd_scholar)
+    tk = sub.add_parser("tahric", help="other narrations of a hadith in the imported books (takhrij)")
+    tk.add_argument("book")
+    tk.add_argument("number")
+    tk.set_defaults(func=cmd_tahric)
     nr = sub.add_parser("narrator", help="look up a narrator: verdict, rank, tabaqa, death, books")
     nr.add_argument("words", nargs="+", help="part of the name, e.g. الزهري, 'سفيان بن عيينة', 'ابو هريرة'")
     nr.add_argument("--limit", type=int, default=5)

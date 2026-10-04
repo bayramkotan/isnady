@@ -26,6 +26,15 @@ def gui_main() -> int:
     from isnady.gui import theme
     from isnady.gui.main_window import MainWindow
 
+    import os
+
+    from PySide6.QtCore import QLoggingCategory
+
+    if not os.environ.get("QT_LOGGING_RULES"):
+        # Qt reports, for EVERY installed font, that it cannot shape a script none of them covers (Bengali,
+        # Tamil, … — "OpenType support missing for …, script 12"): hundreds of harmless lines. Only that
+        # category is silenced; every other Qt warning still shows. A user's own QT_LOGGING_RULES wins.
+        QLoggingCategory.setFilterRules("qt.text.font.db=false")
     app = QApplication(sys.argv[:1])
     app.setApplicationName(APP_NAME)
     app.setApplicationVersion(__version__)

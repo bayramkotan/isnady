@@ -124,7 +124,7 @@ class ChainNode(QWidget):
 
     def __init__(self, title: str, subtitle: str = "", term: str | None = None, *, first: bool = False,
                  last: bool = False, prophet: bool = False, full_name: str = "", latin: bool = False,
-                 person: dict | None = None, candidates: int | None = None) -> None:
+                 person: dict | None = None, candidates: int | None = None, on_person=None) -> None:
         super().__init__()
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
@@ -166,13 +166,25 @@ class ChainNode(QWidget):
             box.addWidget(sub)
         if person:
             who = QLabel(_shorten(person["display_name"], 90))
+            if on_person is not None:
+                who.setCursor(Qt.CursorShape.PointingHandCursor)
+                who.mousePressEvent = lambda _e, pid=person["id"]: on_person(pid)
             who.setObjectName("NodeFacts")
             who.setWordWrap(True)
             who.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
-            who.setToolTip(person["name_ar"] + (("\n" + "، ".join(person["other_names"][:8])) if person.get("other_names") else ""))
+            who.setToolTip(person["name_ar"] + (("\n" + "، ".join(person["other_names"][:8])) if person.get("other_names") else "")
+                           + ("\n\nClick to open this narrator." if on_person is not None else ""))
             who.setStyleSheet(f"color: {theme.current().muted}; "
                               f"{theme.font_css(theme.script_font('arabic', factor=0.62))}")
             box.addWidget(who)
+            from isnady.core.names import latin
+
+            reading = latin(person["display_name"], "tr")
+            if reading:
+                roman = QLabel(reading)
+                roman.setObjectName("NodeFacts")
+                roman.setToolTip(f"Türkçe: {reading}\nEnglish: {latin(person['display_name'], 'en')}")
+                box.addWidget(roman)
             v = person["verdicts"][0] if person.get("verdicts") else None
             if v:
                 dot = theme.rank_color(v["rank"])

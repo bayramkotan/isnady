@@ -40,8 +40,8 @@ exists, the package only reports its version:
 ```js
 import { info, version } from "isnady";
 
-console.log(version); // "0.0.9"
-console.log(info());  // { name: "isnady", version: "0.0.9", dataLoaded: false, homepage: "…" }
+console.log(version); // "0.1.0"
+console.log(info());  // { name: "isnady", version: "0.1.0", dataLoaded: false, homepage: "…" }
 ```
 
 TypeScript declarations are included.

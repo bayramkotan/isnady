@@ -115,6 +115,12 @@ class MainWindow(QMainWindow):
         self.pages = QStackedWidget()
         self.search_page = SearchPage(status_message=self._set_footer)
         self.isnad_page = IsnadPage(self.search_page.connection)
+        from isnady.gui.narrators_page import NarratorsPage
+
+        self.narrators_page = NarratorsPage(self.search_page.connection)
+        from isnady.gui.scholars_page import ScholarsPage
+
+        self.scholars_page = ScholarsPage(self.search_page.connection)
         for key, label, text in SECTIONS:
             self.nav.addItem(label)
             self.nav.item(self.nav.count() - 1).setSizeHint(QSize(0, 38))
@@ -122,13 +128,27 @@ class MainWindow(QMainWindow):
                 page = self.search_page
             elif key == "chains":
                 page = self.isnad_page
+            elif key == "narrators":
+                page = self.narrators_page
+            elif key == "scholars":
+                page = self.scholars_page
             else:
                 page = _placeholder(label, text)
             self.pages.addWidget(page)
         self._chains_row = [k for k, _l, _t in SECTIONS].index("chains")
         self.search_page.open_chain.connect(self._open_chain)
         self.search_page.data_changed.connect(self.isnad_page.refresh)
+        self.search_page.data_changed.connect(self.narrators_page.refresh)
         self.isnad_page.refresh()
+        self._narrators_row = [k for k, _l, _t in SECTIONS].index("narrators")
+        self.narrators_page.open_chain.connect(self._open_chain)
+        self.narrators_page.open_sources.connect(lambda: self._preferences("sources"))
+        self.isnad_page.open_narrator.connect(self._open_narrator)
+        self.narrators_page.refresh()
+        self.scholars_page.open_narrator.connect(self._open_narrator)
+        self.scholars_page.open_chain.connect(self._open_chain)
+        self.search_page.data_changed.connect(self.scholars_page.refresh)
+        self.scholars_page.refresh()
         self.nav.currentRowChanged.connect(self.pages.setCurrentIndex)
         self.nav.setCurrentRow(0)
 
@@ -199,8 +219,9 @@ class MainWindow(QMainWindow):
         self._action(tools_menu, "Identify Narrators Again", lambda: search.identify_narrators(),
                      tip="Match every name in the chains against the imported rijal works again")
         tools_menu.addSeparator()
-        self._action(tools_menu, "Build Meaning Index (AI)", lambda: search.build_meaning_index(),
-                     tip="Learn the meaning index from the imported texts, for Match → By meaning (AI)")
+        self._action(tools_menu, "Build AI Indexes (Meaning, Takhrij)", lambda: search.build_meaning_index(),
+                     tip="Learn the meaning index (Match → By meaning) and find the narrations of each hadith "
+                         "across the books (Also narrated in)")
 
         help_menu = bar.addMenu("&Help")
         self._action(help_menu, "Search Tips", lambda: dialogs.search_tips(self).exec())
@@ -213,6 +234,10 @@ class MainWindow(QMainWindow):
         self._action(help_menu, "Report an Issue", lambda: QDesktopServices.openUrl(QUrl(dialogs.ISSUES_URL)))
         help_menu.addSeparator()
         self._action(help_menu, "About isnady", lambda: dialogs.about(self).exec())
+
+    def _open_narrator(self, person_id: int) -> None:
+        self.nav.setCurrentRow(self._narrators_row)
+        self.narrators_page.select(person_id)
 
     def _open_chain(self, hadith_id: int) -> None:
         self.nav.setCurrentRow(self._chains_row)
@@ -280,6 +305,8 @@ class MainWindow(QMainWindow):
         """A source was imported or removed from Data sources: bring every page up to date."""
         self.search_page._sync_with_database(force=True)
         self.isnad_page.refresh()
+        self.narrators_page.refresh()
+        self.scholars_page.refresh()
 
     def _apply_settings(self) -> None:
         theme.apply(QApplication.instance())
