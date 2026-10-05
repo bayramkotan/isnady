@@ -33,7 +33,13 @@ def main() -> None:
     differing = {k: v for k, v in found.items() if v != version}
     if differing:
         fail("versions differ: " + ", ".join(f"{k} {v}" for k, v in found.items()))
-    print(f"one version everywhere: {version}")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    for label, pattern in (("README status line", r"Pre-alpha \(([^)]+)\)"), ("PyPI badge", r"badge/PyPI-v([0-9.]+)-"),
+                           ("npm badge", r"badge/npm-v([0-9.]+)-")):
+        m = re.search(pattern, readme)
+        if not m or m.group(1) != version:
+            fail(f"{label} says {m.group(1) if m else 'nothing'}, not {version} — run  python tools/bump_version.py {version}")
+    print(f"one version everywhere: {version} (code, npm files, README status line and badges)")
     synced = subprocess.run([sys.executable, str(ROOT / "tools/sync_readme.py"), "--check"], capture_output=True, text=True)
     if synced.returncode != 0:
         fail("js/README.md is not in step with README.md — run  python tools/sync_readme.py  and commit")

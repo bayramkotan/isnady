@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/pypi/v/isnady?style=for-the-badge&color=1D4777&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.1.3-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/npm/v/isnady?style=for-the-badge&color=14304F&logo=npm&label=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.1.3-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <img src="https://img.shields.io/badge/License-MIT-D6B25E?style=for-the-badge" alt="License">
 </p>

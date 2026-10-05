@@ -3,6 +3,14 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Version badges that cannot go stale**: the PyPI and npm badges carry the version in their address, so GitHub's
+  and npm's image caches can no longer show an older one (0.1.3 showed v0.1.2 there for a while).
+- **One command for a new version** (`tools/bump_version.py 0.1.4`): code, npm files, the README's status line and
+  badges, the CHANGELOG heading and the npm README, together. The release check now also checks the README, and
+  `tools/release_status.py` shows what PyPI, npm, GitHub and the Release page publish after a release.
+
 ## [0.1.3] — 2026-10-05
 
 **Deep statistics begin, a glossary to learn from, and two fixes everyone sees.**
