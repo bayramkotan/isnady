@@ -76,10 +76,10 @@ MEASURE_HELP = {
                  "(sahih, hasan, da'if, very weak, fabricated).",
     "kappa": "Cohen's kappa: agreement after removing what chance alone would give. 1 = always the same, 0 = no "
              "better than chance; above 0.8 is very strong, 0.6–0.8 strong, 0.4–0.6 moderate.",
-    "strictness": "Strictness index: on the same hadith, his grade minus the average grade of the others (sahih = 4 … "
-                  "fabricated = 0). Below zero he is stricter (classically mutashaddid), above zero more lenient "
-                  "(mutasahil), near zero moderate (mu'tadil).",
-}
+    "strictness": "Strictness: comparing his grade with each other grader's on the same hadith, how often his is LOWER "
+                  "minus how often it is HIGHER — by order only (grades are ordered categories, not numbers). Below "
+                  "zero he is stricter (classically mutashaddid), above zero more lenient (mutasahil). Statistics → "
+                  "Graders measures it against a model of the true grade, with intervals."}
 
 
 def name_view(scholar: dict) -> dict:
@@ -194,19 +194,26 @@ def grader_stats(conn: sqlite3.Connection, scholar: dict) -> dict | None:
             continue
         others[other] = {"common": len(pairs), "agree": sum(a == b for a, b in pairs) / len(pairs),
                          "within_one": sum(abs(a - b) <= 1 for a, b in pairs) / len(pairs),
-                         "kappa": _kappa(pairs), "difference": sum(a - b for a, b in pairs) / len(pairs)}
-    # strictness: his group minus the mean of the others' groups on the same hadith (negative = stricter)
-    diffs = []
+                         "kappa": _kappa(pairs),
+                         # ORDER only (grades are ordinal — never numbers, never averaged: the SK rule)
+                         "lower": sum(a < b for a, b in pairs) / len(pairs),
+                         "higher": sum(a > b for a, b in pairs) / len(pairs)}
+    # strictness, by order: over every comparison with another grader on the same hadith,
+    # P(his grade is lower) − P(his grade is higher); negative = stricter (mutashaddid)
+    lower = higher = compared = 0
     for h, g in mine.items():
-        theirs = [groups[o][h] for o in groups if o not in names and h in groups[o]]
-        if theirs:
-            diffs.append(g - sum(theirs) / len(theirs))
+        for o in groups:
+            if o not in names and h in groups[o]:
+                compared += 1
+                lower += g < groups[o][h]
+                higher += g > groups[o][h]
     books = [r[0] for r in conn.execute(
         f"""SELECT DISTINCT c.name FROM grades g JOIN hadiths h ON h.id = g.hadith_id
             JOIN collections c ON c.id = h.collection_id WHERE g.grader_name IN ({','.join('?' * len(names))})""", names)]
     return {"graded": len(mine), "books": books, "distribution": {GROUP_LABELS[k]: distribution[k] for k in sorted(GROUP_LABELS, reverse=True)},
             "wordings": wordings.most_common(8), "agreement": others,
-            "strictness": (sum(diffs) / len(diffs)) if diffs else None, "compared": len(diffs)}
+            "strictness": ((higher - lower) / compared) if compared else None, "compared": compared,
+            "lower": (lower / compared) if compared else None, "higher": (higher / compared) if compared else None}
 
 
 # ------------------------------------------------------------------ critic

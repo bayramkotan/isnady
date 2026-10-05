@@ -119,6 +119,12 @@ class MainWindow(QMainWindow):
 
         self.narrators_page = NarratorsPage(self.search_page.connection)
         self.shia_page = NarratorsPage(self.search_page.connection, tradition="shia")
+        from isnady.gui.statistics_page import StatisticsPage
+
+        self.statistics_page = StatisticsPage(self.search_page.connection)
+        from isnady.gui.learn_page import LearnPage
+
+        self.learn_page = LearnPage()
         from isnady.gui.books_page import BooksPage
         from isnady.gui.scholars_page import ScholarsPage
 
@@ -141,6 +147,10 @@ class MainWindow(QMainWindow):
                 page = self.books_page
             elif key == "shia_rijal":
                 page = self.shia_page
+            elif key == "statistics":
+                page = self.statistics_page
+            elif key == "learn":
+                page = self.learn_page
             else:
                 page = _placeholder(label, text)
             self.pages.addWidget(page)
@@ -170,6 +180,11 @@ class MainWindow(QMainWindow):
         for page in (self.narrators_page, self.shia_page):
             page.open_in_book.connect(self._open_person_in_book)
         self.shia_page.refresh()
+        self._statistics_row = [k for k, _l, _t in SECTIONS].index("statistics")
+        self._statistics_loaded = False
+        self.statistics_page.open_hadith.connect(self._open_in_book)
+        self.search_page.data_changed.connect(lambda: setattr(self, "_statistics_loaded", False))
+        self.nav.currentRowChanged.connect(self._load_statistics_when_shown)
         self.nav.currentRowChanged.connect(self.pages.setCurrentIndex)
         self.nav.setCurrentRow(0)
 
@@ -283,6 +298,12 @@ class MainWindow(QMainWindow):
                     "<p style='color:gray'>Making it again replaces it, so after moving isnady or changing how it is "
                     "installed, create it once more.</p>")
         box.exec()
+
+    def _load_statistics_when_shown(self, row: int) -> None:
+        """Statistics reads (or computes) only when it is opened."""
+        if row == self._statistics_row and not self._statistics_loaded:
+            self._statistics_loaded = True
+            self.statistics_page.refresh()
 
     def _load_books_when_shown(self, row: int) -> None:
         """The Books section reads its first chapter only when it is opened, not at start."""

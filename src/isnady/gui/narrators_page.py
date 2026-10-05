@@ -92,26 +92,33 @@ class NarratorsPage(QWidget):
         self.query.setPlaceholderText("Name, kunya or nisba — Arabic or Latin letters")
         self.query.setClearButtonEnabled(True)
         self.tabaqa = QComboBox()
-        self.tabaqa.addItem("Every tabaqa", None)
+        self.tabaqa.addItem("All generations", None)
         for t, text in TABAQA_LABELS.items():
             self.tabaqa.addItem(f"Tabaqa {t}: {text.split(' (')[0]}", t)
         self.rank = QComboBox()
         if shia:
-            self.rank.addItem("Every assessment", None)
+            self.rank.addItem("All assessments", None)
             for r, (_ar, en, _why) in shia_rijal.RANKS.items():
                 self.rank.addItem(en[0].upper() + en[1:], r)
             self.rank.addItem("No judgment in the work", -1)
         else:
-            self.rank.addItem("Every rank", None)
+            self.rank.addItem("All ranks", None)
             for r, (_ar, en) in RANK_LABELS.items():
                 self.rank.addItem(f"Rank {r}: {en.split(' (')[0]}", r)
         self.book = QComboBox()
-        self.book.addItem("Every book", None)
+        self.book.addItem("All books", None)
         for key, name in (("bukhari", "al-Bukhari"), ("muslim", "Muslim"), ("abudawud", "Abu Dawud"),
                           ("tirmidhi", "al-Tirmidhi"), ("nasai", "al-Nasa'i"), ("ibnmajah", "Ibn Maja")):
             self.book.addItem(f"Narrates in {name}", key)
         for combo in (self.tabaqa, self.rank, self.book):
-            combo.currentIndexChanged.connect(self._populate)
+            combo.setObjectName("FilterCombo")
+            combo.setCursor(Qt.CursorShape.PointingHandCursor)
+            combo.currentIndexChanged.connect(self._filters_changed)
+        self.clear_filters = QPushButton("Clear filters")
+        self.clear_filters.setObjectName("Link")
+        self.clear_filters.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.clear_filters.clicked.connect(self._clear_filters)
+        self.clear_filters.hide()
         self.list = QListWidget()
         self.list.setObjectName("NarratorList")
         self.list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -120,12 +127,27 @@ class NarratorsPage(QWidget):
         lbox.addWidget(title)
         lbox.addWidget(self.overview)
         lbox.addWidget(self.query)
-        lbox.addWidget(self.tabaqa)
-        lbox.addWidget(self.rank)
-        lbox.addWidget(self.book)
+        # each filter under its own title, so it is clear what it narrows (UI6)
+        self._filter_boxes = {}
+        titles = (("tabaqa", "Generation (tabaqa)", self.tabaqa),
+                  ("rank", "Assessment" if shia else "Rank (Ibn Hajar)", self.rank),
+                  ("book", "Book", self.book))
+        for key, title, combo in titles:
+            holder = QWidget()
+            hb = QVBoxLayout(holder)
+            hb.setContentsMargins(0, 2, 0, 0)
+            hb.setSpacing(3)
+            hb.addWidget(_label(title, "FilterTitle", wrap=False))
+            hb.addWidget(combo)
+            self._filter_boxes[key] = holder
+            lbox.addWidget(holder)
         if shia:                       # Ibn Hajar's tabaqa and book marks are not the Shia works' measure
-            self.tabaqa.hide()
-            self.book.hide()
+            self._filter_boxes["tabaqa"].hide()
+            self._filter_boxes["book"].hide()
+        clear_row = QHBoxLayout()
+        clear_row.addStretch(1)
+        clear_row.addWidget(self.clear_filters)
+        lbox.addLayout(clear_row)
         lbox.addWidget(self.list, 1)
         lbox.addWidget(self.count)
 
@@ -154,6 +176,26 @@ class NarratorsPage(QWidget):
         root.addWidget(scroll, 1)
 
     # ------------------------------------------------------------------ data
+    def _filters_changed(self, *_args) -> None:
+        """A chosen filter is coloured, so it is plain at a glance which ones are on; then the list refreshes."""
+        active = False
+        for combo in (self.tabaqa, self.rank, self.book):
+            on = combo.currentIndex() > 0
+            active = active or (on and combo.isVisibleTo(self))
+            if combo.property("active") != on:
+                combo.setProperty("active", on)
+                combo.style().unpolish(combo)
+                combo.style().polish(combo)
+        self.clear_filters.setVisible(active)
+        self._populate()
+
+    def _clear_filters(self) -> None:
+        for combo in (self.tabaqa, self.rank, self.book):
+            combo.blockSignals(True)
+            combo.setCurrentIndex(0)
+            combo.blockSignals(False)
+        self._filters_changed()
+
     @property
     def conn(self):
         return self._conn_of()
@@ -340,12 +382,20 @@ class NarratorsPage(QWidget):
                     rank += f"&nbsp;·&nbsp;creed: {html.escape(v['madhhab_label'])}"
             else:
                 dot = theme.rank_color(v["rank"])
-                rank = (f"&nbsp;&nbsp;<span style='color:{dot}'>●</span> rank {v['rank']} of 12: "
+                rank = (f"&nbsp;&nbsp;<span style='color:{dot}'>●</span> "
+                        f"<span style='text-decoration: underline dotted'>rank {v['rank']} of 12</span>: "
                         f"{html.escape(v['rank_label'])}") if v["rank"] else ""
             arabic = theme.script_font("arabic", factor=0.75)
             line = _label(f"<b>{html.escape(v['critic_name'])}</b>, <i>{html.escape(v['work'])}</i>:&nbsp; "
                           f"<span style='font-family:\"{arabic.family()}\"; font-size:{arabic.pointSizeF():.1f}pt'>"
                           f"{html.escape(v['phrase'])}</span>{rank}", "NodeVerdict", rich=True)
+            from isnady.core import learn
+
+            if v["rank_scheme"] == "shia":
+                term = {1: "thiqa", 2: "mamduh", 3: "muwaththaq", 4: "daif_narrator"}.get(v["rank"])
+                line.setToolTip(learn.short(term) + ("\n\n" + learn.short("imami") if v.get("madhhab") else "") if term else "")
+            elif v["rank"]:
+                line.setToolTip(learn.short("rank"))
             box.addWidget(line)
         if not who["verdicts"]:
             box.addWidget(_label("No verdict recorded.", "Caption"))

@@ -15,6 +15,8 @@ Examples
   iy scholar albani
   iy book bukhari 2
   iy shortcut
+  iy stats graders --book abudawud
+  iy term mursal --lang tr
   iy import fawazahmed0 ./tur-bukhari.json
   iy import fawazahmed0 https://example.org/editions.json --book bukhari --language tur
   iy import fawazahmed0 https://example.org/ed.json --user bayram          (password is asked)
@@ -332,7 +334,47 @@ def cmd_sources(_args) -> int:
     return 0
 
 
-def cmd_stats(_args) -> int:
+def cmd_stats_graders(args) -> int:
+    from isnady.core import stats_graders as sg
+    from isnady.core.scholars import SCHOLARS
+
+    conn = _connect()
+    books = sg.books_with_grades(conn)
+    if not books:
+        print("No grades imported.")
+        return 0
+    key = args.book or books[0][0]
+    r = sg.cached(conn, key, lambda m: print(f"  … {m}", file=sys.stderr), args.recompute)
+    short = {g: next((s["name"] for s in SCHOLARS if g in s.get("grader_names", [])), g) for g in r["graders"]}
+    print(f"{key}: {len(r['graders'])} graders" + (f"  (from {r['from_file']})" if r.get("from_file") else "  (computed and saved)"))
+    if len(r["graders"]) < 2:
+        print("  one grader: no agreement or model")
+        return 0
+    a = r["alpha"]
+    print(f"Krippendorff's alpha (ordinal) {a['value']:.3f}  95% {a['ci'][0]:.3f}–{a['ci'][1]:.3f}  over {a['units']:,} hadith")
+    for ov in r.get("one_voice", []):
+        print(f"  ! {short[ov['kept']]} and {short[ov['left_out']]} agree {100 * ov['agree']:.1f}%: one voice in the model")
+    print("Pairs: same grade · Cohen's kappa · ordinal kappa (95% intervals)")
+    for k, p in r["pairs"].items():
+        ga, gb = k.split("|")
+        ci = p["ci"]
+        print(f"  {short[ga]} – {short[gb]} (n {p['common']:,}): {100 * p['agree']:.1f}% [{100 * ci['agree'][0]:.1f}–{100 * ci['agree'][1]:.1f}]"
+              f" · κ {p['kappa']:.2f} [{ci['kappa'][0]:.2f}–{ci['kappa'][1]:.2f}] · κw {p['wkappa']:.2f} [{ci['wkappa'][0]:.2f}–{ci['wkappa'][1]:.2f}]")
+    print("Strictness from the model: P(below the true grade) − P(above it); negative = stricter")
+    for g, s in sorted(r["model"]["strictness"].items(), key=lambda kv: kv[1]["value"]):
+        print(f"  {short[g]:40} {s['value']:+.3f}  [{s['ci'][0]:+.3f}, {s['ci'][1]:+.3f}]")
+    c = r["certainty"]
+    print(f"The model is sure (≥95%) of {c['high']:,} of {c['total']:,} hadith, unsure (<60%) of {c['low']:,}; "
+          f"{r['disputed_total']:,} disputed")
+    for d in r["disputed"][: args.limit]:
+        grades = ", ".join(f"{short[g]}: {sg.LABELS[v]}" for g, v in d["grades"].items())
+        print(f"  #{d.get('number')}: model {sg.LABELS[d['consensus']]} ({100 * d['certainty']:.0f}%) — {grades}")
+    return 0
+
+
+def cmd_stats(args) -> int:
+    if getattr(args, "topic", None) == "graders":
+        return cmd_stats_graders(args)
     conn = _connect()
     books = conn.execute(
         """SELECT c.id, c.name,
@@ -453,6 +495,32 @@ def cmd_ai(args) -> int:
     return 0
 
 
+def cmd_term(args) -> int:
+    from isnady.core import learn
+
+    lang = args.lang
+    if args.search or not args.name:
+        found = learn.search(args.search or "", lang)
+        for t in found:
+            print(f"  {t['id']:16} {learn.name(t, lang):30} {t['ar']:18} {t['short'][lang][:70]}")
+        print(f"{len(found)} term(s)")
+        return 0
+    found = learn.get(args.name) or next(iter(learn.search(args.name, lang)), None)
+    if not found:
+        print(f"No term '{args.name}'. Try: iy term --search {args.name}", file=sys.stderr)
+        return 1
+    t = found
+    print(f"{learn.name(t, lang)}  {t['ar']}   [{learn.categories()[t['cat']][lang]}]")
+    print(f"  {t['short'][lang]}")
+    if t["long"][lang]:
+        print(f"  {t['long'][lang]}")
+    if t["related"]:
+        print("  related: " + ", ".join(learn.name(learn.get(r), lang) for r in t["related"]))
+    if t["source"]:
+        print(f"  source: {t['source']}")
+    return 0
+
+
 def cmd_shortcut(args) -> int:
     from isnady.core import shortcut
 
@@ -540,9 +608,10 @@ def cmd_scholar(args) -> int:
         for other, a in g["agreement"].items():
             k = f"{a['kappa']:.2f}" if a["kappa"] is not None else "-"
             flag = "   (unusually high: possibly not independent in the source)" if a["agree"] >= 0.95 else ""
-            print(f"  vs {other}: agree {100 * a['agree']:.1f}% of {a['common']:,}, kappa {k}, mean difference {a['difference']:+.2f}{flag}")
+            print(f"  vs {other}: agree {100 * a['agree']:.1f}% of {a['common']:,}, kappa {k}, he lower {100 * a['lower']:.1f}% / higher {100 * a['higher']:.1f}%{flag}")
         if g["strictness"] is not None:
-            print(f"  strictness index {g['strictness']:+.2f} (negative = stricter than the others)")
+            print(f"  strictness {g['strictness']:+.2f} by order: lower {100 * g['lower']:.1f}%, higher {100 * g['higher']:.1f}% "
+                  f"of {g['compared']:,} comparisons (negative = stricter)")
     cr = S.critic_stats(conn, s)
     if cr:
         print(f"\n  verdicts on narrators: {cr['verdicts']:,} — " + ", ".join(f"{r}:{n}" for r, _l, n in cr["ranks"]))
@@ -785,6 +854,11 @@ def build_parser() -> argparse.ArgumentParser:
     ai.add_argument("action", choices=["build", "status"])
     ai.add_argument("--dims", type=int, default=200, help="build: number of concepts (default 200)")
     ai.set_defaults(func=cmd_ai)
+    tm = sub.add_parser("term", help="the glossary: a term of hadith and its sciences, or a search")
+    tm.add_argument("name", nargs="?", help="e.g. sahih, mursal, tadlis, kunya")
+    tm.add_argument("--search", help="words to look for in names and definitions")
+    tm.add_argument("--lang", choices=["en", "tr"], default="en")
+    tm.set_defaults(func=cmd_term)
     sh = sub.add_parser("shortcut", help="put isnady on the desktop and in the applications menu, with its icon")
     sh.add_argument("--no-desktop", action="store_true", help="only the applications menu")
     sh.add_argument("--no-menu", action="store_true", help="only the desktop")
@@ -814,7 +888,12 @@ def build_parser() -> argparse.ArgumentParser:
     ch.set_defaults(func=cmd_chain)
 
     sub.add_parser("sources", help="list imported sources").set_defaults(func=cmd_sources)
-    sub.add_parser("stats", help="count what the database holds").set_defaults(func=cmd_stats)
+    st = sub.add_parser("stats", help="count what the database holds; 'graders' for the graders of a book in depth")
+    st.add_argument("topic", nargs="?", choices=["graders"], help="graders: agreement, model, strictness, disputed hadith")
+    st.add_argument("--book", help="collection key, e.g. abudawud (default: the book with most graders)")
+    st.add_argument("--recompute", action="store_true", help="compute again instead of reading the saved results")
+    st.add_argument("--limit", type=int, default=10, help="disputed hadith to list")
+    st.set_defaults(func=cmd_stats)
     rm = sub.add_parser("remove", help="remove a source and everything imported from it")
     rm.add_argument("key", help="source key, see 'iy sources'")
     rm.set_defaults(func=cmd_remove)

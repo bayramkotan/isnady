@@ -44,6 +44,15 @@ w.grab().save(D + "books.png")
 w.books_page.select_work("taqrib"); settle(1500); w.grab().save(D + "books-taqrib.png")
 w.nav.setCurrentRow(w._shia_row); w.shia_page.query.setText("بابويه"); settle(1200)
 w.shia_page.list.setCurrentRow(0); settle(); w.grab().save(D + "shia-rijal.png")
+w.nav.setCurrentRow(w._statistics_row); settle(1500)
+for _ in range(240):
+    if w.statistics_page._thread is not None and not w.statistics_page._thread.isRunning():
+        break
+    settle(500)
+settle(1500); w.grab().save(D + "statistics.png")
+from isnady.gui.main_window import SECTIONS as _SECTIONS
+w.nav.setCurrentRow([k for k, *_ in _SECTIONS].index("learn")); w.learn_page._set_lang("en"); w.learn_page.show_term("mursal")
+settle(); w.grab().save(D + "learn.png")
 from isnady.gui.preferences import PreferencesDialog
 d = PreferencesDialog(w); d.resize(900, 660); d.show(); settle(); d.grab().save(D + "preferences.png"); d.close()
 theme.set_theme_mode("system")

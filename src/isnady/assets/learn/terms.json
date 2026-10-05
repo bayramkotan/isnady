@@ -1,0 +1,1713 @@
+{
+ "version": 1,
+ "license": "CC BY 4.0 — written for isnady",
+ "categories": {
+  "grades": {
+   "en": "Hadith grades",
+   "tr": "Hadis dereceleri"
+  },
+  "chain_kinds": {
+   "en": "Kinds of hadith by their chain",
+   "tr": "Senedine göre hadis türleri"
+  },
+  "chain": {
+   "en": "Chain and text",
+   "tr": "Senet ve metin"
+  },
+  "transmission": {
+   "en": "Receiving and passing on",
+   "tr": "Rivayet yolları ve sîgalar"
+  },
+  "critics": {
+   "en": "Judging narrators (jarh and ta'dil)",
+   "tr": "Ravileri değerlendirme (cerh ve ta'dil)"
+  },
+  "generations": {
+   "en": "Generations",
+   "tr": "Tabakalar"
+  },
+  "names": {
+   "en": "Arabic names",
+   "tr": "Arap isimleri"
+  },
+  "shia": {
+   "en": "Imami rijal",
+   "tr": "Şiî rical terimleri"
+  },
+  "books": {
+   "en": "Books",
+   "tr": "Eserler"
+  },
+  "measures": {
+   "en": "isnady's measures",
+   "tr": "isnady'nin ölçüleri"
+  }
+ },
+ "terms": [
+  {
+   "id": "sahih",
+   "cat": "grades",
+   "ar": "صحيح",
+   "en": "sahih",
+   "tr": "sahîh",
+   "short": {
+    "en": "A hadith with an unbroken chain of trustworthy narrators of sound memory, free of irregularity (shudhudh) and hidden defect ('illa).",
+    "tr": "Senedi kesintisiz, ravileri adil ve zabtı tam, şâz ve illetten uzak hadis."
+   },
+   "long": {
+    "en": "The highest grade. Five conditions together: every narrator heard from the one before him (ittisal), each is upright ('adl), each preserved what he narrated precisely (tamm al-dabt), the report does not contradict stronger narrators (no shudhudh), and it carries no hidden defect that only the experts detect ('illa). A hadith can be sahih in itself (li-dhatihi) or raised to sahih by other routes (li-ghayrihi).",
+    "tr": "En yüksek derece. Beş şart birlikte bulunur: senetteki her ravi bir öncekinden işitmiştir (ittisal), her ravi adildir, rivayetini tam olarak korumuştur (tam zabt), rivayet daha güçlü ravilere aykırı değildir (şâz değil) ve ancak uzmanların fark ettiği gizli bir kusur taşımaz (illet). Bizzat sahih (li-zâtihî) olabileceği gibi başka yollarla sahih derecesine yükselebilir (li-gayrihî)."
+   },
+   "related": [
+    "hasan",
+    "daif",
+    "shadhdh",
+    "muallal",
+    "thiqa"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "hasan",
+   "cat": "grades",
+   "ar": "حسن",
+   "en": "hasan",
+   "tr": "hasen",
+   "short": {
+    "en": "Like a sahih hadith, except that a narrator's memory is somewhat less precise.",
+    "tr": "Sahih gibi, ancak bir ravisinin zabtı tam derecede olmayan hadis."
+   },
+   "long": {
+    "en": "A hadith with the conditions of sahih except that one of its narrators is of lighter precision (khafif al-dabt) — typically a narrator called saduq. It is accepted and acted upon. A weak hadith with several supporting routes may rise to hasan li-ghayrihi. Al-Tirmidhi made the term well known.",
+    "tr": "Sahihin şartlarını taşıyan, ancak ravilerinden birinin zabtı biraz hafif (hafîfü'z-zabt) olan hadis; çoğunlukla \"sadûk\" denen ravi böyledir. Makbuldür, onunla amel edilir. Birden fazla destekleyici yolu olan zayıf bir hadis hasen li-gayrihî olabilir. Terimi yaygınlaştıran Tirmizî'dir."
+   },
+   "related": [
+    "sahih",
+    "daif",
+    "saduq"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "daif",
+   "cat": "grades",
+   "ar": "ضعيف",
+   "en": "da'if",
+   "tr": "zayıf",
+   "short": {
+    "en": "A hadith that lacks one or more of the conditions of hasan.",
+    "tr": "Hasen hadisin şartlarından birini ya da birkaçını taşımayan hadis."
+   },
+   "long": {
+    "en": "Weakness comes either from a break in the chain (mursal, munqati', mu'dal, mu'allaq, a concealed break through tadlis) or from a narrator who is criticised (weak memory, unknown, accused). Its degrees vary widely; scholars differ on using mildly weak hadith for virtuous deeds under conditions, but not for law or belief.",
+    "tr": "Zayıflık ya senetteki bir kopukluktan (mürsel, munkatı', mu'dal, muallak, tedlisle gizlenmiş kopukluk) ya da tenkit edilmiş bir raviden (zabtı zayıf, meçhul, itham edilmiş) gelir. Dereceleri çok farklıdır; hafif zayıf hadisin şartlarla fezâil için kullanılmasında âlimler ihtilaf etmiştir, ahkâm ve akaid için kullanılmaz."
+   },
+   "related": [
+    "hasan",
+    "mawdu",
+    "munqati",
+    "majhul"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "mawdu",
+   "cat": "grades",
+   "ar": "موضوع",
+   "en": "mawdu'",
+   "tr": "mevzû",
+   "short": {
+    "en": "A fabricated report falsely attributed to the Prophet.",
+    "tr": "Peygambere yalan olarak isnat edilmiş, uydurma rivayet."
+   },
+   "long": {
+    "en": "The worst of weak reports: not a hadith at all, but a lie. Narrating it is forbidden except to show that it is fabricated. It is known by a liar in its chain, the fabricator's own admission, or a text that contradicts what is certain. isnady groups it as 'fabricated'.",
+    "tr": "Zayıf rivayetlerin en kötüsü; aslında hadis değil, bir yalandır. Uydurma olduğunu açıklamak dışında rivayet edilmesi haramdır. Senette yalancı bir ravinin bulunması, uyduranın itirafı ya da kesin bilgilere aykırı bir metin onu ele verir. isnady'de \"fabricated\" grubundadır."
+   },
+   "related": [
+    "daif",
+    "kadhdhab",
+    "matruk"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "shadhdh",
+   "cat": "grades",
+   "ar": "شاذ",
+   "en": "shadhdh",
+   "tr": "şâz",
+   "short": {
+    "en": "A report by an acceptable narrator that contradicts narrators more reliable than he.",
+    "tr": "Makbul bir ravinin, kendisinden daha güvenilir ravilere aykırı rivayeti."
+   },
+   "long": {
+    "en": "Shudhudh is a defect even when the narrator is trustworthy: when he contradicts someone stronger or several others, his version is shadhdh and theirs mahfuz (preserved). When a weak narrator contradicts trustworthy ones, his version is munkar and theirs ma'ruf.",
+    "tr": "Ravi güvenilir olsa bile şâzlık bir kusurdur: kendisinden daha güçlü birine ya da birden çok raviye aykırı rivayet ettiğinde onun rivayeti şâz, onlarınki mahfûzdur. Zayıf bir ravi güvenilirlere aykırı rivayet ederse onunki münker, onlarınki ma'rûftur."
+   },
+   "related": [
+    "munkar",
+    "sahih",
+    "muallal"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "munkar",
+   "cat": "grades",
+   "ar": "منكر",
+   "en": "munkar",
+   "tr": "münker",
+   "short": {
+    "en": "A report by a weak narrator that contradicts trustworthy narrators.",
+    "tr": "Zayıf bir ravinin güvenilir ravilere aykırı rivayeti."
+   },
+   "long": {
+    "en": "The weak counterpart of shadhdh. Some early critics used munkar more broadly for any report a narrator alone transmits when he is not strong enough to be relied on alone.",
+    "tr": "Şâzın zayıf ravideki karşılığı. Bazı erken dönem münekkitler münkeri daha geniş anlamda, tek başına güvenilecek kadar güçlü olmayan bir ravinin teferrüd ettiği her rivayet için kullanmıştır."
+   },
+   "related": [
+    "shadhdh",
+    "daif"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "muallal",
+   "cat": "grades",
+   "ar": "معلل",
+   "en": "mu'allal",
+   "tr": "muallel",
+   "short": {
+    "en": "A hadith that looks sound but has a hidden defect ('illa) found by the experts.",
+    "tr": "Görünüşte sağlam, ancak uzmanların bulduğu gizli bir kusuru (illet) olan hadis."
+   },
+   "long": {
+    "en": "'Ilal is the most delicate part of hadith criticism: a chain that seems connected may hide a break, a mursal report may have been joined to a Companion, two reports may have been merged. It is found by gathering all the routes and comparing them. Ibn al-Madini, Ahmad, al-Bukhari and al-Daraqutni excelled in it.",
+    "tr": "İlel, hadis tenkidinin en ince alanıdır: kesintisiz görünen bir senet gizli bir kopukluk taşıyabilir, mürsel bir rivayet bir sahâbîye bağlanmış olabilir, iki rivayet birleştirilmiş olabilir. Bütün yollar toplanıp karşılaştırılarak bulunur. İbnü'l-Medînî, Ahmed, Buhârî ve Dârekutnî bu alanda öne çıkar."
+   },
+   "related": [
+    "shadhdh",
+    "takhrij",
+    "sahih"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "mutawatir",
+   "cat": "chain_kinds",
+   "ar": "متواتر",
+   "en": "mutawatir",
+   "tr": "mütevâtir",
+   "short": {
+    "en": "Reported by so many at every stage that their agreeing on a lie is impossible.",
+    "tr": "Her tabakada, yalan üzerinde birleşmeleri imkânsız sayıda kişinin rivayet ettiği haber."
+   },
+   "long": {
+    "en": "Mutawatir knowledge is certain. It may be mutawatir in wording (lafzi) or in meaning (ma'nawi) — many different reports sharing one meaning. In isnady's statistical terms: independent routes so many that their shared error goes to zero.",
+    "tr": "Mütevâtir haber kesin bilgi ifade eder. Lafzen ya da mânen (farklı rivayetlerin ortak bir anlamı) mütevâtir olabilir. isnady'nin istatistik diliyle: o kadar çok bağımsız yol ki ortak hata sıfıra iner."
+   },
+   "related": [
+    "ahad",
+    "mashhur"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "ahad",
+   "cat": "chain_kinds",
+   "ar": "آحاد",
+   "en": "ahad",
+   "tr": "âhâd",
+   "short": {
+    "en": "Any report that does not reach tawatur.",
+    "tr": "Tevâtür derecesine ulaşmayan her haber."
+   },
+   "long": {
+    "en": "Divided by the number of its routes into mashhur, 'aziz and gharib. Most hadith are ahad; their acceptance depends on the reliability of their chains.",
+    "tr": "Yollarının sayısına göre meşhur, azîz ve garîb diye ayrılır. Hadislerin çoğu âhâddır; kabulleri senetlerinin güvenilirliğine bağlıdır."
+   },
+   "related": [
+    "mutawatir",
+    "mashhur",
+    "aziz",
+    "gharib"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "mashhur",
+   "cat": "chain_kinds",
+   "ar": "مشهور",
+   "en": "mashhur",
+   "tr": "meşhur",
+   "short": {
+    "en": "A report with three or more routes at every stage, short of tawatur.",
+    "tr": "Her tabakada en az üç yolla gelen, tevâtüre ulaşmayan haber."
+   },
+   "long": {
+    "en": "Technically defined by its number of routes. In everyday use 'mashhur' also means simply 'well known', which includes reports with no sound basis.",
+    "tr": "Terim olarak yol sayısıyla tanımlanır. Gündelik kullanımda \"meşhur\" yalnızca \"bilinen\" anlamına da gelir ve sağlam bir aslı olmayan rivayetleri de kapsar."
+   },
+   "related": [
+    "ahad",
+    "aziz",
+    "gharib"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "aziz",
+   "cat": "chain_kinds",
+   "ar": "عزيز",
+   "en": "'aziz",
+   "tr": "azîz",
+   "short": {
+    "en": "A report with at least two routes at every stage.",
+    "tr": "Her tabakada en az iki yolla gelen haber."
+   },
+   "long": {
+    "en": "Not fewer than two narrators at any stage of the chain.",
+    "tr": "Senedin hiçbir tabakasında ikiden az ravi bulunmaz."
+   },
+   "related": [
+    "mashhur",
+    "gharib"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "gharib",
+   "cat": "chain_kinds",
+   "ar": "غريب",
+   "en": "gharib",
+   "tr": "garîb",
+   "short": {
+    "en": "A report narrated by a single narrator at some stage of its chain.",
+    "tr": "Senedinin bir tabakasında tek bir ravinin rivayet ettiği haber."
+   },
+   "long": {
+    "en": "Also called fard. Being gharib is not in itself a weakness: the first hadith of al-Bukhari, 'Actions are only by intentions', is gharib in its early stages and sahih.",
+    "tr": "Ferd de denir. Garîb olmak tek başına zayıflık değildir: Buhârî'nin ilk hadisi \"Ameller niyetlere göredir\" ilk tabakalarında garîbdir ve sahihtir."
+   },
+   "related": [
+    "aziz",
+    "mashhur"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "marfu",
+   "cat": "chain_kinds",
+   "ar": "مرفوع",
+   "en": "marfu'",
+   "tr": "merfû",
+   "short": {
+    "en": "A report attributed to the Prophet — his word, deed, or approval.",
+    "tr": "Peygambere nispet edilen söz, fiil ya da takrir."
+   },
+   "long": {
+    "en": "Defined by whom the words are attributed to, not by the soundness of the chain: a marfu' report may be sahih or weak.",
+    "tr": "Sözün kime nispet edildiğine göre tanımlanır, senedin sağlamlığına göre değil: merfû bir rivayet sahih de zayıf da olabilir."
+   },
+   "related": [
+    "mawquf",
+    "maqtu"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "mawquf",
+   "cat": "chain_kinds",
+   "ar": "موقوف",
+   "en": "mawquf",
+   "tr": "mevkûf",
+   "short": {
+    "en": "A report attributed to a Companion: his own word or deed.",
+    "tr": "Bir sahâbîye nispet edilen söz ya da fiil."
+   },
+   "long": {
+    "en": "Some mawquf reports take the ruling of marfu' — when a Companion says something that could not be known by opinion.",
+    "tr": "Bazı mevkûf rivayetler merfû hükmündedir: sahâbînin re'yle bilinemeyecek bir şeyi söylemesi gibi."
+   },
+   "related": [
+    "marfu",
+    "maqtu",
+    "sahabi"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "maqtu",
+   "cat": "chain_kinds",
+   "ar": "مقطوع",
+   "en": "maqtu'",
+   "tr": "maktû",
+   "short": {
+    "en": "A report attributed to a Successor (tabi'i) or later.",
+    "tr": "Bir tâbiîye ya da sonrakilere nispet edilen söz ya da fiil."
+   },
+   "long": {
+    "en": "Not to be confused with munqati' (a broken chain): maqtu' is about whose words they are.",
+    "tr": "Munkatı' (kopuk senet) ile karıştırılmamalıdır: maktû, sözün kime ait olduğuyla ilgilidir."
+   },
+   "related": [
+    "marfu",
+    "mawquf",
+    "munqati",
+    "tabii"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "musnad",
+   "cat": "chain_kinds",
+   "ar": "مسند",
+   "en": "musnad",
+   "tr": "müsned",
+   "short": {
+    "en": "A marfu' hadith with an apparently connected chain. Also: a book arranged by Companion.",
+    "tr": "Senedi görünüşte muttasıl merfû hadis. Ayrıca: sahâbîlere göre düzenlenmiş eser."
+   },
+   "long": {
+    "en": "As a book, a musnad gathers each Companion's hadith together — the Musnad of Ahmad b. Hanbal is the best known.",
+    "tr": "Eser olarak müsned, her sahâbînin hadislerini bir arada toplar; en bilineni Ahmed b. Hanbel'in Müsned'idir."
+   },
+   "related": [
+    "marfu",
+    "muttasil"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "muttasil",
+   "cat": "chain_kinds",
+   "ar": "متصل",
+   "en": "muttasil",
+   "tr": "muttasıl",
+   "short": {
+    "en": "A chain in which every narrator heard from the one before him.",
+    "tr": "Her ravinin bir öncekinden işittiği, kesintisiz senet."
+   },
+   "long": {
+    "en": "Ittisal is the first condition of sahih. isnady shows a chain's continuity link by link on the Isnad Chains page.",
+    "tr": "İttisal, sahihin ilk şartıdır. isnady, bir senedin kesintisizliğini Isnad Chains sayfasında halka halka gösterir."
+   },
+   "related": [
+    "munqati",
+    "sahih",
+    "isnad"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "mursal",
+   "cat": "chain_kinds",
+   "ar": "مرسل",
+   "en": "mursal",
+   "tr": "mürsel",
+   "short": {
+    "en": "A Successor says 'The Prophet said …' without naming the Companion.",
+    "tr": "Bir tâbiînin, sahâbîyi zikretmeden \"Peygamber şöyle dedi\" demesi."
+   },
+   "long": {
+    "en": "The missing link may be a Companion or a Successor who is weak. Its use is disputed: Abu Hanifa and Malik accepted mursal reports of strong Successors; al-Shafi'i accepted them with support; most hadith critics treat them as weak.",
+    "tr": "Düşen halka bir sahâbî olabileceği gibi zayıf bir tâbiî de olabilir. Delil oluşu tartışmalıdır: Ebû Hanîfe ve Mâlik güçlü tâbiînin mürsellerini kabul etmiş, Şâfiî destekle kabul etmiş, hadisçilerin çoğu zayıf saymıştır."
+   },
+   "related": [
+    "munqati",
+    "tabii",
+    "sahabi"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "munqati",
+   "cat": "chain_kinds",
+   "ar": "منقطع",
+   "en": "munqati'",
+   "tr": "munkatı'",
+   "short": {
+    "en": "A chain with a break somewhere other than its end.",
+    "tr": "Senedin son halkası dışında bir yerinde kopukluk bulunan hadis."
+   },
+   "long": {
+    "en": "One narrator (or more, not in a row) is missing. The break is found by dates: the narrator could not have met the one he names.",
+    "tr": "Bir ravi (ya da art arda olmayan birkaç ravi) düşmüştür. Kopukluk tarihlerle anlaşılır: ravi, adını verdiği kişiyle karşılaşmış olamaz."
+   },
+   "related": [
+    "muttasil",
+    "mudal",
+    "muallaq",
+    "mursal"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "mudal",
+   "cat": "chain_kinds",
+   "ar": "معضل",
+   "en": "mu'dal",
+   "tr": "mu'dal",
+   "short": {
+    "en": "A chain with two or more consecutive narrators missing.",
+    "tr": "Senedinde art arda iki ya da daha fazla ravi düşmüş hadis."
+   },
+   "long": {
+    "en": "Weaker than munqati', since more is unknown.",
+    "tr": "Daha fazlası bilinmediği için munkatı'dan daha zayıftır."
+   },
+   "related": [
+    "munqati",
+    "muallaq"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "muallaq",
+   "cat": "chain_kinds",
+   "ar": "معلق",
+   "en": "mu'allaq",
+   "tr": "muallak",
+   "short": {
+    "en": "A chain with one or more narrators omitted at the compiler's end.",
+    "tr": "Senedin musannif tarafındaki başından bir ya da daha fazla ravisi atılmış hadis."
+   },
+   "long": {
+    "en": "Al-Bukhari's mu'allaq reports are a known case: those he gives in a firm form ('he said') are taken as sound to the point he quotes from.",
+    "tr": "Buhârî'nin muallakları bilinen bir örnektir: kesinlik ifadesiyle (\"dedi\") verdikleri, aktardığı noktaya kadar sahih kabul edilir."
+   },
+   "related": [
+    "munqati",
+    "mudal"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "mudallas",
+   "cat": "chain_kinds",
+   "ar": "مدلس",
+   "en": "mudallas",
+   "tr": "müdelles",
+   "short": {
+    "en": "A report whose narrator hid a break, using words like 'from' for someone he did not hear it from directly.",
+    "tr": "Ravisinin, doğrudan işitmediği kişiden \"an\" gibi ihtimalli bir ifadeyle rivayet ederek kopukluğu gizlediği hadis."
+   },
+   "long": {
+    "en": "Tadlis is not lying: the narrator uses a word that allows hearing without claiming it. A mudallis's 'an is suspended until he states that he heard (haddathana, sami'tu).",
+    "tr": "Tedlis yalan değildir: ravi işitmeye ihtimali olan, ama işittiğini iddia etmeyen bir kelime kullanır. Müdellis bir ravinin \"an\"lı rivayeti, işittiğini açıkça söyleyene (haddesenâ, semi'tu) kadar askıda kalır."
+   },
+   "related": [
+    "mudallis",
+    "an",
+    "haddathana"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "isnad",
+   "cat": "chain",
+   "ar": "إسناد",
+   "en": "isnad",
+   "tr": "isnad",
+   "short": {
+    "en": "The chain of narrators through which a hadith reached the compiler.",
+    "tr": "Bir hadisin musannife ulaştığı ravi zinciri."
+   },
+   "long": {
+    "en": "'The isnad is part of the religion; were it not for the isnad, anyone would say whatever he wished' (Ibn al-Mubarak). Every hadith is judged by its isnad and its text together. isnady is built around it.",
+    "tr": "\"İsnad dindendir; isnad olmasaydı dileyen dilediğini söylerdi\" (İbnü'l-Mübârek). Her hadis senedi ve metniyle birlikte değerlendirilir. isnady onun etrafında kurulmuştur."
+   },
+   "related": [
+    "matn",
+    "sanad",
+    "tariq",
+    "muttasil"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "sanad",
+   "cat": "chain",
+   "ar": "سند",
+   "en": "sanad",
+   "tr": "sened",
+   "short": {
+    "en": "The chain itself; often used interchangeably with isnad.",
+    "tr": "Zincirin kendisi; çoğu zaman isnad ile aynı anlamda kullanılır."
+   },
+   "long": {
+    "en": "Strictly, isnad is the act of tracing the chain and sanad the chain traced; in practice the two words are used alike.",
+    "tr": "Dar anlamda isnad zinciri kurma işi, sened ise kurulan zincirdir; uygulamada iki kelime aynı anlamda kullanılır."
+   },
+   "related": [
+    "isnad",
+    "matn"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "matn",
+   "cat": "chain",
+   "ar": "متن",
+   "en": "matn",
+   "tr": "metin",
+   "short": {
+    "en": "The text of the hadith — the words at the end of the chain.",
+    "tr": "Hadisin metni; senedin sonunda gelen sözler."
+   },
+   "long": {
+    "en": "Criticism of the matn asks whether the words contradict the Qur'an, sound hadith, or established fact. isnady compares matns across books to find the other narrations of a hadith (takhrij).",
+    "tr": "Metin tenkidi, sözlerin Kur'an'a, sahih hadislere ya da kesin bilgilere aykırı olup olmadığını sorar. isnady, bir hadisin diğer rivayetlerini (tahrîc) bulmak için kitaplar arasında metinleri karşılaştırır."
+   },
+   "related": [
+    "isnad",
+    "takhrij"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "tariq",
+   "cat": "chain",
+   "ar": "طريق",
+   "en": "tariq",
+   "tr": "tarîk",
+   "short": {
+    "en": "One route of a hadith — one of its chains.",
+    "tr": "Bir hadisin yollarından biri; senetlerinden biri."
+   },
+   "long": {
+    "en": "A hadith with many routes is stronger; the routes are gathered in takhrij and compared in i'tibar.",
+    "tr": "Çok yolu olan hadis daha güçlüdür; yollar tahrîcle toplanır, i'tibârla karşılaştırılır."
+   },
+   "related": [
+    "isnad",
+    "itibar",
+    "takhrij"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "mutabaa",
+   "cat": "chain",
+   "ar": "متابعة",
+   "en": "mutaba'a",
+   "tr": "mütâbaat",
+   "short": {
+    "en": "Another narrator transmitting the same hadith from the same teacher (or higher) — a corroborating route.",
+    "tr": "Başka bir ravinin aynı hadisi aynı hocadan (ya da daha yukarıdan) rivayet etmesi; destekleyici yol."
+   },
+   "long": {
+    "en": "A full mutaba'a meets the narrator at his own teacher; a partial one higher in the chain. It strengthens a narrator who might otherwise be alone.",
+    "tr": "Tam mütâbaat raviyle aynı hocada buluşur; eksik (kâsır) mütâbaat zincirin daha yukarısında. Aksi hâlde tek kalacak bir raviyi güçlendirir."
+   },
+   "related": [
+    "shahid",
+    "itibar",
+    "tariq"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "shahid",
+   "cat": "chain",
+   "ar": "شاهد",
+   "en": "shahid",
+   "tr": "şâhid",
+   "short": {
+    "en": "A different Companion's report with the same meaning — a witness hadith.",
+    "tr": "Aynı anlamda, başka bir sahâbîden gelen rivayet; şâhid hadis."
+   },
+   "long": {
+    "en": "Where mutaba'a supports a narrator, a shahid supports the meaning through another Companion. Together they are the 'followers and witnesses' (mutaba'at wa shawahid).",
+    "tr": "Mütâbaat bir raviyi desteklerken şâhid, anlamı başka bir sahâbî yoluyla destekler. İkisi birlikte \"mütâbaât ve şevâhid\"dir."
+   },
+   "related": [
+    "mutabaa",
+    "itibar"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "itibar",
+   "cat": "chain",
+   "ar": "اعتبار",
+   "en": "i'tibar",
+   "tr": "i'tibâr",
+   "short": {
+    "en": "Searching the routes of a hadith to see whether a narrator is followed or alone.",
+    "tr": "Bir ravinin tek mi kaldığını yoksa desteklenip desteklenmediğini görmek için hadisin yollarını araştırma."
+   },
+   "long": {
+    "en": "Not a kind of hadith but a method: it leads to mutaba'at and shawahid, or shows that a narrator is alone (tafarrud).",
+    "tr": "Bir hadis türü değil, bir yöntemdir: mütâbaat ve şevâhide ulaştırır ya da ravinin tek kaldığını (teferrüd) gösterir."
+   },
+   "related": [
+    "mutabaa",
+    "shahid",
+    "takhrij"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "takhrij",
+   "cat": "chain",
+   "ar": "تخريج",
+   "en": "takhrij",
+   "tr": "tahrîc",
+   "short": {
+    "en": "Finding where else a hadith is narrated, with its chains, and judging them.",
+    "tr": "Bir hadisin başka hangi kaynaklarda, hangi senetlerle rivayet edildiğini bulma ve değerlendirme."
+   },
+   "long": {
+    "en": "isnady's 'Also narrated in' line is takhrij by the computer: the same text found across and within the imported books, compared by the words they share.",
+    "tr": "isnady'deki \"Also narrated in\" satırı bilgisayarla yapılan tahrîcdir: içe aktarılan kitaplarda aynı metin, ortak kelimeleri karşılaştırılarak bulunur."
+   },
+   "related": [
+    "itibar",
+    "mutabaa",
+    "shahid",
+    "matn"
+   ],
+   "source": ""
+  },
+  {
+   "id": "madar",
+   "cat": "chain",
+   "ar": "مدار",
+   "en": "madar",
+   "tr": "medâr",
+   "short": {
+    "en": "The narrator on whom the routes of a hadith converge.",
+    "tr": "Bir hadisin yollarının üzerinde birleştiği ravi."
+   },
+   "long": {
+    "en": "When many chains meet at one narrator, the hadith depends on him: if he is weak, the many routes after him do not save it.",
+    "tr": "Birçok senet tek bir ravide birleştiğinde hadis ona dayanır: o zayıfsa, ondan sonraki çok sayıdaki yol hadisi kurtarmaz."
+   },
+   "related": [
+    "tariq",
+    "isnad"
+   ],
+   "source": ""
+  },
+  {
+   "id": "ali_nazil",
+   "cat": "chain",
+   "ar": "عالٍ ونازل",
+   "en": "'ali and nazil",
+   "tr": "âlî ve nâzil",
+   "short": {
+    "en": "A high chain has few links to the Prophet; a low chain has many.",
+    "tr": "Âlî senette Peygambere kadar az, nâzil senette çok halka vardır."
+   },
+   "long": {
+    "en": "Fewer links mean fewer chances of error, so scholars travelled to hear hadith with a higher chain. Al-Bukhari's three-link chains (thulathiyyat) are famous.",
+    "tr": "Daha az halka daha az hata ihtimali demektir; bu yüzden âlimler âlî senetle hadis işitmek için yolculuk ettiler. Buhârî'nin üç halkalı senetleri (sülâsiyyât) meşhurdur."
+   },
+   "related": [
+    "isnad",
+    "rihla"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "sama",
+   "cat": "transmission",
+   "ar": "سماع",
+   "en": "sama'",
+   "tr": "semâ'",
+   "short": {
+    "en": "Hearing the hadith from the teacher himself — the strongest way of receiving.",
+    "tr": "Hadisi hocanın kendisinden işitme; rivayet almanın en güçlü yolu."
+   },
+   "long": {
+    "en": "Expressed with haddathana, sami'tu, akhbarana. The first of the eight ways of receiving (turuq al-tahammul).",
+    "tr": "Haddesenâ, semi'tu, ahberanâ ile ifade edilir. Hadis almanın sekiz yolunun (turuku't-tahammül) ilkidir."
+   },
+   "related": [
+    "qiraa",
+    "ijaza",
+    "haddathana"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "qiraa",
+   "cat": "transmission",
+   "ar": "قراءة",
+   "en": "qira'a ('ard)",
+   "tr": "kırâat (arz)",
+   "short": {
+    "en": "The student reads to the teacher, who listens and confirms.",
+    "tr": "Talebenin hocaya okuması, hocanın dinleyip onaylaması."
+   },
+   "long": {
+    "en": "Many held it equal to sama'. Expressed with akhbarana or 'qara'tu 'ala'.",
+    "tr": "Pek çok âlim onu semâ'a denk saymıştır. Ahberanâ ya da \"karae'tü alâ\" ile ifade edilir."
+   },
+   "related": [
+    "sama",
+    "haddathana"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "ijaza",
+   "cat": "transmission",
+   "ar": "إجازة",
+   "en": "ijaza",
+   "tr": "icâzet",
+   "short": {
+    "en": "The teacher's permission to narrate from him what he has narrated.",
+    "tr": "Hocanın, rivayet ettiklerini kendisinden rivayet etmeye izin vermesi."
+   },
+   "long": {
+    "en": "An ijaza can be for named books or for all one's narrations, written or spoken. Later it became the certificate a student received — and ijaza chains still link teachers to the compilers today.",
+    "tr": "İcazet belirli kitaplar ya da bütün rivayetler için, yazılı ya da sözlü olabilir. Sonraları talebenin aldığı belge hâline geldi; icazet zincirleri hocaları bugün de musanniflere bağlar."
+   },
+   "related": [
+    "sama",
+    "munawala",
+    "isnad"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "munawala",
+   "cat": "transmission",
+   "ar": "مناولة",
+   "en": "munawala",
+   "tr": "münâvele",
+   "short": {
+    "en": "The teacher hands the student his book, usually with permission to narrate it.",
+    "tr": "Hocanın kitabını talebeye vermesi, çoğunlukla rivayet izniyle birlikte."
+   },
+   "long": {
+    "en": "With ijaza it is a strong way of receiving; without permission it is disputed.",
+    "tr": "İcazetle birlikte güçlü bir yoldur; izin olmadan tartışmalıdır."
+   },
+   "related": [
+    "ijaza",
+    "mukataba"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "mukataba",
+   "cat": "transmission",
+   "ar": "مكاتبة",
+   "en": "mukataba",
+   "tr": "mükâtebe",
+   "short": {
+    "en": "The teacher writes hadith to the student, in his own hand or by dictation.",
+    "tr": "Hocanın talebeye hadis yazması; kendi eliyle ya da yazdırarak."
+   },
+   "long": {
+    "en": "",
+    "tr": ""
+   },
+   "related": [
+    "munawala",
+    "wijada"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "wijada",
+   "cat": "transmission",
+   "ar": "وجادة",
+   "en": "wijada",
+   "tr": "vicâde",
+   "short": {
+    "en": "Finding hadith in someone's handwriting without having heard or received permission.",
+    "tr": "Birinin el yazısında, işitmeden ve izin almadan hadis bulma."
+   },
+   "long": {
+    "en": "The weakest way: one may report it as 'I found in the writing of …' but not as heard.",
+    "tr": "En zayıf yoldur: \"… el yazısında buldum\" diye aktarılabilir, ama işitilmiş gibi aktarılamaz."
+   },
+   "related": [
+    "mukataba",
+    "sama"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "haddathana",
+   "cat": "transmission",
+   "ar": "حدثنا",
+   "en": "haddathana",
+   "tr": "haddesenâ",
+   "short": {
+    "en": "'He told us' — the narrator states that he heard it from the teacher.",
+    "tr": "\"Bize anlattı\" — ravinin hocadan işittiğini söylediği ifade."
+   },
+   "long": {
+    "en": "A sigha of explicit hearing. isnady shows each link's sigha on the Isnad Chains page.",
+    "tr": "Açık işitme bildiren bir sîga. isnady, her halkanın sîgasını Isnad Chains sayfasında gösterir."
+   },
+   "related": [
+    "sama",
+    "an",
+    "akhbarana"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "akhbarana",
+   "cat": "transmission",
+   "ar": "أخبرنا",
+   "en": "akhbarana",
+   "tr": "ahberanâ",
+   "short": {
+    "en": "'He informed us' — used by many for reading to the teacher, by others like haddathana.",
+    "tr": "\"Bize haber verdi\" — çoğunlukla hocaya okumada, bazılarınca haddesenâ gibi kullanılır."
+   },
+   "long": {
+    "en": "",
+    "tr": ""
+   },
+   "related": [
+    "haddathana",
+    "qiraa"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "an",
+   "cat": "transmission",
+   "ar": "عن",
+   "en": "'an ('an'ana)",
+   "tr": "an (an'ane)",
+   "short": {
+    "en": "'From' — a link that does not say how the narrator received the report.",
+    "tr": "\"…den\" — ravinin rivayeti nasıl aldığını söylemeyen bağlantı."
+   },
+   "long": {
+    "en": "From a narrator who met his teacher and is not a mudallis, 'an is taken as hearing; from a mudallis it is suspended.",
+    "tr": "Hocasıyla karşılaşmış ve müdellis olmayan bir raviden \"an\" işitme kabul edilir; müdellisten gelirse askıda kalır."
+   },
+   "related": [
+    "mudallas",
+    "haddathana"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "rihla",
+   "cat": "transmission",
+   "ar": "رحلة",
+   "en": "rihla",
+   "tr": "rıhle",
+   "short": {
+    "en": "Travelling in search of hadith.",
+    "tr": "Hadis talebi için yolculuk."
+   },
+   "long": {
+    "en": "Jabir b. 'Abd Allah travelled a month to hear one hadith. Rihla brought higher chains and more routes, and is why a narrator's teachers came from many cities.",
+    "tr": "Câbir b. Abdullah tek bir hadis için bir ay yol gitti. Rıhle âlî senetler ve daha çok yol kazandırdı; bir ravinin hocalarının pek çok şehirden olması bu yüzdendir."
+   },
+   "related": [
+    "ali_nazil",
+    "sama"
+   ],
+   "source": ""
+  },
+  {
+   "id": "jarh_tadil",
+   "cat": "critics",
+   "ar": "الجرح والتعديل",
+   "en": "jarh and ta'dil",
+   "tr": "cerh ve ta'dil",
+   "short": {
+    "en": "The science of judging narrators — criticising (jarh) and confirming (ta'dil) them.",
+    "tr": "Ravileri değerlendirme ilmi: tenkit (cerh) ve güvenilirliklerini tespit (ta'dil)."
+   },
+   "long": {
+    "en": "Critics judged two things: 'adala (uprightness) and dabt (precision of memory or writing). Their verdicts are fixed words; Ibn Hajar arranged them in twelve ranks in the Taqrib, which isnady reads.",
+    "tr": "Münekkitler iki şeyi değerlendirdi: adâlet ve zabt (hafıza ya da yazının sağlamlığı). Hükümleri belirli kelimelerdir; İbn Hacer bunları Takrîb'de on iki mertebede düzenledi, isnady de onları okur."
+   },
+   "related": [
+    "adala",
+    "dabt",
+    "thiqa",
+    "rank"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "adala",
+   "cat": "critics",
+   "ar": "عدالة",
+   "en": "'adala",
+   "tr": "adâlet",
+   "short": {
+    "en": "Uprightness: a Muslim of sound mind, adult, free of grave sin and of what breaks dignity.",
+    "tr": "Adalet: akıllı, ergin, büyük günahlardan ve mürûeti bozan şeylerden uzak Müslüman olmak."
+   },
+   "long": {
+    "en": "",
+    "tr": ""
+   },
+   "related": [
+    "dabt",
+    "jarh_tadil"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "dabt",
+   "cat": "critics",
+   "ar": "ضبط",
+   "en": "dabt",
+   "tr": "zabt",
+   "short": {
+    "en": "Precision: preserving what one narrates, in memory (dabt sadr) or in writing (dabt kitab).",
+    "tr": "Zabt: rivayet ettiğini hafızada (zabtu's-sadr) ya da yazıda (zabtu'l-kitâb) koruma."
+   },
+   "long": {
+    "en": "Full dabt with 'adala makes a narrator thiqa; lighter dabt makes him saduq (hasan); weak dabt makes him da'if.",
+    "tr": "Tam zabt ve adâlet raviyi sika yapar; hafif zabt sadûk (hasen); zayıf zabt zayıf."
+   },
+   "related": [
+    "adala",
+    "thiqa",
+    "saduq"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "rank",
+   "cat": "critics",
+   "ar": "مرتبة",
+   "en": "rank (martaba)",
+   "tr": "mertebe",
+   "short": {
+    "en": "One of Ibn Hajar's twelve degrees of narrators, from the Companions down to the accused liar.",
+    "tr": "İbn Hacer'in, sahâbîlerden yalancılıkla itham edilene kadar on iki ravi derecesinden biri."
+   },
+   "long": {
+    "en": "1 Companions; 2 emphatic praise (thiqa thiqa, thiqa hafiz); 3 thiqa; 4 saduq, la ba'sa bihi; 5 saduq with a fault; 6 maqbul; 7 mastur; 8 da'if; 9 majhul; 10 matruk; 11 accused of lying; 12 kadhdhab. isnady colours each rank and uses it as the starting point of a narrator's reliability.",
+    "tr": "1 sahâbîler; 2 güçlü övgü (sika sika, sika hâfız); 3 sika; 4 sadûk, lâ be'se bih; 5 kusuru olan sadûk; 6 makbûl; 7 mestûr; 8 zayıf; 9 meçhul; 10 metrûk; 11 yalanla itham edilen; 12 kezzâb. isnady her mertebeyi renklendirir ve ravinin güvenilirliğinin başlangıç noktası olarak kullanır."
+   },
+   "related": [
+    "thiqa",
+    "saduq",
+    "maqbul",
+    "daif_narrator",
+    "matruk",
+    "kadhdhab"
+   ],
+   "source": "Ibn Hajar, Taqrib al-Tahdhib (introduction)"
+  },
+  {
+   "id": "thiqa",
+   "cat": "critics",
+   "ar": "ثقة",
+   "en": "thiqa",
+   "tr": "sika",
+   "short": {
+    "en": "Trustworthy: upright and precise — the narrator of sahih hadith.",
+    "tr": "Güvenilir: adil ve zabtı tam ravi; sahih hadisin ravisi."
+   },
+   "long": {
+    "en": "Ibn Hajar's third rank; doubled or strengthened words (thiqa thiqa, thiqa thabt, thiqa hafiz) make the second.",
+    "tr": "İbn Hacer'in üçüncü mertebesi; tekrarlanan ya da güçlendirilen ifadeler (sika sika, sika sebt, sika hâfız) ikinci mertebeyi oluşturur."
+   },
+   "related": [
+    "thabt",
+    "saduq",
+    "rank"
+   ],
+   "source": "Ibn Hajar, Taqrib al-Tahdhib"
+  },
+  {
+   "id": "thabt",
+   "cat": "critics",
+   "ar": "ثبت",
+   "en": "thabt",
+   "tr": "sebt",
+   "short": {
+    "en": "Firm and reliable — added to thiqa for emphasis.",
+    "tr": "Sağlam ve güvenilir; vurgu için sika'ya eklenir."
+   },
+   "long": {
+    "en": "",
+    "tr": ""
+   },
+   "related": [
+    "thiqa",
+    "hafiz"
+   ],
+   "source": ""
+  },
+  {
+   "id": "hafiz",
+   "cat": "critics",
+   "ar": "حافظ",
+   "en": "hafiz",
+   "tr": "hâfız",
+   "short": {
+    "en": "A master of hadith who knew a great many by heart, with their chains and their narrators.",
+    "tr": "Çok sayıda hadisi senetleri ve ravileriyle ezbere bilen hadis üstadı."
+   },
+   "long": {
+    "en": "As praise of a narrator it raises him; as a title it marks the great scholars of hadith (al-hafiz Ibn Hajar).",
+    "tr": "Bir ravi için övgü olarak onu yükseltir; unvan olarak büyük hadis âlimlerini belirtir (hâfız İbn Hacer)."
+   },
+   "related": [
+    "thiqa",
+    "thabt"
+   ],
+   "source": ""
+  },
+  {
+   "id": "saduq",
+   "cat": "critics",
+   "ar": "صدوق",
+   "en": "saduq",
+   "tr": "sadûk",
+   "short": {
+    "en": "Truthful: upright but with lighter precision — his hadith are hasan.",
+    "tr": "Doğru sözlü: adil ama zabtı hafif; hadisi hasendir."
+   },
+   "long": {
+    "en": "Ibn Hajar's fourth rank (with la ba'sa bihi); saduq with a fault — 'he makes mistakes', 'he has illusions' — is the fifth.",
+    "tr": "İbn Hacer'in dördüncü mertebesi (lâ be'se bih ile birlikte); kusurla birlikte sadûk — \"hata yapar\", \"vehimleri var\" — beşincidir."
+   },
+   "related": [
+    "hasan",
+    "thiqa",
+    "rank"
+   ],
+   "source": "Ibn Hajar, Taqrib al-Tahdhib"
+  },
+  {
+   "id": "maqbul",
+   "cat": "critics",
+   "ar": "مقبول",
+   "en": "maqbul",
+   "tr": "makbûl",
+   "short": {
+    "en": "Acceptable when followed by another narrator; otherwise soft (layyin).",
+    "tr": "Bir başka ravi tarafından desteklendiğinde kabul edilen; aksi hâlde leyyin."
+   },
+   "long": {
+    "en": "Ibn Hajar's sixth rank, for a narrator with few hadith and nothing proven against him.",
+    "tr": "İbn Hacer'in altıncı mertebesi; az hadisi olan ve aleyhine bir şey sabit olmayan ravi için."
+   },
+   "related": [
+    "mutabaa",
+    "rank"
+   ],
+   "source": "Ibn Hajar, Taqrib al-Tahdhib"
+  },
+  {
+   "id": "majhul",
+   "cat": "critics",
+   "ar": "مجهول",
+   "en": "majhul",
+   "tr": "meçhul",
+   "short": {
+    "en": "Unknown: a narrator whose person or reliability is not known.",
+    "tr": "Bilinmeyen: şahsı ya da güvenilirliği bilinmeyen ravi."
+   },
+   "long": {
+    "en": "Majhul al-'ayn — only one narrates from him; majhul al-hal (mastur) — two or more narrate from him but no one confirmed him.",
+    "tr": "Meçhûlü'l-ayn: ondan yalnız bir kişi rivayet eder; meçhûlü'l-hâl (mestûr): ondan iki ya da daha fazla kişi rivayet eder ama kimse onu ta'dil etmemiştir."
+   },
+   "related": [
+    "mastur",
+    "daif"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "mastur",
+   "cat": "critics",
+   "ar": "مستور",
+   "en": "mastur",
+   "tr": "mestûr",
+   "short": {
+    "en": "Known as a person, but his reliability unconfirmed — Ibn Hajar's seventh rank.",
+    "tr": "Şahsı bilinen, güvenilirliği tespit edilmemiş ravi; İbn Hacer'in yedinci mertebesi."
+   },
+   "long": {
+    "en": "",
+    "tr": ""
+   },
+   "related": [
+    "majhul",
+    "rank"
+   ],
+   "source": "Ibn Hajar, Taqrib al-Tahdhib"
+  },
+  {
+   "id": "daif_narrator",
+   "cat": "critics",
+   "ar": "ضعيف (راوٍ)",
+   "en": "da'if (narrator)",
+   "tr": "zayıf (ravi)",
+   "short": {
+    "en": "A narrator criticised for weak precision — his hadith need support.",
+    "tr": "Zabtı zayıf diye tenkit edilmiş ravi; hadisi desteğe muhtaçtır."
+   },
+   "long": {
+    "en": "Ibn Hajar's eighth rank. A weak narrator's hadith can be strengthened by other routes; a matruk's cannot.",
+    "tr": "İbn Hacer'in sekizinci mertebesi. Zayıf ravinin hadisi başka yollarla güçlenebilir; metrûkunki güçlenemez."
+   },
+   "related": [
+    "daif",
+    "matruk",
+    "rank"
+   ],
+   "source": "Ibn Hajar, Taqrib al-Tahdhib"
+  },
+  {
+   "id": "matruk",
+   "cat": "critics",
+   "ar": "متروك",
+   "en": "matruk",
+   "tr": "metrûk",
+   "short": {
+    "en": "Abandoned: a narrator whose hadith are left aside, for gross errors or suspicion.",
+    "tr": "Terk edilmiş: çok hata ya da şüphe yüzünden hadisi bırakılan ravi."
+   },
+   "long": {
+    "en": "Ibn Hajar's tenth rank. His hadith do not support others.",
+    "tr": "İbn Hacer'in onuncu mertebesi. Hadisi başkasına destek olmaz."
+   },
+   "related": [
+    "kadhdhab",
+    "daif_narrator",
+    "rank"
+   ],
+   "source": "Ibn Hajar, Taqrib al-Tahdhib"
+  },
+  {
+   "id": "kadhdhab",
+   "cat": "critics",
+   "ar": "كذاب",
+   "en": "kadhdhab",
+   "tr": "kezzâb",
+   "short": {
+    "en": "A liar — the lowest rank; his hadith are fabricated.",
+    "tr": "Yalancı — en alt mertebe; hadisi uydurmadır."
+   },
+   "long": {
+    "en": "Ibn Hajar's twelfth rank (with wadda', a fabricator); the eleventh is 'accused of lying' (muttaham bi-l-kadhib).",
+    "tr": "İbn Hacer'in on ikinci mertebesi (vazzâ', uyduran ile birlikte); on birincisi \"yalanla itham edilen\"dir (müttehem bi'l-kezib)."
+   },
+   "related": [
+    "mawdu",
+    "matruk",
+    "rank"
+   ],
+   "source": "Ibn Hajar, Taqrib al-Tahdhib"
+  },
+  {
+   "id": "mudallis",
+   "cat": "critics",
+   "ar": "مدلس",
+   "en": "mudallis",
+   "tr": "müdellis",
+   "short": {
+    "en": "A narrator known for tadlis — for hiding breaks in what he narrates.",
+    "tr": "Tedlisle — rivayetindeki kopuklukları gizlemekle — tanınan ravi."
+   },
+   "long": {
+    "en": "Even trustworthy narrators practised tadlis (Sufyan al-Thawri, al-A'mash). Ibn Hajar classed them in five degrees in Tabaqat al-Mudallisin.",
+    "tr": "Güvenilir raviler bile tedlis yapmıştır (Süfyân es-Sevrî, el-A'meş). İbn Hacer onları Tabakâtü'l-müdellisîn'de beş derecede sınıflandırdı."
+   },
+   "related": [
+    "mudallas",
+    "an"
+   ],
+   "source": "Ibn Hajar, Tabaqat al-Mudallisin"
+  },
+  {
+   "id": "mukhtalit",
+   "cat": "critics",
+   "ar": "مختلط",
+   "en": "mukhtalit",
+   "tr": "muhtalit",
+   "short": {
+    "en": "A narrator whose memory became confused late in life.",
+    "tr": "Ömrünün sonunda hafızası karışan ravi."
+   },
+   "long": {
+    "en": "What students heard from him before the confusion is accepted; after it, rejected — so it matters who heard from him when.",
+    "tr": "Talebelerin ondan karışıklıktan önce işittikleri kabul, sonra işittikleri reddedilir; bu yüzden kimin ondan ne zaman işittiği önemlidir."
+   },
+   "related": [
+    "dabt",
+    "daif_narrator"
+   ],
+   "source": ""
+  },
+  {
+   "id": "mutashaddid",
+   "cat": "critics",
+   "ar": "متشدد / متساهل",
+   "en": "mutashaddid / mutasahil",
+   "tr": "müteşeddid / mütesâhil",
+   "short": {
+    "en": "A strict critic, quick to criticise; a lenient one, quick to accept. Between them, the moderate (mu'tadil).",
+    "tr": "Tenkide hızlı, sert münekkit; kabule hızlı, müsamahakâr münekkit. Aralarında mutedil olan."
+   },
+   "long": {
+    "en": "Al-Dhahabi described the critics this way: Yahya b. Ma'in and Abu Hatim strict, al-Tirmidhi and al-Hakim lenient, Ahmad and al-Bukhari moderate. isnady measures it for the graders of a book: how often each grades below or above the true grade the others imply.",
+    "tr": "Zehebî münekkitleri böyle nitelemiştir: Yahyâ b. Maîn ve Ebû Hâtim sert, Tirmizî ve Hâkim müsamahakâr, Ahmed ve Buhârî mutedil. isnady bunu bir kitabın derecelendiricileri için ölçer: her birinin, diğerlerinin işaret ettiği gerçek dereceden ne sıklıkla aşağı ya da yukarı derece verdiği."
+   },
+   "related": [
+    "jarh_tadil",
+    "kappa"
+   ],
+   "source": "al-Dhahabi, Dhikr man yu'tamad qawluhu fi al-jarh wa al-ta'dil"
+  },
+  {
+   "id": "sahabi",
+   "cat": "generations",
+   "ar": "صحابي",
+   "en": "sahabi (Companion)",
+   "tr": "sahâbî",
+   "short": {
+    "en": "One who met the Prophet as a believer and died a Muslim.",
+    "tr": "Peygamberle mümin olarak karşılaşmış ve Müslüman olarak ölmüş kimse."
+   },
+   "long": {
+    "en": "The Companions are all upright ('udul) in the view of Sunni scholars, so their reliability is not examined: Ibn Hajar's first rank and first tabaqa.",
+    "tr": "Sünnî âlimlere göre sahâbîlerin hepsi adildir (udûl), bu yüzden güvenilirlikleri incelenmez: İbn Hacer'in birinci mertebesi ve birinci tabakası."
+   },
+   "related": [
+    "tabii",
+    "tabaqa"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "tabii",
+   "cat": "generations",
+   "ar": "تابعي",
+   "en": "tabi'i (Successor)",
+   "tr": "tâbiî",
+   "short": {
+    "en": "One who met a Companion as a believer and died a Muslim.",
+    "tr": "Bir sahâbîyle mümin olarak karşılaşmış ve Müslüman olarak ölmüş kimse."
+   },
+   "long": {
+    "en": "",
+    "tr": ""
+   },
+   "related": [
+    "sahabi",
+    "atba",
+    "tabaqa"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "atba",
+   "cat": "generations",
+   "ar": "أتباع التابعين",
+   "en": "atba' al-tabi'in",
+   "tr": "etbâu't-tâbiîn",
+   "short": {
+    "en": "The generation after the Successors — those who met a Successor.",
+    "tr": "Tâbiînden sonraki nesil; bir tâbiîyle karşılaşanlar."
+   },
+   "long": {
+    "en": "",
+    "tr": ""
+   },
+   "related": [
+    "tabii",
+    "tabaqa"
+   ],
+   "source": "Ibn Hajar, Nukhbat al-Fikar; Ibn al-Salah, Muqaddima"
+  },
+  {
+   "id": "tabaqa",
+   "cat": "generations",
+   "ar": "طبقة",
+   "en": "tabaqa",
+   "tr": "tabaka",
+   "short": {
+    "en": "A generation of narrators of about the same age and teachers.",
+    "tr": "Yaşları ve hocaları yakın olan ravi nesli."
+   },
+   "long": {
+    "en": "Ibn Hajar uses twelve: 1 the Companions; 2–5 the Successors (senior to junior); 6–9 their followers; 10–12 the compilers' teachers and the generations after. A narrator's tabaqa helps tell apart two of the same name.",
+    "tr": "İbn Hacer on iki tabaka kullanır: 1 sahâbîler; 2–5 tâbiîn (büyüklerden küçüklere); 6–9 onların talebeleri; 10–12 musanniflerin hocaları ve sonrakiler. Ravinin tabakası, aynı adı taşıyan iki kişiyi ayırmaya yardım eder."
+   },
+   "related": [
+    "sahabi",
+    "tabii",
+    "rank"
+   ],
+   "source": "Ibn Hajar, Taqrib al-Tahdhib (introduction)"
+  },
+  {
+   "id": "ism",
+   "cat": "names",
+   "ar": "اسم",
+   "en": "ism",
+   "tr": "isim",
+   "short": {
+    "en": "The given name: Muhammad, Sulayman, 'A'isha.",
+    "tr": "Kişinin kendi adı: Muhammed, Süleyman, Âişe."
+   },
+   "long": {
+    "en": "",
+    "tr": ""
+   },
+   "related": [
+    "nasab",
+    "kunya",
+    "laqab",
+    "nisba"
+   ],
+   "source": ""
+  },
+  {
+   "id": "nasab",
+   "cat": "names",
+   "ar": "نسب",
+   "en": "nasab",
+   "tr": "neseb",
+   "short": {
+    "en": "The lineage: b. (ibn, son of) … b. … — father, grandfather and further.",
+    "tr": "Soy: b. (ibn, oğlu) … b. … — baba, dede ve ötesi."
+   },
+   "long": {
+    "en": "Some are known by an ancestor's name: Ibn 'Umar, Ibn Jurayj, Ibn Hajar.",
+    "tr": "Bazıları bir atalarının adıyla bilinir: İbn Ömer, İbn Cüreyc, İbn Hacer."
+   },
+   "related": [
+    "ism",
+    "kunya"
+   ],
+   "source": ""
+  },
+  {
+   "id": "kunya",
+   "cat": "names",
+   "ar": "كنية",
+   "en": "kunya",
+   "tr": "künye",
+   "short": {
+    "en": "Abu … / Umm … — 'father of …', 'mother of …'.",
+    "tr": "Ebû … / Ümmü … — \"…nın babası\", \"…nın annesi\"."
+   },
+   "long": {
+    "en": "Often after a child's name, but not always: Abu Hurayra ('father of the kitten') is known only by his kunya.",
+    "tr": "Çoğu zaman bir çocuğun adıyla, ama her zaman değil: Ebû Hüreyre (\"kedicik babası\") yalnızca künyesiyle bilinir."
+   },
+   "related": [
+    "ism",
+    "laqab"
+   ],
+   "source": ""
+  },
+  {
+   "id": "laqab",
+   "cat": "names",
+   "ar": "لقب",
+   "en": "laqab",
+   "tr": "lakap",
+   "short": {
+    "en": "A by-name or title: al-A'mash ('the bleary-eyed'), al-A'raj ('the lame').",
+    "tr": "Lakap ya da unvan: el-A'meş (\"gözü sulanan\"), el-A'rac (\"topal\")."
+   },
+   "long": {
+    "en": "A narrator may be known by his laqab (al-A'mash is Sulayman b. Mihran). isnady marks with ★ the part of a name a person is known by.",
+    "tr": "Bir ravi lakabıyla bilinebilir (el-A'meş, Süleyman b. Mihrân'dır). isnady, kişinin bilindiği isim parçasını ★ ile işaretler."
+   },
+   "related": [
+    "kunya",
+    "nisba",
+    "ism"
+   ],
+   "source": ""
+  },
+  {
+   "id": "nisba",
+   "cat": "names",
+   "ar": "نسبة",
+   "en": "nisba",
+   "tr": "nisbe",
+   "short": {
+    "en": "A name ending in -i that tells where a person was from, his tribe or his trade: al-Kufi, al-Qurashi, al-Bazzaz.",
+    "tr": "-î ile biten ve kişinin nereli olduğunu, kabilesini ya da mesleğini söyleyen ad: el-Kûfî, el-Kureşî, el-Bezzâz."
+   },
+   "long": {
+    "en": "Many are known by a nisba: al-Bukhari (from Bukhara), al-Zuhri (from the clan of Zuhra), al-Thawri.",
+    "tr": "Pek çoğu nisbesiyle bilinir: el-Buhârî (Buharalı), ez-Zührî (Zühre oğullarından), es-Sevrî."
+   },
+   "related": [
+    "laqab",
+    "ism"
+   ],
+   "source": ""
+  },
+  {
+   "id": "wala",
+   "cat": "names",
+   "ar": "ولاء",
+   "en": "wala'",
+   "tr": "velâ",
+   "short": {
+    "en": "Clientship: a freed slave or a convert attached to an Arab tribe — 'mawla of …', 'mawlahum'.",
+    "tr": "Bir Arap kabilesine bağlı azatlı köle ya da mühtedi olma: \"… mevlâsı\", \"mevlâhüm\"."
+   },
+   "long": {
+    "en": "Many of the greatest narrators were mawali — Nafi', 'Ikrima, al-Hasan al-Basri.",
+    "tr": "En büyük ravilerin pek çoğu mevâlîdendi: Nâfi', İkrime, Hasan-ı Basrî."
+   },
+   "related": [
+    "nisba"
+   ],
+   "source": ""
+  },
+  {
+   "id": "muwaththaq",
+   "cat": "shia",
+   "ar": "موثق",
+   "en": "muwaththaq",
+   "tr": "muvessak",
+   "short": {
+    "en": "In Imami usage: a hadith whose narrators are trustworthy, one or more of them not Imami.",
+    "tr": "İmâmî kullanımda: ravileri güvenilir, bir ya da birkaçı İmâmî olmayan hadis."
+   },
+   "long": {
+    "en": "One of the four Imami grades (sahih, hasan, muwaththaq, da'if) used since Ibn Tawus and al-'Allama al-Hilli. isnady's Shia Rijal page reads narrators on this scale.",
+    "tr": "İbn Tâvûs ve Allâme Hillî'den beri kullanılan dört İmâmî dereceden biri (sahih, hasen, muvessak, zayıf). isnady'nin Shia Rijal sayfası ravileri bu ölçüyle okur."
+   },
+   "related": [
+    "mamduh",
+    "imami"
+   ],
+   "source": "al-'Allama al-Hilli"
+  },
+  {
+   "id": "mamduh",
+   "cat": "shia",
+   "ar": "ممدوح",
+   "en": "mamduh",
+   "tr": "memdûh",
+   "short": {
+    "en": "In Imami rijal: a narrator praised (jalil, wajh, 'ayn) but not called thiqa — his hadith are hasan.",
+    "tr": "İmâmî ricalde: övülmüş (celîl, vech, ayn) ama sika denmemiş ravi; hadisi hasendir."
+   },
+   "long": {
+    "en": "",
+    "tr": ""
+   },
+   "related": [
+    "muwaththaq",
+    "imami"
+   ],
+   "source": ""
+  },
+  {
+   "id": "imami",
+   "cat": "shia",
+   "ar": "إمامي",
+   "en": "Imami",
+   "tr": "İmâmî",
+   "short": {
+    "en": "Of the Twelver Shia; in rijal, a narrator of that creed. Others: Waqifi, Fathi, Zaydi, 'ammi (Sunni).",
+    "tr": "On iki imam Şîası; ricalde bu mezhepten ravi. Diğerleri: vâkıfî, fethî, zeydî, âmmî (Sünnî)."
+   },
+   "long": {
+    "en": "The Imami critics judge a narrator on two axes: reliability and creed. isnady never assumes a creed the critic does not state.",
+    "tr": "İmâmî münekkitler raviyi iki eksende değerlendirir: güvenilirlik ve mezhep. isnady, münekkitin belirtmediği bir mezhebi asla varsaymaz."
+   },
+   "related": [
+    "muwaththaq",
+    "mamduh"
+   ],
+   "source": ""
+  },
+  {
+   "id": "kutub_sitta",
+   "cat": "books",
+   "ar": "الكتب الستة",
+   "en": "al-Kutub al-Sitta",
+   "tr": "Kütüb-i Sitte",
+   "short": {
+    "en": "The Six Books: the Sahihs of al-Bukhari and Muslim, and the Sunans of Abu Dawud, al-Tirmidhi, al-Nasa'i and Ibn Maja.",
+    "tr": "Altı Kitap: Buhârî ve Müslim'in Sahîh'leri; Ebû Dâvûd, Tirmizî, Nesâî ve İbn Mâce'nin Sünen'leri."
+   },
+   "long": {
+    "en": "Some put Malik's Muwatta' or al-Darimi's Sunan in place of Ibn Maja. Ibn Hajar's Taqrib marks with a rumuz which of them each narrator appears in.",
+    "tr": "Bazıları İbn Mâce'nin yerine Mâlik'in Muvatta'ını ya da Dârimî'nin Sünen'ini koyar. İbn Hacer'in Takrîb'i, her ravinin bunlardan hangisinde geçtiğini rumuzlarla işaretler."
+   },
+   "related": [
+    "sahihayn",
+    "sunan"
+   ],
+   "source": ""
+  },
+  {
+   "id": "sahihayn",
+   "cat": "books",
+   "ar": "الصحيحان",
+   "en": "al-Sahihayn",
+   "tr": "Sahîhayn",
+   "short": {
+    "en": "The two Sahihs: al-Bukhari's and Muslim's — the soundest books after the Qur'an.",
+    "tr": "İki Sahîh: Buhârî'nin ve Müslim'in — Kur'an'dan sonra en sahih kitaplar."
+   },
+   "long": {
+    "en": "",
+    "tr": ""
+   },
+   "related": [
+    "kutub_sitta",
+    "sahih"
+   ],
+   "source": ""
+  },
+  {
+   "id": "sunan",
+   "cat": "books",
+   "ar": "سنن",
+   "en": "sunan",
+   "tr": "sünen",
+   "short": {
+    "en": "A book of hadith arranged by legal chapters (purity, prayer, …), mostly marfu' reports.",
+    "tr": "Fıkıh bablarına (taharet, namaz…) göre düzenlenmiş, çoğu merfû hadislerden oluşan eser."
+   },
+   "long": {
+    "en": "",
+    "tr": ""
+   },
+   "related": [
+    "kutub_sitta",
+    "musnad"
+   ],
+   "source": ""
+  },
+  {
+   "id": "muwatta",
+   "cat": "books",
+   "ar": "الموطأ",
+   "en": "al-Muwatta'",
+   "tr": "Muvatta'",
+   "short": {
+    "en": "Malik b. Anas's book of hadith, Companions' sayings and Medinan practice, arranged by legal chapters.",
+    "tr": "Mâlik b. Enes'in hadisleri, sahâbe sözlerini ve Medine amelini fıkıh bablarına göre topladığı eser."
+   },
+   "long": {
+    "en": "",
+    "tr": ""
+   },
+   "related": [
+    "sunan"
+   ],
+   "source": ""
+  },
+  {
+   "id": "taqrib",
+   "cat": "books",
+   "ar": "تقريب التهذيب",
+   "en": "Taqrib al-Tahdhib",
+   "tr": "Takrîbü't-Tehzîb",
+   "short": {
+    "en": "Ibn Hajar's concise book of the narrators of the Six Books: each with his name, rank, tabaqa and death.",
+    "tr": "İbn Hacer'in Kütüb-i Sitte ravilerine dair özlü eseri: her biri adı, mertebesi, tabakası ve vefatıyla."
+   },
+   "long": {
+    "en": "An abridgement of his Tahdhib al-Tahdhib, itself from al-Mizzi's Tahdhib al-Kamal. isnady reads all 8,824 entries and matches the names in the chains to them.",
+    "tr": "Kendi Tehzîbü't-Tehzîb'inin, o da Mizzî'nin Tehzîbü'l-Kemâl'inin özetidir. isnady 8.824 maddenin hepsini okur ve zincirlerdeki adları onlarla eşleştirir."
+   },
+   "related": [
+    "rank",
+    "tabaqa",
+    "jarh_tadil"
+   ],
+   "source": ""
+  },
+  {
+   "id": "kappa",
+   "cat": "measures",
+   "ar": "",
+   "en": "Cohen's kappa",
+   "tr": "Cohen kappa",
+   "short": {
+    "en": "Agreement between two graders beyond what chance alone would give: 1 always the same, 0 no better than chance.",
+    "tr": "İki derecelendiricinin, tesadüfün vereceğinin ötesindeki uyumu: 1 hep aynı, 0 tesadüften iyi değil."
+   },
+   "long": {
+    "en": "Above 0.8 very strong, 0.6–0.8 strong, 0.4–0.6 moderate. The ordinal (weighted) kappa counts a near miss (hasan for sahih) as less of a disagreement than a far one (fabricated for sahih).",
+    "tr": "0,8 üstü çok güçlü, 0,6–0,8 güçlü, 0,4–0,6 orta. Sıralı (ağırlıklı) kappa, yakın bir farkı (sahihe hasen) uzak bir farktan (sahihe mevzû) daha küçük bir anlaşmazlık sayar."
+   },
+   "related": [
+    "alpha",
+    "mutashaddid"
+   ],
+   "source": ""
+  },
+  {
+   "id": "alpha",
+   "cat": "measures",
+   "ar": "",
+   "en": "Krippendorff's alpha",
+   "tr": "Krippendorff alfa",
+   "short": {
+    "en": "Agreement of all graders at once, beyond chance, by the order of the grades.",
+    "tr": "Bütün derecelendiricilerin bir arada, tesadüfün ötesindeki uyumu; derecelerin sırasına göre."
+   },
+   "long": {
+    "en": "Above 0.8 strong; 0.667–0.8 enough for tentative conclusions; below, weak.",
+    "tr": "0,8 üstü güçlü; 0,667–0,8 geçici sonuçlar için yeterli; altı zayıf."
+   },
+   "related": [
+    "kappa"
+   ],
+   "source": ""
+  },
+  {
+   "id": "interval",
+   "cat": "measures",
+   "ar": "",
+   "en": "95% interval",
+   "tr": "%95 güven aralığı",
+   "short": {
+    "en": "The range in which the true value lies with 95% confidence, given the data.",
+    "tr": "Veriye göre gerçek değerin %95 güvenle bulunduğu aralık."
+   },
+   "long": {
+    "en": "isnady shows an interval with every measure: a narrow one means the number is well determined, a wide one that the data are few.",
+    "tr": "isnady her ölçünün yanında aralığını gösterir: dar aralık sayının iyi belirlendiğini, geniş aralık verinin az olduğunu söyler."
+   },
+   "related": [
+    "kappa",
+    "alpha"
+   ],
+   "source": ""
+  },
+  {
+   "id": "dawid_skene",
+   "cat": "measures",
+   "ar": "",
+   "en": "Dawid–Skene model",
+   "tr": "Dawid–Skene modeli",
+   "short": {
+    "en": "A model that estimates each hadith's true grade and each grader's tendencies together, from their grades.",
+    "tr": "Derecelerden, her hadisin gerçek derecesini ve her derecelendiricinin eğilimlerini birlikte tahmin eden model."
+   },
+   "long": {
+    "en": "Each grader has a confusion matrix: how often he gives each grade to a hadith of each true grade. The model gives every hadith a probability for each grade — its certainty — and measures strictness by order only.",
+    "tr": "Her derecelendiricinin bir hata matrisi vardır: gerçek derecesi belli bir hadise her dereceyi ne sıklıkla verdiği. Model her hadise her derece için bir olasılık — kesinliğini — verir ve sertliği yalnızca sırayla ölçer."
+   },
+   "related": [
+    "mutashaddid",
+    "kappa"
+   ],
+   "source": "Dawid & Skene (1979)"
+  }
+ ]
+}

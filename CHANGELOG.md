@@ -3,6 +3,30 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.1.3] — 2026-10-05
+
+**Deep statistics begin, a glossary to learn from, and two fixes everyone sees.**
+
+- **Learn**: 81 terms of hadith and its sciences, written for isnady with their classical sources — grades, kinds of
+  hadith by their chain, chain and text, ways of receiving, judging narrators, generations, Arabic names, Imami
+  rijal, books, and isnady's own measures. Each with its Arabic, a one-line and a longer definition in English or
+  Turkish, related terms, and its source; searchable in both languages. Pointing at a grade on a search result,
+  or at a narrator's rank, shows what it means. `iy term`.
+- **Statistics → Graders**, the first deep statistics tab: for a book graded by several scholars, the agreement of
+  every pair (same grade, Cohen's kappa, ordinal kappa) with 95% bootstrap intervals; Krippendorff's ordinal alpha;
+  a Dawid–Skene model of each hadith's true grade with each grader's confusion matrix and the model's certainty;
+  strictness by order only (P below the true grade − P above it) with intervals; pair-by-pair who grades higher;
+  the disputed hadith, opening in their book. A pair agreeing far too often to be independent (al-Albani and Muhyi
+  al-Din, 98.1%) is one voice in the model. Computed once in the background and kept in a file; `iy stats graders`.
+- The Hadith Scholars page measures strictness by order only (how often his grade is lower or higher than the
+  others' on the same hadith), no longer by averaging grades as numbers.
+- **No more empty space below the results**: the Search page (and the Books reader) ended in thousands of empty
+  pixels — up to half the page after widening the window — because each text measured its least height at the
+  width it was made with. The page now ends where the last result does, at any window size.
+- **Clearer filters on the Narrators and Shia Rijal pages**: each filter sits under its own title (Generation,
+  Rank, Book; Assessment), the boxes are plain to see, a chosen filter is coloured, and *Clear filters* appears
+  when one is on.
+
 ## [0.1.2] — 2026-10-04
 
 **Names that can be read, and a desktop shortcut.**

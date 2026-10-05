@@ -234,6 +234,18 @@ def stylesheet(t: Tokens) -> str:
     QCheckBox:disabled {{ color: {t.muted}; }}
     QListWidget#NarratorList {{ background: transparent; border: none; outline: none; }}
     QLabel#RowLatin {{ color: {t.lapis}; font-weight: 600; }}
+    QPushButton#Chip {{ background: {t.lapis_soft}; color: {t.lapis}; border: none; border-radius: 13px;
+                       padding: 5px 12px; font-weight: 600; }}
+    QPushButton#Chip:hover {{ background: {t.lapis}; color: {t.surface}; }}
+    QPushButton#Segment {{ background: {t.surface}; color: {t.muted}; border: 1.5px solid {t.border};
+                          border-radius: 8px; padding: 5px 14px; font-weight: 600; }}
+    QPushButton#Segment:checked {{ background: {t.lapis}; color: {t.surface}; border-color: {t.lapis}; }}
+    QLabel#FilterTitle {{ color: {t.muted}; font-size: 8.5pt; font-weight: 600; letter-spacing: 0.3px; }}
+    QComboBox#FilterCombo {{ background: {t.surface}; color: {t.ink}; border: 1.5px solid {t.muted};
+                            border-radius: 9px; padding: 7px 12px; min-height: 22px; font-weight: 600; }}
+    QComboBox#FilterCombo:hover {{ border-color: {t.lapis}; }}
+    QComboBox#FilterCombo[active="true"] {{ background: {t.lapis_soft}; border: 1.5px solid {t.lapis}; color: {t.lapis}; }}
+    QComboBox#FilterCombo::drop-down {{ border: none; width: 28px; }}
     QTreeWidget#Contents {{ background: transparent; border: none; outline: none; color: {t.ink}; }}
     QTreeWidget#Contents::item {{ padding: 4px 2px; }}
     QTreeWidget#Contents::item:selected {{ background: {t.lapis_soft}; color: {t.ink}; }}

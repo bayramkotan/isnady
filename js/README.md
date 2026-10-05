@@ -27,6 +27,8 @@
   <a href="#-hadith-scholars">Scholars</a> •
   <a href="#-books">Books</a> •
   <a href="#-shia-rijal">Shia Rijal</a> •
+  <a href="#-statistics">Statistics</a> •
+  <a href="#-learn">Learn</a> •
   <a href="#-search-by-meaning-ai">Meaning (AI)</a> •
   <a href="#-chains-of-transmission">Chains</a> •
   <a href="#-educational-by-design">Educational</a> •
@@ -41,7 +43,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.1.2).** Search and chains of transmission work today, on data you import
+> **Pre-alpha (0.1.3).** Search and chains of transmission work today, on data you import
 > in one command. Narrators, scholars, gradings and the rest are being built, in the open.
 
 ---
@@ -290,6 +292,43 @@ the Shia narrators are kept apart from the (Sunni) chains: no chain link is matc
 Next: al-Tusi's *Rijal* and *Fihrist*, al-'Allama al-Hilli's *Khulasat al-aqwal*, Ibn Dawud's
 *Rijal*, al-Kashshi's reports, and the Four Books with their chains.
 
+### 📊 Statistics
+
+Measured in depth, each figure with what it means and how sure it is. Grades are ordered
+categories, so they are never turned into numbers or averaged. The first tab, **Graders**, takes
+the scholars who graded a book (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i, Muhammad Muhyi
+al-Din 'Abd al-Hamid on Sunan Abi Dawud) and shows:
+
+- agreement of every pair — same grade, Cohen's kappa and the ordinal kappa — with 95% intervals,
+  and Krippendorff's alpha for all of them together;
+- a **Dawid–Skene model** of each hadith's true grade: each grader's confusion matrix (how he grades
+  a hadith of each true grade) and, for every hadith, how sure the model is;
+- **strictness** — the classical *mutashaddid* and *mutasahil*, measured by order only, with intervals;
+- the **disputed hadith**, where the scholars are furthest apart — a double-click opens one in its book.
+
+Two graders who agree far too often to be independent (98.1%) count as one voice in the model,
+and the page says so. Results are computed once and kept in a file. `iy stats graders`.
+Narrators, books, hadith, chains, correlations and the models follow, tab by tab.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/statistics.png" alt="Statistics — the graders of Sunan Abi Dawud: Krippendorff's alpha, agreement with intervals, the model's certainty" width="850">
+</p>
+
+### 🎓 Learn
+
+The terms of hadith and its sciences, written for isnady with their classical sources: 81 terms —
+the grades (sahih, hasan, da'if, mawdu', shadhdh, munkar, mu'allal), the kinds of hadith by their
+chain (mutawatir, mursal, munqati', mu'allaq, mudallas …), chain and text (mutaba'a, shahid,
+takhrij, madar), the ways of receiving (sama', ijaza, haddathana, 'an), judging narrators (the
+twelve ranks of Ibn Hajar, thiqa, saduq, majhul, matruk, mudallis), generations, the parts of an
+Arabic name, Imami rijal, the books, and isnady's own measures. Each with its Arabic, a one-line
+and a longer definition in **English or Turkish**, related terms one click away, and its source.
+The grades on every result explain themselves when you point at them. `iy term mursal --lang tr`.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/learn.png" alt="Learn — the term mursal: Arabic, definition, related terms and source" width="850">
+</p>
+
 ### 🧠 Search by meaning (AI)
 
 Choose **Match → By meaning (AI)** to find hadith that say the same thing in other words or in
@@ -464,6 +503,8 @@ script. The command line never loads Qt.
 | `iy ai build` | `isnady ai build` | Learn the meaning index from the imported texts (`iy ai status` to check) |
 | `iy import najashi FILE` | `isnady catalog import najashi` | al-Najashi's Rijal: Shia narrators read on the Imami scale, and the book |
 | `iy shortcut` | `isnady shortcut --no-desktop` | A desktop and applications-menu shortcut, with isnady's icon |
+| `iy term [NAME]` | `isnady term --search tadlis` | The glossary: a term's meaning, English or Turkish (`--lang tr`) |
+| `iy stats graders` | `isnady stats graders --book abudawud` | The graders of a book in depth: agreement, model, strictness |
 | `iy book [KEY [CHAPTER]]` | `isnady book bukhari 2` | The books; a book's chapters; a chapter read in order |
 | `iy scholar [NAME]` | `isnady scholar albani` | The scholars in the data, or one of them with his measured statistics |
 | `iy tahric BOOK NUMBER` | `isnady tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |

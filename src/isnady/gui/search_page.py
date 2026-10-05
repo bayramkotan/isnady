@@ -136,7 +136,11 @@ class ResultCard(QFrame):
             for grader, grade in result.grades:
                 pill = _label(f"{html.escape(grader)}: <b>{html.escape(grade)}</b>", "Pill")
                 pill.setTextFormat(Qt.TextFormat.RichText)
-                pill.setToolTip(f"{grader} graded this hadith: {grade}")
+                from isnady.core import learn
+                from isnady.core.grades import group as grade_group
+
+                meaning = learn.for_group(grade_group(grade))
+                pill.setToolTip(f"{grader} graded this hadith: {grade}" + (f"\n\n{meaning}" if meaning else ""))
                 pills.addWidget(pill)
             box.addLayout(pills)
             box.addSpacing(4)

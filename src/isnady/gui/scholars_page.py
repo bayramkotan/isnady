@@ -289,7 +289,7 @@ class ScholarsPage(QWidget):
                 kappa = f"{a['kappa']:.2f}" if a["kappa"] is not None else "—"
                 line = (f"<b>{html.escape(other)}</b>: same group on <b>{100 * a['agree']:.1f}%</b> of {a['common']:,} hadith "
                         f"(within one step {100 * a['within_one']:.1f}%) · Cohen's kappa {kappa} · "
-                        f"he grades {'higher' if a['difference'] > 0 else 'lower'} by {abs(a['difference']):.2f} on average")
+                        f"he grades lower on {100 * a['lower']:.1f}%, higher on {100 * a['higher']:.1f}%")
                 box.addWidget(_label(line, "Lead", rich=True))
                 if a["agree"] >= HIGH_AGREEMENT:
                     warn = _label(f"⚠ {100 * a['agree']:.1f}% agreement is unusually high for two scholars grading on their "
@@ -301,9 +301,10 @@ class ScholarsPage(QWidget):
                 s = g["strictness"]
                 word = "stricter" if s < -0.05 else ("more lenient" if s > 0.05 else "close to the others")
                 box.addWidget(_label(
-                    f"<b>Strictness index {s:+.2f}</b> — {word} than the other graders on the same hadith "
-                    f"({g['compared']:,} hadith compared). The classical mutashaddid / mutasahil, measured: his grade group "
-                    f"(4 sahih … 0 fabricated) minus the mean of the others'.", "Lead", rich=True))
+                    f"<b>Strictness {s:+.2f}</b> — {word} than the other graders on the same hadith: his grade lower in "
+                    f"{100 * g['lower']:.1f}%, higher in {100 * g['higher']:.1f}% of {g['compared']:,} comparisons. "
+                    "The classical mutashaddid / mutasahil, by order only. Statistics → Graders measures it against a "
+                    "model of the true grade, with intervals.", "Lead", rich=True))
 
         cr = core_scholars.critic_stats(conn, scholar)
         if cr:

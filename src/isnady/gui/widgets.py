@@ -131,7 +131,15 @@ class TextBlock(QWidget):
         return QSize(width, self.heightForWidth(width))
 
     def minimumSizeHint(self) -> QSize:  # noqa: N802
-        return QSize(80, self.heightForWidth(self.width() if self.width() > 50 else 600))
+        # one line only: the real height comes from heightForWidth at the width the layout gives. A minimum
+        # measured at the creation width (narrow, or 600) made the results area as tall as every text at that
+        # width — thousands of empty pixels below the last card (BUG-S1)
+        return QSize(80, self.fontMetrics().height())
+
+    def resizeEvent(self, event) -> None:  # noqa: N802
+        super().resizeEvent(event)
+        if event.oldSize().width() != event.size().width():
+            self.updateGeometry()          # a new width means a new height: let the layout ask again
 
     def paintEvent(self, _event) -> None:  # noqa: N802
         from PySide6.QtGui import QPainter
