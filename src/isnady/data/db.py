@@ -76,52 +76,6 @@ CREATE TABLE IF NOT EXISTS person_names (
 );
 CREATE INDEX IF NOT EXISTS ix_person_names_name ON person_names(name);
 
--- Works (BR1, 2026-10-04): every book isnady can open and read, of ANY kind — a hadith collection, a rijal
--- work, a manual of fiqh, a commentary — as a tree of any depth (volume → kitab → bab → …) whose leaves are a
--- hadith, a narrator's entry, a cross-reference or a paragraph of text. Hadith collections are built from
--- their imported hadith and chapters; other works write their own tree when imported. This is also the shape
--- of isnady's own exchange format (see the Handoff: "isnady work format").
-CREATE TABLE IF NOT EXISTS works (
-    id            INTEGER PRIMARY KEY,
-    key           TEXT NOT NULL UNIQUE,
-    kind          TEXT NOT NULL,              -- hadith | rijal | fiqh | commentary | other
-    title         TEXT NOT NULL,
-    title_ar      TEXT,
-    author        TEXT,                       -- isnady.core.scholars id, when known
-    source_id     INTEGER REFERENCES sources(id) ON DELETE CASCADE,
-    collection_id INTEGER REFERENCES collections(id) ON DELETE CASCADE,
-    stamp         TEXT                        -- what the tree was built from; a change rebuilds it
-);
-CREATE TABLE IF NOT EXISTS work_nodes (
-    id        INTEGER PRIMARY KEY,
-    work_id   INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
-    parent_id INTEGER REFERENCES work_nodes(id) ON DELETE CASCADE,
-    ordinal   INTEGER NOT NULL,
-    kind      TEXT NOT NULL,                  -- volume | kitab | bab | section | hadith | entry | reference | paragraph
-    label     TEXT,                           -- the number or mark shown before the title
-    title     TEXT,
-    hadith_id INTEGER REFERENCES hadiths(id) ON DELETE CASCADE,
-    person_id INTEGER REFERENCES persons(id) ON DELETE SET NULL,
-    text      TEXT
-);
-CREATE INDEX IF NOT EXISTS ix_work_nodes_parent ON work_nodes(work_id, parent_id, ordinal);
-CREATE INDEX IF NOT EXISTS ix_work_nodes_hadith ON work_nodes(hadith_id);
-CREATE INDEX IF NOT EXISTS ix_work_nodes_person ON work_nodes(person_id);
-
--- Narrations of the same hadith found across and within the collections (YZ2, isnady.core.takhrij).
--- kind: 'same' (the texts overlap strongly) or 'same_report' (they overlap and the same Companion narrates
--- both). Derived data: rebuilt from the texts, never imported.
-CREATE TABLE IF NOT EXISTS hadith_relations (
-    hadith_a INTEGER NOT NULL REFERENCES hadiths(id) ON DELETE CASCADE,
-    hadith_b INTEGER NOT NULL REFERENCES hadiths(id) ON DELETE CASCADE,
-    kind     TEXT NOT NULL,
-    score    REAL NOT NULL,
-    method   TEXT NOT NULL,
-    PRIMARY KEY (hadith_a, hadith_b)
-);
-CREATE INDEX IF NOT EXISTS ix_hadith_relations_b ON hadith_relations(hadith_b);
-CREATE INDEX IF NOT EXISTS ix_isnad_links_person ON isnad_links(person_id);
-
 -- Where a rijal work says a person's hadith appear (Ibn Hajar's marks: خ م د ت س ق ع 4 ...).
 CREATE TABLE IF NOT EXISTS person_marks (
     person_id INTEGER NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
@@ -271,6 +225,53 @@ CREATE TABLE IF NOT EXISTS grades (
     UNIQUE (hadith_id, grader_name, grade, source_id)
 );
 CREATE INDEX IF NOT EXISTS ix_grades_hadith ON grades(hadith_id);
+
+-- Tables that refer to hadiths, collections and persons come AFTER them: a fresh database is built
+-- in this order (2026-10-06: they once stood first and every first import on a new computer failed).
+-- Works (BR1, 2026-10-04): every book isnady can open and read, of ANY kind — a hadith collection, a rijal
+-- work, a manual of fiqh, a commentary — as a tree of any depth (volume → kitab → bab → …) whose leaves are a
+-- hadith, a narrator's entry, a cross-reference or a paragraph of text. Hadith collections are built from
+-- their imported hadith and chapters; other works write their own tree when imported. This is also the shape
+-- of isnady's own exchange format (see the Handoff: "isnady work format").
+CREATE TABLE IF NOT EXISTS works (
+    id            INTEGER PRIMARY KEY,
+    key           TEXT NOT NULL UNIQUE,
+    kind          TEXT NOT NULL,              -- hadith | rijal | fiqh | commentary | other
+    title         TEXT NOT NULL,
+    title_ar      TEXT,
+    author        TEXT,                       -- isnady.core.scholars id, when known
+    source_id     INTEGER REFERENCES sources(id) ON DELETE CASCADE,
+    collection_id INTEGER REFERENCES collections(id) ON DELETE CASCADE,
+    stamp         TEXT                        -- what the tree was built from; a change rebuilds it
+);
+CREATE TABLE IF NOT EXISTS work_nodes (
+    id        INTEGER PRIMARY KEY,
+    work_id   INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+    parent_id INTEGER REFERENCES work_nodes(id) ON DELETE CASCADE,
+    ordinal   INTEGER NOT NULL,
+    kind      TEXT NOT NULL,                  -- volume | kitab | bab | section | hadith | entry | reference | paragraph
+    label     TEXT,                           -- the number or mark shown before the title
+    title     TEXT,
+    hadith_id INTEGER REFERENCES hadiths(id) ON DELETE CASCADE,
+    person_id INTEGER REFERENCES persons(id) ON DELETE SET NULL,
+    text      TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_work_nodes_parent ON work_nodes(work_id, parent_id, ordinal);
+CREATE INDEX IF NOT EXISTS ix_work_nodes_hadith ON work_nodes(hadith_id);
+CREATE INDEX IF NOT EXISTS ix_work_nodes_person ON work_nodes(person_id);
+
+-- Narrations of the same hadith found across and within the collections (YZ2, isnady.core.takhrij).
+-- kind: 'same' (the texts overlap strongly) or 'same_report' (they overlap and the same Companion narrates
+-- both). Derived data: rebuilt from the texts, never imported.
+CREATE TABLE IF NOT EXISTS hadith_relations (
+    hadith_a INTEGER NOT NULL REFERENCES hadiths(id) ON DELETE CASCADE,
+    hadith_b INTEGER NOT NULL REFERENCES hadiths(id) ON DELETE CASCADE,
+    kind     TEXT NOT NULL,
+    score    REAL NOT NULL,
+    method   TEXT NOT NULL,
+    PRIMARY KEY (hadith_a, hadith_b)
+);
+CREATE INDEX IF NOT EXISTS ix_hadith_relations_b ON hadith_relations(hadith_b);
 """
 
 # Hadith rows are shared by every source that mentions them; once nothing

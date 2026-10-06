@@ -5,6 +5,16 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **First start on a new computer fixed**: since 0.1.0 a fresh database could not be built — an index stood in the
+  schema before its table — so the first import on a computer that had never run isnady failed ("no such table:
+  isnad_links"). Databases upgraded from earlier versions were never affected, which is why it went unseen. The
+  tables are now created in order, and every release first builds a database from nothing (`tools/release_check.py`).
+- **Graders compared fairly**: a grade of the chain only ("Isnaad Sahih" — the chain is sound, the text not judged)
+  is no longer compared with a grade of the hadith ("Munkar"). It was 25.8% of Zubair 'Ali Za'i's grades of Sunan
+  Abi Dawud (4.5% of al-Albani's). Statistics → Graders and the Hadith Scholars page leave such grades out and say
+  how many: alpha 0.705 → 0.738; al-Albani–Zubair agreement 70.0% → 74.4%; Zubair's strictness −0.10 → −0.14.
+  The alignment of his grades with the hadith numbers was checked and is right (no shift fits better, in any part
+  of the book).
 - **Portable applications**: Windows gets one portable `.exe` instead of an installer, macOS a zipped `isnady.app`
   instead of a disk image; the Linux AppImage was portable already. Nothing is installed; a folder named
   `isnady-data` beside the application keeps all its data there (isnady on a USB stick).

@@ -228,6 +228,13 @@ class StatisticsPage(QWidget):
             f"The model is sure (≥95%) of the true grade of <b>{c['high']:,}</b> hadith ({100 * c['high'] / c['total']:.1f}%), "
             f"fairly sure of {c['middle']:,}, and unsure (<60%) of <b>{c['low']:,}</b> ({100 * c['low'] / c['total']:.1f}%).",
             "Lead", rich=True))
+        left = {g: n for g, n in r.get("chain_only", {}).items() if n}
+        if left:
+            card.layout().addWidget(_label(
+                "Grades of the <b>chain only</b> (\"Isnaad Sahih\": the chain is sound, the text is not judged) answer "
+                "another question than a grade of the hadith, so they are left out of every comparison here: "
+                + ", ".join(f"{html.escape(_short(g))} {n:,}" for g, n in sorted(left.items(), key=lambda kv: -kv[1])) + ".",
+                "Caption", rich=True))
         for ov in r.get("one_voice", []):
             warn = _label(f"⚠ {_short(ov['kept'])} and {_short(ov['left_out'])} agree on {100 * ov['agree']:.1f}% — too often "
                           "for two scholars grading on their own; the source probably filled one column from the other. In "

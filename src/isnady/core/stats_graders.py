@@ -20,9 +20,9 @@ import random
 import sqlite3
 from collections import Counter, defaultdict
 
-from isnady.core.grades import GROUP_LABELS, group
+from isnady.core.grades import GROUP_LABELS, group, isnad_only
 
-METHOD = "isnady-graders-2"
+METHOD = "isnady-graders-3"
 HIGH_AGREEMENT = 0.95                   # as core.scholars: above this, two graders are not two independent views
 K = 5                                   # grade groups 0..4 (fabricated … sahih), used only as ORDER
 LABELS = [GROUP_LABELS[k] for k in range(K)]
@@ -31,14 +31,27 @@ SEED = 1405
 
 
 # ------------------------------------------------------------------ data
-def load(conn: sqlite3.Connection, collection: str) -> dict[str, dict[int, int]]:
-    """grader -> {hadith id: grade group} for one book (the first grade a grader gives a hadith)."""
+def load(conn: sqlite3.Connection, collection: str, chain_only_out: dict | None = None) -> dict[str, dict[int, int]]:
+    """grader -> {hadith id: grade group} for one book (the first grade a grader gives a hadith).
+
+    A grade of the CHAIN only ("Isnaad Sahih": the chain is sound, the text not judged) answers another question
+    than a grade of the hadith: compared with "Munkar" it is not a disagreement. Such grades are left out of
+    every comparison and counted per grader in chain_only_out. (2026-10-06: 25.8% of Zubair 'Ali Za'i's grades of
+    Sunan Abi Dawud are chain-only, against 4.5% of al-Albani's.)"""
     out: dict[str, dict[int, int]] = defaultdict(dict)
+    seen: set = set()
     for name, hid, grade in conn.execute(
             """SELECT g.grader_name, g.hadith_id, g.grade FROM grades g JOIN hadiths h ON h.id = g.hadith_id
                JOIN collections c ON c.id = h.collection_id WHERE c.key = ? ORDER BY g.id""", (collection,)):
+        if (name, hid) in seen:
+            continue
+        seen.add((name, hid))
+        if isnad_only(grade):
+            if chain_only_out is not None:
+                chain_only_out[name] = chain_only_out.get(name, 0) + 1
+            continue
         k = group(grade)
-        if k is not None and hid not in out[name]:
+        if k is not None:
             out[name][hid] = k
     return dict(out)
 
@@ -158,12 +171,13 @@ def dawid_skene(data: dict[str, dict[int, int]], iterations: int = 200, tol: flo
 # ------------------------------------------------------------------ everything for one book
 def analyse(conn: sqlite3.Connection, collection: str, progress=None) -> dict:
     say = progress or (lambda _m: None)
-    data = load(conn, collection)
+    chain_only: dict = {}
+    data = load(conn, collection, chain_only)
     graders = sorted(data, key=lambda g: -len(data[g]))
     rng = random.Random(SEED)
     out = {"collection": collection, "graders": graders, "counts": {g: len(data[g]) for g in graders},
            "distribution": {g: [sum(1 for k in data[g].values() if k == c) for c in range(K)] for g in graders},
-           "labels": LABELS, "boot": BOOT}
+           "labels": LABELS, "boot": BOOT, "chain_only": {g: chain_only.get(g, 0) for g in graders}}
     if len(graders) < 2:
         return out
     say("Agreement between every pair of graders")

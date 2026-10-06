@@ -20,6 +20,26 @@ def fail(message: str) -> None:
     sys.exit(f"release check failed: {message}")
 
 
+def fresh_install_check() -> None:
+    """A database built from nothing, as on a computer that never ran isnady: every table and index must be
+    created in an order SQLite accepts, and the schema must be the current version. (2026-10-06: an index stood
+    before its table and every first import on a new computer failed — upgraded databases never showed it.)"""
+    import os
+    import tempfile
+
+    code = ("import sys; sys.path.insert(0, sys.argv[1]); from isnady.data import db; c = db.connect(); "
+            "v = c.execute('PRAGMA user_version').fetchone()[0]; "
+            "n = c.execute(\"SELECT COUNT(*) FROM sqlite_master WHERE type='table'\").fetchone()[0]; "
+            "assert v == db.SCHEMA_VERSION, (v, db.SCHEMA_VERSION); print(v, n)")
+    with tempfile.TemporaryDirectory() as tmp:
+        env = dict(os.environ, ISNADY_DATA_DIR=tmp)
+        out = subprocess.run([sys.executable, "-c", code, str(ROOT / "src")], env=env, capture_output=True, text=True)
+    if out.returncode != 0:
+        fail("a fresh database cannot be built: " + (out.stderr.strip().splitlines() or ["?"])[-1])
+    version, tables = out.stdout.split()
+    print(f"a fresh database builds: schema {version}, {tables} tables")
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         sys.exit(__doc__)
@@ -49,6 +69,7 @@ def main() -> None:
     if not m or not m.group(1).strip():
         fail(f"CHANGELOG.md has no section '## [{version}]'")
     print(f"CHANGELOG.md has the {version} section")
+    fresh_install_check()
     if "--notes" in sys.argv:
         out = Path(sys.argv[sys.argv.index("--notes") + 1])
         downloads = f"""

@@ -12,7 +12,7 @@ Life dates are given only where they are certain; the lives themselves are TODO 
 import sqlite3
 from collections import Counter, defaultdict
 
-from isnady.core.grades import GROUP_LABELS, group
+from isnady.core.grades import isnad_only, GROUP_LABELS, group
 
 SCHOLARS = [
     {"id": "bukhari", "known_ar": "البخاري", "tr": "Buhârî (Muhammed b. İsmâil)", "name": "al-Bukhari", "full": "Muhammad b. Isma'il al-Bukhari",
@@ -157,9 +157,15 @@ def compiler_stats(conn: sqlite3.Connection, scholar: dict) -> list[dict]:
 def _grade_groups(conn: sqlite3.Connection) -> dict[str, dict[int, int]]:
     """grader name -> {hadith id: group} (the first grade a grader gives a hadith)."""
     out: dict[str, dict[int, int]] = defaultdict(dict)
+    seen: set = set()
     for name, hid, grade in conn.execute("SELECT grader_name, hadith_id, grade FROM grades ORDER BY id"):
+        if (name, hid) in seen:
+            continue
+        seen.add((name, hid))
+        if isnad_only(grade):          # a grade of the chain only is not compared with a grade of the hadith
+            continue
         g = group(grade)
-        if g is not None and hid not in out[name]:
+        if g is not None:
             out[name][hid] = g
     return out
 
