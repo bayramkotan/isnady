@@ -235,11 +235,18 @@ class MainWindow(QMainWindow):
         view_menu.addSeparator()
         theme_menu = view_menu.addMenu("Theme")
         group = QActionGroup(self)
-        for mode, label in (("system", "Follow system"), ("light", "Light"), ("dark", "Dark")):
+        self._theme_actions = {}
+        choices = [("system", "Follow system (Lapis / Lapis Night)")] + [(k, v[0]) for k, v in theme.THEMES.items()]
+        for n, (mode, label) in enumerate(choices):
             action = self._action(theme_menu, label, lambda _c=False, m=mode: self._set_theme(m))
             action.setCheckable(True)
             action.setChecked(theme.theme_mode() == mode)
             group.addAction(action)
+            self._theme_actions[mode] = action
+            if n == 0:
+                theme_menu.addSeparator()
+        theme_menu.addSeparator()
+        self._action(theme_menu, "Choose with previews…", lambda: self._preferences("themes"))
         text_menu = view_menu.addMenu("Reading Text Size")
         self._action(text_menu, "Larger", lambda: self._change_text_scale(+1), "Ctrl++")
         self._action(text_menu, "Smaller", lambda: self._change_text_scale(-1), "Ctrl+-")
@@ -396,6 +403,8 @@ class MainWindow(QMainWindow):
 
     def _apply_settings(self) -> None:
         theme.apply(QApplication.instance())
+        for mode, action in getattr(self, "_theme_actions", {}).items():
+            action.setChecked(theme.theme_mode() == mode)
         self.retheme()
 
     def _set_theme(self, mode: str) -> None:

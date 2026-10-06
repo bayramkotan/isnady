@@ -432,6 +432,12 @@ each shown on real hadith and real chains — is on the roadmap.
 
 ## 🎨 Appearance
 
+Seven themes, chosen in **Edit → Preferences → Themes** — each shown as a small live isnady window —
+or in **View → Theme**: *Lapis* (lapis and gold of illuminated manuscripts) and *Lapis Night*, which
+"Follow system" switches between; *Paper* (warm cream and ink, for long reading); *Slate* (quiet and
+modern, with a light sidebar); *Emerald*; *Midnight* (deep dark with teal); and *High Contrast*
+(black, white and yellow, for low vision). `iy config set view.theme paper`.
+
 Every script has its own reading font, size, colour and line spacing — Arabic, Latin,
 Cyrillic, Bengali and Tamil today, more as sources in other scripts arrive. The light and
 the dark theme each keep their own colours, and the interface font can be changed too.

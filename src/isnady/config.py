@@ -102,8 +102,9 @@ def validate(key: str, value):
         return ""
     default = DEFAULTS[key]
     if key == "view.theme":
-        if value not in ("system", "light", "dark"):
-            raise ConfigError("view.theme must be system, light or dark")
+        allowed = ("system", "light", "dark", "paper", "slate", "emerald", "midnight", "contrast")
+        if value not in allowed:
+            raise ConfigError("view.theme must be one of: " + ", ".join(allowed))
         return value
     if key.endswith(".color") or key.startswith("colors."):
         if not _HEX.match(str(value)):

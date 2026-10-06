@@ -5,6 +5,10 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **Themes**: seven, each drawn as a small live isnady window in Edit → Preferences → **Themes** (and listed in View →
+  Theme): Lapis and Lapis Night (followed by "Follow system"), Paper, Slate (light sidebar), Emerald, Midnight and
+  High Contrast. A click applies the theme at once; `iy config set view.theme slate`. Cards are rounder and the
+  sidebar rows have more room.
 - **First start on a new computer fixed**: since 0.1.0 a fresh database could not be built — an index stood in the
   schema before its table — so the first import on a computer that had never run isnady failed ("no such table:
   isnad_links"). Databases upgraded from earlier versions were never affected, which is why it went unseen. The

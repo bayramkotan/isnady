@@ -56,6 +56,48 @@ DARK = Tokens(
     pill="#222C38",
 )
 
+# Named themes (UI5). "light" and "dark" keep their keys (saved settings) and are the Lapis pair that "system"
+# follows; the others are chosen by name. The user's colour edits (Preferences → Colours) belong to the Lapis pair.
+PAPER = Tokens(
+    dark=False, window="#F3EEE4", surface="#FFFCF6", border="#E2D8C8", ink="#2B241C", muted="#776A59",
+    lapis="#8A3B1F", lapis_soft="#F1E2D4", gold="#A8792A", gilt="#F3DFAE",
+    sidebar="#3A2A1E", sidebar_ink="#F6EEE3", sidebar_muted="#BCAA93", sidebar_selected="#55402E",
+    pill="#EFE6D8",
+)
+SLATE = Tokens(
+    dark=False, window="#F5F6F8", surface="#FFFFFF", border="#E2E5EA", ink="#111827", muted="#646B78",
+    lapis="#4338CA", lapis_soft="#ECEDFE", gold="#C2700A", gilt="#FCE7C2",
+    sidebar="#FFFFFF", sidebar_ink="#111827", sidebar_muted="#646B78", sidebar_selected="#ECEDFE",
+    pill="#F0F2F5",
+)
+EMERALD = Tokens(
+    dark=False, window="#EFF5F2", surface="#FFFFFF", border="#D3E2DB", ink="#13241D", muted="#58706A",
+    lapis="#0F6E66", lapis_soft="#DCF0EA", gold="#B0741C", gilt="#F6E1B2",
+    sidebar="#0B3B33", sidebar_ink="#EAF6F2", sidebar_muted="#93BCB1", sidebar_selected="#14544A",
+    pill="#E7F1ED",
+)
+MIDNIGHT = Tokens(
+    dark=True, window="#0D1117", surface="#161B22", border="#2A313C", ink="#E6EDF3", muted="#8B949E",
+    lapis="#5CC8BC", lapis_soft="#16302E", gold="#E3B341", gilt="#4A3A12",
+    sidebar="#090C10", sidebar_ink="#E6EDF3", sidebar_muted="#7D8590", sidebar_selected="#18242C",
+    pill="#21262D",
+)
+CONTRAST = Tokens(
+    dark=True, window="#000000", surface="#0B0B0B", border="#BDBDBD", ink="#FFFFFF", muted="#D4D4D4",
+    lapis="#FFD400", lapis_soft="#2E2A00", gold="#FFD400", gilt="#5C4D00",
+    sidebar="#000000", sidebar_ink="#FFFFFF", sidebar_muted="#D4D4D4", sidebar_selected="#262626",
+    pill="#1A1A1A",
+)
+THEMES = {   # key: (name, description, tokens)
+    "light": ("Lapis", "Lapis and gold of illuminated manuscripts", LIGHT),
+    "dark": ("Lapis Night", "The same, by night", DARK),
+    "paper": ("Paper", "Warm cream and ink, for long reading", PAPER),
+    "slate": ("Slate", "Quiet and modern, a light sidebar", SLATE),
+    "emerald": ("Emerald", "Green and gold", EMERALD),
+    "midnight": ("Midnight", "Deep dark with teal", MIDNIGHT),
+    "contrast": ("High Contrast", "Black, white and yellow, for low vision", CONTRAST),
+}
+
 _current: Tokens = LIGHT
 _SYSTEM_UI_FONT: QFont | None = None     # the platform's own UI font, before any user choice
 
@@ -77,7 +119,7 @@ def current() -> Tokens:
     return _current
 
 
-THEME_MODES = ("system", "light", "dark")
+THEME_MODES = ("system",) + tuple(THEMES)
 TEXT_SCALE_MIN, TEXT_SCALE_MAX, TEXT_SCALE_STEP = 0.8, 1.6, 0.1
 
 
@@ -213,12 +255,12 @@ def stylesheet(t: Tokens) -> str:
     QToolTip {{ background: {t.surface}; color: {t.ink}; border: 1px solid {t.border}; padding: 4px 6px; }}
 
     /* sidebar */
-    QFrame#Sidebar {{ background: {t.sidebar}; border: none; }}
+    QFrame#Sidebar {{ background: {t.sidebar}; border: none; border-right: 1px solid {t.border if not t.dark and t.sidebar.upper() == t.surface.upper() else t.sidebar}; }}
     QLabel#Wordmark {{ color: {t.sidebar_ink}; }}
     QLabel#WordmarkArabic {{ color: {t.gold}; }}
     QLabel#SidebarFooter {{ color: {t.sidebar_muted}; font-size: 8.5pt; }}
     QListWidget#Nav {{ background: transparent; border: none; outline: none; color: {t.sidebar_ink}; }}
-    QListWidget#Nav::item {{ padding-left: 14px; margin: 1px 10px; border-radius: 6px; color: {t.sidebar_muted}; }}
+    QListWidget#Nav::item {{ padding-left: 16px; margin: 2px 12px; border-radius: 8px; color: {t.sidebar_muted}; }}
     QListWidget#Nav::item:hover {{ background: {t.sidebar_selected}; color: {t.sidebar_ink}; }}
     QListWidget#Nav::item:selected {{ background: {t.sidebar_selected}; color: {t.sidebar_ink};
                                       border-left: 3px solid {t.gold}; }}
@@ -278,7 +320,7 @@ def stylesheet(t: Tokens) -> str:
 
     /* results */
     QScrollArea#Results, QWidget#ResultsBody {{ background: {t.window}; border: none; }}
-    QFrame#Card {{ background: {t.surface}; border: 1px solid {t.border}; border-radius: 12px; }}
+    QFrame#Card {{ background: {t.surface}; border: 1px solid {t.border}; border-radius: 14px; }}
     QLabel#CardTitle {{ color: {t.ink}; }}
     QLabel#CardNumber {{ color: {t.muted}; }}
     QLabel#Pill {{ background: {t.pill}; color: {t.ink}; border: 1px solid {t.pill}; border-radius: 7px;
@@ -359,15 +401,16 @@ def apply(app: QApplication, mode: str | None = None) -> Tokens:
     if "Fusion" in QStyleFactory.keys():
         app.setStyle("Fusion")
     mode = mode or theme_mode()
-    if mode == "light":
-        base = LIGHT
-    elif mode == "dark":
-        base = DARK
+    if mode in THEMES:
+        base = THEMES[mode][2]
     else:
         base = DARK if _is_dark_scheme() else LIGHT
-    which = "dark" if base.dark else "light"
-    overrides = {token: config.get(f"colors.{which}.{token}") for token in config.COLOR_TOKENS}
-    _current = replace(base, **{k: v for k, v in overrides.items() if v})
+    if base in (LIGHT, DARK):           # the user's own colours belong to the Lapis pair
+        which = "dark" if base.dark else "light"
+        overrides = {token: config.get(f"colors.{which}.{token}") for token in config.COLOR_TOKENS}
+        _current = replace(base, **{k: v for k, v in overrides.items() if v})
+    else:
+        _current = base
     family, size = config.get("ui.family"), float(config.get("ui.size"))
     ui_font = QFont(family) if family else QFont(_SYSTEM_UI_FONT or app.font())
     if size:
