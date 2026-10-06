@@ -3,7 +3,9 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.1.4] — 2026-10-06
+
+**Portable applications, a fix for every new computer, graders compared fairly, and seven themes.**
 
 - **Themes**: seven, each drawn as a small live isnady window in Edit → Preferences → **Themes** (and listed in View →
   Theme): Lapis and Lapis Night (followed by "Follow system"), Paper, Slate (light sidebar), Emerald, Midnight and
