@@ -5,6 +5,9 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **Portable applications**: Windows gets one portable `.exe` instead of an installer, macOS a zipped `isnady.app`
+  instead of a disk image; the Linux AppImage was portable already. Nothing is installed; a folder named
+  `isnady-data` beside the application keeps all its data there (isnady on a USB stick).
 - **Version badges that cannot go stale**: the PyPI and npm badges carry the version in their address, so GitHub's
   and npm's image caches can no longer show an older one (0.1.3 showed v0.1.2 there for a while).
 - **One command for a new version** (`tools/bump_version.py 0.1.4`): code, npm files, the README's status line and

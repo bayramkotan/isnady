@@ -90,9 +90,12 @@ everything included, the AI features too:
 
 | System | File |
 |---|---|
-| Windows 10/11 | `isnady-<version>-windows-setup.exe` — Windows may say the publisher is unknown (the app is not signed): *More info → Run anyway* |
+| Windows 10/11 | `isnady-<version>-windows-portable.exe` — Windows may say the publisher is unknown (the app is not signed): *More info → Run anyway* |
 | Linux | `isnady-<version>-linux-x86_64.AppImage` — make it executable (`chmod +x`) and run it |
-| macOS, Apple silicon / Intel | `isnady-<version>-macos-arm64.dmg` / `…-macos-x86_64.dmg` — the first time, right-click the app and choose *Open* (it is not notarized) |
+| macOS, Apple silicon / Intel | `isnady-<version>-macos-arm64.zip` / `…-macos-x86_64.zip` — unzip and run `isnady.app`; the first time, right-click it and choose *Open* (it is not notarized) |
+
+All three are **portable**: nothing is installed, each runs from wherever it is. Put a folder named
+`isnady-data` beside the file and isnady keeps its databases and settings there — isnady on a USB stick.
 
 Put isnady on the desktop and in the applications menu with **Tools → Create Desktop Shortcut** (or
 `iy shortcut`): the shortcut starts isnady the way it is installed — the AppImage, the application, or the
@@ -592,7 +595,7 @@ Python 3.10 or newer and PySide6. The command line alone needs no PySide6.
 
 
 The desktop application of your own system: `pip install ".[ai]" pyinstaller`, then
-`python packaging/build_app.py linux|windows|macos VERSION` (Windows also needs Inno Setup).
+`python packaging/build_app.py linux|windows|macos VERSION`.
 
 ## 📝 License
 

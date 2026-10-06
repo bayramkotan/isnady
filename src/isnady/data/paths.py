@@ -52,16 +52,44 @@ def chosen_data_dir() -> Path | None:
         return None
 
 
+PORTABLE_DIR_NAME = "isnady-data"
+
+
+def app_location() -> Path | None:
+    """The folder the portable application sits in: beside the AppImage, the Windows .exe or the macOS .app.
+    None when isnady runs from a Python installation."""
+    if os.environ.get("APPIMAGE"):
+        return Path(os.environ["APPIMAGE"]).resolve().parent
+    if getattr(sys, "frozen", False):
+        exe = Path(sys.executable).resolve()
+        if sys.platform == "darwin" and ".app/Contents/MacOS" in exe.as_posix():
+            return exe.parents[3]                     # …/isnady.app/Contents/MacOS/isnady → beside isnady.app
+        return exe.parent
+    return None
+
+
+def portable_data_dir() -> Path | None:
+    """A folder named isnady-data next to the portable application: everything is kept there (a USB stick)."""
+    where = app_location()
+    if where is None:
+        return None
+    candidate = where / PORTABLE_DIR_NAME
+    return candidate if candidate.is_dir() else None
+
+
 def data_dir_source() -> str:
-    """Why the data folder is where it is: environment, chosen, or default."""
+    """Why the data folder is where it is: environment, portable, chosen, or default."""
     if os.environ.get("ISNADY_DATA_DIR"):
         return "environment"
+    if portable_data_dir():
+        return "portable"
     return "chosen" if chosen_data_dir() else "default"
 
 
 def data_dir() -> Path:
     override = os.environ.get("ISNADY_DATA_DIR")
-    base = Path(override).expanduser() if override else (chosen_data_dir() or default_data_dir())
+    base = (Path(override).expanduser() if override
+            else (portable_data_dir() or chosen_data_dir() or default_data_dir()))
     base.mkdir(parents=True, exist_ok=True)
     return base
 

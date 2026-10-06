@@ -1,11 +1,12 @@
 """Build the isnady desktop application for this system — one script for the three:
 
-    python packaging/build_app.py windows VERSION   → dist-app/isnady-VERSION-windows-setup.exe (Inno Setup)
+    python packaging/build_app.py windows VERSION   → dist-app/isnady-VERSION-windows-portable.exe (one file)
     python packaging/build_app.py linux   VERSION   → dist-app/isnady-VERSION-linux-x86_64.AppImage
-    python packaging/build_app.py macos   VERSION   → dist-app/isnady-VERSION-macos-<arch>.dmg (the .app inside)
+    python packaging/build_app.py macos   VERSION   → dist-app/isnady-VERSION-macos-<arch>.zip (isnady.app inside)
 
-Needs: isnady installed with its AI extra (pip install ".[ai]"), PyInstaller; Windows: Inno Setup (iscc);
-Linux: network once for appimagetool. Run from the repository root. Used by .github/workflows/publish.yml.
+All three are PORTABLE (Bayram, 2026-10-06: no setup): nothing is installed, the file runs where it is. A folder
+named isnady-data beside it keeps every database and setting there (data.paths.portable_data_dir).
+Needs: isnady installed with its AI extra (pip install ".[ai]"), PyInstaller; Linux: network once for appimagetool. Run from the repository root. Used by .github/workflows/publish.yml.
 """
 
 import os
@@ -34,24 +35,29 @@ def run(*args, **kw) -> None:
     subprocess.run([str(a) for a in args], check=True, **kw)
 
 
-def pyinstaller(target: str) -> Path:
+def pyinstaller(target: str, onefile: bool = False) -> Path:
     icon = PKG / ("isnady.ico" if target == "windows" else "isnady.icns" if target == "macos" else "isnady.png")
     args = [sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "--name", "isnady", "--windowed",
             "--icon", icon, "--collect-data", "isnady", "--collect-submodules", "isnady",
             "--distpath", ROOT / "dist", "--workpath", ROOT / "build" / "pyinstaller", "--specpath", ROOT / "build"]
     if target == "macos":
         args += ["--osx-bundle-identifier", "com.bayramkotan.isnady"]
+    if onefile:
+        args.append("--onefile")
     for module in EXCLUDE:
         args += ["--exclude-module", module]
     run(*args, PKG / "isnady_app.py")
+    if onefile:
+        return ROOT / "dist" / ("isnady.exe" if target == "windows" else "isnady")
     return ROOT / "dist" / ("isnady.app" if target == "macos" else "isnady")
 
 
 def windows(version: str) -> Path:
-    folder = pyinstaller("windows")
-    iscc = shutil.which("iscc") or r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-    run(iscc, f"/DMyAppVersion={version}", f"/DSourceDir={folder}", f"/DOutputDir={OUT}", PKG / "isnady.iss")
-    return OUT / f"isnady-{version}-windows-setup.exe"
+    """One portable .exe: no installer, no administrator rights; it unpacks itself at each start."""
+    exe = pyinstaller("windows", onefile=True)
+    target = OUT / f"isnady-{version}-windows-portable.exe"
+    shutil.copy2(exe, target)
+    return target
 
 
 def linux(version: str) -> Path:
@@ -79,15 +85,12 @@ def linux(version: str) -> Path:
 
 
 def macos(version: str) -> Path:
+    """isnady.app in a zip: unzip and run, from anywhere (no disk image, nothing to install)."""
     app = pyinstaller("macos")
     arch = "arm64" if platform.machine() == "arm64" else "x86_64"
-    stage = ROOT / "build" / "dmg"
-    shutil.rmtree(stage, ignore_errors=True)
-    stage.mkdir(parents=True)
-    run("ditto", app, stage / "isnady.app")
-    (stage / "Applications").symlink_to("/Applications")
-    target = OUT / f"isnady-{version}-macos-{arch}.dmg"
-    run("hdiutil", "create", "-volname", f"isnady {version}", "-srcfolder", stage, "-ov", "-format", "UDZO", target)
+    target = OUT / f"isnady-{version}-macos-{arch}.zip"
+    # ditto keeps the bundle's symlinks and permissions, which a plain zip would break
+    run("ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", app, target)
     return target
 
 

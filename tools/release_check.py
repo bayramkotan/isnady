@@ -56,14 +56,15 @@ def main() -> None:
 
 | System | File |
 |---|---|
-| Windows 10/11 (64-bit) | `isnady-{version}-windows-setup.exe` — installer; Windows may warn that the publisher is unknown (the app is not signed): *More info → Run anyway* |
-| Linux (x86-64) | `isnady-{version}-linux-x86_64.AppImage` — `chmod +x` it and run; needs `libxcb-cursor0` on some systems |
-| macOS, Apple silicon | `isnady-{version}-macos-arm64.dmg` |
-| macOS, Intel | `isnady-{version}-macos-x86_64.dmg` |
+| Windows 10/11 (64-bit) | `isnady-{version}-windows-portable.exe` — portable: nothing to install, run it from anywhere. Windows may say the publisher is unknown (the app is not signed): *More info → Run anyway* |
+| Linux (x86-64) | `isnady-{version}-linux-x86_64.AppImage` — portable: `chmod +x` it and run; needs `libxcb-cursor0` on some systems |
+| macOS, Apple silicon | `isnady-{version}-macos-arm64.zip` — unzip, run `isnady.app` |
+| macOS, Intel | `isnady-{version}-macos-x86_64.zip` |
 | Python | `pip install -U isnady` (or `iy update`) |
 
-The macOS app is not notarized: the first time, right-click it and choose *Open*. `SHA256SUMS.txt` lists the
-checksum of every file. The same version is on PyPI and npm.
+All three applications are portable. Put a folder named `isnady-data` beside the file and isnady keeps its databases
+and settings there — isnady on a USB stick. The macOS app is not notarized: the first time, right-click it and choose
+*Open*. `SHA256SUMS.txt` lists the checksum of every file. The same version is on PyPI and npm.
 """
         out.write_text(m.group(1).strip() + "\n" + downloads, encoding="utf-8")
         print(f"release notes written to {out}")
