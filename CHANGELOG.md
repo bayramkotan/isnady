@@ -3,7 +3,7 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.1.7] — 2026-10-08
 
 **Statistics in depth: the narrators, the chains and the grades measured, each finding said in a sentence.**
 
