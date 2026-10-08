@@ -3,7 +3,7 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.1.5] — 2026-10-08
 
 **Search finds people: the narrators of both traditions and the scholars of hadith.**
 
