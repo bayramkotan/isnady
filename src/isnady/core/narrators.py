@@ -338,10 +338,10 @@ def latin_skeleton(word: str) -> str:
     """Consonants of a Latin spelling, comparable with arabic_skeleton: the shadda written twice ("Abbas",
     "Musaddad") counts once, a word-initial y/w is a consonant, a final -i is the nisba ending.
     "b." and "bt." — how isnady itself writes ibn and bint — are ibn and bint."""
-    bare = word.strip().strip(".").lower()
-    if bare in ("b", "bin", "ibn", "bn", "ben"):
+    bare = word.strip().strip(".").replace("İ", "i").replace("I", "ı").lower().replace("ı", "i")
+    if bare in ("b", "bin", "ibn", "bn", "ben", "ibni", "ibnu", "ibnü", "bini"):     # Turkish İbni Abbas
         return "bn"
-    if bare in ("bt", "bint"):
+    if bare in ("bt", "bint", "binti", "bintu"):
         return "bnt"
     import unicodedata
 
@@ -400,15 +400,23 @@ def _token_index(conn: sqlite3.Connection) -> list[tuple[int, list[str]]]:
     return _skeleton_cache["token_rows"]
 
 
-def _ordered_score(wanted: list[str], name: list[str], whole: list[str], full_name: list[str]) -> int | None:
+def _exact(q: str, word: str) -> bool:
+    # an Arabic query without the article finds the word with it: زبير finds الزبير
+    if word.startswith("ال") and len(word) > 3 and not q.startswith("ال"):
+        word = word[2:]
+    # a short skeleton ("sh" of Aisha, "ns" of Anas) must be the whole word: as a beginning it fits hundreds
+    return word == q if len(q) < 3 else word.startswith(q)
+
+
+def _ordered_score(wanted: list[str], name: list[str], whole: list[str], full_name: list[str],
+                   match=_exact) -> int | None:
     """None when the query words do not occur IN ORDER in the name (each as a word or the start of one);
     otherwise a score: one point per whole word, two when the name begins with the query's first word,
     a hundred when the query is the whole name ("Ibn Umar" = بن عمر, "Zuhri" = الزهري).
     "Anas ibn Malik" is not "Malik ibn Anas", and "سعيد … والد سفيان" is not "سفيان بن سعيد"."""
     i, score = 0, 0
     for q in wanted:
-        # a short skeleton ("sh" of Aisha, "ns" of Anas) must be the whole word: as a beginning it fits hundreds
-        while i < len(name) and not (name[i] == q if len(q) < 3 else name[i].startswith(q)):
+        while i < len(name) and not match(q, name[i]):
             i += 1
         if i == len(name):
             return None
@@ -421,15 +429,92 @@ def _ordered_score(wanted: list[str], name: list[str], whole: list[str], full_na
     return score
 
 
-def search_persons(conn: sqlite3.Connection, text: str, limit: int = 20) -> list[tuple[int, str]]:
+# ------------------------------------------------------------------ close spellings (S4)
+def split_abd(text: str) -> str:
+    """"Abdullah", "Abdurrahman", "Abdülaziz", "Abdulmelik", عبدالله — typed as one word — as the books write them,
+    in two: abd + the name of God (عبد الله, عبد الرحمن). The article's l goes ("ulaziz" → aziz) unless it is
+    Allah's ("ullah")."""
+    def latin(m: re.Match) -> str:
+        rest = re.sub(r"^[aeiouüı]", "", m.group(2))
+        if rest.startswith("l") and not rest.startswith("ll"):
+            rest = rest[1:]
+        return f"{m.group(1)} {rest}" if rest else m.group(0)
+
+    text = re.sub(r"\b([Aa]bd)([aeiouüı][a-zçğışöüâîû'-]{2,})", latin, text)
+    return re.sub(r"(?<![\w])(عبد)(ال\w+)", r"\1 \2", text)
+
+
+
+FUZZY_BELOW = 10        # fewer exact matches than this: look for close spellings too
+_LOOSE_DIGRAPHS = (("kh", "h"), ("sh", "s"), ("th", "t"), ("dh", "z"), ("gh", "g"))
+
+
+def loose(word: str) -> str:
+    """A skeleton (or an Arabic word) with the distinctions a hurried or Turkish spelling loses: kh/h, sh/s, th/t,
+    gh/g (Buhari = Bukhari), dh/z (Muaz = Mu'adh), a final h (Hurayrah = Hurayra), and a letter typed twice once
+    (zuberyyyr → zbr). An Arabic word loses its article (زبيير → زبير finds الزبير)."""
+    if word and not _ARABIC_LETTER.search(word):
+        for digraph, single in _LOOSE_DIGRAPHS:
+            word = word.replace(digraph, single)
+        if len(word) > 2 and word.endswith("h"):
+            word = word[:-1]
+    elif word.startswith("ال") and len(word) > 3:
+        word = word[2:]
+    return re.sub(r"(.)\1+", r"\1", word)
+
+
+def near(a: str, b: str) -> bool:
+    """At most one letter apart: one added, dropped, changed, or two neighbours swapped (zübyer)."""
+    if a == b:
+        return True
+    la, lb = len(a), len(b)
+    if abs(la - lb) > 1:
+        return False
+    if la == lb:
+        diff = [i for i in range(la) if a[i] != b[i]]
+        return len(diff) == 1 or (len(diff) == 2 and diff[1] == diff[0] + 1
+                                  and a[diff[0]] == b[diff[1]] and a[diff[1]] == b[diff[0]])
+    if la > lb:
+        a, b = b, a
+    i = 0
+    while i < len(a) and a[i] == b[i]:
+        i += 1
+    return a[i:] == b[i + 1:]
+
+
+def _same_loose(q: str, word: str) -> bool:
+    """First pass: a query word (already loose) and a name word are the same once loosened (zuberyyyr = zbr,
+    Buhaari = bhry = البخاري), or the query is the beginning of the name word (three letters or more)."""
+    w = loose(word)
+    return w == q or (len(q) >= 3 and w.startswith(q))
+
+
+def _one_off(q: str, word: str) -> bool:
+    """Second pass, only when the first finds too little: one letter apart, for words of four letters or more
+    and with the first letter right — a consonant skeleton is short, and al-Zuhri (zhry) is one letter from
+    al-Bukhari (bhry)."""
+    w = loose(word)
+    if w == q:
+        return True
+    if len(q) < 4 or not w or w[0] != q[0]:
+        return False
+    return near(q, w) or (len(w) > len(q) and near(q, w[:len(q)]))
+
+
+def search_persons(conn: sqlite3.Connection, text: str, limit: int = 20,
+                   close: set | None = None) -> list[tuple[int, str]]:
     """Persons whose names contain the words typed, in that order (diacritics and letter forms ignored).
     Latin letters are matched on the consonant skeleton ("Abu Hurayra", "Zuhri", "Ibn Abbas").
     A match in the person's own entry counts above the same match in a name read from elsewhere: Abu Hurayra
-    himself ("أبو هريرة الدوسي") before an unnamed man the Taqrib describes through him."""
+    himself ("أبو هريرة الدوسي") before an unnamed man the Taqrib describes through him.
+    Fewer than FUZZY_BELOW matches: close spellings are looked for too (S4: zuberyyyr, Buhaari, زبيير), after
+    every exact match; their ids are added to `close` when a set is given."""
     if not text.strip():
         return []
     best: dict[int, int] = {}
-    if not _ARABIC_LETTER.search(text):
+    latin_query = not _ARABIC_LETTER.search(text)
+    text = split_abd(text)
+    if latin_query:
         whole = [latin_skeleton(w) for w in text.split() if latin_skeleton(w)]
         wanted = [w for w in whole if w not in ("bn", "bnt")]          # "ibn", "bint" carry nothing here
         if not wanted:
@@ -451,6 +536,23 @@ def search_persons(conn: sqlite3.Connection, text: str, limit: int = 20) -> list
             if score is not None:
                 score += 10 * own
                 best[pid] = max(best.get(pid, -1), score)
+    # close spellings, after every exact match: first the same letters loosened (scores from -1000), then — still
+    # too few — one letter apart (from -2000)
+    loose_wanted = [loose(w) for w in wanted]
+    index = _skeleton_index(conn) if latin_query else _token_index(conn)
+    ibn = ("bn", "bnt") if latin_query else ("بن",)
+    for match, offset in ((_same_loose, -1000), (_one_off, -2000)):
+        if len(best) >= FUZZY_BELOW:
+            break
+        for pid, words, own in index:
+            if pid in best and best[pid] > offset + 500:
+                continue
+            core = [w for w in words if w not in ibn]
+            score = _ordered_score(loose_wanted, core, whole, words, match=match)
+            if score is not None:
+                best[pid] = max(best.get(pid, -10**6), score + 10 * own + offset)
+                if close is not None:
+                    close.add(pid)
     uses = dict(conn.execute("SELECT person_id, COUNT(*) FROM isnad_links WHERE person_id IS NOT NULL "
                              "GROUP BY person_id").fetchall())
     order = sorted(best, key=lambda pid: (-best[pid], -uses.get(pid, 0)))[:limit]
@@ -469,7 +571,7 @@ def overview(conn: sqlite3.Connection, tradition: str = "sunni") -> dict:
 
 def browse(conn: sqlite3.Connection, text: str = "", tabaqa: int | None = None, rank: int | None = None,
            book: str | None = None, limit: int = 300, tradition: str | None = "sunni",
-           only: list[int] | None = None) -> tuple[list[dict], int]:
+           only: list[int] | None = None, close: set | None = None) -> tuple[list[dict], int]:
     """Narrators for the list: (rows, total before the limit), most often in the chains first.
     tradition None: both traditions (the Search page), each row saying which it belongs to."""
     from isnady.core.rijal import COLLECTION_MARKS, display_name
@@ -479,7 +581,7 @@ def browse(conn: sqlite3.Connection, text: str = "", tabaqa: int | None = None, 
         where.append("COALESCE(p.tradition, 'sunni') = ?")
         args.append(tradition)
     if text.strip():
-        ids = [pid for pid, _n in search_persons(conn, text, limit=5000)]
+        ids = [pid for pid, _n in search_persons(conn, text, limit=5000, close=close)]
         if not ids:
             return [], 0
         where.append(f"p.id IN ({','.join(str(i) for i in ids)})")
@@ -557,7 +659,7 @@ def fold_latin(text: str) -> str:
     for word in re.split(r"[\s]+", w):
         word = re.sub(r"^(al|el|an|ar|as|at|az|ad|ash|adh|en|er|es|et|ez|ed)-", "", word)
         word = re.sub(r"[^a-z]", "", word)
-        if word in ("ibn", "bin", "bn", "b", "bint", "bt"):
+        if word in ("ibn", "bin", "bn", "b", "bint", "bt", "ibni", "ibnu", "bini", "binti"):
             continue
         words.append(word.replace("e", "a").replace("o", "u").replace("y", "i"))
     return " ".join(w for w in words if w)
@@ -582,30 +684,37 @@ def find(conn: sqlite3.Connection, text: str, tradition: str | None = None) -> t
       3. the query occurs only in the words about him (a teacher his entry names).
     Within each, search_persons' own order (how well the words fit, then how often in the chains).
     Returns (rows, how many match in all); only the first SEARCH_RERANK matches are read and returned."""
+    text = split_abd(text)
     wanted, latin_query = _query_words(text)
     if not wanted:
         return [], 0
-    rows, total = browse(conn, text, limit=SEARCH_RERANK, tradition=tradition)
+    close: set = set()
+    rows, total = browse(conn, text, limit=SEARCH_RERANK, tradition=tradition, close=close)
 
     whole = _whole_query(text, latin_query)
 
-    def tier(row: dict) -> int:
+    def tier(row: dict, close_spelling: bool) -> int:
+        # a close spelling (S4) is ranked the same way, on the loosened words, without asking for its vowels
+        match = _one_off if close_spelling else _exact
+        w_whole = [loose(w) for w in whole] if close_spelling else whole
+        w_wanted = [loose(w) for w in wanted] if close_spelling else wanted
         known = _name_words(row["view"]["arabic"] or "", latin_query, keep_ibn=True)
-        first = whole[0] if whole else ""
-        begins = known and (known[0] == first if len(first) < 3 else known[0].startswith(first))
-        if begins and _ordered_score(whole, known, whole, known) is not None and (
-                not latin_query or _closeness(text, row["view"]["reading"] or "") >= 0.8):
+        first = w_whole[0] if w_whole else ""
+        begins = bool(known) and match(first, known[0])
+        if begins and _ordered_score(w_whole, known, w_whole, known, match=match) is not None and (
+                close_spelling or not latin_query or _closeness(text, row["view"]["reading"] or "") >= 0.8):
             return 0          # consonants alone confuse Umar and Amir, Aisha and Ayyash: a Latin query needs its vowels too
         # the name itself — ism, lineage, kunya, by-names, nisbas as name_parts reads them — not the words
         # about him that follow it in the entry ("… narrates from Abu Hurayra")
         parts = " ".join(arabic for _key, values, _star in row["view"]["rows"] for arabic, _latin in values)
         name = _name_words(parts, latin_query)
-        if name and _ordered_score(wanted, name, wanted, name) is not None:
+        if name and _ordered_score(w_wanted, name, w_wanted, name, match=match) is not None:
             return 1
         return 2
 
     for row in rows:
-        row["tier"] = tier(row)
+        row["close"] = row["id"] in close        # found by a close spelling, not the one typed (S4)
+        row["tier"] = tier(row, row["close"]) + (10 if row["close"] else 0)    # close spellings after every exact match
         # a Latin query is matched on consonants only, so al-A'sha (الأعشى) fits "Aisha" as well as A'isha does;
         # the vowels of the readings put A'isha first
         row["closeness"] = (max(_closeness(text, row["view"]["reading"] or ""),
@@ -621,7 +730,7 @@ def find(conn: sqlite3.Connection, text: str, tradition: str | None = None) -> t
     missing = famous - {r["id"] for r in rows}
     if missing:
         more, _n = browse(conn, limit=len(missing), tradition=tradition, only=sorted(missing))
-        rows.extend({**row, "tier": -1, "closeness": 1.0} for row in more)
+        rows.extend({**row, "tier": -1, "closeness": 1.0, "close": False} for row in more)
         total += len(more)
     order = {id(r): i for i, r in enumerate(rows)}
     rows.sort(key=lambda r: (r["tier"], -round(r["closeness"], 1), order[id(r)]))

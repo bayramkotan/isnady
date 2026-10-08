@@ -5,7 +5,16 @@ is taken from its section here.
 
 ## [Unreleased]
 
-**Themes change at once.**
+**Themes change at once, and names are found from close spellings.**
+
+- **Close spellings** (Search → Narrators and Scholars, the Narrators page, `iy search --in`): when the letters
+  typed find little, isnady looks for names one slip away — a letter typed twice or missing ("zuberyyyr",
+  "Buhaari", "Müslümm"), two letters swapped, one wrong, or written as Turkish and English differ (h and kh,
+  "Buhari" = al-Bukhari; z and dh, "Muaz bin Cebel" = Mu'adh b. Jabal; a final h, "Abu Hurayrah"). They come after
+  every exact match, each card marked "≈ close spelling", and the page says when nothing was written exactly so.
+- **Turkish and one-word names**: "İbni Abbas", "İbni Ömer", "binti" are read as ibn and bint; "Abdullah",
+  "Abdurrahman", "Abdülaziz", عبدالله typed as one word are found as the books write them (عبد الله, عبد الرحمن);
+  an Arabic name typed without the article finds it with it (زبير finds الزبير).
 
 - **A new theme in under a second or so, instead of five to seven**: Qt styles every widget of the window again,
   the hidden pages too, and every page was then drawn again — the two narrator lists alone are two thousand

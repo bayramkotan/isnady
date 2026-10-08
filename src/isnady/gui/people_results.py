@@ -14,6 +14,8 @@ from isnady.core.rijal import RANK_LABELS, TABAQA_LABELS
 from isnady.core.scholars import ROLE_HELP
 from isnady.gui import theme
 
+CLOSE_TIP = ("Found by a close spelling, not by the letters typed: a letter typed twice or missing, or one that "
+             "Turkish and English write differently (h and kh, z and dh).")
 SHIA_COLOR = {1: 2, 2: 4, 3: 5, 4: 9}    # as on the Narrators page: Shia categories in the colours of like standing
 TRADITION = {"sunni": ("Sunni", "A narrator of the Sunni books, as Ibn Hajar's Taqrib al-Tahdhib records him."),
              "shia": ("Shia", "A narrator of the Shia books, as al-Najashi's Rijal records him. His judgment is "
@@ -136,6 +138,8 @@ def person_card(row: dict, open_person) -> QFrame:
     if not shia:
         parts.append((f"{row['in_chains']:,} in chains" if row["in_chains"] else "not in the imported chains",
                       "How often he is identified in the chains of the imported books."))
+    if row.get("close"):
+        parts.append((f"<span style='color:{theme.current().gold}'>≈ close spelling</span>", CLOSE_TIP))
     _facts(box, tags, parts, f"Open in {page}")
     return card
 
@@ -161,6 +165,8 @@ def scholar_card(scholar: dict, open_scholar) -> QFrame:
     if not tags:
         parts.append(("nothing of his is imported yet",
                       "Import his book or his grades (File → Data Sources) to see his work measured."))
+    if scholar.get("close"):
+        parts.append((f"<span style='color:{theme.current().gold}'>≈ close spelling</span>", CLOSE_TIP))
     _facts(box, tags, parts, "Open in Hadith Scholars")
     return card
 

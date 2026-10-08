@@ -146,8 +146,36 @@ def search(conn: sqlite3.Connection, text: str) -> list[dict]:
         names = " ".join([s["name"], s["full"], s["tr"], s["arabic"], s.get("known_ar", "")])
         if fits(names + " " + " ".join(s["works"])):
             found.append(({**s, "roles": roles.get(s["id"], [])}, fits(names)))
+    if not found:
+        found = _close_spellings(text, roles)
     found.sort(key=lambda f: (not f[1], not f[0]["roles"]))
     return [s for s, _n in found]
+
+
+def _close_spellings(text: str, roles: dict) -> list[tuple[dict, bool]]:
+    """Nothing found as typed: every query word close to a word of his names or works (S4) — the same once
+    loosened (zübeyrr, Buhaari: letters typed twice, kh/h …) or, from four letters, one letter apart (Albnai)."""
+    from isnady.core.narrators import fold_latin, loose, near
+
+    def words(hay: str) -> list[str]:
+        return [loose(w) for w in (fold_latin(hay.replace("-", " ")).split() + _fold(hay).split()) if w]
+
+    def fits(q: str, ws: list[str]) -> bool:
+        return any(w.startswith(q) or (len(q) >= 4 and (near(q, w) or near(q, w[:len(q)]))) for w in ws)
+
+    wanted = [q for q in (loose(w) for w in fold_latin(text).split()) if len(q) >= 3] or \
+             [q for q in (loose(w) for w in _fold(text).split()) if len(q) >= 3]
+    if not wanted:
+        return []
+    out = []
+    for s in SCHOLARS:
+        names = " ".join([s["name"], s["full"], s["tr"], s["arabic"], s.get("known_ar", "")])
+        name_words, all_words = words(names), words(names + " " + " ".join(s["works"]))
+        if all(fits(q, all_words) for q in wanted):
+            out.append(({**s, "roles": roles.get(s["id"], []), "close": True}, all(fits(q, name_words) for q in wanted)))
+    if any(in_name for _s, in_name in out):          # a close name, then not the titles that happen to be close too
+        out = [(s, in_name) for s, in_name in out if in_name]
+    return out
 
 
 _IBN = ("b", "bn", "ibn", "bin", "ب", "بن", "ابن")
@@ -171,8 +199,17 @@ def named(text: str) -> list[dict]:
     wanted = _squeeze(text)
     if len(wanted) < 3:
         return []
+    exact = [s for s in SCHOLARS
+             if any(_squeeze(name).startswith(wanted) for name in (s["name"], s["tr"], s.get("known_ar", "")) if name)]
+    if exact:
+        return exact
+    # a close spelling (S4): letters typed twice once, kh/h, sh/s … (Buhaari, Elbaany, Nevevii)
+    from isnady.core.narrators import loose
+
+    wanted = loose(wanted)
     return [s for s in SCHOLARS
-            if any(_squeeze(name).startswith(wanted) for name in (s["name"], s["tr"], s.get("known_ar", "")) if name)]
+            if any(loose(_squeeze(name)).startswith(wanted) for name in (s["name"], s["tr"], s.get("known_ar", ""))
+                   if name)]
 
 
 def as_narrator(conn: sqlite3.Connection, scholar: dict) -> int | None:

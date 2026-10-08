@@ -413,7 +413,8 @@ def _search_people(conn, args) -> int:
         print(f"{len(found)} scholar{'s' if len(found) != 1 else ''} found")
         for s in found[args.offset:args.offset + args.limit]:
             roles = ", ".join(s["roles"]) or "nothing of his imported yet"
-            print(f"\n{s['name']}  {s.get('known_ar') or s['arabic']}  ({s['id']})")
+            print(f"\n{s['name']}  {s.get('known_ar') or s['arabic']}  ({s['id']})"
+                  + ("  ≈ close spelling" if s.get("close") else ""))
             print(f"  {s['tr']} · {s['dates']}" if s["dates"] else f"  {s['tr']}")
             print(f"  roles here: {roles}")
             print(f"  works: {', '.join(s['works'])}")
@@ -429,7 +430,8 @@ def _search_people(conn, args) -> int:
     for r in shown:
         view = r["view"]
         known = view["reading"] or view["full_reading"]
-        print(f"\n{known + '  ' if known else ''}{view['arabic'] or r['name']}  (id {r['id']}, {r['tradition']})")
+        print(f"\n{known + '  ' if known else ''}{view['arabic'] or r['name']}  (id {r['id']}, {r['tradition']})"
+              + ("  ≈ close spelling" if r.get("close") else ""))
         if view["full_reading"] and view["full_reading"] != known:
             print(f"  {view['full_reading']}")
         facts = []

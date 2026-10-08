@@ -755,6 +755,11 @@ class SearchPage(QWidget):
         last = self.body_layout.count() - 1
         if last >= 0 and self.body_layout.itemAt(last).spacerItem() is not None:
             self.body_layout.takeAt(last)
+        if not more and all(r.get("close") for r in self._found):
+            hint = _label(f"Nothing is written exactly “{self.query_edit.text().strip()}”. These are the closest "
+                          "spellings: a letter typed twice or missing, or written as Turkish and English differ "
+                          "(h and kh, z and dh).", "Lead", wrap=True)
+            self.body_layout.addWidget(hint)
         batch = self._found[self._people_shown:self._people_shown + PAGE_SIZE]
         for row in batch:
             if kind == "narrators":
@@ -775,7 +780,10 @@ class SearchPage(QWidget):
         self.body_layout.addStretch(1)
         noun = {"narrators": ("narrator", "narrators"), "scholars": ("scholar", "scholars")}[kind]
         total = self._people_total
-        self.summary.setText(f"{total:,} {noun[total != 1]}, {self._people_ms} ms")
+        close = sum(1 for r in self._found if r.get("close"))
+        note = "" if not close else (" — by close spelling" if close == len(self._found)
+                                     else f", the last {close:,} by close spelling")
+        self.summary.setText(f"{total:,} {noun[total != 1]}{note}, {self._people_ms} ms")
 
     def release(self) -> None:
         """Let go of the cards before a new theme; retheme() draws them again (UI5-P). The start page and the
