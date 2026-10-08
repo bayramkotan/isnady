@@ -234,7 +234,11 @@ class BooksPage(QWidget):
         langs = [r[0] for r in self.conn.execute(
             """SELECT DISTINCT e.language FROM editions e JOIN collections c ON c.id = e.collection_id
                WHERE c.key = ? ORDER BY (e.language != 'Arabic'), e.language""", (self._work["key"],))]
-        saved = config.state_get(f"reader.languages.{self._work['key']}") or langs
+        from isnady.core import language
+
+        # the book's own choice; without one, the content languages (L1) — and every language when none is among them
+        saved = (config.state_get(f"reader.languages.{self._work['key']}")
+                 or [lang for lang in langs if language.shows(lang)] or langs)
         for lang in langs:
             box = QCheckBox(lang)
             box.setChecked(lang in saved)

@@ -6,6 +6,7 @@ Sections without their own page yet show a short description.
 from PySide6.QtCore import QSize, Qt, QUrl
 from PySide6.QtGui import QAction, QActionGroup, QDesktopServices, QGuiApplication, QKeySequence
 from PySide6.QtWidgets import (
+    QMenu,
     QPushButton,
     QApplication,
     QFrame,
@@ -106,6 +107,24 @@ class MainWindow(QMainWindow):
         self.install_notice.clicked.connect(self._check_installation)
         self.install_notice.hide()
         side.addWidget(self.install_notice)
+        # the two languages, always in sight (L1): the interface (how names and terms are read) and the content
+        # (the languages the hadith texts are shown in); each opens its choices
+        self.ui_lang_button = QPushButton()
+        self.content_lang_button = QPushButton()
+        languages = QWidget()
+        lang_box = QVBoxLayout(languages)
+        lang_box.setContentsMargins(18, 0, 18, 6)
+        lang_box.setSpacing(6)
+        for button in (self.ui_lang_button, self.content_lang_button):
+            button.setObjectName("SidebarLang")
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+            lang_box.addWidget(button)
+        side.addWidget(languages)
+        self.ui_lang_button.setMenu(QMenu(self.ui_lang_button))
+        self.content_lang_button.setMenu(QMenu(self.content_lang_button))
+        self.ui_lang_button.menu().aboutToShow.connect(lambda: self._fill_ui_language_menu(self.ui_lang_button.menu()))
+        self.content_lang_button.menu().aboutToShow.connect(
+            lambda: self._fill_content_language_menu(self.content_lang_button.menu()))
         self.footer = QLabel(f"version {__version__}")
         self.footer.setObjectName("SidebarFooter")
         self.footer.setContentsMargins(26, 0, 26, 0)
@@ -200,6 +219,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central)
         self.statusBar().hide()
         self._build_menus()
+        self._update_language_buttons()
 
     # --------------------------------------------------------------- menus
     def _action(self, menu, text: str, slot, shortcut=None, tip: str = "") -> QAction:
@@ -236,6 +256,10 @@ class MainWindow(QMainWindow):
         for i, (_key, label, _text) in enumerate(SECTIONS):
             self._action(view_menu, label, lambda _c=False, row=i: self.nav.setCurrentRow(row), f"Ctrl+{i + 1}")
         view_menu.addSeparator()
+        ui_menu = view_menu.addMenu("Interface Language")
+        ui_menu.aboutToShow.connect(lambda: self._fill_ui_language_menu(ui_menu))
+        content_menu = view_menu.addMenu("Content Languages")
+        content_menu.aboutToShow.connect(lambda: self._fill_content_language_menu(content_menu))
         theme_menu = view_menu.addMenu("Theme")
         group = QActionGroup(self)
         self._theme_actions = {}
@@ -424,6 +448,90 @@ class MainWindow(QMainWindow):
     def _set_theme(self, mode: str) -> None:
         theme.set_theme_mode(mode)
         self._restyle(lambda: theme.apply(QApplication.instance(), mode))
+
+    # ------------------------------------------------------------------ languages (L1)
+    def _update_language_buttons(self) -> None:
+        from isnady.core import language
+
+        ui = language.UI_LANGUAGES[language.ui_language()]
+        chosen = language.content_languages()
+        content = ", ".join(chosen) if chosen else "all languages"
+        self.ui_lang_button.setText(f"Interface:  {ui}")
+        self.ui_lang_button.setToolTip(
+            "The interface language: how every Arabic name is read (Musaddad b. Musarhad / Müsedded b. Müserhed) and "
+            "the language of the glossary.\nMenus and page texts are in English for now.")
+        self.content_lang_button.setText(f"Content:  {content}")
+        self.content_lang_button.setToolTip(
+            f"The hadith texts are shown in: {content}.\nA text that matches a search is shown whatever its language; "
+            "each book in Books can still choose its own.")
+
+    def _fill_ui_language_menu(self, menu) -> None:
+        from isnady.core import language
+
+        menu.clear()
+        group = QActionGroup(menu)
+        for code, name in language.UI_LANGUAGES.items():
+            action = menu.addAction(name)
+            action.setCheckable(True)
+            action.setChecked(code == language.ui_language())
+            group.addAction(action)
+            action.triggered.connect(lambda _c=False, c=code: self._set_ui_language(c))
+        menu.addSeparator()
+        note = menu.addAction("Names and terms follow it; menus are in English for now")
+        note.setEnabled(False)
+
+    def _fill_content_language_menu(self, menu) -> None:
+        from isnady.core import language
+        from isnady.core import search as core_search
+
+        menu.clear()
+        conn = self.search_page.connection()
+        available = core_search.list_languages(conn) if conn is not None else []
+        chosen = language.content_languages()
+        every = menu.addAction("All languages")
+        every.setCheckable(True)
+        every.setChecked(not chosen)
+        every.triggered.connect(lambda: self._set_content_languages([]))
+        menu.addSeparator()
+        for lang in available:
+            action = menu.addAction(lang)
+            action.setCheckable(True)
+            action.setChecked(lang in chosen)
+            action.triggered.connect(lambda checked, l=lang: self._toggle_content_language(l, checked))
+        if not available:
+            menu.addAction("No texts imported yet").setEnabled(False)
+
+    def _toggle_content_language(self, lang: str, on: bool) -> None:
+        from isnady.core import language
+        from isnady.core import search as core_search
+
+        conn = self.search_page.connection()
+        available = core_search.list_languages(conn) if conn is not None else []
+        chosen = language.content_languages() or list(available)
+        chosen = [l for l in available if (l in chosen and l != lang) or (l == lang and on)]
+        self._set_content_languages([] if not chosen or set(chosen) == set(available) else chosen)
+
+    def _set_ui_language(self, code: str) -> None:
+        from isnady.core import language
+
+        language.set_ui_language(code)
+        self.learn_page._set_lang(code)          # the glossary in the same language
+        self._languages_changed()
+
+    def _set_content_languages(self, languages: list[str]) -> None:
+        from isnady.core import language
+
+        language.set_content_languages(languages)
+        self._languages_changed()
+
+    def _languages_changed(self) -> None:
+        self.search_page.__dict__.pop("_person_cache", None)      # the narrators of the chains, read again
+        self._update_language_buttons()
+        QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            self.retheme()                                        # the page in view now, the others when opened
+        finally:
+            QGuiApplication.restoreOverrideCursor()
 
     def _restyle(self, apply) -> None:
         """A new theme, fast (UI5-P). Qt styles EVERY widget of the application again, hidden pages too, and was

@@ -260,6 +260,18 @@ def known_aliases(conn: sqlite3.Connection, person_id: int) -> list[str]:
     return _alias_cache["allowed"].get(person_id, [])
 
 
+def reading(conn: sqlite3.Connection, person_id: int, name_ar: str) -> tuple[str, str]:
+    """(reading, Arabic) of the name a narrator is known by, in the interface language (L1): ("Musaddad b.
+    Musarhad", "مسدد بن مسرهد"). The reading is "" when isnady cannot read the name yet — then show the Arabic."""
+    from isnady.core import name_parts
+    from isnady.core.rijal import display_name
+
+    shown = display_name(name_ar)
+    row = conn.execute("SELECT kunya FROM persons WHERE id = ?", (person_id,)).fetchone()
+    view = name_parts.present(name_parts.parse(shown, row[0] if row else None, known_aliases(conn, person_id), name_ar))
+    return view["reading"] or view["full_reading"] or "", view["arabic"] or shown
+
+
 def describe(conn: sqlite3.Connection, person_id: int) -> dict | None:
     """Everything the rijal works say about one person, for display."""
     from isnady.core.rijal import BOOK_MARKS, RANK_LABELS, TABAQA_LABELS

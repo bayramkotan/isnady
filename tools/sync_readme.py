@@ -41,5 +41,5 @@ if __name__ == "__main__":
             sys.exit("js/README.md is not in step with README.md: run  python tools/sync_readme.py")
         print("js/README.md is in step with README.md")
     else:
-        target.write_text(text, encoding="utf-8")
+        target.write_text(text, encoding="utf-8", newline="\n")      # LF everywhere: the same file, the same MD5 (REL3)
         print(f"wrote {target.relative_to(ROOT)} ({len(text):,} characters)")

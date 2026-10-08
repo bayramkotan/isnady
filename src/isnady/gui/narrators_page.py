@@ -459,7 +459,9 @@ class NarratorsPage(QWidget):
             col.setSpacing(2)
             col.addWidget(_label(heading, "FilterLabel"))
             for r in items:
-                short = short_name(r["name"], 5)                    # the ism and the first of the lineage
+                # read in the interface language (L1); the Arabic (ism and the first of the lineage) when unread
+                reading, _unused = core_narrators.reading(conn, r["id"], r["name"])
+                short = reading or short_name(r["name"], 5)
                 link = _link(f"{short}  ({r['count']})", lambda _c=False, pid=r["id"]: self.select(pid),
                              f"{r['name']}\nOpen this narrator")
                 col.addWidget(link)

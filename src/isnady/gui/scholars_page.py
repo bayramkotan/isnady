@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from isnady.core import narrators as core_narrators
 from isnady.core import scholars as core_scholars
 from isnady.core.rijal import short_name
 from isnady.gui import theme
@@ -60,8 +61,9 @@ class Bar(QWidget):
                        Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight, self._label)
             p.setFont(self.font())
         else:
+            shown = p.fontMetrics().elidedText(self._label, Qt.TextElideMode.ElideRight, label_w - 10)
             p.drawText(QRectF(0, 0, label_w - 8, self.height()), Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
-                       self._label)
+                       shown)
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(QColor(t.lapis_soft))
         p.drawRoundedRect(QRectF(label_w, 6, bar_w, self.height() - 12), 4, 4)
@@ -210,9 +212,13 @@ class ScholarsPage(QWidget):
             return
         box.addWidget(_label(heading, "FilterLabel"))
         top = max(r["count"] for r in rows)
+        conn = self.conn
         for r in rows:
-            bar = Bar(short_name(r["name"]), r["count"], top, theme.current().lapis)
-            bar.setToolTip(f"{r['name']}\nClick to open this narrator")
+            # the name read in the interface language (L1); the Arabic where isnady cannot read it yet
+            reading, arabic = core_narrators.reading(conn, r["id"], r["name"])
+            bar = Bar(reading or short_name(r["name"]), r["count"], top, theme.current().lapis)
+            bar.setToolTip(f"{reading}\n{arabic}\n{r['name']}\nClick to open this narrator" if reading
+                           else f"{r['name']}\nClick to open this narrator")
             bar.setCursor(Qt.CursorShape.PointingHandCursor)
             bar.mousePressEvent = lambda _e, pid=r["id"]: self.open_narrator.emit(pid)
             box.addWidget(bar)

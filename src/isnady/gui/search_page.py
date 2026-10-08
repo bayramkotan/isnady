@@ -850,6 +850,15 @@ class SearchPage(QWidget):
     def make_card(self, result: core.SearchResult, score: float | None = None, in_book: bool = False) -> "ResultCard":
         """The card of one hadith — its chain, identified narrators, other narrations — as every page shows it.
         in_book: the card is already in its book (the reader), so it has no "In its book" link."""
+        if not in_book:
+            # the content languages (L1): the texts in the languages chosen, and any text the search matched
+            from dataclasses import replace
+
+            from isnady.core import language
+
+            kept = [t for t in result.texts if language.shows(t.language) or t.spans]
+            if kept and len(kept) != len(result.texts):
+                result = replace(result, texts=kept)
         chains = core_isnad.chain(self._conn, result.hadith_id)
         chain = chains[0] if chains else None
         card = ResultCard(result, chain, self.open_chain.emit, self._people(chain), score, self._related(result.hadith_id),

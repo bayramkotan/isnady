@@ -3,9 +3,20 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.1.6] — 2026-10-08
 
-**Themes change at once, and names are found from close spellings.**
+**Names in your language, the two languages always in sight, close spellings found, and themes that change at once.**
+
+- **Names read in the interface language**: every Arabic name isnady can read is shown in Latin letters where it
+  was shown only in Arabic — the teachers and Companions of a compiler (Hadith Scholars), a narrator's teachers and
+  students (Narrators) — with the Arabic on hover; a name isnady cannot read yet stays in Arabic.
+- **Two languages, always in sight** (sidebar, and View → Interface Language / Content Languages): the
+  **interface** language, English or Türkçe, decides how names are read (Musaddad b. Musarhad / Müsedded b.
+  Müserhed) and the language of the glossary — menus and pages are in English for now; the **content** languages
+  are the languages the hadith texts are shown in (all, or those chosen). A text a search matched is shown whatever
+  its language, and each book in Books can still choose its own. `iy config set view.ui_language tr`,
+  `iy config set view.content_languages "Arabic,Turkish"`.
+- **The npm README is written the same on every system** (LF line endings), so its MD5 is the same on Windows.
 
 - **Close spellings** (Search → Narrators and Scholars, the Narrators page, `iy search --in`): when the letters
   typed find little, isnady looks for names one slip away — a letter typed twice or missing ("zuberyyyr",

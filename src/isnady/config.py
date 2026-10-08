@@ -56,7 +56,9 @@ _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 
 def defaults() -> dict:
-    d = {"view.theme": "system", "view.text_scale": 1.0, "ui.family": "", "ui.size": 0.0}
+    d = {"view.theme": "system", "view.text_scale": 1.0, "ui.family": "", "ui.size": 0.0,
+         "view.ui_language": "en",            # the interface: how names and terms are read (L1)
+         "view.content_languages": ""}        # the hadith texts shown, by language, comma-separated; empty: all
     for script, (_label, _sample, family, size, line) in SCRIPTS.items():
         d[f"text.{script}.family"] = family
         d[f"text.{script}.size"] = size
@@ -119,6 +121,12 @@ def validate(key: str, value):
         if value not in allowed:
             raise ConfigError("view.theme must be one of: " + ", ".join(allowed))
         return value
+    if key == "view.ui_language":
+        if value not in ("en", "tr"):
+            raise ConfigError("view.ui_language must be en or tr")
+        return value
+    if key == "view.content_languages":
+        return ",".join(part.strip() for part in str(value).split(",") if part.strip())
     if key.endswith(".color") or key.startswith("colors."):
         if not _HEX.match(str(value)):
             raise ConfigError(f"{key} must be a colour like #1D4777 (or empty for the default)")
@@ -194,6 +202,24 @@ def state_get(key: str, default=None):
         return json.loads(_state_path().read_text(encoding="utf-8")).get(key, default)
     except (OSError, ValueError):
         return default
+
+
+def state_forget(prefix: str) -> None:
+    """Forget every remembered value whose key begins with prefix (each book's own languages, when the content
+    languages are chosen anew for all)."""
+    path = _state_path()
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return
+    kept = {k: v for k, v in data.items() if not k.startswith(prefix)}
+    if kept != data:
+        try:
+            tmp = path.with_suffix(".tmp")
+            tmp.write_text(json.dumps(kept, ensure_ascii=False, indent=1), encoding="utf-8")
+            tmp.replace(path)
+        except OSError:
+            pass
 
 
 def state_set(key: str, value) -> None:

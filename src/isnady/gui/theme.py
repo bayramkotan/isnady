@@ -370,6 +370,10 @@ def stylesheet(t: Tokens) -> str:
     QPushButton#SidebarNotice {{ background: transparent; color: {t.gold}; border: 1px solid {t.gold};
         border-radius: 8px; padding: 6px 10px; margin: 0 18px 8px 18px; text-align: left; font-weight: 600; }}
     QPushButton#SidebarNotice:hover {{ background: {t.sidebar_selected}; }}
+    QPushButton#SidebarLang {{ background: transparent; color: {t.sidebar_ink}; border: 1px solid {t.sidebar_selected};
+        border-radius: 8px; padding: 5px 10px; text-align: left; font-size: 9pt; }}
+    QPushButton#SidebarLang:hover {{ background: {t.sidebar_selected}; }}
+    QPushButton#SidebarLang::menu-indicator {{ subcontrol-position: right center; right: 8px; }}
     QLabel#ChainChipUnknown {{ background: transparent; color: {t.muted}; border: 1px dashed {t.border};
                                border-radius: 8px; padding: 1px 9px; }}
     QLabel#NodeFacts {{ color: {t.muted}; font-size: 9pt; }}

@@ -42,8 +42,10 @@ _KNOWN_PHRASE = re.compile(r"(?:المعروف|يعرف)\s+(?:ب)?((?:ابن\s+|
 
 def _r(words: list[str]) -> str:
     """The English reading of a part, written as inside a name: "al-Kahili", "b. Mihran", not "Al-…", "B. …"."""
-    text = latin(" ".join(words), "en", max_words=8) or ""
-    if text.startswith(("Al-", "B. ")):
+    from isnady.core.language import ui_language
+
+    text = latin(" ".join(words), ui_language(), max_words=8) or ""     # the interface language (L1)
+    if re.match(r"^(Al|El|Ez|Es|Et|Ed|En|Er|Eş|Ed)-|^B\. ", text):     # Turkish articles too: ez-Zührî
         text = text[0].lower() + text[1:]
     return text
 
