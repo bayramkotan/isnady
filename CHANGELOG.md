@@ -23,6 +23,14 @@ is taken from its section here.
 - **Grades and chains**: does the weakest narrator foretell the grade? Kendall's tau-b and Goodman–Kruskal's gamma
   with bootstrap intervals for every grader of every book, the cross-tables behind them, and chain length against
   grade. Ranks and grades stay ordered categories: counted, cross-tabulated and rank-correlated, never averaged.
+- **The hadith model** (Statistics → The hadith model; `iy stats model`): what each scholar's grade follows, as an
+  ordinal (proportional-odds) regression of the grade on the hadith's best chain — its weakest narrator, further weak
+  narrators, length, names not identified, chains in the book, narrations elsewhere, stopping short of the Prophet, a
+  doubtful link. Odds ratios with 95% intervals, a likelihood-ratio test for every factor (Holm-adjusted), McFadden's
+  R², accuracy against the base rate, Somers' D, a calibration chart; the hadith graded higher than their chain
+  foretells (candidates for strengthening by other routes) and lower (candidates for a hidden defect), and the
+  surprises several scholars share. Fitted in pure Python and checked against statsmodels' OrderedModel (the same
+  estimates; standard errors within 0.005).
 - **Books** side by side, and the narrators each pair of books shares.
 - **Command line**: `iy stats corpus|narrators|chains|grades|books [--book KEY] [--csv DIR]`.
 - Charts follow one design: thin marks, a two-sided blue–grey–red scale for ranks and grades (accepted ↔ rejected),

@@ -432,6 +432,41 @@ def cmd_stats_corpus(args) -> int:
     return 0
 
 
+def cmd_stats_model(args) -> int:
+    """iy stats model — the hadith model (ST7-H): what each scholar's grade follows, the factors that matter, the fit,
+    and the hadith graded higher or lower than their chain foretells."""
+    from isnady.core import stats_models as sm
+
+    conn = _connect()
+    r = sm.cached(conn, args.book, lambda m: print(f"  … {m}", file=sys.stderr), args.recompute)
+    if not r["models"]:
+        print("No model: it needs a graded book whose chains are split into names (at least 100 graded hadith).")
+        return 0
+    for m in r["models"]:
+        if args.grader and args.grader.lower() not in m["grader"].lower():
+            continue
+        print(f"\n{m['grader']} — {m['book_name']}: {m['n']:,} hadith, grades {' < '.join(reversed(m['labels']))}")
+        print(f"  fit: McFadden R² {m['mcfadden']:.3f} · right {100 * m['accuracy']:.1f}% (base {100 * m['base_rate']:.1f}%) "
+              f"· Somers' D {m['somers_d']:.3f} · LR χ² {m['lr_all']['chi2']:.1f} on {m['lr_all']['df']} df")
+        print("  odds ratio of a WEAKER grade (95% interval), p")
+        for c in m["coefficients"]:
+            print(f"    {c['name']:34} {c['or']:7.2f} [{c['or_ci'][0]:.2f}–{c['or_ci'][1]:.2f}]  p {c['p']:.2g}")
+        print("  factors (likelihood-ratio test, Holm-adjusted p)")
+        for t in sorted(m["tests"], key=lambda t: -t["chi2"]):
+            print(f"    {t['label']:34} χ² {t['chi2']:7.1f}  df {t['df']}  p {t['p_holm']:.2g}")
+        for side, word in (("graded_higher", "higher"), ("graded_lower", "lower")):
+            print(f"  graded {word} than the chain foretells: {m[side + '_total']:,}; the least expected:")
+            for d in m[side][:args.limit]:
+                print(f"    hadith {d['number']:>6}  {d['grade']:>24}  model: {d['likely']:<24} p {d['p']:.3f}  "
+                      f"weakest {d['factors']['weakest']}")
+    if r.get("shared"):
+        print(f"\nSurprises two scholars or more share: {len(r['shared'])}")
+        for s in r["shared"][:args.limit]:
+            print(f"  {'▲' if s['side'] == 'graded_higher' else '▼'} {s['book']} {s['number']}: "
+                  + "; ".join(f"{g}: {gr}" for g, gr, _l, _p in s["graders"]))
+    return 0
+
+
 def _write_corpus_csv(r: dict, folder: str) -> None:
     """Every table behind the statistics, one CSV each (UTF-8 with BOM: spreadsheets read the Arabic right)."""
     import csv
@@ -475,6 +510,8 @@ def _write_corpus_csv(r: dict, folder: str) -> None:
 def cmd_stats(args) -> int:
     if getattr(args, "topic", None) == "graders":
         return cmd_stats_graders(args)
+    if getattr(args, "topic", None) == "model":
+        return cmd_stats_model(args)
     if getattr(args, "topic", None) in ("corpus", "narrators", "chains", "grades", "books"):
         if args.topic == "corpus":
             args.topic = None
@@ -1050,10 +1087,12 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("sources", help="list imported sources").set_defaults(func=cmd_sources)
     st = sub.add_parser("stats", help="count what the database holds; corpus, narrators, chains, grades, books, graders "
                                       "for the statistics in depth")
-    st.add_argument("topic", nargs="?", choices=["corpus", "narrators", "chains", "grades", "books", "graders"],
+    st.add_argument("topic", nargs="?", choices=["corpus", "narrators", "chains", "grades", "books", "model", "graders"],
                     help="corpus: everything below; narrators: reliability, concentration, pillars; chains: length, "
                          "weakest link, time gaps; grades: weakest narrator and length against the grade; books: the "
-                         "books compared; graders: agreement, model, strictness, disputed hadith")
+                         "books compared; model: what each scholar's grade follows (ordinal regression) and the hadith "
+                         "graded higher or lower than their chain; graders: agreement, model, strictness, disputed hadith")
+    st.add_argument("--grader", help="with 'model': only the scholars whose name contains this")
     st.add_argument("--csv", metavar="DIR", help="also write every table behind the statistics as CSV files into DIR")
     st.add_argument("--book", help="collection key, e.g. abudawud (default: the book with most graders)")
     st.add_argument("--recompute", action="store_true", help="compute again instead of reading the saved results")

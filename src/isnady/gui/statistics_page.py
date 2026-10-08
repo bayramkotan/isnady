@@ -10,8 +10,10 @@ counted, cross-tabulated and rank-correlated, never averaged (SK).
 
 import csv
 import html
+import math
 
 from PySide6.QtCore import QObject, QSize, Qt, QThread, Signal
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -34,16 +36,32 @@ from PySide6.QtWidgets import (
 from isnady.core import narrators as core_narrators
 from isnady.core import stats_corpus as corpus
 from isnady.core import stats_graders as core
+from isnady.core import stats_models as models
 from isnady.core.rijal import RANK_LABELS, TABAQA_LABELS
 from isnady.core.scholars import SCHOLARS
 from isnady.gui import theme
-from isnady.gui.stats_charts import Columns, HeatMap, IntervalPlot, Lorenz, PeopleBars, StackedBars, StatTiles
+from isnady.gui.stats_charts import (
+    Calibration,
+    Columns,
+    HeatMap,
+    IntervalPlot,
+    Lorenz,
+    PeopleBars,
+    StackedBars,
+    StatTiles,
+)
+
+
+def _corpus_and_models(conn, key, progress, recompute) -> dict:
+    """The two analyses of the corpus sections, in one background run: the descriptive one and the model."""
+    return {"corpus": corpus.cached(conn, key, progress, recompute), "models": models.cached(conn, key, progress, recompute)}
 
 SECTIONS = [
     ("overview", "Overview", "the corpus at a glance"),
     ("narrators", "Narrators", "who carries the hadith"),
     ("chains", "Chains", "length, weakest link, time"),
     ("grades", "Grades and chains", "do the chains explain the grades"),
+    ("model", "The hadith model", "what a scholar's grade follows"),
     ("books", "Books", "the books compared"),
     ("graders", "Graders", "the scholars who graded"),
 ]
@@ -301,7 +319,7 @@ class StatisticsPage(QWidget):
         self.c_status.setText("Computing…" if recompute else "Reading the saved results…")
         self.c_recompute.setEnabled(False)
         self._thread = QThread(self)
-        self._cworker = _Worker(corpus.cached, self.scope.currentData(), recompute)
+        self._cworker = _Worker(_corpus_and_models, self.scope.currentData(), recompute)
         self._cworker.moveToThread(self._thread)
         self._thread.started.connect(self._cworker.run)
         self._cworker.progress.connect(lambda m: self.c_status.setText(m + "…"))
@@ -324,8 +342,9 @@ class StatisticsPage(QWidget):
         self._clear_sections()
 
     # ------------------------------------------------------------------ the corpus sections
-    def _show_corpus(self, r: dict) -> None:
-        self._result = r
+    def _show_corpus(self, both: dict) -> None:
+        self._result = both
+        r, self._models = both["corpus"], both.get("models") or {}
         self._clear_sections()
         if r.get("empty") or not r.get("overview", {}).get("chains"):
             for key in self._boxes:
@@ -342,6 +361,7 @@ class StatisticsPage(QWidget):
         self._narrators(r)
         self._chains(r)
         self._grades(r)
+        self._model_section()
         self._books(r)
         for box in self._boxes.values():
             box.addStretch(1)
@@ -573,6 +593,229 @@ class StatisticsPage(QWidget):
                           (["grader", "book", "tau-b", "low", "high"],
                            [[_short(g["grader"]), g["book"], round(g["length"]["tau"], 4)]
                             + [round(x, 4) for x in (g["length"]["tau_ci"] or [])] for g in lengths]))
+
+    # ------------------------------------------------------------------ the hadith model (ST7-H)
+    def _model_section(self) -> None:
+        box = self._boxes["model"]
+        ms = (self._models or {}).get("models") or []
+        if not ms:
+            box.addWidget(_label("No model yet: it needs a book whose hadith are graded and whose chains are split into "
+                                 "names (at least a hundred graded hadith).", "Lead"))
+            return
+        row = QHBoxLayout()
+        row.addWidget(_label("Model of", "FilterTitle"))
+        pick = QComboBox()
+        pick.setObjectName("FilterCombo")
+        for i, m in enumerate(ms):
+            pick.addItem(f"{_short(m['grader'])} — {m['book_name']}", i)
+        pick.setCurrentIndex(min(getattr(self, "_model_index", 0), len(ms) - 1))
+        row.addWidget(pick)
+        row.addStretch(1)
+        holder = QWidget()
+        holder.setLayout(row)
+        box.addWidget(holder)
+        self._model_box = QVBoxLayout()
+        self._model_box.setSpacing(16)
+        wrap = QWidget()
+        wrap.setLayout(self._model_box)
+        box.addWidget(wrap)
+
+        def show(i: int) -> None:
+            self._model_index = i
+            while self._model_box.count():
+                w = self._model_box.takeAt(0).widget()
+                if w is not None:
+                    w.setParent(None)
+                    w.deleteLater()
+            self._model_findings(ms[i], ms)
+        pick.currentIndexChanged.connect(show)
+        show(pick.currentIndex())
+        self._shared_surprises()
+
+    def _model_finding(self, *args, **kwargs) -> QFrame:
+        """A finding in the model's own box (the box is rebuilt when another scholar's model is chosen)."""
+        card = self._finding("model", *args, **kwargs)
+        self._boxes["model"].removeWidget(card)
+        self._model_box.addWidget(card)
+        return card
+
+    def _model_findings(self, m: dict, all_models: list[dict]) -> None:
+        name = _short(m["grader"])
+        coefs = m["coefficients"]
+        sig = [c for c in coefs if c["p"] < 0.05 and c["beta"] > 0]
+        top = max(sig, key=lambda c: c["beta"]) if sig else None
+        headline = (f"For {name}, {top['name'].replace('Weakest: ', 'a weakest narrator who is ').lower()} multiplies "
+                    f"the odds of a weaker grade by {top['or']:.1f}." if top else
+                    f"For {name}, no factor of the chain moves the grade beyond chance.")
+        plot = [(c["name"], c["beta"], (c["beta"] - 1.96 * c["se"], c["beta"] + 1.96 * c["se"])) for c in coefs]
+        fmt = lambda v, lo, hi: f"OR {math.exp(v):.2f}  [{math.exp(lo):.2f}–{math.exp(hi):.2f}]"  # noqa: E731
+        self._model_finding(
+            "What the grade follows", headline,
+            [IntervalPlot(plot, "a stronger grade", "a weaker grade", fmt=fmt, label_w=250)],
+            "An ordinal (proportional-odds) regression of the scholar's grade on the hadith's best chain. Each row is "
+            "one factor; the dot is its effect on the log-odds of a WEAKER grade, the line its 95% interval, and the "
+            "figure at the right the odds ratio: 2 doubles the odds of a weaker grade, 0.5 halves them, 1 is no effect. "
+            "The weakest narrator is compared with a chain whose weakest is trustworthy (thiqa); the other factors are "
+            "per unit. All are measured together, so each is its effect with the others held equal.",
+            (["factor", "beta", "se", "odds ratio", "low", "high", "p"],
+             [[c["name"], round(c["beta"], 5), round(c["se"], 5), round(c["or"], 4), round(c["or_ci"][0], 4),
+               round(c["or_ci"][1], 4), c["p"]] for c in coefs]))
+        # which factors matter: likelihood-ratio tests
+        tests = sorted(m["tests"], key=lambda t: -t["chi2"])
+        matter = [t for t in tests if t["p_holm"] < 0.05]
+        total = m["lr_all"]["chi2"] or 1
+        table = QTableWidget(len(tests), 5)
+        table.setHorizontalHeaderLabels(["Factor", "χ²", "df", "p (Holm)", "Share of what the chain explains"])
+        table.verticalHeader().hide()
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        for i, t in enumerate(tests):
+            for j, v in enumerate([t["label"], f"{t['chi2']:.1f}", str(t["df"]),
+                                   "< 0.001" if t["p_holm"] < 0.001 else f"{t['p_holm']:.3f}",
+                                   _pct(t["chi2"] / total)]):
+                item = QTableWidgetItem(v)
+                if t["p_holm"] >= 0.05:
+                    item.setForeground(QColor(theme.current().muted))       # no evidence: muted
+                table.setItem(i, j, item)
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        table.setFixedHeight(len(tests) * 30 + 34)
+        lead = tests[0] if tests else None
+        self._model_finding(
+            "Which factors matter",
+            (f"{len(matter)} of {len(tests)} factors matter; {lead['label'].lower()} alone carries "
+             f"{_pct(lead['chi2'] / total)} of what the chain explains." if lead else "No factor to test."),
+            [table],
+            "For each factor the model is fitted again without it; the likelihood-ratio χ² is how much worse it then "
+            "fits, with its degrees of freedom. p is adjusted for testing several factors at once (Holm). The last "
+            "column is the factor's χ² beside the whole chain's (all factors against none) — overlapping factors can "
+            "add up to more than 100%.",
+            (["factor", "chi2", "df", "p", "p holm"], [[t["label"], round(t["chi2"], 3), t["df"], t["p"], t["p_holm"]]
+                                                       for t in tests]))
+        # how much the chain explains
+        tiles = StatTiles([
+            ("Hadith", f"{m['n']:,}", f"graded by {name}, with a chain"),
+            ("Right", _pct(m["accuracy"]), f"against {_pct(m['base_rate'])} by always saying “{m['labels'][0]}”"),
+            ("McFadden R²", f"{m['mcfadden']:.3f}" if m["mcfadden"] is not None else "—", "0.2–0.4 is a very good fit"),
+            ("Somers' D", f"{m['somers_d']:.2f}" if m["somers_d"] is not None else "—", "ordering: 0 none, 1 perfect"),
+        ])
+        self._model_finding(
+            "How much the chain explains",
+            f"The chain explains part of {name}'s grades, not most: the rest is what a scholar weighs beyond one chain.",
+            [tiles, Calibration(m["calibration"], f"Calibration: the model's probability of “{m['labels'][0]}” (across) "
+                                                  "against the share of hadith that got it (up). Points on the diagonal: "
+                                                  "the model's probabilities can be taken at their word.")],
+            "McFadden's R² compares the model's likelihood with a model that knows only how often each grade is given; "
+            "for a model of human judgement values of 0.1–0.2 are usual and 0.2–0.4 very good. 'Right' counts the "
+            "hadith whose most likely grade is the scholar's. Somers' D measures how well the model's expected grade "
+            "orders the hadith. That the chain explains only part of the grade is itself the finding: a scholar grades "
+            "a hadith on all its routes and on its text, not on one chain.",
+            (["predicted (mean)", "observed", "hadith"], m["calibration"]))
+        # the surprises
+        for side, title, sentence, how in (
+            ("graded_higher", "Graded higher than the chain foretells",
+             "hadith {name} grades stronger than their chain alone would — candidates for strengthening by other "
+             "routes (mutaba'at, shawahid).",
+             "Hadith whose grade is STRONGER than the model's most likely grade, the least expected first: the "
+             "probability is the model's for this grade or a stronger one. A weak chain graded sahih or hasan is "
+             "usually a hadith strengthened by its other routes (hasan li-ghayrihi, sahih li-ghayrihi) — or a "
+             "narrator the scholar judges otherwise than Ibn Hajar. Double-click to read it in its book."),
+            ("graded_lower", "Graded lower than the chain foretells",
+             "hadith {name} grades weaker than their chain alone would — candidates for a hidden defect ('illa) or "
+             "an irregular text (shudhudh).",
+             "Hadith whose grade is WEAKER than the model's most likely grade, the least expected first. A chain of "
+             "trustworthy narrators graded weak points to what the chain does not show: a hidden defect ('illa), a "
+             "contradiction of stronger narrators (shudhudh), a break the names do not reveal (irsal khafi, tadlis). "
+             "Double-click to read it in its book.")):
+            items = m[side]
+            if not items:
+                continue
+            total_side = m[f"{side}_total"]
+            self._model_finding(title, f"{total_side:,} " + sentence.format(name=name),
+                                [self._surprise_table(items, m["labels"])], how,
+                                (["hadith", "grade", "model's most likely", "probability", "weakest narrator",
+                                  "chain length", "chains"],
+                                 [[d["number"], d["grade"], d["likely"], round(d["p"], 5), d["factors"]["weakest"],
+                                   d["factors"]["length"], d["factors"]["routes"]] for d in items]))
+        # the scholars compared, on the weakest narrator
+        same_book = [x for x in all_models if x["book"] == m["book"]]
+        if len(same_book) > 1:
+            rows = []
+            for c_name in [c["name"] for c in coefs if c["block"] == "weakest"]:
+                for x in same_book:
+                    c = next((c for c in x["coefficients"] if c["name"] == c_name), None)
+                    if c:
+                        rows.append((f"{c_name.replace('Weakest: ', '')} — {_short(x['grader'])}", c["beta"],
+                                     (c["beta"] - 1.96 * c["se"], c["beta"] + 1.96 * c["se"])))
+            self._model_finding(
+                "The scholars compared", "How strongly each scholar's grade follows the weakest narrator.",
+                [IntervalPlot(rows, "a stronger grade", "a weaker grade", fmt=fmt, label_w=300)],
+                "The same model fitted to each scholar's grades of this book. Where one scholar's odds ratio for a weak "
+                "narrator is larger than another's, he leans more on Ibn Hajar's verdicts on the narrators; a smaller "
+                "one shows a scholar who more often finds the hadith strengthened elsewhere — or who judges the "
+                "narrator otherwise.",
+                (["level", "grader", "beta", "low", "high"],
+                 [[r_[0].split(" — ")[0], r_[0].split(" — ")[1], round(r_[1], 5), round(r_[2][0], 5), round(r_[2][1], 5)]
+                  for r_ in rows]))
+
+    def _surprise_table(self, items: list[dict], labels: list[str]) -> QTableWidget:
+        table = QTableWidget(0, 6)
+        table.setHorizontalHeaderLabels(["Hadith", "Grade", "Model's most likely", "Probability", "Weakest narrator",
+                                         "Names / not identified"])
+        table.verticalHeader().hide()
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        for d in items[:25]:
+            row = table.rowCount()
+            table.insertRow(row)
+            first = QTableWidgetItem(str(d["number"]))
+            first.setData(Qt.ItemDataRole.UserRole, d["hadith_id"])
+            table.setItem(row, 0, first)
+            f = d["factors"]
+            probs = " · ".join(f"{lab} {100 * q:.0f}%" for lab, q in zip(labels, d["probs"]))
+            for j, v in enumerate([d["grade"], d["likely"], f"{100 * d['p']:.1f}%", f["weakest"],
+                                   f"{f['length']} / {f['unidentified']}"], start=1):
+                item = QTableWidgetItem(v)
+                item.setToolTip(f"The model's grades for this hadith: {probs}")
+                table.setItem(row, j, item)
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        table.setFixedHeight(min(25, len(items)) * 30 + 34)
+        table.cellDoubleClicked.connect(lambda rr, _c: self.open_hadith.emit(table.item(rr, 0).data(Qt.ItemDataRole.UserRole)))
+        return table
+
+    def _shared_surprises(self) -> None:
+        shared = (self._models or {}).get("shared") or []
+        if not shared:
+            return
+        table = QTableWidget(0, 4)
+        table.setHorizontalHeaderLabels(["Hadith", "Book", "Scholars and their grades", "Weakest narrator"])
+        table.verticalHeader().hide()
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        for s in shared[:30]:
+            row = table.rowCount()
+            table.insertRow(row)
+            first = QTableWidgetItem(f"{s['number']}  {'▲' if s['side'] == 'graded_higher' else '▼'}")
+            first.setData(Qt.ItemDataRole.UserRole, s["hadith_id"])
+            first.setToolTip("▲ graded higher than the chain foretells · ▼ graded lower")
+            table.setItem(row, 0, first)
+            table.setItem(row, 1, QTableWidgetItem(s["book"]))
+            who = QTableWidgetItem("; ".join(f"{_short(g)}: {grade}" for g, grade, _l, _p in s["graders"]))
+            who.setToolTip("\n".join(f"{_short(g)}: {grade} — the model expected {likely} ({100 * p:.1f}% for this or "
+                                      "further)" for g, grade, likely, p in s["graders"]))
+            table.setItem(row, 2, who)
+            table.setItem(row, 3, QTableWidgetItem(s["factors"]["weakest"]))
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        table.setFixedHeight(min(30, len(shared)) * 30 + 34)
+        table.cellDoubleClicked.connect(lambda rr, _c: self.open_hadith.emit(table.item(rr, 0).data(Qt.ItemDataRole.UserRole)))
+        up = sum(1 for s in shared if s["side"] == "graded_higher")
+        self._finding("model", "Surprises the scholars share",
+                      f"{len(shared)} hadith surprise two scholars or more in the same way — {up} graded higher than "
+                      f"their chain, {len(shared) - up} lower.", [table],
+                      "One scholar's surprise may be his own judgement or a slip; the same surprise in several scholars' "
+                      "grades points to the hadith itself — its other routes, or a defect they all saw. ▲ higher than "
+                      "the chain foretells, ▼ lower. Double-click to read it in its book.",
+                      (["hadith", "side", "book", "graders", "weakest narrator"],
+                       [[s["number"], s["side"], s["book"], "; ".join(f"{g}: {gr}" for g, gr, _l, _p in s["graders"]),
+                         s["factors"]["weakest"]] for s in shared]))
 
     def _books(self, r: dict) -> None:
         b = r["books"]

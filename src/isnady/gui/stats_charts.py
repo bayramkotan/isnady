@@ -89,12 +89,14 @@ class IntervalPlot(QWidget):
     """One row per item: a dot at the value and a line over its 95% interval, around a zero line.
     rows = [(label, value, (low, high))]; left/right = what each side of zero means."""
 
-    def __init__(self, rows: list[tuple[str, float, tuple[float, float]]], left: str, right: str, parent=None) -> None:
+    def __init__(self, rows: list[tuple[str, float, tuple[float, float]]], left: str, right: str, parent=None,
+                 fmt=None, label_w: int = 290) -> None:
         super().__init__(parent)
         self.rows, self.left, self.right = rows, left, right
+        self.fmt = fmt or (lambda v, lo, hi: f"{v:+.3f}")       # the figure at the right of each row
         span = max([abs(v) for _l, v, _c in rows] + [abs(x) for _l, _v, c in rows for x in c] + [0.05])
         self.span = span * 1.15
-        self.label_w, self.row_h, self.top, self.bottom = 290, 40, 8, 40
+        self.label_w, self.row_h, self.top, self.bottom = label_w, 40, 8, 40
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setMinimumHeight(self.top + self.row_h * len(rows) + self.bottom)
 
@@ -105,7 +107,7 @@ class IntervalPlot(QWidget):
         t = theme.current()
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        x0, x1 = self.label_w, self.width() - 70
+        x0, x1 = self.label_w, self.width() - 170
         def X(v):
             return x0 + (v + self.span) / (2 * self.span) * (x1 - x0)
         h = self.top + self.row_h * len(self.rows)
@@ -127,7 +129,8 @@ class IntervalPlot(QWidget):
             p.drawEllipse(QRectF(X(v) - 6, y - 6, 12, 12))
             p.setPen(QColor(t.muted))
             p.setFont(small)
-            p.drawText(QRectF(x1 + 6, y - self.row_h / 2, 70, self.row_h), Qt.AlignmentFlag.AlignVCenter, f"{v:+.3f}")
+            p.drawText(QRectF(x1 + 6, y - self.row_h / 2, 160, self.row_h), Qt.AlignmentFlag.AlignVCenter,
+                       self.fmt(v, lo, hi))
         p.setPen(QColor(t.muted))
         p.setFont(small)
         p.drawText(QRectF(x0, h + 6, X(0) - x0 - 8, 30), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop, "◀ " + self.left)
@@ -439,3 +442,57 @@ class PeopleBars(QWidget):
         i = self._row_at(e.position().y())
         if i >= 0 and self.rows[i].get("id") and e.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.rows[i]["id"])
+
+
+class Calibration(QWidget):
+    """Predicted against observed: each point a tenth of the hadith by the model's probability of the strongest
+    grade, at that probability (across) and the share that really got it (up); its size the number of hadith. On the
+    diagonal the model says what happens."""
+
+    def __init__(self, points: list[list[float]], label: str, parent=None) -> None:
+        super().__init__(parent)
+        self.points, self.label = points, label
+        self.setFixedHeight(260)
+        self.setMouseTracking(True)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+    def _xy(self, x: float, y: float) -> QPointF:
+        side = self.height() - 40
+        return QPointF(52 + x * side, 10 + (1 - y) * side)
+
+    def paintEvent(self, _e) -> None:  # noqa: N802
+        t = theme.current()
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        for k in range(5):
+            p.setPen(QPen(QColor(t.border), 1))
+            p.drawLine(self._xy(0, k / 4), self._xy(1, k / 4))
+            p.drawLine(self._xy(k / 4, 0), self._xy(k / 4, 1))
+            p.setPen(QColor(t.muted))
+            a = self._xy(0, k / 4)
+            p.drawText(QRectF(0, a.y() - 8, 46, 16), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, f"{25 * k}%")
+            b = self._xy(k / 4, 0)
+            p.drawText(QRectF(b.x() - 20, b.y() + 4, 40, 16), Qt.AlignmentFlag.AlignHCenter, f"{25 * k}%")
+        p.setPen(QPen(QColor(t.muted), 1))
+        p.drawLine(self._xy(0, 0), self._xy(1, 1))
+        biggest = max((n for _x, _y, n in self.points), default=1) or 1
+        for x, y, n in self.points:
+            r = 4 + 8 * (n / biggest) ** 0.5
+            c = self._xy(x, y)
+            p.setPen(QPen(QColor(t.surface), 2))                     # the surface ring
+            p.setBrush(QColor(t.lapis))
+            p.drawEllipse(c, r, r)
+        side = self.height() - 40
+        p.setPen(QColor(t.muted))
+        p.drawText(QRectF(52 + side + 24, 10, max(10, self.width() - side - 90), side), Qt.TextFlag.TextWordWrap,
+                   self.label)
+        p.end()
+
+    def mouseMoveEvent(self, e) -> None:  # noqa: N802
+        for x, y, n in self.points:
+            c = self._xy(x, y)
+            if (c - e.position()).manhattanLength() < 14:
+                QToolTip.showText(e.globalPosition().toPoint(),
+                                  f"{n:,} hadith: the model gave {100 * x:.0f}% on average, {100 * y:.0f}% got it", self)
+                return
+        QToolTip.hideText()
