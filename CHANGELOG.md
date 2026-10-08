@@ -3,6 +3,31 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+**Statistics in depth: the narrators, the chains and the grades measured, each finding said in a sentence.**
+
+- **A new Statistics page**: one section at a time — Overview, Narrators, Chains, Grades and chains, Books, Graders —
+  each a few findings: a sentence that says what the numbers show, the chart that shows it, the figures on hover,
+  and, folded until asked for, how to read it and how it was measured. Every finding can be saved as CSV for a
+  thesis or a paper. All books or one, chosen at the top; computed once in the background and kept while the data is
+  unchanged.
+- **Narrators**: Ibn Hajar's ranks of everyone he judged, of the narrators in the chains, and of every name counted
+  as often as it appears (what the hadith actually rest on); how concentrated the transmission is (Lorenz curve,
+  Gini, the busiest 1% and 10%, how few carry half); the pillars, the weak narrators the most hadith pass through,
+  the network (PageRank on who narrates from whom), and reliability generation by generation. Names in the interface
+  language; a click opens the narrator.
+- **Chains**: length (isnad 'ali and nazil); the weakest link of every chain; teacher–student pairs too far apart in
+  time and pairs out of the order of generations — each a sign of a wrongly identified name or a wrong year, listed
+  so it can be checked.
+- **Grades and chains**: does the weakest narrator foretell the grade? Kendall's tau-b and Goodman–Kruskal's gamma
+  with bootstrap intervals for every grader of every book, the cross-tables behind them, and chain length against
+  grade. Ranks and grades stay ordered categories: counted, cross-tabulated and rank-correlated, never averaged.
+- **Books** side by side, and the narrators each pair of books shares.
+- **Command line**: `iy stats corpus|narrators|chains|grades|books [--book KEY] [--csv DIR]`.
+- Charts follow one design: thin marks, a two-sided blue–grey–red scale for ranks and grades (accepted ↔ rejected),
+  solid hairline grids, a legend and the figures on hover so colour never carries meaning alone.
+
 ## [0.1.6] — 2026-10-08
 
 **Names in your language, the two languages always in sight, close spellings found, and themes that change at once.**

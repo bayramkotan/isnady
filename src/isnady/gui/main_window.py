@@ -204,6 +204,7 @@ class MainWindow(QMainWindow):
         self._statistics_row = [k for k, _l, _t in SECTIONS].index("statistics")
         self._statistics_loaded = False
         self.statistics_page.open_hadith.connect(self._open_in_book)
+        self.statistics_page.open_narrator.connect(self._open_narrator)
         self.search_page.data_changed.connect(lambda: setattr(self, "_statistics_loaded", False))
         self.nav.currentRowChanged.connect(self._load_statistics_when_shown)
         self.nav.currentRowChanged.connect(self.pages.setCurrentIndex)

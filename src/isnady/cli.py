@@ -372,9 +372,113 @@ def cmd_stats_graders(args) -> int:
     return 0
 
 
+def cmd_stats_corpus(args) -> int:
+    """iy stats narrators|chains|grades|books — the corpus statistics of the Statistics page (ST7), as text;
+    --csv DIR writes every table behind them."""
+    from isnady.core import stats_corpus as sc
+
+    conn = _connect()
+    r = sc.cached(conn, args.book, lambda m: print(f"  … {m}", file=sys.stderr), args.recompute)
+    if r.get("empty"):
+        print("Nothing to measure: import a hadith collection first.")
+        return 0
+    groups = [g for g, _d in r["groups"]]
+    pct = lambda x, n: f"{100 * x / n:.1f}%" if n else "—"  # noqa: E731
+    o = r["overview"]
+    print(f"{args.book or 'All books'}: {o['hadith']:,} hadith, {o['chains']:,} chains, {o['identified']:,} of "
+          f"{o['links']:,} names identified ({pct(o['identified'], o['links'])}), {o['narrators']:,} narrators"
+          + (f"  (from {r['from_file']})" if r.get("from_file") else "  (computed and saved)"))
+    topic = args.topic
+    if topic in ("narrators", None):
+        n = r["narrators"]
+        print("\nReliability (Ibn Hajar's ranks in six groups)")
+        for label, row in (("all narrators of the Taqrib", n["rank_all"]), ("narrators in these chains", n["rank_people"]),
+                           ("every name in these chains", n["rank_links"])):
+            total = sum(row)
+            print(f"  {label:30} " + " · ".join(f"{g} {pct(v, total)}" for g, v in zip(groups, row)))
+        c = n["concentration"]
+        if c.get("gini") is not None:
+            print(f"\nConcentration: busiest 1% carry {100 * c['top1']:.1f}%, busiest 10% {100 * c['top10']:.1f}%; "
+                  f"{c['half_by']:,} of {c['people']:,} narrators carry half; Gini {c['gini']:.3f}")
+        print("\nThe pillars (times in the chains · hadith · rank)")
+        for p in n["pillars"][:args.limit]:
+            print(f"  {p['links']:6,} {p['hadith']:6,}  rank {p['rank'] or '—':>2}  {p['name']}")
+    if topic in ("chains", None):
+        ch = r["chains"]
+        print("\nChain length (names: chains): " + ", ".join(f"{k}: {v:,}" for k, v in ch["lengths"]))
+        total = sum(ch["weakest"])
+        print("Weakest link: " + " · ".join(f"{g} {pct(v, total)}" for g, v in zip(groups, ch["weakest"])))
+        print(f"Generations in order: {ch['order_ok']:,} pairs right, {ch['order_bad']:,} the student earlier than his teacher")
+        print("Pairs too far apart in time (student's death − teacher's), most frequent:")
+        for s in ch["gap_suspects"][:args.limit]:
+            print(f"  {s['gap']:+5d} years ×{s['times']:<4} {s['student']['name']}  ←  {s['teacher']['name']}")
+    if topic in ("grades", None):
+        print("\nWeakest narrator against the grade (Kendall's tau-b, 95% interval, gamma); then chain length")
+        for g in r["grades"]:
+            w, ln = g.get("weakest"), g.get("length")
+            if not w or w["tau"] is None:
+                continue
+            ci = f"[{w['tau_ci'][0]:.3f}, {w['tau_ci'][1]:.3f}]" if w["tau_ci"] else ""
+            lt = f"{ln['tau']:.3f}" if ln and ln["tau"] is not None else "—"
+            print(f"  {g['grader'][:34]:34} {g['book'][:22]:22} n {w['n']:5,}  tau-b {w['tau']:.3f} {ci}  "
+                  f"gamma {w['gamma']:.3f}  · length tau-b {lt}")
+    if topic in ("books", None):
+        print("\nBooks: chains · median length · identified · reach the Prophet · narrators")
+        for b in r["books"]["rows"]:
+            print(f"  {b['name'][:32]:32} {b['chains']:7,}  {b['median_length'] or '—':>3}  {100 * b['identified']:5.1f}%  "
+                  f"{100 * b['reaching']:5.1f}%  {b['narrators']:6,}")
+    if args.csv:
+        _write_corpus_csv(r, args.csv)
+    return 0
+
+
+def _write_corpus_csv(r: dict, folder: str) -> None:
+    """Every table behind the statistics, one CSV each (UTF-8 with BOM: spreadsheets read the Arabic right)."""
+    import csv
+    from pathlib import Path
+
+    out = Path(folder)
+    out.mkdir(parents=True, exist_ok=True)
+    groups = [g for g, _d in r["groups"]]
+
+    def write(name: str, header: list, rows: list) -> None:
+        with open(out / f"{name}.csv", "w", newline="", encoding="utf-8-sig") as f:
+            w = csv.writer(f)
+            w.writerow(header)
+            w.writerows(rows)
+
+    n, ch = r["narrators"], r["chains"]
+    write("reliability", ["series"] + groups, [["taqrib"] + n["rank_all"], ["narrators in chains"] + n["rank_people"],
+                                               ["names in chains"] + n["rank_links"]])
+    write("pillars", ["id", "name", "rank", "tabaqa", "death", "times", "hadith"],
+          [[p["id"], p["name"], p["rank"], p["tabaqa"], p["death"], p["links"], p["hadith"]] for p in n["pillars"]])
+    write("lorenz", ["share of narrators", "share of names"], n["concentration"].get("curve", []))
+    write("tabaqa", ["tabaqa"] + groups, [[i + 1] + row for i, row in enumerate(n["tabaqa_groups"])])
+    write("chain_length", ["names", "chains"], ch["lengths"])
+    write("weakest_link", ["series"] + groups, [["chains"] + ch["weakest"], ["fully identified"] + ch["weakest_full"]])
+    write("time_gaps", ["years (bin)", "pairs"], ch["gaps"])
+    write("time_suspects", ["student", "teacher", "years", "times"],
+          [[s["student"]["name"], s["teacher"]["name"], s["gap"], s["times"]] for s in ch["gap_suspects"]])
+    rows = []
+    for g in r["grades"]:
+        for kind in ("weakest", "length"):
+            a = g.get(kind)
+            if a and a["tau"] is not None:
+                rows.append([g["grader"], g["book"], kind, a["n"], a["tau"], *(a["tau_ci"] or ["", ""]), a["gamma"]])
+    write("grades_association", ["grader", "book", "against", "n", "tau_b", "low", "high", "gamma"], rows)
+    write("books", ["book", "chains", "median length", "identified", "reach the Prophet", "narrators"] + groups,
+          [[b["name"], b["chains"], b["median_length"], b["identified"], b["reaching"], b["narrators"]] + b["groups"]
+           for b in r["books"]["rows"]])
+    print(f"\nCSV tables written to {out}")
+
+
 def cmd_stats(args) -> int:
     if getattr(args, "topic", None) == "graders":
         return cmd_stats_graders(args)
+    if getattr(args, "topic", None) in ("corpus", "narrators", "chains", "grades", "books"):
+        if args.topic == "corpus":
+            args.topic = None
+        return cmd_stats_corpus(args)
     conn = _connect()
     books = conn.execute(
         """SELECT c.id, c.name,
@@ -944,8 +1048,13 @@ def build_parser() -> argparse.ArgumentParser:
     ch.set_defaults(func=cmd_chain)
 
     sub.add_parser("sources", help="list imported sources").set_defaults(func=cmd_sources)
-    st = sub.add_parser("stats", help="count what the database holds; 'graders' for the graders of a book in depth")
-    st.add_argument("topic", nargs="?", choices=["graders"], help="graders: agreement, model, strictness, disputed hadith")
+    st = sub.add_parser("stats", help="count what the database holds; corpus, narrators, chains, grades, books, graders "
+                                      "for the statistics in depth")
+    st.add_argument("topic", nargs="?", choices=["corpus", "narrators", "chains", "grades", "books", "graders"],
+                    help="corpus: everything below; narrators: reliability, concentration, pillars; chains: length, "
+                         "weakest link, time gaps; grades: weakest narrator and length against the grade; books: the "
+                         "books compared; graders: agreement, model, strictness, disputed hadith")
+    st.add_argument("--csv", metavar="DIR", help="also write every table behind the statistics as CSV files into DIR")
     st.add_argument("--book", help="collection key, e.g. abudawud (default: the book with most graders)")
     st.add_argument("--recompute", action="store_true", help="compute again instead of reading the saved results")
     st.add_argument("--limit", type=int, default=10, help="disputed hadith to list")

@@ -373,6 +373,12 @@ def stylesheet(t: Tokens) -> str:
     QPushButton#SidebarLang {{ background: transparent; color: {t.sidebar_ink}; border: 1px solid {t.sidebar_selected};
         border-radius: 8px; padding: 5px 10px; text-align: left; font-size: 9pt; }}
     QPushButton#SidebarLang:hover {{ background: {t.sidebar_selected}; }}
+    QFrame#Tile {{ background: {t.window}; border: none; border-radius: 10px; }}
+    QListWidget#StatsRail {{ background: transparent; border: none; outline: none; }}
+    QListWidget#StatsRail::item {{ color: {t.muted}; padding: 6px 12px; margin: 1px 0; border-radius: 9px;
+                                   border-left: 3px solid transparent; }}
+    QListWidget#StatsRail::item:hover {{ background: {t.lapis_soft}; color: {t.ink}; }}
+    QListWidget#StatsRail::item:selected {{ background: {t.surface}; color: {t.ink}; border-left: 3px solid {t.gold}; }}
     QPushButton#SidebarLang::menu-indicator {{ subcontrol-position: right center; right: 8px; }}
     QLabel#ChainChipUnknown {{ background: transparent; color: {t.muted}; border: 1px dashed {t.border};
                                border-radius: 8px; padding: 1px 9px; }}
