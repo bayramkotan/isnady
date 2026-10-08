@@ -197,7 +197,7 @@ class SearchPage(QWidget):
         self._notice = ""
         self._page: core.SearchPage | None = None
         self._results: list[core.SearchResult] = []
-        self._people: list[dict] | None = None      # narrators or scholars found (S3); None: a hadith search
+        self._found: list[dict] | None = None      # narrators or scholars found (S3); None: a hadith search
         self._people_total = 0
         self._people_shown = 0
 
@@ -508,7 +508,7 @@ class SearchPage(QWidget):
             self.run_search()
 
     def _rerun_if_searched(self, *_args) -> None:
-        if (self._page is not None or self._people is not None) and self.query_edit.text().strip():
+        if (self._page is not None or self._found is not None) and self.query_edit.text().strip():
             self.run_search()
 
     def kind(self) -> str:
@@ -524,7 +524,7 @@ class SearchPage(QWidget):
         if self.query_edit.text().strip():
             self.run_search()
         else:
-            self._page, self._people = None, None
+            self._page, self._found = None, None
             self._show_start()
         self.query_edit.setFocus()
 
@@ -537,13 +537,13 @@ class SearchPage(QWidget):
             return
         self._sync_with_database()
         if not self.query_edit.text().strip():
-            self._page, self._people = None, None
+            self._page, self._found = None, None
             self._show_start()
             return
         if self.kind() != "hadith":
             self._search_people()
             return
-        self._people = None
+        self._found = None
         QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             self._scores = {}
@@ -557,7 +557,7 @@ class SearchPage(QWidget):
             QGuiApplication.restoreOverrideCursor()
 
     def load_more(self) -> None:
-        if self._people is not None:
+        if self._found is not None:
             self._show_people(more=True)
             return
         if not self._page:
@@ -721,11 +721,11 @@ class SearchPage(QWidget):
 
             start = time.perf_counter()
             if self.kind() == "narrators":
-                self._people, self._people_total = core_narrators.find(
+                self._found, self._people_total = core_narrators.find(
                     self._conn, text, self.tradition_combo.currentData() or None)
             else:
-                self._people = core_scholars.search(self._conn, text)
-                self._people_total = len(self._people)
+                self._found = core_scholars.search(self._conn, text)
+                self._people_total = len(self._found)
             self._people_ms = int((time.perf_counter() - start) * 1000)
         finally:
             QGuiApplication.restoreOverrideCursor()
@@ -739,7 +739,7 @@ class SearchPage(QWidget):
             self._people_shown = 0
             self.scroll.verticalScrollBar().setValue(0)
         kind = self.kind()
-        if not self._people:
+        if not self._found:
             empty = QWidget()
             box = QVBoxLayout(empty)
             box.setContentsMargins(8, 40, 8, 8)
@@ -755,7 +755,7 @@ class SearchPage(QWidget):
         last = self.body_layout.count() - 1
         if last >= 0 and self.body_layout.itemAt(last).spacerItem() is not None:
             self.body_layout.takeAt(last)
-        batch = self._people[self._people_shown:self._people_shown + PAGE_SIZE]
+        batch = self._found[self._people_shown:self._people_shown + PAGE_SIZE]
         for row in batch:
             if kind == "narrators":
                 card = people_results.person_card(row, self.open_person.emit)
@@ -763,12 +763,12 @@ class SearchPage(QWidget):
                 card = people_results.scholar_card(row, self.open_scholar.emit)
             self.body_layout.addWidget(card)
         self._people_shown += len(batch)
-        remaining = len(self._people) - self._people_shown
+        remaining = len(self._found) - self._people_shown
         if remaining > 0:
             self.more_button.setText(f"Show {min(PAGE_SIZE, remaining)} more ({remaining:,} left)")
             self.body_layout.addWidget(self.more_button, 0, Qt.AlignmentFlag.AlignHCenter)
-        elif self._people_total > len(self._people):
-            note = _label(f"The {len(self._people):,} closest of {self._people_total:,} are shown: "
+        elif self._people_total > len(self._found):
+            note = _label(f"The {len(self._found):,} closest of {self._people_total:,} are shown: "
                           "add a word to find the others.", "Caption")
             note.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             self.body_layout.addWidget(note)
@@ -779,7 +779,7 @@ class SearchPage(QWidget):
 
     def retheme(self) -> None:
         """Redraw the results with the current theme and text size."""
-        if self._people is not None:
+        if self._found is not None:
             scroll = self.scroll.verticalScrollBar().value()
             shown = self._people_shown
             self._show_people()
