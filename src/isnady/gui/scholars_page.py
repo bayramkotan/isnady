@@ -319,3 +319,7 @@ class ScholarsPage(QWidget):
 
     def retheme(self) -> None:
         self.refresh()
+
+    def release(self) -> None:
+        """Let go of what is shown before a new theme; retheme() builds it again (UI5-P)."""
+        self._clear()

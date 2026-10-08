@@ -233,8 +233,14 @@ def known_aliases(conn: sqlite3.Connection, person_id: int) -> list[str]:
     """The aliases that may name this person by themselves. An alias of one narrator is his; an alias shared by
     several (التيمي: 7, بن عمر: 7) only for the one the chains cite most, at least twice as often as the next —
     "Ibn 'Umar" is the Companion, as the classical usage has it; the others are shown by their own names."""
+    # nothing written since the last call, by this connection (total_changes) or another (data_version): the
+    # answer stands, without counting the chains again — 200 rows of the Narrators list asked it 200 times (UI5-P)
+    quick = (id(conn), conn.total_changes, conn.execute("PRAGMA data_version").fetchone()[0])
+    if _alias_cache.get("quick") == quick and "allowed" in _alias_cache:
+        return _alias_cache["allowed"].get(person_id, [])
     stamp = tuple(conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM person_names").fetchone()) + \
         tuple(conn.execute("SELECT COUNT(*), SUM(person_id IS NOT NULL) FROM isnad_links").fetchone())
+    _alias_cache["quick"] = quick
     if _alias_cache.get("stamp") != stamp:
         uses = dict(conn.execute("SELECT person_id, COUNT(*) FROM isnad_links WHERE person_id IS NOT NULL "
                                  "GROUP BY person_id").fetchall())

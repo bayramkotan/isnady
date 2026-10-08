@@ -79,10 +79,23 @@ def settings_path() -> Path:
     return data_dir() / SETTINGS_FILE
 
 
+_read_cache: dict = {}
+
+
 def _read() -> dict:
+    """The settings file, read again only when it changed (its size, time or file): drawing a page asks for
+    a setting over a thousand times (UI5-P). A copy is returned, so a caller may change it."""
+    path = settings_path()
     try:
-        data = json.loads(settings_path().read_text(encoding="utf-8"))
-        return data if isinstance(data, dict) else {}
+        st = path.stat()
+        stamp = (st.st_mtime_ns, st.st_size, st.st_ino)
+        hit = _read_cache.get(path)
+        if hit is not None and hit[0] == stamp:
+            return dict(hit[1])
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data = data if isinstance(data, dict) else {}
+        _read_cache[path] = (stamp, data)
+        return dict(data)
     except (OSError, ValueError):
         return {}
 

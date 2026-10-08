@@ -407,8 +407,8 @@ def apply(app: QApplication, mode: str | None = None) -> Tokens:
     global _current, _SYSTEM_UI_FONT
     if _SYSTEM_UI_FONT is None:
         _SYSTEM_UI_FONT = QFont(app.font())
-    if "Fusion" in QStyleFactory.keys():
-        app.setStyle("Fusion")
+    if "Fusion" in QStyleFactory.keys() and app.style().name().lower() != "fusion":
+        app.setStyle("Fusion")          # once: setting a style again restyles every widget (UI5-P)
     mode = mode or theme_mode()
     if mode in THEMES:
         base = THEMES[mode][2]
@@ -424,7 +424,8 @@ def apply(app: QApplication, mode: str | None = None) -> Tokens:
     ui_font = QFont(family) if family else QFont(_SYSTEM_UI_FONT or app.font())
     if size:
         ui_font.setPointSizeF(size)
-    app.setFont(ui_font)
+    if app.font() != ui_font:
+        app.setFont(ui_font)
     app.setPalette(_palette(_current))
     app.setStyleSheet(stylesheet(_current))
     return _current

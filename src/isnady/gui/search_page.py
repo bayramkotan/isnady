@@ -777,6 +777,12 @@ class SearchPage(QWidget):
         total = self._people_total
         self.summary.setText(f"{total:,} {noun[total != 1]}, {self._people_ms} ms")
 
+    def release(self) -> None:
+        """Let go of the cards before a new theme; retheme() draws them again (UI5-P). The start page and the
+        "nothing found" notice are small and stay."""
+        if self._found or (self._page is not None and self._page.total):
+            self._clear_body()
+
     def retheme(self) -> None:
         """Redraw the results with the current theme and text size."""
         if self._found is not None:

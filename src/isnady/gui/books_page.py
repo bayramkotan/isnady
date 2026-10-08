@@ -448,6 +448,11 @@ class BooksPage(QWidget):
                 self.select_work(work["key"])
             self.open_chapter(chapter, focus_hadith=hadith_id)
 
+    def release(self) -> None:
+        """Let go of the open chapter before a new theme; retheme() opens it again (UI5-P)."""
+        if self._work:
+            self._clear()
+
     def retheme(self) -> None:
         if self._work:
             self.open_work(self._work["key"], self._chapter)

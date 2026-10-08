@@ -4,7 +4,7 @@ Sections without their own page yet show a short description.
 """
 
 from PySide6.QtCore import QSize, Qt, QUrl
-from PySide6.QtGui import QAction, QActionGroup, QDesktopServices, QKeySequence
+from PySide6.QtGui import QAction, QActionGroup, QDesktopServices, QGuiApplication, QKeySequence
 from PySide6.QtWidgets import (
     QPushButton,
     QApplication,
@@ -188,6 +188,7 @@ class MainWindow(QMainWindow):
         self.search_page.data_changed.connect(lambda: setattr(self, "_statistics_loaded", False))
         self.nav.currentRowChanged.connect(self._load_statistics_when_shown)
         self.nav.currentRowChanged.connect(self.pages.setCurrentIndex)
+        self.nav.currentRowChanged.connect(self._retheme_when_shown)
         self.nav.setCurrentRow(0)
 
         central = QWidget()
@@ -416,15 +417,32 @@ class MainWindow(QMainWindow):
         self.scholars_page.refresh()
 
     def _apply_settings(self) -> None:
-        theme.apply(QApplication.instance())
+        self._restyle(lambda: theme.apply(QApplication.instance()))
         for mode, action in getattr(self, "_theme_actions", {}).items():
             action.setChecked(theme.theme_mode() == mode)
-        self.retheme()
 
     def _set_theme(self, mode: str) -> None:
         theme.set_theme_mode(mode)
-        theme.apply(QApplication.instance(), mode)
-        self.retheme()
+        self._restyle(lambda: theme.apply(QApplication.instance(), mode))
+
+    def _restyle(self, apply) -> None:
+        """A new theme, fast (UI5-P). Qt styles EVERY widget of the application again, hidden pages too, and was
+        then asked to redraw every page: 5–7 seconds with the narrator lists and a book open. Now every page lets go
+        of what it shows first (release) — the page in view too, since it is drawn again anyway — so the new style
+        meets only the frame of the window; the page in view is then drawn at once, the others when next opened."""
+        from PySide6.QtCore import QCoreApplication, QEvent
+
+        QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            for i in range(self.pages.count()):
+                page = self.pages.widget(i)
+                if hasattr(page, "release"):
+                    page.release()
+            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)   # gone before the new style
+            apply()
+            self.retheme()
+        finally:
+            QGuiApplication.restoreOverrideCursor()
 
     def _change_text_scale(self, direction: int) -> None:
         if direction == 0:
@@ -440,8 +458,16 @@ class MainWindow(QMainWindow):
         self.footer.setText(f"{message}\nversion {__version__}")
 
     def retheme(self) -> None:
-        """Called when the theme, the text size or any appearance setting changes."""
-        for i in range(self.pages.count()):
-            page = self.pages.widget(i)
-            if hasattr(page, "retheme"):
-                page.retheme()
+        """Called when the theme, the text size or any appearance setting changes: the page in view is redrawn
+        now, every other page when it is next opened (_retheme_when_shown)."""
+        current = self.pages.currentWidget()
+        self._stale = {self.pages.widget(i) for i in range(self.pages.count())
+                       if hasattr(self.pages.widget(i), "retheme")} - {current}
+        if hasattr(current, "retheme"):
+            current.retheme()
+
+    def _retheme_when_shown(self, row: int) -> None:
+        page = self.pages.widget(row)
+        if page in getattr(self, "_stale", set()):
+            self._stale.discard(page)
+            page.retheme()

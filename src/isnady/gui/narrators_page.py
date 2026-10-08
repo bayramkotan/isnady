@@ -501,3 +501,8 @@ class NarratorsPage(QWidget):
 
     def retheme(self) -> None:
         self.refresh()
+
+    def release(self) -> None:
+        """Let go of the list and the detail before a new theme; retheme() builds them again (UI5-P)."""
+        self.list.clear()
+        self._clear()

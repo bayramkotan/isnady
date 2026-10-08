@@ -3,6 +3,19 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+**Themes change at once.**
+
+- **A new theme in under a second or so, instead of five to seven**: Qt styles every widget of the window again,
+  the hidden pages too, and every page was then drawn again — the two narrator lists alone are two thousand
+  widgets. Now the pages let go of what they show before the new style is applied, the page in view is drawn at
+  once, and every other page is drawn when it is next opened. The style engine is no longer set up again on every
+  change. Measured with Sunan Abi Dawud, the Taqrib and al-Najashi imported: 5.5–7.6 s before, 0.7–1.3 s now.
+- **Pages draw faster**: the settings file is read again only when it changes (drawing the Narrators list asked
+  for it over a thousand times), and the names a narrator is known by are not worked out again while nothing
+  in the database has changed. The Narrators and Shia Rijal pages open in about half the time.
+
 ## [0.1.5] — 2026-10-08
 
 **Search finds people: the narrators of both traditions and the scholars of hadith.**
