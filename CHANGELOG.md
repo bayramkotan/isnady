@@ -12,6 +12,11 @@ is taken from its section here.
   "Buhaari", "Müslümm"), two letters swapped, one wrong, or written as Turkish and English differ (h and kh,
   "Buhari" = al-Bukhari; z and dh, "Muaz bin Cebel" = Mu'adh b. Jabal; a final h, "Abu Hurayrah"). They come after
   every exact match, each card marked "≈ close spelling", and the page says when nothing was written exactly so.
+- **Weaker matches apart**: Arabic is written without its short vowels, so names are matched by their consonants
+  first — and "Bayram" (b-r-m) has the consonants of al-Barmaki. A Latin query is now compared with the READINGS of
+  the parts of the name it matched; where the vowels differ the match is weaker, shown after the others under
+  "Weaker matches" with the reason, and each such card names the word it matched (البرمكي). A name isnady cannot
+  read yet is marked "same consonants" rather than judged.
 - **Turkish and one-word names**: "İbni Abbas", "İbni Ömer", "binti" are read as ibn and bint; "Abdullah",
   "Abdurrahman", "Abdülaziz", عبدالله typed as one word are found as the books write them (عبد الله, عبد الرحمن);
   an Arabic name typed without the article finds it with it (زبير finds الزبير).

@@ -349,7 +349,7 @@ def latin_skeleton(word: str) -> str:
     w = word.replace("I", "ı").replace("İ", "i").lower()
     w = w.replace("ş", "sh").replace("ı", "i").replace("c", "j").replace("ç", "ch").replace("v", "w")
     w = "".join(c for c in unicodedata.normalize("NFKD", w) if not unicodedata.combining(c))
-    w = re.sub(r"^(al|el|ad|an|ar|as|at|az|ash|adh)-", "", w)
+    w = re.sub(r"^(al|el|ad|an|ar|as|at|az|ash|adh|es|et|ez|ed|en|er|eş|ed|ad|ul|ül)-", "", w)
     w = re.sub(r"[^a-z]", "", w)
     w = re.sub(r"(.)\1+", r"\1", w)                          # the shadda, written twice in Latin
     if not w:
@@ -446,18 +446,21 @@ def split_abd(text: str) -> str:
 
 
 FUZZY_BELOW = 10        # fewer exact matches than this: look for close spellings too
-_LOOSE_DIGRAPHS = (("kh", "h"), ("sh", "s"), ("th", "t"), ("dh", "z"), ("gh", "g"))
+_LOOSE_DIGRAPHS = (("kh", "h"), ("sh", "s"), ("th", "s"), ("dh", "z"), ("gh", "g"))
 
 
 def loose(word: str) -> str:
     """A skeleton (or an Arabic word) with the distinctions a hurried or Turkish spelling loses: kh/h, sh/s, th/t,
-    gh/g (Buhari = Bukhari), dh/z (Muaz = Mu'adh), a final h (Hurayrah = Hurayra), and a letter typed twice once
+    gh/g (Buhari = Bukhari), dh/z (Muaz = Mu'adh), th/s (Sevri = Thawri), a final h (Hurayrah = Hurayra) and a final
+    -i (Nafi = نافع), and a letter typed twice once
     (zuberyyyr → zbr). An Arabic word loses its article (زبيير → زبير finds الزبير)."""
     if word and not _ARABIC_LETTER.search(word):
         for digraph, single in _LOOSE_DIGRAPHS:
             word = word.replace(digraph, single)
         if len(word) > 2 and word.endswith("h"):
             word = word[:-1]
+        if len(word) > 2 and word.endswith("y"):
+            word = word[:-1]            # a final -i: the nisba, or a vowel before ʿayn (Nafi = نافع)
     elif word.startswith("ال") and len(word) > 3:
         word = word[2:]
     return re.sub(r"(.)\1+", r"\1", word)
@@ -674,6 +677,55 @@ def _closeness(query: str, reading: str) -> float:
     return difflib.SequenceMatcher(None, q, r).ratio() if q and r else 0.0
 
 
+def _part_closeness(query: str, view: dict) -> float | None:
+    """How alike a Latin query is to the READINGS of the parts of the name whose consonants it matched (the name he
+    is known by, ism, lineage, kunya, by-names, nisbas), over as many words as the query has.
+    None when a matched part has no reading — the Latin readings stop at a word they do not know (عكرمة): nothing
+    to compare, nothing concluded. 0 when no part of the name matched: the words are only in the entry's text."""
+    import difflib
+
+    q = fold_latin(query)
+    n = max(1, len(q.split()))
+    wanted = [loose(w) for w in _whole_query(query, True) if w not in ("bn", "bnt")]
+    parts = [(view.get("arabic") or "", view.get("reading") or "")]
+    parts += [(ar, latin) for _key, values, _star in view.get("rows", []) for ar, latin in values]
+    best, unread = 0.0, False
+    for arabic, reading in parts:
+        words = [loose(w) for w in _name_words(arabic, True)]
+        if not words or not any(_same_loose(q_w, w) or _one_off(q_w, w) for q_w in wanted for w in words):
+            continue
+        if not reading:
+            # no reading to compare the vowels with: a whole word with the same consonants (برمة for "Bayram") cannot
+            # be judged; the query only BEGINNING a longer word (البرمكي al-Barmaki) is a weak match
+            if any(q_w == w for q_w in wanted for w in words):
+                unread = True
+            continue
+        folded = fold_latin(reading.split(" (")[0]).split()
+        for i in range(max(1, len(folded) - n + 1)):
+            stretch = " ".join(folded[i:i + n])
+            if stretch:
+                best = max(best, difflib.SequenceMatcher(None, q, stretch).ratio())
+    if best < WEAK_BELOW and unread:
+        return None
+    return best
+
+
+def _matched_words(query: str, entry: str, latin_query: bool) -> list[str]:
+    """The words of an entry the query matched, as written there (البرمكي for "Bayram"): shown on a weak or a
+    close-spelling card, so the reader sees why it was found."""
+    wanted = [loose(w) for w in (_whole_query(query, latin_query)) if w not in ("bn", "bnt", "بن")]
+    out = []
+    for q in wanted:
+        for word in entry.split():
+            w = arabic_skeleton(word) if latin_query else normalize(word)
+            if _same_loose(q, w) or _one_off(q, w):
+                if word not in out:
+                    out.append(word)
+                break
+    return out
+
+
+WEAK_BELOW = 0.7        # a Latin query whose best reading is less alike than this has only the consonants in common
 SEARCH_RERANK = 400     # the best matches whose names are read (name_parts) to put the closest first
 
 
@@ -702,7 +754,8 @@ def find(conn: sqlite3.Connection, text: str, tradition: str | None = None) -> t
         first = w_whole[0] if w_whole else ""
         begins = bool(known) and match(first, known[0])
         if begins and _ordered_score(w_whole, known, w_whole, known, match=match) is not None and (
-                close_spelling or not latin_query or _closeness(text, row["view"]["reading"] or "") >= 0.8):
+                close_spelling or not latin_query or not row["view"]["reading"]
+                or _closeness(text, row["view"]["reading"]) >= 0.8):
             return 0          # consonants alone confuse Umar and Amir, Aisha and Ayyash: a Latin query needs its vowels too
         # the name itself — ism, lineage, kunya, by-names, nisbas as name_parts reads them — not the words
         # about him that follow it in the entry ("… narrates from Abu Hurayra")
@@ -715,6 +768,13 @@ def find(conn: sqlite3.Connection, text: str, tradition: str | None = None) -> t
     for row in rows:
         row["close"] = row["id"] in close        # found by a close spelling, not the one typed (S4)
         row["tier"] = tier(row, row["close"]) + (10 if row["close"] else 0)    # close spellings after every exact match
+        # consonants alone: "Bayram" (b-r-m) is the consonants of al-Barmaki too. When the readings say the vowels
+        # differ, the match is weak (S4): shown after the others, under its own heading
+        part = _part_closeness(text, row["view"]) if latin_query else None
+        row["weak"] = part is not None and part < WEAK_BELOW
+        row["unread"] = latin_query and part is None     # same consonants, a name isnady cannot read: undecided
+        if row["weak"] or row["close"] or row["unread"]:
+            row["matched"] = _matched_words(text, row["name"], latin_query)
         # a Latin query is matched on consonants only, so al-A'sha (الأعشى) fits "Aisha" as well as A'isha does;
         # the vowels of the readings put A'isha first
         row["closeness"] = (max(_closeness(text, row["view"]["reading"] or ""),
@@ -732,8 +792,10 @@ def find(conn: sqlite3.Connection, text: str, tradition: str | None = None) -> t
         more, _n = browse(conn, limit=len(missing), tradition=tradition, only=sorted(missing))
         rows.extend({**row, "tier": -1, "closeness": 1.0, "close": False} for row in more)
         total += len(more)
+    for r in rows:
+        r.setdefault("weak", False)
     order = {id(r): i for i, r in enumerate(rows)}
-    rows.sort(key=lambda r: (r["tier"], -round(r["closeness"], 1), order[id(r)]))
+    rows.sort(key=lambda r: (r["weak"], r["tier"], -round(r["closeness"], 1), order[id(r)]))
     return rows, total
 
 

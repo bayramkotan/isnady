@@ -755,13 +755,28 @@ class SearchPage(QWidget):
         last = self.body_layout.count() - 1
         if last >= 0 and self.body_layout.itemAt(last).spacerItem() is not None:
             self.body_layout.takeAt(last)
-        if not more and all(r.get("close") for r in self._found):
-            hint = _label(f"Nothing is written exactly “{self.query_edit.text().strip()}”. These are the closest "
-                          "spellings: a letter typed twice or missing, or written as Turkish and English differ "
-                          "(h and kh, z and dh).", "Lead", wrap=True)
-            self.body_layout.addWidget(hint)
+        typed = self.query_edit.text().strip()
+        if not more and all(r.get("weak") for r in self._found):
+            self.body_layout.addWidget(_label(
+                f"No name reads “{typed}”. Arabic is written without its short vowels, so isnady first matches the "
+                "consonants — these names have the consonants typed, but their readings sound different.",
+                "Lead", wrap=True))
+        elif not more and all(r.get("close") for r in self._found):
+            self.body_layout.addWidget(_label(
+                f"Nothing is written exactly “{typed}”. These are the closest spellings: a letter typed twice or "
+                "missing, or written as Turkish and English differ (h and kh, z and dh).", "Lead", wrap=True))
         batch = self._found[self._people_shown:self._people_shown + PAGE_SIZE]
-        for row in batch:
+        for index, row in enumerate(batch, start=self._people_shown):
+            if row.get("weak") and index > 0 and not self._found[index - 1].get("weak"):
+                # the weaker matches, after the others, under their own heading (S4)
+                head = _label("Weaker matches", "CardTitle")
+                head.setFont(theme.reading_font(15, bold=True))
+                why = _label(f"The same consonants as “{typed}”, but the names read differently — Arabic is "
+                             "written without its short vowels, so the consonants are matched first.", "Caption",
+                             wrap=True)
+                self.body_layout.addSpacing(10)
+                self.body_layout.addWidget(head)
+                self.body_layout.addWidget(why)
             if kind == "narrators":
                 card = people_results.person_card(row, self.open_person.emit)
             else:
@@ -781,8 +796,11 @@ class SearchPage(QWidget):
         noun = {"narrators": ("narrator", "narrators"), "scholars": ("scholar", "scholars")}[kind]
         total = self._people_total
         close = sum(1 for r in self._found if r.get("close"))
+        weak = sum(1 for r in self._found if r.get("weak"))
         note = "" if not close else (" — by close spelling" if close == len(self._found)
-                                     else f", the last {close:,} by close spelling")
+                                     else f", {close:,} by close spelling")
+        if weak:
+            note += " — all weaker matches" if weak == len(self._found) else f", {weak:,} weaker"
         self.summary.setText(f"{total:,} {noun[total != 1]}{note}, {self._people_ms} ms")
 
     def release(self) -> None:

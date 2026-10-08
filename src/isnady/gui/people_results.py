@@ -16,6 +16,10 @@ from isnady.gui import theme
 
 CLOSE_TIP = ("Found by a close spelling, not by the letters typed: a letter typed twice or missing, or one that "
              "Turkish and English write differently (h and kh, z and dh).")
+WEAK_TIP = ("The consonants typed are in this name, but its reading sounds different (Bayram and al-Barmaki are "
+            "both b-r-m). Arabic is written without its short vowels, so consonants are matched first.")
+UNREAD_TIP = ("The consonants typed are in this name, and isnady has no reading of it to compare the vowels with, "
+              "so it cannot say whether it sounds like what you typed.")
 SHIA_COLOR = {1: 2, 2: 4, 3: 5, 4: 9}    # as on the Narrators page: Shia categories in the colours of like standing
 TRADITION = {"sunni": ("Sunni", "A narrator of the Sunni books, as Ibn Hajar's Taqrib al-Tahdhib records him."),
              "shia": ("Shia", "A narrator of the Shia books, as al-Najashi's Rijal records him. His judgment is "
@@ -138,8 +142,15 @@ def person_card(row: dict, open_person) -> QFrame:
     if not shia:
         parts.append((f"{row['in_chains']:,} in chains" if row["in_chains"] else "not in the imported chains",
                       "How often he is identified in the chains of the imported books."))
-    if row.get("close"):
-        parts.append((f"<span style='color:{theme.current().gold}'>≈ close spelling</span>", CLOSE_TIP))
+    matched = " ".join(row.get("matched") or [])
+    shown = (f" <span style='font-family:\"{theme.script_font('arabic').family()}\"; font-size:11pt'>"
+             f"{html.escape(matched)}</span>") if matched else ""
+    if row.get("weak"):
+        parts.append((f"<span style='color:{theme.current().muted}'>≈ same consonants:{shown}</span>", WEAK_TIP))
+    elif row.get("close"):
+        parts.append((f"<span style='color:{theme.current().gold}'>≈ close spelling:{shown}</span>", CLOSE_TIP))
+    elif row.get("unread"):
+        parts.append((f"<span style='color:{theme.current().muted}'>≈ same consonants:{shown}</span>", UNREAD_TIP))
     _facts(box, tags, parts, f"Open in {page}")
     return card
 

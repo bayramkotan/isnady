@@ -431,7 +431,8 @@ def _search_people(conn, args) -> int:
         view = r["view"]
         known = view["reading"] or view["full_reading"]
         print(f"\n{known + '  ' if known else ''}{view['arabic'] or r['name']}  (id {r['id']}, {r['tradition']})"
-              + ("  ≈ close spelling" if r.get("close") else ""))
+              + ("  ≈ same consonants, other vowels" if r.get("weak") else "  ≈ close spelling" if r.get("close")
+                 else "  ≈ same consonants, reading unknown" if r.get("unread") else ""))
         if view["full_reading"] and view["full_reading"] != known:
             print(f"  {view['full_reading']}")
         facts = []
