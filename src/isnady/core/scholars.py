@@ -112,6 +112,69 @@ def present(conn: sqlite3.Connection) -> list[dict]:
     return out
 
 
+def _fold(text: str) -> str:
+    """Lower case, without accents or the marks of transliteration: "Buhârî" and "al-Bukhari" are compared as
+    "buhari" and "albukhari"; Arabic letters are normalized (diacritics and letter forms ignored)."""
+    import unicodedata
+
+    from isnady.core.normalize import normalize
+
+    text = normalize(text)
+    text = "".join(c for c in unicodedata.normalize("NFKD", text.lower()) if not unicodedata.combining(c))
+    return "".join(c for c in text if c.isalnum() or c.isspace())
+
+
+def search(conn: sqlite3.Connection, text: str) -> list[dict]:
+    """The scholars whose names (Arabic, English, Turkish, the name he is known by) or works contain every word
+    typed, those with something in this database first. Each has his roles here ([] when nothing is imported)."""
+    from isnady.core.narrators import fold_latin
+
+    words = [w.removeprefix("al").removeprefix("el") or w for w in _fold(text).split()]
+    words = [w for w in words if w not in ("b", "bn", "ibn", "bin", "ب", "بن")]
+    if not words:
+        return []
+    loose = fold_latin(text).split()          # Turkish and English spellings alike: "Sünen" finds "Sunan"
+
+    def fits(hay: str) -> bool:
+        exact = _fold(hay).replace(" ", "")
+        return all(w in exact for w in words) or bool(loose) and all(
+            w in fold_latin(hay.replace("-", " ")).replace(" ", "") for w in loose)
+
+    roles = {s["id"]: s["roles"] for s in present(conn)}
+    found = []
+    for s in SCHOLARS:
+        names = " ".join([s["name"], s["full"], s["tr"], s["arabic"], s.get("known_ar", "")])
+        if fits(names + " " + " ".join(s["works"])):
+            found.append(({**s, "roles": roles.get(s["id"], [])}, fits(names)))
+    found.sort(key=lambda f: (not f[1], not f[0]["roles"]))
+    return [s for s, _n in found]
+
+
+_IBN = ("b", "bn", "ibn", "bin", "ب", "بن", "ابن")
+
+
+def _squeeze(text: str) -> str:
+    """A name as one string of letters, without the article and without "ibn": Latin through
+    narrators.fold_latin ("al-Albani", "el-Elbânî" and "Albani" are all "albani"), Arabic normalized."""
+    from isnady.core.narrators import fold_latin
+    from isnady.core.normalize import normalize
+
+    if any("\u0600" <= c <= "\u06ff" for c in text):
+        words = [w.removeprefix("ال") if len(w) > 4 else w for w in normalize(text).split()]
+        return "".join(w for w in words if w not in _IBN)
+    return fold_latin(text).replace(" ", "")
+
+
+def named(text: str) -> list[dict]:
+    """The scholars KNOWN by the words typed: the name he is known by (in English, Turkish or Arabic) begins with
+    them — "Bukhari", "Buhârî", "Abu Dawud", "Ibn Hajar", "Malik". Not "Anas", which only ends Malik b. Anas."""
+    wanted = _squeeze(text)
+    if len(wanted) < 3:
+        return []
+    return [s for s in SCHOLARS
+            if any(_squeeze(name).startswith(wanted) for name in (s["name"], s["tr"], s.get("known_ar", "")) if name)]
+
+
 def as_narrator(conn: sqlite3.Connection, scholar: dict) -> int | None:
     prefix = scholar.get("taqrib")
     if not prefix:

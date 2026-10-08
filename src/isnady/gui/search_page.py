@@ -1,7 +1,8 @@
-"""Search page: hadith text search over every imported edition.
+"""Search page: hadith text search over every imported edition, and the people of hadith.
 
-All matching logic is in isnady.core.search; this page only collects the
-query, calls the core and renders the results as cards.
+The drop-down before the search field chooses what is searched (S3): Hadith (the default), Narrators (both
+traditions) or Scholars. All matching logic is in isnady.core (search, narrators.find, scholars.search); this page
+only collects the query, calls the core and renders the results as cards.
 """
 
 import html
@@ -36,6 +37,20 @@ FIRST_BATCH = 4     # cards shown at once; the rest follow in small batches
 NEXT_BATCH = 3
 MODE_LABELS = (("all", "All words"), ("any", "Any word"), ("phrase", "Exact phrase"), ("meaning", "By meaning (AI)"))
 EXAMPLES = ("النيات", "الصلاة", "niyet", "komşu")
+KINDS = (("hadith", "Hadith"), ("narrators", "Narrators"), ("scholars", "Scholars"))
+KIND_TEXT = {   # placeholder, start-page title, start-page lead, examples
+    "hadith": ("Search the hadith: a word or phrase in Arabic, Turkish or English", "Search the hadith", "", EXAMPLES),
+    "narrators": ("Search the narrators by name: Arabic, English or Turkish spelling", "Search the narrators",
+                  "Every narrator of both traditions — Ibn Hajar's Taqrib for the Sunni books, al-Najashi's Rijal for "
+                  "the Shia books — by any part of his name. Names are matched by their letters, without vowels or "
+                  "diacritics, so “Abu Hurayra”, “Ebû Hüreyre” and أبو هريرة all find him. Try one of these:",
+                  ("Abu Hurayra", "الزهري", "Ibn Umar", "Âişe", "Zurara")),
+    "scholars": ("Search the scholars of hadith: a name or a book", "Search the scholars",
+                 "The compilers of the books, the scholars who graded their hadith and the critics of narrators — "
+                 "by name in any spelling, or by the title of a work. Try one of these:",
+                 ("Buhârî", "Albani", "ابن حجر", "Riyad al-Salihin")),
+}
+TRADITIONS = (("", "Both traditions"), ("sunni", "Sunni"), ("shia", "Shia"))
 
 
 def _highlight(text: str, spans: list[tuple[int, int]], gilt: str) -> str:
@@ -169,6 +184,8 @@ class ResultCard(QFrame):
 class SearchPage(QWidget):
     open_chain = Signal(int)          # hadith id; the main window shows it on the Isnad Chains page
     open_book = Signal(int)           # hadith id; the main window opens its book at its chapter (Books)
+    open_person = Signal(int, str)    # person id, tradition; Narrators or Shia Rijal shows him
+    open_scholar = Signal(str)        # scholar id; Hadith Scholars shows him
     data_changed = Signal()
 
     def __init__(self, status_message=None, parent=None) -> None:
@@ -180,6 +197,19 @@ class SearchPage(QWidget):
         self._notice = ""
         self._page: core.SearchPage | None = None
         self._results: list[core.SearchResult] = []
+        self._people: list[dict] | None = None      # narrators or scholars found (S3); None: a hadith search
+        self._people_total = 0
+        self._people_shown = 0
+
+        # what is searched (S3): hadith by default, every time isnady starts
+        self.kind_combo = QComboBox()
+        self.kind_combo.setObjectName("SearchKind")
+        self.kind_combo.setCursor(Qt.CursorShape.PointingHandCursor)
+        for key, label in KINDS:
+            self.kind_combo.addItem(label, key)
+        self.kind_combo.setToolTip("What to search: the text of the hadith, the narrators of both traditions "
+                                   "by name, or the scholars of hadith")
+        self.kind_combo.currentIndexChanged.connect(self._kind_changed)
 
         # search bar
         self.query_edit = QLineEdit()
@@ -209,6 +239,13 @@ class SearchPage(QWidget):
             combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
             combo.currentIndexChanged.connect(self._rerun_if_searched)
         self.whole_words.toggled.connect(self._rerun_if_searched)
+        self.tradition_combo = QComboBox()
+        for key, label in TRADITIONS:
+            self.tradition_combo.addItem(label, key)
+        self.tradition_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.tradition_combo.setToolTip("Sunni: the narrators of Ibn Hajar's Taqrib. Shia: those of al-Najashi's "
+                                        "Rijal.\nThe two are never matched to each other: each keeps its own terms.")
+        self.tradition_combo.currentIndexChanged.connect(self._rerun_if_searched)
         self.summary = _label(name="Summary")
 
         # results
@@ -230,16 +267,31 @@ class SearchPage(QWidget):
 
         top = QHBoxLayout()
         top.setSpacing(10)
+        top.addWidget(self.kind_combo)
         top.addWidget(self.query_edit, 1)
         top.addWidget(self.search_button)
         filters = QHBoxLayout()
         filters.setSpacing(8)
+        self.hadith_filters = QWidget()            # shown for the hadith; the narrators have their own
+        row = QHBoxLayout(self.hadith_filters)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(8)
         for text, widget in (("Match", self.mode_combo), (None, self.whole_words),
                              ("Book", self.book_combo), ("Language", self.language_combo)):
             if text:
-                filters.addSpacing(10)
-                filters.addWidget(_label(text, "FilterLabel"))
-            filters.addWidget(widget)
+                row.addSpacing(10)
+                row.addWidget(_label(text, "FilterLabel"))
+            row.addWidget(widget)
+        self.people_filters = QWidget()
+        row = QHBoxLayout(self.people_filters)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(8)
+        row.addSpacing(10)
+        row.addWidget(_label("Tradition", "FilterLabel"))
+        row.addWidget(self.tradition_combo)
+        self.people_filters.hide()
+        filters.addWidget(self.hadith_filters)
+        filters.addWidget(self.people_filters)
         filters.addStretch(1)
         filters.addWidget(self.summary)
 
@@ -278,7 +330,7 @@ class SearchPage(QWidget):
 
         self.query_edit.setEnabled(False)
         self.search_button.setEnabled(False)
-        for widget in (self.mode_combo, self.whole_words, self.book_combo, self.language_combo):
+        for widget in (self.kind_combo, self.mode_combo, self.whole_words, self.book_combo, self.language_combo):
             widget.setEnabled(False)
         self._clear_body()
         box_widget = QWidget()
@@ -456,8 +508,25 @@ class SearchPage(QWidget):
             self.run_search()
 
     def _rerun_if_searched(self, *_args) -> None:
-        if self._page is not None and self.query_edit.text().strip():
+        if (self._page is not None or self._people is not None) and self.query_edit.text().strip():
             self.run_search()
+
+    def kind(self) -> str:
+        return self.kind_combo.currentData()
+
+    def _kind_changed(self, *_args) -> None:
+        """Another thing to search: its own filters, its own hint; the words typed are searched again."""
+        kind = self.kind()
+        self.hadith_filters.setVisible(kind == "hadith")
+        self.people_filters.setVisible(kind == "narrators")
+        self.query_edit.setPlaceholderText(KIND_TEXT[kind][0])
+        self.summary.setText("")
+        if self.query_edit.text().strip():
+            self.run_search()
+        else:
+            self._page, self._people = None, None
+            self._show_start()
+        self.query_edit.setFocus()
 
     def search_for(self, text: str) -> None:
         self.query_edit.setText(text)
@@ -468,9 +537,13 @@ class SearchPage(QWidget):
             return
         self._sync_with_database()
         if not self.query_edit.text().strip():
-            self._page = None
+            self._page, self._people = None, None
             self._show_start()
             return
+        if self.kind() != "hadith":
+            self._search_people()
+            return
+        self._people = None
         QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
             self._scores = {}
@@ -484,6 +557,9 @@ class SearchPage(QWidget):
             QGuiApplication.restoreOverrideCursor()
 
     def load_more(self) -> None:
+        if self._people is not None:
+            self._show_people(more=True)
+            return
         if not self._page:
             return
         QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
@@ -526,14 +602,15 @@ class SearchPage(QWidget):
         arabic = _label("وَمَا يَنْطِقُ عَنِ الْهَوَى", "HeroArabic")
         arabic.setFont(theme.reading_font(26))
         arabic.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignAbsolute)
-        title = _label("Search the hadith", "Hero")
+        kind = self.kind()
+        title = _label(KIND_TEXT[kind][1], "Hero")
         title.setFont(theme.reading_font(30, bold=True))
         box.addWidget(arabic)
         box.addWidget(title)
 
         if self._notice:
             box.addWidget(_label(html.escape(self._notice), "Lead", wrap=True))
-        if hadith == 0:
+        if hadith == 0 and kind == "hadith":
             lead = _label(
                 "The database is empty. Import a source from a terminal, for example:<br>"
                 "<code>iy import fawazahmed0 https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/"
@@ -542,16 +619,20 @@ class SearchPage(QWidget):
                 "Lead", wrap=True, selectable=True)
             lead.setTextFormat(Qt.TextFormat.RichText)
             box.addWidget(lead)
+        elif kind == "narrators" and not self._conn.execute("SELECT 1 FROM persons LIMIT 1").fetchone():
+            box.addWidget(_label("No narrators yet: import Ibn Hajar's Taqrib or al-Najashi's Rijal "
+                                 "(File → Data Sources), or from a terminal: iy catalog import taqrib",
+                                 "Lead", wrap=True))
         else:
-            lead = _label(
+            lead = _label(KIND_TEXT[kind][2] or (
                 "Arabic diacritics and letter forms are ignored, so الاعمال finds الأَعْمَالُ. "
-                "Turkish and other Latin-script text ignores case and accents. Try one of these:",
+                "Turkish and other Latin-script text ignores case and accents. Try one of these:"),
                 "Lead", wrap=True)
             lead.setMaximumWidth(640)
             box.addWidget(lead)
             examples = QHBoxLayout()
             examples.setSpacing(8)
-            for word in EXAMPLES:
+            for word in KIND_TEXT[kind][3]:
                 button = QPushButton(word)
                 button.setObjectName("Example")
                 button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -627,8 +708,85 @@ class SearchPage(QWidget):
                                     if getattr(self, "_meaning_stale", False) else "")
         self.summary.setText(f"{page.total:,} hadith, {page.elapsed_ms} ms{note}")
 
+    # -------------------------------------------------------------- people (S3)
+    def _search_people(self) -> None:
+        """Narrators (both traditions, or one) or scholars whose names fit the words typed."""
+        from isnady.core import scholars as core_scholars
+
+        text = self.query_edit.text().strip()
+        self._page = None
+        QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            import time
+
+            start = time.perf_counter()
+            if self.kind() == "narrators":
+                self._people, self._people_total = core_narrators.find(
+                    self._conn, text, self.tradition_combo.currentData() or None)
+            else:
+                self._people = core_scholars.search(self._conn, text)
+                self._people_total = len(self._people)
+            self._people_ms = int((time.perf_counter() - start) * 1000)
+        finally:
+            QGuiApplication.restoreOverrideCursor()
+        self._show_people()
+
+    def _show_people(self, more: bool = False) -> None:
+        from isnady.gui import people_results
+
+        if not more:
+            self._clear_body()
+            self._people_shown = 0
+            self.scroll.verticalScrollBar().setValue(0)
+        kind = self.kind()
+        if not self._people:
+            empty = QWidget()
+            box = QVBoxLayout(empty)
+            box.setContentsMargins(8, 40, 8, 8)
+            title = _label(f"No {kind} found for “{self.query_edit.text().strip()}”", "Hero", wrap=True)
+            title.setFont(theme.reading_font(20, bold=True))
+            box.addWidget(title)
+            box.addWidget(people_results.empty_hint(kind))
+            self.body_layout.addWidget(empty)
+            self.body_layout.addStretch(1)
+            self.summary.setText("")
+            return
+        self.more_button.setParent(None)
+        last = self.body_layout.count() - 1
+        if last >= 0 and self.body_layout.itemAt(last).spacerItem() is not None:
+            self.body_layout.takeAt(last)
+        batch = self._people[self._people_shown:self._people_shown + PAGE_SIZE]
+        for row in batch:
+            if kind == "narrators":
+                card = people_results.person_card(row, self.open_person.emit)
+            else:
+                card = people_results.scholar_card(row, self.open_scholar.emit)
+            self.body_layout.addWidget(card)
+        self._people_shown += len(batch)
+        remaining = len(self._people) - self._people_shown
+        if remaining > 0:
+            self.more_button.setText(f"Show {min(PAGE_SIZE, remaining)} more ({remaining:,} left)")
+            self.body_layout.addWidget(self.more_button, 0, Qt.AlignmentFlag.AlignHCenter)
+        elif self._people_total > len(self._people):
+            note = _label(f"The {len(self._people):,} closest of {self._people_total:,} are shown: "
+                          "add a word to find the others.", "Caption")
+            note.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            self.body_layout.addWidget(note)
+        self.body_layout.addStretch(1)
+        noun = {"narrators": ("narrator", "narrators"), "scholars": ("scholar", "scholars")}[kind]
+        total = self._people_total
+        self.summary.setText(f"{total:,} {noun[total != 1]}, {self._people_ms} ms")
+
     def retheme(self) -> None:
         """Redraw the results with the current theme and text size."""
+        if self._people is not None:
+            scroll = self.scroll.verticalScrollBar().value()
+            shown = self._people_shown
+            self._show_people()
+            while self._people_shown < shown:
+                self._show_people(more=True)
+            self.scroll.verticalScrollBar().setValue(scroll)
+            return
         if self._page is not None and self._page.total:
             scroll = self.scroll.verticalScrollBar().value()
             self._clear_body()

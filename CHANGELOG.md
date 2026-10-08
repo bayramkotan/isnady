@@ -3,6 +3,27 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+**Search finds people: the narrators of both traditions and the scholars of hadith.**
+
+- **Search → Narrators / Scholars**: a drop-down before the search field chooses what is searched — Hadith (the
+  default at every start), Narrators or Scholars. Each card shows the person in brief: the name he is known by, in
+  reading and in Arabic, his full name, his standing in words (the Arabic term and Ibn Hajar's rank, or al-Najashi's
+  judgment and the narrator's school, on hover), his generation, year of death and how often he is in the imported
+  chains. A click opens him on his own page: Narrators, Shia Rijal or Hadith Scholars.
+- **Both traditions in one search**, each card marked Sunni or Shia, with a Tradition filter. The two are never
+  matched to each other: each keeps its own terms.
+- **The closest first**: the person KNOWN by the words typed (Abu Hurayra, al-Zuhri, Ibn Umar), then those in whose
+  name they stand, then those whose entry only mentions them. A scholar known by the name is first among the
+  narrators too ("Bukhari" → Muhammad b. Isma'il, "Abu Dawud" → Sulayman b. al-Ash'ath).
+- **Turkish and English spellings alike**: "Âişe", "Ebû Hüreyre", "İbn Ömer", "Câbir", "Buhârî", "Elbânî" find
+  the same people as "Aisha", "Abu Hurayra", "Ibn Umar", "Jabir", "al-Bukhari", "al-Albani". Names are matched by
+  their consonants, and the vowels then put A'isha before al-A'sha and Umar before 'Amir.
+- **Narrator search, also on the Narrators page**: "b." is read as ibn ("Hammad b. Zayd" found nothing); a match in
+  the person's own entry counts above the same name read from another entry; a two-letter skeleton ("Anas",
+  "Aisha") must be a whole word, no longer the beginning of hundreds.
+
 ## [0.1.4] — 2026-10-06
 
 **Portable applications, a fix for every new computer, graders compared fairly, and seven themes.**

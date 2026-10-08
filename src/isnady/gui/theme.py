@@ -269,6 +269,10 @@ def stylesheet(t: Tokens) -> str:
     QLineEdit#SearchField {{ background: {t.surface}; color: {t.ink}; border: 1px solid {t.border};
                              border-radius: 10px; padding: 10px 14px; font-size: 12.5pt; }}
     QLineEdit#SearchField:focus {{ border: 2px solid {t.lapis}; padding: 9px 13px; }}
+    QComboBox#SearchKind {{ background: {t.lapis_soft}; color: {t.lapis}; border: 1px solid {t.lapis_soft};
+                            border-radius: 10px; padding: 10px 14px; font-size: 11pt; font-weight: 600; }}
+    QComboBox#SearchKind:hover {{ border-color: {t.lapis}; }}
+    QComboBox#SearchKind::drop-down {{ border: none; width: 26px; }}
     QPushButton#Primary {{ background: {t.lapis}; color: {t.surface if not t.dark else t.window}; border: none;
                            border-radius: 10px; padding: 10px 22px; font-weight: 600; font-size: 11pt; }}
     QPushButton#Primary:hover {{ background: {t.gold}; }}
@@ -321,6 +325,11 @@ def stylesheet(t: Tokens) -> str:
     /* results */
     QScrollArea#Results, QWidget#ResultsBody {{ background: {t.window}; border: none; }}
     QFrame#Card {{ background: {t.surface}; border: 1px solid {t.border}; border-radius: 14px; }}
+    QFrame#PersonCard {{ background: {t.surface}; border: 1px solid {t.border}; border-radius: 14px; }}
+    QFrame#PersonCard:hover {{ border: 1px solid {t.lapis}; background: {t.lapis_soft}; }}
+    QFrame#PersonCard QLabel {{ background: transparent; }}
+    QFrame#PersonCard QLabel#Tag {{ background: {t.lapis_soft}; color: {t.lapis}; border: 1px solid {t.lapis};
+                                   border-radius: 8px; padding: 1px 9px; font-size: 8.5pt; font-weight: 600; }}
     QLabel#CardTitle {{ color: {t.ink}; }}
     QLabel#CardNumber {{ color: {t.muted}; }}
     QLabel#Pill {{ background: {t.pill}; color: {t.ink}; border: 1px solid {t.pill}; border-radius: 7px;

@@ -402,8 +402,57 @@ def cmd_stats(args) -> int:
     return 0
 
 
+def _search_people(conn, args) -> int:
+    """iy search --in narrators|scholars: the same people search as the Search page (S3)."""
+    text = " ".join(args.words)
+    if args.kind == "scholars":
+        from isnady.core import scholars
+
+        found = scholars.search(conn, text)
+        conn.close()
+        print(f"{len(found)} scholar{'s' if len(found) != 1 else ''} found")
+        for s in found[args.offset:args.offset + args.limit]:
+            roles = ", ".join(s["roles"]) or "nothing of his imported yet"
+            print(f"\n{s['name']}  {s.get('known_ar') or s['arabic']}  ({s['id']})")
+            print(f"  {s['tr']} · {s['dates']}" if s["dates"] else f"  {s['tr']}")
+            print(f"  roles here: {roles}")
+            print(f"  works: {', '.join(s['works'])}")
+        return 0
+    from isnady.core import shia_rijal
+    from isnady.core.rijal import RANK_LABELS
+
+    rows, total = core_narrators.find(conn, text, args.tradition)
+    conn.close()
+    shown = rows[args.offset:args.offset + args.limit]
+    more = f" (the closest {len(rows)} are ranked)" if total > len(rows) else ""
+    print(f"{total} narrator{'s' if total != 1 else ''} found{more}")
+    for r in shown:
+        view = r["view"]
+        known = view["reading"] or view["full_reading"]
+        print(f"\n{known + '  ' if known else ''}{view['arabic'] or r['name']}  (id {r['id']}, {r['tradition']})")
+        if view["full_reading"] and view["full_reading"] != known:
+            print(f"  {view['full_reading']}")
+        facts = []
+        if r["tradition"] == "shia":
+            facts.append(shia_rijal.RANKS[r["rank"]][1] if r["rank"] else "no judgment")
+            if r.get("madhhab"):
+                facts.append(shia_rijal.MADHHAB_LABELS.get(r["madhhab"], r["madhhab"]))
+        elif r["rank"]:
+            facts.append(f"rank {r['rank']}: {RANK_LABELS[r['rank']][1]}")
+        if r["tabaqa"]:
+            facts.append(f"tabaqa {r['tabaqa']}")
+        if r["death"]:
+            facts.append(f"d. {r['death']} AH")
+        if r["tradition"] != "shia":
+            facts.append(f"{r['in_chains']} in chains")
+        print("  " + " · ".join(facts))
+    return 0
+
+
 def cmd_search(args) -> int:
     conn = _connect()
+    if args.kind != "hadith":
+        return _search_people(conn, args)
     if args.mode == "meaning":
         return _search_meaning(conn, args)
     core_search.ensure_index(conn, progress=lambda m: print(m, file=sys.stderr))
@@ -834,8 +883,12 @@ def build_parser() -> argparse.ArgumentParser:
     auth.add_argument("--api-key-param", help="send the API key as this query parameter instead of a header")
     imp.set_defaults(func=cmd_import)
 
-    se = sub.add_parser("search", help="search hadith text (same engine as the app)")
+    se = sub.add_parser("search", help="search hadith text, narrators or scholars (same engine as the app)")
     se.add_argument("words", nargs="+", help="words to search; Arabic diacritics and letter forms are ignored")
+    se.add_argument("--in", dest="kind", choices=["hadith", "narrators", "scholars"], default="hadith",
+                    help="what to search: hadith text (default), narrators of both traditions by name, or scholars")
+    se.add_argument("--tradition", choices=["sunni", "shia"],
+                    help="with --in narrators: only the Sunni (Taqrib) or the Shia (al-Najashi) narrators")
     se.add_argument("--mode", choices=["all", "any", "phrase", "meaning"], default="all",
                     help="meaning: by meaning and across languages (needs: pip install \"isnady[ai]\" and iy ai build)")
     se.add_argument("--whole-words", action="store_true", help="match whole words only")

@@ -172,6 +172,8 @@ class MainWindow(QMainWindow):
         self.books_page.open_chain.connect(self._open_chain)
         self.books_page.open_narrator.connect(self._open_narrator)
         self.search_page.open_book.connect(self._open_in_book)
+        self.search_page.open_person.connect(self._open_person)
+        self.search_page.open_scholar.connect(self._open_scholar)
         self.search_page.data_changed.connect(lambda: setattr(self, "_books_loaded", False))
         self.nav.currentRowChanged.connect(self._load_books_when_shown)
         self._shia_row = [k for k, _l, _t in SECTIONS].index("shia_rijal")
@@ -331,6 +333,18 @@ class MainWindow(QMainWindow):
     def _open_narrator(self, person_id: int) -> None:
         self.nav.setCurrentRow(self._narrators_row)
         self.narrators_page.select(person_id)
+
+    def _open_person(self, person_id: int, tradition: str) -> None:
+        """A narrator found by Search: on Narrators, or on Shia Rijal for one of the Shia books."""
+        if tradition == "shia":
+            self.nav.setCurrentRow(self._shia_row)
+            self.shia_page.select(person_id)
+        else:
+            self._open_narrator(person_id)
+
+    def _open_scholar(self, scholar_id: str) -> None:
+        self.nav.setCurrentRow([k for k, _l, _t in SECTIONS].index("scholars"))
+        self.scholars_page.select(scholar_id)
 
     def _open_chain(self, hadith_id: int) -> None:
         self.nav.setCurrentRow(self._chains_row)
