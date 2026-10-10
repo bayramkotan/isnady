@@ -215,7 +215,7 @@ class ResultCard(QFrame):
 class SearchPage(QWidget):
     open_chain = Signal(int)          # hadith id; the main window shows it on the Isnad Chains page
     open_book = Signal(int)           # hadith id; the main window opens its book at its chapter (Books)
-    open_person = Signal(int, str)    # person id, tradition; Narrators or Shia Rijal shows him
+    open_person = Signal(int, str)    # person id, tradition; Narrators shows him
     open_scholar = Signal(str)        # scholar id; Hadith Scholars shows him
     data_changed = Signal()
 

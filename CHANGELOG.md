@@ -15,6 +15,24 @@ is taken from its section here.
 - **README** on GitHub, PyPI and npm with new screenshots: search narrowed to a few books with the other
   languages folded, the book list, the Narrators, hadith model and correlation sections of Statistics, Data
   sources, Books and languages; the isnady-data README shows how to use it from this computer.
+- **Sunni and Shia narrators on one page, each tradition by its own road** (SH1). The Shia Rijal section is gone
+  from the menu: **Narrators** shows *All*, *Sunni* or *Shia*, every Shia narrator with a gold *Shia* tag and his
+  critic's verdict in the Imami terms (never on Ibn Hajar's scale). Every value derived from a chain is reached
+  along the book's own tradition (`core/traditions.py`): road A for the Sunni books, road B for the Shia books.
+  - **Shia chains are read the Shia way** (`isnad.parse(text, "shia")`, parser isnady-isnad-5): the teacher named
+    without a term (al-Kulayni), "عدة من أصحابنا" with the teachers al-Kulayni said each group stands for, two
+    narrators at one link, two roads joined by "جميعاً", "رفعه", unnamed narrators ("عن رجل", "بعض أصحابه"),
+    "عنه", "بإسناده" (kept whole), the hadith number and the student's "قال:" at the head, al-Saduq's
+    "رضي الله عنه … قال: حدثنا", places and dates after a name. The chain ends at one of the Fourteen
+    Ma'sumun — the Prophet ﷺ or an Imam, most often by his kunya (أبو عبد الله = Ja'far al-Sadiq, أبو جعفر =
+    al-Baqir, أبو الحسن = al-Kazim or al-Rida); "سألته" is *mudmar*. al-Kafi: 96.8% of 14,239 chains split
+    (was 9), 92% reach a Ma'sum; 'Uyun Akhbar al-Rida and al-Mufid's Amali from none to 608 and 333.
+  - **Shia chains are identified only in Shia rijal works** (al-Najashi; al-Tusi when imported), Sunni ones only in
+    the Taqrib; al-Kulayni's own teachers are recognised at the head of his chains (محمد بن يحيى is al-'Attar) and
+    "ابن أبي عمير" by his father's name. al-Kafi: 29,652 of 61,160 names identified (was 3).
+  - The chain page draws the Imam the chain reaches, explains al-Kulayni's groups and the unnamed narrators, shows
+    al-Najashi's verdicts in their own terms, and says when a second road joins; `iy chain kafi 5:1740` and
+    `iy isnads` likewise. Database schema 8: `isnads.ends_with` (whom the chain reaches) and `isnads.raised`.
 
 ## [0.1.8] — 2026-10-10
 

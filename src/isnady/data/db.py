@@ -26,7 +26,7 @@ from pathlib import Path
 
 from isnady.data.paths import db_path
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 SCHEMA = """
 -- ------------------------------------------------------------------ sources
@@ -196,7 +196,9 @@ CREATE TABLE IF NOT EXISTS isnads (
     source_id INTEGER REFERENCES sources(id) ON DELETE CASCADE,
     derived_by      TEXT,                      -- NULL: given by the source; else the parser that read it from the text
     reaches_prophet INTEGER,                   -- 1 when the chain ends at the Prophet (marfu'), as read
-    problem         TEXT                       -- why the chain could not be split into links, if it could not
+    problem         TEXT,                      -- why the chain could not be split into links, if it could not
+    ends_with       TEXT,                      -- whom it reaches: "prophet"; on road B (Shia) also an Imam ("sadiq" …)
+    raised          INTEGER                    -- 1: "رفعه", raised to him without the rest of its links
 );
 CREATE INDEX IF NOT EXISTS ix_isnads_hadith ON isnads(hadith_id);
 
@@ -328,6 +330,10 @@ MIGRATIONS = {
     ],
     6: [
         "ALTER TABLE verdicts ADD COLUMN madhhab TEXT",
+    ],
+    7: [
+        "ALTER TABLE isnads ADD COLUMN ends_with TEXT",
+        "ALTER TABLE isnads ADD COLUMN raised INTEGER",
     ],
 }
 OLDEST_UPGRADABLE = 2

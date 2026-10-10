@@ -1,4 +1,4 @@
-"""Shia rijal on its own terms (Shia Rijal section): what a Shia critic says of a narrator, read along the two
+"""Shia rijal on its own terms (shown on the Narrators page, SH1): what a Shia critic says of a narrator, read along the two
 axes of the Imami tradition — reliability (thiqa, praised, weak) and creed (Imami or not: Waqifi, Fathi,
 Zaydi, 'ammi …) — and the classical four-fold category those two make (later Imami usage, from Ibn Tawus and
 al-'Allama al-Hilli): an Imami thiqa, a praised narrator (mamduh), a non-Imami thiqa (muwaththaq), a weak one.

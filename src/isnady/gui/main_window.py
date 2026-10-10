@@ -28,15 +28,13 @@ from isnady.gui.search_page import SearchPage
 # (key, sidebar label, description shown until the page is built)
 SECTIONS = [
     ("search", "Search", "Search hadith text, books and grades."),
-    ("narrators", "Narrators", "Every narrator: biography, teachers and students, generation, narrations "
-                               "and every recorded verdict on them."),
+    ("narrators", "Narrators", "Every narrator, Sunni and Shia on one page: biography, teachers and students, "
+                               "generation, narrations and every recorded verdict, each by its own tradition's measure."),
     ("chains", "Isnad Chains", "Chains of transmission drawn link by link, with each narrator's standing "
                                "and whether each link could have met the next."),
     ("scholars", "Hadith Scholars", "The scholars of hadith: their lives, books, teachers and students, "
                                      "and what their collections contain."),
     ("books", "Books", "The hadith collections in the database and what each source adds."),
-    ("shia_rijal", "Shia Rijal", "Narrator verdicts from the Shia rijal works, per narrator, beside the "
-                                 "Sunni view."),
     ("statistics", "Statistics", "Narrators, books and grades counted and compared."),
     ("learn", "Learn", "The sciences of hadith: terms, grades, jarh wa ta'dil and the classical works, "
                        "shown on real hadith and real chains."),
@@ -137,7 +135,6 @@ class MainWindow(QMainWindow):
         from isnady.gui.narrators_page import NarratorsPage
 
         self.narrators_page = NarratorsPage(self.search_page.connection)
-        self.shia_page = NarratorsPage(self.search_page.connection, tradition="shia")
         from isnady.gui.statistics_page import StatisticsPage
 
         self.statistics_page = StatisticsPage(self.search_page.connection)
@@ -164,8 +161,6 @@ class MainWindow(QMainWindow):
                 page = self.scholars_page
             elif key == "books":
                 page = self.books_page
-            elif key == "shia_rijal":
-                page = self.shia_page
             elif key == "statistics":
                 page = self.statistics_page
             elif key == "learn":
@@ -195,12 +190,7 @@ class MainWindow(QMainWindow):
         self.search_page.open_scholar.connect(self._open_scholar)
         self.search_page.data_changed.connect(lambda: setattr(self, "_books_loaded", False))
         self.nav.currentRowChanged.connect(self._load_books_when_shown)
-        self._shia_row = [k for k, _l, _t in SECTIONS].index("shia_rijal")
-        self.shia_page.open_sources.connect(lambda: self._preferences("sources"))
-        self.search_page.data_changed.connect(self.shia_page.refresh)
-        for page in (self.narrators_page, self.shia_page):
-            page.open_in_book.connect(self._open_person_in_book)
-        self.shia_page.refresh()
+        self.narrators_page.open_in_book.connect(self._open_person_in_book)
         self._statistics_row = [k for k, _l, _t in SECTIONS].index("statistics")
         self._statistics_loaded = False
         self.statistics_page.open_hadith.connect(self._open_in_book)
@@ -361,12 +351,8 @@ class MainWindow(QMainWindow):
         self.narrators_page.select(person_id)
 
     def _open_person(self, person_id: int, tradition: str) -> None:
-        """A narrator found by Search: on Narrators, or on Shia Rijal for one of the Shia books."""
-        if tradition == "shia":
-            self.nav.setCurrentRow(self._shia_row)
-            self.shia_page.select(person_id)
-        else:
-            self._open_narrator(person_id)
+        """A narrator found by Search, Sunni or Shia: on Narrators, which shows each by his tradition's measure."""
+        self._open_narrator(person_id)
 
     def _open_scholar(self, scholar_id: str) -> None:
         self.nav.setCurrentRow([k for k, _l, _t in SECTIONS].index("scholars"))

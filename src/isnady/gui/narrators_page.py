@@ -1,6 +1,10 @@
-"""Narrators: every narrator of the imported rijal works, searchable and filterable, with what the rijal
-work says of him and what the imported chains show — whom he narrates from, who narrates from him, and the
-hadith whose chains include him."""
+"""Narrators: every narrator of the imported rijal works, Sunni and Shia on one page (SH1), searchable and
+filterable, with what the rijal work says of him and what the imported chains show — whom he narrates from, who
+narrates from him, and the hadith whose chains include him.
+
+The two traditions meet here but are not mixed: a Shia narrator carries a gold "Shia" tag and is judged in the
+Imami terms of his own critics (core.shia_rijal), a Sunni narrator on Ibn Hajar's twelve ranks; each is found in
+the chains of his own tradition's books (road A / road B, core.traditions)."""
 
 import html
 
@@ -14,6 +18,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
+    QButtonGroup,
     QPushButton,
     QScrollArea,
     QSizePolicy,
@@ -22,7 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 from isnady.core import narrators as core_narrators
-from isnady.core import shia_rijal
+from isnady.core import shia_rijal, traditions
 from isnady.core.names import latin
 from isnady.core.rijal import BOOK_MARKS, RANK_LABELS, TABAQA_LABELS, display_name, short_name
 from isnady.gui import theme
@@ -68,15 +73,14 @@ class NarratorsPage(QWidget):
     open_sources = Signal()         # no rijal work yet → Data Sources
     open_in_book = Signal(int)      # person id → the rijal work, at his entry (Books)
 
-    def __init__(self, connection_getter, parent=None, tradition: str = "sunni") -> None:
-        """tradition: "sunni" (the Narrators section, Ibn Hajar's scale) or "shia" (the Shia Rijal section, read on
-        the Imami scale — core.shia_rijal). The same page, each tradition by its own measure."""
+    def __init__(self, connection_getter, parent=None, tradition: str | None = None) -> None:
+        """tradition: the narrators shown first — "sunni", "shia", or None for both. The reader switches between
+        them at the top of the list; each narrator is shown by his own tradition's measure."""
         super().__init__(parent)
         self.setObjectName("Page")
         self._conn_of = connection_getter
         self._current: int | None = None
         self.tradition = tradition
-        shia = tradition == "shia"
 
         # ---------------------------------------------------------------- left: search and list
         left = QFrame()
@@ -85,9 +89,28 @@ class NarratorsPage(QWidget):
         lbox = QVBoxLayout(left)
         lbox.setContentsMargins(18, 16, 18, 14)
         lbox.setSpacing(8)
-        title = _label("Shia Rijal" if shia else "Narrators", "CardTitle")
+        title = _label("Narrators", "CardTitle")
         title.setFont(theme.reading_font(18, bold=True))
-        self.overview = _label("", "Caption")
+        self.overview = _label("", "Caption", rich=True)
+        # Sunni / Shia / both: one page, the two roads side by side
+        self._segments = QButtonGroup(self)
+        self._segments.setExclusive(True)
+        seg_row = QHBoxLayout()
+        seg_row.setSpacing(6)
+        for key, text, tip in ((None, "All", "Sunni and Shia narrators together, each by his own tradition's measure"),
+                               ("sunni", "Sunni", "Narrators of the Sunni rijal works (Ibn Hajar's Taqrib): twelve ranks"),
+                               ("shia", "Shia", "Narrators of the Shia rijal works (al-Najashi …): the Imami terms")):
+            b = QPushButton(text)
+            b.setObjectName("Segment")
+            b.setCheckable(True)
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            b.setToolTip(tip)
+            b.setProperty("tradition", key)
+            b.setChecked(key == tradition)
+            self._segments.addButton(b)
+            seg_row.addWidget(b)
+        seg_row.addStretch(1)
+        self._segments.buttonClicked.connect(lambda b: self.set_tradition(b.property("tradition")))
         self.query = QLineEdit()
         self.query.setPlaceholderText("Name, kunya or nisba — Arabic or Latin letters")
         self.query.setClearButtonEnabled(True)
@@ -96,15 +119,7 @@ class NarratorsPage(QWidget):
         for t, text in TABAQA_LABELS.items():
             self.tabaqa.addItem(f"Tabaqa {t}: {text.split(' (')[0]}", t)
         self.rank = QComboBox()
-        if shia:
-            self.rank.addItem("All assessments", None)
-            for r, (_ar, en, _why) in shia_rijal.RANKS.items():
-                self.rank.addItem(en[0].upper() + en[1:], r)
-            self.rank.addItem("No judgment in the work", -1)
-        else:
-            self.rank.addItem("All ranks", None)
-            for r, (_ar, en) in RANK_LABELS.items():
-                self.rank.addItem(f"Rank {r}: {en.split(' (')[0]}", r)
+        self._fill_ranks()
         self.book = QComboBox()
         self.book.addItem("All books", None)
         for key, name in (("bukhari", "al-Bukhari"), ("muslim", "Muslim"), ("abudawud", "Abu Dawud"),
@@ -125,25 +140,26 @@ class NarratorsPage(QWidget):
         self.list.currentItemChanged.connect(lambda item, _p: item and self.show_person(item.data(Qt.ItemDataRole.UserRole)))
         self.count = _label("", "Caption")
         lbox.addWidget(title)
+        lbox.addLayout(seg_row)
         lbox.addWidget(self.overview)
         lbox.addWidget(self.query)
         # each filter under its own title, so it is clear what it narrows (UI6)
         self._filter_boxes = {}
+        self._filter_titles = {}
         titles = (("tabaqa", "Generation (tabaqa)", self.tabaqa),
-                  ("rank", "Assessment" if shia else "Rank (Ibn Hajar)", self.rank),
+                  ("rank", "Rank (Ibn Hajar)", self.rank),
                   ("book", "Book", self.book))
         for key, title, combo in titles:
             holder = QWidget()
             hb = QVBoxLayout(holder)
             hb.setContentsMargins(0, 2, 0, 0)
             hb.setSpacing(3)
-            hb.addWidget(_label(title, "FilterTitle", wrap=False))
+            self._filter_titles[key] = _label(title, "FilterTitle", wrap=False)
+            hb.addWidget(self._filter_titles[key])
             hb.addWidget(combo)
             self._filter_boxes[key] = holder
             lbox.addWidget(holder)
-        if shia:                       # Ibn Hajar's tabaqa and book marks are not the Shia works' measure
-            self._filter_boxes["tabaqa"].hide()
-            self._filter_boxes["book"].hide()
+        self._show_filters()
         clear_row = QHBoxLayout()
         clear_row.addStretch(1)
         clear_row.addWidget(self.clear_filters)
@@ -196,6 +212,46 @@ class NarratorsPage(QWidget):
             combo.blockSignals(False)
         self._filters_changed()
 
+    def _fill_ranks(self) -> None:
+        """The rank filter speaks the chosen tradition's language; for both together there is no one scale."""
+        self.rank.blockSignals(True)
+        self.rank.clear()
+        if self.tradition == "shia":
+            self.rank.addItem("All assessments", None)
+            for r, (_ar, en, _why) in shia_rijal.RANKS.items():
+                self.rank.addItem(en[0].upper() + en[1:], r)
+            self.rank.addItem("No judgment in the work", -1)
+        else:
+            self.rank.addItem("All ranks", None)
+            for r, (_ar, en) in RANK_LABELS.items():
+                self.rank.addItem(f"Rank {r}: {en.split(' (')[0]}", r)
+        self.rank.blockSignals(False)
+
+    def _show_filters(self) -> None:
+        # Ibn Hajar's tabaqa and book marks are the Sunni works' measure; the two scales are never one filter
+        sunni = self.tradition == "sunni"
+        self._filter_boxes["tabaqa"].setVisible(sunni)
+        self._filter_boxes["book"].setVisible(sunni)
+        self._filter_boxes["rank"].setVisible(self.tradition is not None)
+        self._filter_titles["rank"].setText("Assessment (Imami terms)" if self.tradition == "shia" else "Rank (Ibn Hajar)")
+
+    def set_tradition(self, tradition: str | None) -> None:
+        """Show the Sunni narrators, the Shia ones, or both (None)."""
+        if tradition == self.tradition:
+            return
+        self.tradition = tradition
+        for b in self._segments.buttons():
+            b.setChecked(b.property("tradition") == tradition)
+        for combo in (self.tabaqa, self.book):
+            combo.blockSignals(True)
+            combo.setCurrentIndex(0)
+            combo.blockSignals(False)
+        self._fill_ranks()
+        self._show_filters()
+        self._current = None
+        self.refresh()
+        self._filters_changed()
+
     @property
     def conn(self):
         return self._conn_of()
@@ -204,21 +260,26 @@ class NarratorsPage(QWidget):
         conn = self.conn
         if conn is None:
             return
-        ov = core_narrators.overview(conn, self.tradition)
-        self.left.setEnabled(ov["persons"] > 0)
-        if not ov["persons"]:
+        lines, persons = [], 0
+        for road in ((self.tradition,) if self.tradition else traditions.TRADITIONS):
+            ov = core_narrators.overview(conn, road)
+            persons += ov["persons"]
+            if not ov["persons"]:
+                continue
+            share = f"{100 * ov['identified'] / ov['links']:.1f}%" if ov["links"] else "—"
+            tag = ("<span style='color:%s'><b>Shia</b></span>" % theme.current().gold if road == "shia"
+                   else "<b>Sunni</b>")
+            chains = (f"{ov['identified']:,} of {ov['links']:,} names in the {traditions.LABELS[road]} chains "
+                      f"identified ({share})" if ov["links"] else f"no {traditions.LABELS[road]} chains imported yet")
+            lines.append(f"{tag}: {ov['persons']:,} narrators from {html.escape(', '.join(ov['works']))}; {chains}.")
+        self.left.setEnabled(True)
+        if not persons:
             self.overview.setText("")
             self.list.clear()
             self.count.setText("")
             self._show_empty()
             return
-        share = f"{100 * ov['identified'] / ov['links']:.1f}%" if ov["links"] else "—"
-        if self.tradition == "shia":
-            self.overview.setText(f"{ov['persons']:,} narrators from {', '.join(ov['works'])}, each read on the Imami scale: "
-                                  "reliability and creed. Shia chains are not imported yet.")
-        else:
-            self.overview.setText(f"{ov['persons']:,} narrators from {', '.join(ov['works'])}. "
-                                  f"{ov['identified']:,} of {ov['links']:,} names in the chains identified ({share}).")
+        self.overview.setText("<br>".join(lines))
         self._populate()
         if self._current:
             self.show_person(self._current)
@@ -259,9 +320,11 @@ class NarratorsPage(QWidget):
             if known and view["full_reading"] and view["full_reading"] != known:
                 box.addWidget(_label(fm_ui.elidedText(view["full_reading"], Qt.TextElideMode.ElideRight, ROW_TEXT_WIDTH),
                                      "Caption", wrap=False))
-            dot = theme.rank_color(SHIA_COLOR.get(r["rank"]) if self.tradition == "shia" else r["rank"])
+            shia = r.get("tradition") == "shia"
+            dot = theme.rank_color(SHIA_COLOR.get(r["rank"]) if shia else r["rank"])
             facts = []
-            if self.tradition == "shia":
+            if shia:
+                facts.append(f"<span style='color:{theme.current().gold}'><b>Shia</b></span>")
                 if r["rank"]:
                     facts.append(f"<span style='color:{dot}'>●</span> {shia_rijal.RANKS[r['rank']][1].split(' (')[0]}")
                 else:
@@ -274,8 +337,7 @@ class NarratorsPage(QWidget):
                 facts.append(f"tabaqa {r['tabaqa']}")
             if r["death"]:
                 facts.append(f"d. {r['death']}")
-            if self.tradition != "shia":
-                facts.append(f"{r['in_chains']:,} in chains")
+            facts.append(f"{r['in_chains']:,} in chains")
             caption = _label(" · ".join(facts), "Caption", wrap=False, rich=True)
             box.addWidget(caption)
             item.setSizeHint(widget.sizeHint())
@@ -322,14 +384,14 @@ class NarratorsPage(QWidget):
         hero = _label("No narrators yet", "Hero")
         hero.setFont(theme.reading_font(24, bold=True))
         box.addWidget(hero)
-        if self.tradition == "shia":
-            box.addWidget(_label("The Shia rijal works are imported from Data Sources: al-Najashi's Rijal — 1,266 authors and "
-                                 "narrators with his judgment on each, read on the Imami scale (reliability and creed).",
+        if self.tradition != "shia":
+            box.addWidget(_label("Sunni narrators come from Ibn Hajar's Taqrib al-Tahdhib — 8,824 narrators with his "
+                                 "verdict on each; every name in the chains of the Sunni books is matched to its narrator.",
                                  "Lead"))
-        else:
-            box.addWidget(_label("Narrators come from a rijal work. Import Ibn Hajar's Taqrib al-Tahdhib — 8,824 narrators "
-                                 "with his verdict on each — and every name in the chains is matched to its narrator.",
-                                 "Lead"))
+        if self.tradition != "sunni":
+            box.addWidget(_label("Shia narrators come from al-Najashi's Rijal — 1,266 authors and narrators with his "
+                                 "judgment on each, read in the Imami terms (reliability and creed); the chains of the "
+                                 "Shia books are matched to them.", "Lead"))
         row = QHBoxLayout()
         go = QPushButton("Open Data Sources")
         go.setObjectName("Primary")
@@ -349,13 +411,25 @@ class NarratorsPage(QWidget):
         self._current = person_id
         self._clear()
         t = theme.current()
+        shia = (who.get("tradition") or "sunni") == "shia"
 
         # the name: known-as, full name, the parts (NM1)
         self.detail_box.addWidget(NameCard(who["name_view"]))
 
         # verdicts, tabaqa, death
         card, box = self._card("What the critics say")
-        if who["name_ar"].strip() != who["display_name"].strip() or self.tradition == "shia":
+        tag_row = QHBoxLayout()
+        tag = QLabel("Shia narrator" if shia else "Sunni narrator")
+        tag.setObjectName("TagGold" if shia else "TagMuted")
+        tag.setToolTip(("A narrator of the Shia rijal works, judged in the Imami terms of his own critics and "
+                        "identified in the chains of the Shia books") if shia else
+                       ("A narrator of the Sunni rijal works, ranked on Ibn Hajar's scale and identified in the "
+                        "chains of the Sunni books"))
+        tag_row.addWidget(tag)
+        tag_row.addWidget(_label(f"from {html.escape(who.get('source') or '')}", "Caption", wrap=False, rich=True))
+        tag_row.addStretch(1)
+        box.addLayout(tag_row)
+        if who["name_ar"].strip() != who["display_name"].strip() or shia:
             # the entry as the critic wrote it: folded away, one click to read
             entry = _arabic(who["name_ar"], 0.62, muted=True)
             entry.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -408,7 +482,7 @@ class NarratorsPage(QWidget):
             facts.append(f"<b>Death</b>: {html.escape(who['death_year_note'])}")
         if facts:
             box.addWidget(_label(" &nbsp;·&nbsp; ".join(facts), "Lead", rich=True))
-        if self.tradition == "shia":
+        if shia:
             explain = _label("<b>How the Imami critics judge</b> — on two axes: <b>reliability</b> (thiqa; praised — jalil, "
                              "wajh, 'ayn, la ba's bihi; weak) and <b>creed</b> (Imami, or Waqifi, Fathi, Zaydi, 'ammi …). "
                              "Together they give the classical four: an Imami <b>thiqa</b>, a <b>praised</b> narrator (mamduh), "
@@ -441,18 +515,13 @@ class NarratorsPage(QWidget):
             box.addWidget(_label("Where his hadith appear (Ibn Hajar's marks)", "Caption"))
             box.addWidget(marks)
 
-        if self.tradition == "shia":
-            card, box = self._card("Chains")
-            box.addWidget(_label("The Shia hadith collections (al-Kafi, Man la yahduruhu al-faqih, Tahdhib al-ahkam, "
-                                 "al-Istibsar) and their chains are not imported yet; when they are, this narrator's teachers, "
-                                 "students and hadith will show here.", "Caption"))
-            self.detail_box.addStretch(1)
-            return
-        # teachers and students as the chains show them
+        # teachers and students as the chains of his own tradition's books show them
         rel = core_narrators.relations(conn, person_id)
         card, box = self._card("Teachers and students in the imported chains")
-        box.addWidget(_label("Counted from the chains imported here, where both narrators are identified. "
-                             "The full lists of al-Mizzi's Tahdhib al-Kamal are a later step.", "Caption"))
+        box.addWidget(_label(("Counted from the chains of the Shia books imported here (al-Kafi …), where both "
+                              "narrators are identified." if shia else
+                              "Counted from the chains imported here, where both narrators are identified. "
+                              "The full lists of al-Mizzi's Tahdhib al-Kamal are a later step."), "Caption"))
         cols = QHBoxLayout()
         for heading, items in (("Narrates from", rel["teachers"]), ("Narrated to", rel["students"])):
             col = QVBoxLayout()
@@ -493,6 +562,11 @@ class NarratorsPage(QWidget):
 
     def select(self, person_id: int) -> None:
         """Show a narrator, from this page or from another (the chain page)."""
+        conn = self.conn
+        row = conn.execute("SELECT COALESCE(tradition, 'sunni') FROM persons WHERE id = ?", (person_id,)).fetchone() \
+            if conn is not None else None
+        if row and self.tradition and row[0] != self.tradition:
+            self.set_tradition(row[0])              # a Shia narrator opened while Sunni ones are shown, or the reverse
         for i in range(self.list.count()):
             if self.list.item(i).data(Qt.ItemDataRole.UserRole) == person_id:
                 self.list.blockSignals(True)

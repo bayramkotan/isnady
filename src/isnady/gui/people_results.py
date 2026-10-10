@@ -2,7 +2,7 @@
 
 Each card is the person in brief — the name he is known by (reading and Arabic), his full name, his standing in
 words with the Arabic term in the tooltip, his generation (tabaqa) and how often he is in the imported chains —
-and the whole card opens him on his own page (Narrators, Shia Rijal or Hadith Scholars)."""
+and the whole card opens him on his own page (Narrators, Sunni and Shia, or Hadith Scholars)."""
 
 import html
 
@@ -103,7 +103,7 @@ def _facts(box: QVBoxLayout, tags: list[tuple[str, str]], parts: list[tuple[str,
 def person_card(row: dict, open_person) -> QFrame:
     """A narrator found by Search, from either tradition (core.narrators.find)."""
     shia = row["tradition"] == "shia"
-    page = "Shia Rijal" if shia else "Narrators"
+    page = "Narrators"
     card = _ClickCard(lambda: open_person(row["id"], row["tradition"]), f"Open {row['name']} on the {page} page")
     box = QVBoxLayout(card)
     box.setContentsMargins(22, 14, 22, 12)

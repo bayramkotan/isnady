@@ -738,8 +738,7 @@ def _search_people(conn, args) -> int:
             facts.append(f"tabaqa {r['tabaqa']}")
         if r["death"]:
             facts.append(f"d. {r['death']} AH")
-        if r["tradition"] != "shia":
-            facts.append(f"{r['in_chains']} in chains")
+        facts.append(f"{r['in_chains']} in chains")
         print("  " + " · ".join(facts))
     return 0
 
@@ -993,8 +992,10 @@ def cmd_isnads(args) -> int:
         print(f"Read {stats['parsed'] + stats['raw_only']} chains now.")
     print(f"Parser: {core_isnad.PARSER_ID}")
     for b in core_isnad.book_stats(conn):
-        print(f"  {b['name']}: {b['chains']} chains, {b['split']} split into narrators "
-              f"({100 * b['split'] / b['chains']:.1f}%), {b['marfu']} reach the Prophet, {b['links']} links")
+        shia = b.get("tradition") == "shia"           # road B: read in the Shia way, ending at a Ma'sum
+        end = "a Ma'sum (the Prophet or an Imam)" if shia else "the Prophet"
+        print(f"  {b['name']}{' (Shia)' if shia else ''}: {b['chains']} chains, {b['split']} split into narrators "
+              f"({100 * b['split'] / b['chains']:.1f}%), {b['marfu']} reach {end}, {b['links']} links")
         for problem, count in b["problems"]:
             print(f"    {count:6}  not split: {problem}")
     if core_narrators_loaded(conn):
@@ -1027,15 +1028,21 @@ def cmd_chain(args) -> int:
     for ch in chains:
         if ch["problem"]:
             print(f"  not split: {ch['problem']}")
-        for link in ch["links"]:
+        for i, link in enumerate(ch["links"]):
             arabic, meaning, _why = core_isnad.term_label(link["transmission"])
-            print(f"  {link['position']:>2}. {arabic} ({meaning})  {link['raw_name']}")
-            if link["person_id"]:
+            meaning = meaning if meaning.startswith("(") else f"({meaning})"
+            print(f"  {link['position']:>2}. {arabic} {meaning}  {link['raw_name']}")
+            nxt = ch["links"][i + 1]["raw_name"] if i + 1 < len(ch["links"]) else ""
+            note = core_isnad.link_note(link["raw_name"], nxt)
+            if note and not link["person_id"]:
+                print(f"      = {note}")
+            elif link["person_id"]:
                 who = core_narrators.describe(conn, link["person_id"])
                 v = who["verdicts"][0] if who["verdicts"] else None
                 facts = [f"tabaqa {who['tabaqa']}" if who["tabaqa"] else "",
                          f"d. {who['death_year_ah']} AH" if who["death_year_ah"] else "",
-                         f"Ibn Hajar: {v['phrase']}" + (f" (rank {v['rank']})" if v and v["rank"] else "") if v else ""]
+                         f"{v['critic_name']}: {v['phrase'][:160] + (' …' if len(v['phrase']) > 160 else '')}" + (f" ({v['rank_label']})" if v and v["rank"] and v["rank_scheme"] == "shia"
+                                                          else f" (rank {v['rank']})" if v and v["rank"] else "") if v else ""]
                 print(f"      = {who['display_name']}")
                 print(f"        {'; '.join(f for f in facts if f)}")
             elif link.get("candidates") is not None and core_narrators_loaded(conn):
@@ -1043,7 +1050,8 @@ def cmd_chain(args) -> int:
                 print(f"      = not identified ({n} possible narrator{'s' if n != 1 else ''})" if n else
                       "      = not identified (no narrator of that name found)")
         if ch["links"]:
-            print("      -> the Prophet" if ch["reaches_prophet"] else "      (chain stops here)")
+            end = core_isnad.end_label(ch)
+            print(f"      -> {end}" if end else "      (chain stops here)")
         if args.raw and ch["raw"]:
             print(f"  raw: {ch['raw']}")
     conn.close()
@@ -1071,7 +1079,11 @@ def cmd_narrator(args) -> int:
         if who["death_year_ah"] or who["death_year_note"]:
             print(f"  death: {who['death_year_ah'] or '?'} AH" + (f"  ({who['death_year_note']})" if who["death_year_note"] else ""))
         for v in who["verdicts"]:
-            rank = f"  rank {v['rank']}: {v['rank_label']}" if v["rank"] else ""
+            if v["rank_scheme"] == "shia":         # the Imami terms, not a rank of Ibn Hajar's twelve (SK)
+                rank = f"  {v['rank_label']}" + (f", {v['madhhab_label']}" if v.get("madhhab_label") else "") \
+                    if v["rank"] else "  no judgment in these words"
+            else:
+                rank = f"  rank {v['rank']}: {v['rank_label']}" if v["rank"] else ""
             print(f"  {v['critic_name']}, {v['work']}: {v['phrase']}{rank}")
         if who["marks"]:
             print("  books: " + ", ".join(f"{m} {meaning}" for m, meaning in who["marks"]))

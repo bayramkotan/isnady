@@ -26,7 +26,7 @@ from typing import Callable
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
-MATCHER_ID = "isnady-narrators-7"
+MATCHER_ID = "isnady-narrators-8"
 _TEACHER_MIN_TABAQA = 9           # the compilers' own teachers (Ibn Hajar's tabaqat 9-12)
 _HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم).*$")
 _CLARIFY = re.compile(r"[،,]?\s*-?\s*(?:يعني|هو)\s+([^-]+?)\s*-?\s*$")
@@ -46,23 +46,30 @@ def _is_subsequence(short: list[str], long: list[str]) -> bool:
 class Index:
     """Every person's names as tokens, with tabaqa and book marks, for fast lookup."""
 
-    def __init__(self, conn: sqlite3.Connection) -> None:
+    def __init__(self, conn: sqlite3.Connection, tradition: str = "sunni") -> None:
+        self.tradition = tradition
         self.tabaqa, self.marks, self.full = {}, defaultdict(set), {}
         self.names: dict[str, list[tuple[int, list[str], bool]]] = defaultdict(list)   # first token -> entries
         self.exact: dict[str, set[int]] = defaultdict(set)
-        # only narrators of the chains' own tradition: every imported chain is Sunni, and a Shia rijal work's
-        # narrator with the same name is a different source's judgment, not a candidate for these links
-        for pid, tabaqa, name in conn.execute("SELECT id, tabaqa, name_ar FROM persons WHERE COALESCE(tradition, 'sunni') = 'sunni'"):
+        # only narrators of the chains' own tradition (SH1, the two roads): a Sunni book's chains are read in the
+        # Sunni rijal works, a Shia book's in the Shia ones — a narrator of the other tradition with the same name
+        # is another source's judgment, never a candidate for these links
+        for pid, tabaqa, name in conn.execute("SELECT id, tabaqa, name_ar FROM persons WHERE COALESCE(tradition, 'sunni') = ?",
+                                              (tradition,)):
             self.tabaqa[pid] = tabaqa
             self.full[pid] = tokens(name)
         for pid, mark in conn.execute("SELECT person_id, mark FROM person_marks"):
             self.marks[pid].add(mark)
         for pid, name, kind in conn.execute("SELECT n.person_id, n.name, n.kind FROM person_names n JOIN persons p ON p.id = n.person_id "
-                                            "WHERE COALESCE(p.tradition, 'sunni') = 'sunni'"):
+                                            "WHERE COALESCE(p.tradition, 'sunni') = ?", (tradition,)):
             toks = tokens(name)
             if toks:
                 self.names[toks[0]].append((pid, toks, kind != "full"))
                 self.exact[" ".join(toks)].add(pid)
+                if tradition == "shia" and kind == "full" and "بن" in toks[1:]:
+                    # the Shia chains call many by their father alone: "ابن أبي عمير" is Muhammad b. Abi 'Umayr
+                    i = toks.index("بن", 1)
+                    self.names["بن"].append((pid, toks[i:], True))
 
     def candidates(self, toks: list[str]) -> set[int]:
         """Persons whose name can be the one written in the chain.
@@ -135,11 +142,21 @@ def name_tokens(raw_name: str, previous: list[str] | None) -> tuple[list[str], s
 
 def match_chain(index: Index, links: list[dict], collection: str, reaches_prophet: bool) -> list[tuple]:
     """For each link: (person_id or None, confidence or None, number of candidates)."""
+    from isnady.core import traditions
+
     allowed_marks = COLLECTION_MARKS.get(collection)
     cands: list[set[int]] = []
     previous: list[str] | None = None
     for link in links:
+        if index.tradition == "shia" and traditions.link_kind(link["raw_name"]) != "person":
+            cands.append(set())                    # a group, "عنه", "عن رجل": no one to look up
+            previous = None
+            continue
         toks, _how = name_tokens(link["raw_name"], previous)
+        if index.tradition == "shia" and link["position"] == 1:
+            fuller = traditions.teacher_name(collection, link["raw_name"])
+            if fuller:
+                toks = tokens(fuller)                  # the compiler's own teacher, as the rijal works name him
         found = index.candidates(toks)
         if allowed_marks and found:
             in_book = {p for p in found if index.marks[p] & allowed_marks}
@@ -204,17 +221,22 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
         return {"chains": 0, "links": 0, "identified": 0, "note": "up to date"}
 
     say("Identifying narrators")
-    index = Index(conn)
+    indexes: dict[str, Index] = {}
     chains = conn.execute(
-        """SELECT i.id, i.reaches_prophet, c.key FROM isnads i
+        """SELECT i.id, i.reaches_prophet AND COALESCE(i.ends_with, 'prophet') = 'prophet', c.key,
+                  COALESCE(c.tradition, 'sunni') FROM isnads i
            JOIN hadiths h ON h.id = i.hadith_id JOIN collections c ON c.id = h.collection_id
            WHERE i.problem IS NULL"""
     ).fetchall()
     total = identified = 0
-    for isnad_id, reaches, collection in chains:
+    for isnad_id, reaches, collection, tradition in chains:
+        # road A or road B: each book's chains are identified in its own tradition's rijal works
+        road = "shia" if tradition == "shia" else "sunni"
+        if road not in indexes:
+            indexes[road] = Index(conn, road)
         links = [dict(r) for r in conn.execute(
             "SELECT position, raw_name FROM isnad_links WHERE isnad_id = ? ORDER BY position", (isnad_id,))]
-        results = match_chain(index, links, collection, bool(reaches))
+        results = match_chain(indexes[road], links, collection, bool(reaches))
         for link, (pid, confidence, count) in zip(links, results):
             conn.execute("UPDATE isnad_links SET person_id = ?, match_confidence = ?, candidates = ? "
                          "WHERE isnad_id = ? AND position = ?", (pid, confidence, count, isnad_id, link["position"]))
@@ -576,8 +598,12 @@ def search_persons(conn: sqlite3.Connection, text: str, limit: int = 20,
 
 # ------------------------------------------------------------------ the Narrators page
 def overview(conn: sqlite3.Connection, tradition: str = "sunni") -> dict:
+    """Narrators of one tradition, and how many names in the chains of THAT tradition's books are identified."""
     persons = conn.execute("SELECT COUNT(*) FROM persons WHERE COALESCE(tradition, 'sunni') = ?", (tradition,)).fetchone()[0]
-    links = conn.execute("SELECT COUNT(*), SUM(person_id IS NOT NULL) FROM isnad_links").fetchone()
+    links = conn.execute(
+        """SELECT COUNT(*), SUM(l.person_id IS NOT NULL) FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id
+           JOIN hadiths h ON h.id = i.hadith_id JOIN collections c ON c.id = h.collection_id
+           WHERE COALESCE(c.tradition, 'sunni') = ?""", (tradition,)).fetchone()
     works = [r[0] for r in conn.execute(
         "SELECT DISTINCT s.name FROM persons p JOIN sources s ON s.id = p.source_id WHERE COALESCE(p.tradition, 'sunni') = ? "
         "ORDER BY s.name", (tradition,))]

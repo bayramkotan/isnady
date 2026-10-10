@@ -19,6 +19,17 @@ from isnady.gui.widgets import FlowLayout, expanding_width_policy
 PROPHET = "النبي ﷺ"
 
 
+def end_chip(chain: dict) -> str:
+    """The short Arabic name of whom a chain reaches: the Prophet ﷺ, or on road B one of the Imams."""
+    from isnady.core import traditions
+
+    key = chain.get("ends_with") or "prophet"
+    if key == "prophet":
+        return PROPHET
+    m = traditions.MASUM.get(key)
+    return m.name_ar if m else "الإمام عليه السلام"
+
+
 def _chip(text: str, name: str, tip: str = "") -> QLabel:
     chip = QLabel(text)
     chip.setObjectName(name)
@@ -38,14 +49,28 @@ def _shorten(text: str, limit: int) -> str:
     return text if len(text) <= limit else text[:limit].rsplit(" ", 1)[0] + " …"
 
 
+SHIA_COLOR = {1: 2, 2: 4, 3: 5, 4: 9}   # the Shia categories drawn in the rank colours of like standing
+
+
+def _critic(v: dict) -> str:
+    """The critic by the name isnady gives him (NM2): "Ibn Hajar", "al-Najashi" …"""
+    if v.get("rank_scheme") == "shia":
+        return v.get("critic_name") or "al-Najashi"
+    return "Ibn Hajar" if "حجر" in (v.get("critic_name") or "") or not v.get("critic_name") else v["critic_name"]
+
+
 def person_summary(person: dict | None) -> str:
-    """One line about an identified narrator: Ibn Hajar's verdict, rank, tabaqa and death."""
+    """One line about an identified narrator: his critic's verdict (Ibn Hajar's rank, or the Imami terms of a
+    Shia critic), tabaqa and death."""
     if not person:
         return ""
     parts = []
     v = person["verdicts"][0] if person.get("verdicts") else None
     if v:
-        parts.append(f"Ibn Hajar: {v['phrase']}" + (f" (rank {v['rank']} of 12)" if v["rank"] else ""))
+        if v.get("rank_scheme") == "shia":
+            parts.append(f"{_critic(v)}: {v['phrase'][:80]}" + (f" ({v['rank_label']})" if v["rank"] else ""))
+        else:
+            parts.append(f"Ibn Hajar: {v['phrase']}" + (f" (rank {v['rank']} of 12)" if v["rank"] else ""))
     if person.get("tabaqa"):
         parts.append(f"tabaqa {person['tabaqa']}")
     if person.get("death_year_ah"):
@@ -76,14 +101,14 @@ class ChainStrip(QWidget):
                 flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChip", tip))
             else:
                 n = link.get("candidates")
-                why = ("not identified yet" if n is None else
+                why = core_isnad.link_note(link["raw_name"]) or ("not identified yet" if n is None else
                        f"not identified: {n} narrators could have this name" if n else
                        "not identified: no narrator of this name in the rijal work")
                 flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChipUnknown",
                                      f"{link['raw_name']}\n{why}\n{arabic}: {meaning}"))
-        if chain["reaches_prophet"]:
+        if chain["reaches_prophet"] or chain.get("ends_with"):
             flow.addWidget(_arrow())
-            flow.addWidget(_chip(PROPHET, "ChainChipProphet", "The chain reaches the Prophet (marfu')"))
+            flow.addWidget(_chip(end_chip(chain), "ChainChipProphet", "The chain reaches " + core_isnad.end_label(chain)))
         self.setSizePolicy(expanding_width_policy())
 
     def hasHeightForWidth(self) -> bool:  # noqa: N802
@@ -124,7 +149,7 @@ class ChainNode(QWidget):
 
     def __init__(self, title: str, subtitle: str = "", term: str | None = None, *, first: bool = False,
                  last: bool = False, prophet: bool = False, full_name: str = "", latin: bool = False,
-                 person: dict | None = None, candidates: int | None = None, on_person=None) -> None:
+                 person: dict | None = None, candidates: int | None = None, on_person=None, note: str = "") -> None:
         super().__init__()
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
@@ -190,11 +215,19 @@ class ChainNode(QWidget):
                 box.addWidget(roman)
             v = person["verdicts"][0] if person.get("verdicts") else None
             if v:
-                dot = theme.rank_color(v["rank"])
-                rank_text = (f"&nbsp;&nbsp;<span style='color:{dot}'>●</span> rank {v['rank']} of 12: "
-                             f"{html.escape(v['rank_label'])}") if v["rank"] else ""
+                shia = v.get("rank_scheme") == "shia"
+                if shia:                    # the Imami terms, never Ibn Hajar's twelve ranks (SK)
+                    dot = theme.rank_color(SHIA_COLOR.get(v["rank"]))
+                    rank_text = (f"&nbsp;&nbsp;<span style='color:{dot}'>●</span> {html.escape(v['rank_label'])}"
+                                 if v["rank"] else "&nbsp;&nbsp;<i>no judgment in these words</i>")
+                    if v.get("madhhab_label"):
+                        rank_text += f" · {html.escape(v['madhhab_label'])}"
+                else:
+                    dot = theme.rank_color(v["rank"])
+                    rank_text = (f"&nbsp;&nbsp;<span style='color:{dot}'>●</span> rank {v['rank']} of 12: "
+                                 f"{html.escape(v['rank_label'])}") if v["rank"] else ""
                 arabic = theme.script_font("arabic", factor=0.68)
-                verdict = QLabel(f"Ibn Hajar: <span style='font-family:\"{arabic.family()}\"; "
+                verdict = QLabel(f"{html.escape(_critic(v))}: <span style='font-family:\"{arabic.family()}\"; "
                                  f"font-size:{arabic.pointSizeF():.1f}pt'>{html.escape(_shorten(v['phrase'], 70))}</span>"
                                  f"{rank_text}")
                 verdict.setObjectName("NodeVerdict")
@@ -214,6 +247,11 @@ class ChainNode(QWidget):
                 line.setObjectName("NodeFacts")
                 line.setWordWrap(True)
                 box.addWidget(line)
+        elif note and not prophet:
+            unknown = QLabel(note)
+            unknown.setObjectName("NodeUnknown")
+            unknown.setWordWrap(True)
+            box.addWidget(unknown)
         elif candidates is not None and not prophet and not latin:
             text = (f"Not identified yet: {candidates} narrators in the rijal work could have this name"
                     if candidates else "Not identified: no narrator of this name in the rijal work")

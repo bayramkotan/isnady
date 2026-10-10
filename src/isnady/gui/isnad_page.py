@@ -23,7 +23,8 @@ from PySide6.QtWidgets import (
 from isnady.core import isnad as core_isnad
 from isnady.core import narrators as core_narrators
 from isnady.gui import theme
-from isnady.gui.chain_widgets import PROPHET, ChainNode
+from isnady.core import traditions
+from isnady.gui.chain_widgets import ChainNode, end_chip
 from isnady.gui.widgets import TextBlock, expanding_width_policy
 
 
@@ -43,6 +44,7 @@ class IsnadPage(QWidget):
 
     def __init__(self, connection_getter, parent=None) -> None:
         super().__init__(parent)
+        self._tradition = "sunni"
         self.setObjectName("Page")
         self._conn_of = connection_getter          # the Search page owns the connection
         self._current: dict | None = None
@@ -241,6 +243,7 @@ class IsnadPage(QWidget):
         head.addStretch(1)
         self.body_layout.addLayout(head)
 
+        self._tradition = traditions.of_collection(self.conn, info["book"])
         verdict = self._verdict(chain)
         self.body_layout.addWidget(verdict)
         self.body_layout.addSpacing(16)
@@ -248,14 +251,19 @@ class IsnadPage(QWidget):
         if chain and chain["links"]:
             self.body_layout.addWidget(ChainNode(info["book_name"], "The compiler's book, where the chain begins",
                                                  first=True, latin=True))
-            for link in chain["links"]:
+            links = chain["links"]
+            for i, link in enumerate(links):
                 person = core_narrators.describe(self.conn, link["person_id"]) if link.get("person_id") else None
+                nxt = links[i + 1]["raw_name"] if i + 1 < len(links) else ""
                 self.body_layout.addWidget(ChainNode(core_isnad.short_name(link["raw_name"]), "",
                                                      link["transmission"], full_name=link["raw_name"],
                                                      person=person, candidates=link.get("candidates"),
-                                                     on_person=self.open_narrator.emit))
-            if chain["reaches_prophet"]:
-                self.body_layout.addWidget(ChainNode(PROPHET, "The Messenger of God", None, last=True, prophet=True))
+                                                     on_person=self.open_narrator.emit,
+                                                     note=core_isnad.link_note(link["raw_name"], nxt)))
+            if chain["reaches_prophet"] or chain.get("ends_with"):
+                key = chain.get("ends_with") or "prophet"
+                subtitle = "The Messenger of God" if key == "prophet" else core_isnad.end_label(chain)
+                self.body_layout.addWidget(ChainNode(end_chip(chain), subtitle, None, last=True, prophet=True))
         self.body_layout.addSpacing(18)
 
         text = core_isnad.arabic_text(self.conn, hid)
@@ -270,6 +278,20 @@ class IsnadPage(QWidget):
         elif chain["problem"]:
             text = (f"This chain was kept whole and not split: {chain['problem']}. "
                     "The full wording is shown below.")
+        elif self._tradition == "shia" and chain["links"]:
+            # road B: the chain is read in the Shia way and ends at one of the Fourteen Ma'sumun
+            n = len(chain["links"])
+            known = sum(1 for link in chain["links"] if link.get("person_id"))
+            end = core_isnad.end_label(chain)
+            text = (f"Read as a Shia chain: {n} link{'s' if n != 1 else ''} between the compiler and {end}."
+                    if end else f"Read as a Shia chain: {n} link{'s' if n != 1 else ''}; it stops before a Ma'sum is "
+                    "named (maqtu', or the last link could not be read with confidence).")
+            if any(link.get("candidates") is not None for link in chain["links"]):
+                text += f" {known} of them identified in the Shia rijal works (al-Najashi …)."
+            from isnady.core.normalize import normalize
+
+            if "جميعا" in normalize(chain.get("raw") or ""):
+                text += " A second road joins it (\"jami'an\"); the first road is drawn."
         elif chain["reaches_prophet"]:
             n = len(chain["links"])
             known = sum(1 for link in chain["links"] if link.get("person_id"))

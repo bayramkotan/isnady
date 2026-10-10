@@ -26,7 +26,7 @@
   <a href="#-narrators">Narrators</a> •
   <a href="#-hadith-scholars">Scholars</a> •
   <a href="#-books">Books</a> •
-  <a href="#-shia-rijal">Shia Rijal</a> •
+  <a href="#-sunni-and-shia-two-roads">Sunni and Shia</a> •
   <a href="#-statistics">Statistics</a> •
   <a href="#-learn">Learn</a> •
   <a href="#-search-by-meaning-ai">Meaning (AI)</a> •
@@ -288,23 +288,41 @@ iy book bukhari 2 --language Turkish
 iy book taqrib 1
 ```
 
-### 🕌 Shia Rijal
+### 🕌 Sunni and Shia: two roads
 
-The Imami tradition's judgments on narrators, on its own terms: al-Najashi's *Rijal* — 1,266
-authors and narrators — read along the two axes of the Imami critics, **reliability** (thiqa;
-praised — *jalil*, *wajh*, *'ayn*; weak) and **creed** (Imami, or Waqifi, Fathi, Zaydi, *'ammi* …),
-which together give the classical four: an Imami *thiqa*, a praised narrator (*mamduh*), a *thiqa*
-of another school (*muwaththaq*), a weak one. The critic's own words are always shown; a creed he
-does not state stays unknown; nothing is mapped onto Ibn Hajar's twelve ranks. Checked on four
-blind samples of entries, each round's misses corrected. The book itself reads in **Books**, and
-the Shia narrators are kept apart from the (Sunni) chains: no chain link is matched to them.
+Sunni and Shia narrators meet on one **Narrators** page — *All*, *Sunni* or *Shia* at the top of the
+list — and every Shia narrator carries a gold **Shia** tag. They meet without being mixed: each value
+isnady derives is reached along the road of the book's own tradition.
+
+| | Road A — Sunni books | Road B — Shia books |
+|---|---|---|
+| How a chain opens | a transmission term on every link (حدثنا، أخبرنا، عن …) | al-Kulayni names his teacher without a term (علي بن إبراهيم عن أبيه …) |
+| Groups and joined roads | two narrators at one link (qiran) | "عدة من أصحابنا" — al-Kulayni's groups, with the teachers he said they stand for; "… جميعاً عن …", two roads joined; "رفعه"; "عن رجل" |
+| Where it ends | the Prophet ﷺ | one of the Fourteen Ma'sumun: the Prophet ﷺ or an Imam, most often by his kunya — أبو عبد الله is Ja'far al-Sadiq, أبو جعفر al-Baqir, أبو الحسن al-Kazim or al-Rida; "سألته" is *mudmar* |
+| Who identifies its narrators | Ibn Hajar's *Taqrib al-Tahdhib* | only the Shia rijal works: al-Najashi's *Rijal* (al-Tusi's next) |
+| How a narrator is judged | Ibn Hajar's twelve ranks | the Imami critics' own terms — **reliability** (*thiqa*; praised — *jalil*, *wajh*, *'ayn*; weak) and **creed** (Imami, or Waqifi, Fathi, Zaydi, *'ammi* …): an Imami *thiqa*, a praised narrator (*mamduh*), a *thiqa* of another school (*muwaththaq*), a weak one |
+
+Nothing is mapped onto the other tradition's measure, and a narrator of one tradition is never a
+candidate for a link of the other's chains. Read this way, **96.8%** of al-Kafi's 14,239 chains split
+into their narrators (it was 9 chains when they were read the Sunni way), **92%** reach a
+Ma'sum, and half of their 61,160 names are already identified in al-Najashi's *Rijal* (from 3).
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/shia-rijal.png" alt="Shia Rijal — al-Najashi on 'Ali b. al-Husayn b. Babawayh: his words and their reading on the Imami scale" width="850">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/chain-shia.png" alt="A chain of al-Kafi read the Shia way: al-Kulayni's group of teachers, the narrators judged by al-Najashi, ending at Imam Ja'far al-Sadiq" width="850">
 </p>
 
-Next: al-Tusi's *Rijal* and *Fihrist*, al-'Allama al-Hilli's *Khulasat al-aqwal*, Ibn Dawud's
-*Rijal*, al-Kashshi's reports, and the Four Books with their chains.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/narrators-shia.png" alt="Narrators — Zurara b. A'yan, a Shia narrator: al-Najashi's words and their reading in the Imami terms" width="850">
+</p>
+
+```bash
+iy search "زرارة" --in narrators --tradition shia
+iy isnads                    # per book: chains split, and whom they reach — the Prophet, or a Ma'sum on road B
+iy chain kafi 5:1740
+```
+
+Next: al-Tusi's *Rijal* and *Fihrist* (and al-Kashshi's reports), names resolved by teacher and
+student, and statistics of the Shia books by the Imami scholars' grades (al-Majlisi, al-Behbudi).
 
 ### 📊 Statistics
 

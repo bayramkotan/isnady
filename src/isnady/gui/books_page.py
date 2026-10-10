@@ -423,7 +423,7 @@ class BooksPage(QWidget):
                 self.open_chapter(self._order[i])
 
     def show_person(self, person_id: int) -> None:
-        """Open the rijal work and chapter of a narrator's entry (from the Narrators or Shia Rijal pages)."""
+        """Open the rijal work and chapter of a narrator's entry (from the Narrators page)."""
         conn = self.conn
         if self.works.count() == 0:
             self.refresh()
