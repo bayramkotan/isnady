@@ -860,7 +860,9 @@ def cmd_book(args) -> int:
             print(f"  {w['key']:12} {w['title']:32} {w['kind']:8} {w['leaves']:6,} items, {w['chapters']} chapters")
         conn.close()
         return 0
-    work = works.find_work(conn, args.key)
+    from isnady.core import books as core_books
+
+    work = works.find_work(conn, core_books.resolve(args.key))
     if work is None:
         print(f"No book '{args.key}'. See: iy book", file=sys.stderr)
         conn.close()
@@ -1248,6 +1250,12 @@ def _utf8_output() -> None:
 def main(argv: list[str] | None = None) -> int:
     _utf8_output()
     args = build_parser().parse_args(argv)
+    # a book may be named by its full name (musnad_ahmad_ibn_hanbal), its key (ahmad) or an earlier id
+    if getattr(args, "book", None) and getattr(args, "func", None) not in (cmd_catalog,):
+        from isnady.core import books as core_books
+
+        args.book = [core_books.resolve(b) for b in args.book] if isinstance(args.book, list) \
+            else core_books.resolve(args.book)
     try:
         return args.func(args)
     except BrokenPipeError:

@@ -3,66 +3,55 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.1.8] — 2026-10-10
 
-- **Books named in full**: in isnady-data every book's folder and id is its full title with its compiler's name —
-  `sunni/musnad_ahmad_ibn_hanbal/`, `sunni/sahih_al_bukhari/`, `shia/al_kafi_al_kulayni/`,
-  `rijal/sunni/taqrib_al_tahdhib_ibn_hajar_al_asqalani.md` — never a bare name; `iy catalog import
-  musnad_ahmad_ibn_hanbal` (the short keys of earlier versions are still understood).
+**isnady's own data repository with every Sunni and Shia source, books in order and in full name, search in a few
+books, and the correlation and test laboratory.**
 
+- **Data repositories** (Settings → Data sources; `iy repo`): isnady reads its sources from a repository — a
+  `catalog.json` listing books and rijal works with their files, licences and tradition. The default is isnady's
+  own, [isnady-data](https://github.com/bayramkotan/isnady-data): every Sunni and Shia source isnady reads (35), in
+  one place and in isnady's own format, each book in a folder named by its full title and its compiler —
+  `sunni/sahih_al_bukhari/`, `sunni/musnad_ahmad_ibn_hanbal/`, `shia/al_kafi_al_kulayni/`,
+  `rijal/sunni/taqrib_al_tahdhib_ibn_hajar_al_asqalani.md`, never a bare name. Sunni: the six books, the Muwatta,
+  Musnad Ahmad ibn Hanbal, Sunan al-Darimi, Riyad al-Salihin, al-Shama'il al-Muhammadiyya, Bulugh al-Maram, al-Adab
+  al-Mufrad, Mishkat al-Masabih and three forty-hadith books, in Arabic and up to eight translations, with grades.
+  Shia: al-Kafi of al-Kulayni in eight volumes with al-Majlisi's and al-Behbudi's grades, the books of al-Shaykh
+  al-Saduq, al-Shaykh al-Mufid, al-Shaykh al-Tusi, Ibn Abi Zaynab al-Nu'mani, Ibn Qulawayh, al-Husayn ibn Sa'id
+  al-Ahwazi and Asif al-Muhsini, in Arabic and English. Rijal: Ibn Hajar's Taqrib al-Tahdhib and al-Najashi's Rijal.
+- Optional repositories in the same list — the datasets others publish (fawazahmed0/hadith-api, Thaqalayn, Open
+  Hadith Data, hadith-json, the LK Hadith Corpus, Hugging Face meeAtif/hadith_datasets, Hadith-Data-Sets, OpenITI),
+  each book under its own key so editions numbered differently never mix — and any repository with a catalog can
+  be added (a GitHub repository, a Hugging Face dataset, a URL or a folder) and chosen. The catalog is kept for a
+  day; offline, the copy shipped with isnady is used.
+- **isnady's book format** (isnady-book/1): `book.json` (numbers, chapters, references, grades) and one file per
+  language, so only the languages chosen are downloaded; a book imported earlier straight from its publisher is
+  replaced, not shown twice. A second importer reads any CSV or JSON table of hadith through a column mapping.
+  `iy catalog import musnad_ahmad_ibn_hanbal`; the short keys of earlier versions (`ahmad`, `fawaz-bukhari`) are
+  still understood, and every command that takes a book takes its full name (`iy chain sunan_abi_dawud 1`).
 - **Books in order, Sunni and Shia apart**: every book list (Search, Isnad Chains, Statistics, Books) shows the
   Sunni collections first — the six books, the Muwatta, the Musnad and al-Darimi in their classical order, then the
   others by name, read without a leading 'ayn or article — and the Shia collections after them, al-Kafi first,
-  each group under its own heading.
+  each group under its own heading. The Data sources page lists the repository's sources the same way, with their
+  Arabic titles, tradition and licence.
 - **Search in a few books**: Books on the Search page opens a list to tick — all books, all Sunni, all Shia, or any
   few one by one; a narrowed search is marked.
 - **Settings → Books and languages**: switch any imported book off (it stays in the database, but is left out of
   searches, book lists and statistics until switched on again; statistics keep a saved result for each set of
   active books, so switching back reads it instead of computing again); choose the languages the texts are shown
   in, the others folded behind an arrow on each hadith (▸ Other languages: English) or left out.
-
-- **Data repositories** (Settings → Data sources; `iy repo`): isnady reads its sources from a repository — a
-  `catalog.json` listing books and rijal works with their files, licences and tradition. The default is isnady's
-  own, [isnady-data](https://github.com/bayramkotan/isnady-data), which holds every Sunni and Shia source isnady
-  reads (35) in one place and in isnady's own format (`sunni/bukhari/`, `shia/kafi/`, `rijal/sunni/` …): the six
-  books, the Muwatta, Musnad Ahmad, Sunan al-Darimi, Riyad al-Salihin, al-Shama'il, Bulugh al-Maram, al-Adab
-  al-Mufrad, Mishkat al-Masabih and three forty-hadith books (Arabic and up to eight translations, with grades);
-  sixteen Shia collections — al-Kafi in eight volumes with al-Majlisi's and al-Behbudi's grades, al-Saduq's books,
-  al-Mufid, al-Tusi, al-Nu'mani, Ibn Qulawayh, al-Ahwazi, al-Muhsini (Arabic and English); the Taqrib and
-  al-Najashi's Rijal. Optional repositories, chosen from the same list: the datasets others publish
-  (fawazahmed0/hadith-api, Thaqalayn, Open Hadith Data, hadith-json, the LK Hadith Corpus, Hugging Face
-  meeAtif/hadith_datasets, Hadith-Data-Sets, OpenITI), each book under its own key so editions numbered
-  differently never mix. Any repository with a catalog can be added (a GitHub repository, a Hugging Face dataset,
-  a URL or a folder) and chosen. The catalog is read from the repository and kept for a day; without the network,
-  the copy shipped with isnady is used.
-- **isnady's book format** (isnady-book/1, format `isnady`): a book is a folder with `book.json` (numbers,
-  chapters, references, grades) and one file per language, so only the languages chosen are downloaded. A book
-  imported earlier straight from its publisher is replaced by the isnady-data one, not shown twice.
-- The Data sources page lists the repository's sources as Sunni hadith, Shia hadith and narrators, each with its
-  Arabic title, tradition, licence, whether it is kept in the repository or read from its origin, and a link to
-  the origin. Shia collections are marked Shia in the database (`collections.tradition`).
-- **A new importer for tables** (format `table`): any CSV file or JSON list of hadith, the catalog naming which
-  column is the number, the Arabic, a translation, a commentary, a grade, the chapter and its title — a book in
-  several files (chapters, volumes numbered volume:hadith) read as one.
-- `iy repo list|use|show|add|remove`; `iy catalog list|import --repo ID`; the old ids (`fawaz-bukhari` …) still
-  work. `tools/build_data_repo.py` writes the shipped catalogs and builds the isnady-data repository.
-
-- **Correlations and tests** (Statistics → Correlations and tests; `iy stats lab [--book KEY] [--csv DIR]`): every
-  measure against every other, by rank. For the hadith of a book: the factors of the best chain (weakest narrator,
-  further weak narrators, length, names not identified, chains in the book, narrations elsewhere, stopping short of
-  the Prophet, a doubtful link), the hadith's place in the book, every scholar's grade and how far the scholars are
-  apart — Spearman's ρ with Benjamini–Hochberg q-values, and the partial ρ with all the other factors held equal:
-  what each factor says of each scholar's grade on its own (the rank counterpart of the hadith model). For the
-  narrators: Ibn Hajar's rank, generation, year of death, times in the chains, teachers, students, PageRank. The
-  scholars against each other: how closely their grades follow one another, and Stuart–Maxwell's test of whether
-  one grades higher overall on the same hadith (Holm-adjusted). The books against each other: Kruskal–Wallis with
-  ε², pairwise Mann–Whitney with Cliff's δ (Holm). The hadith model's shape tested: Brant's test of the
-  proportional-odds assumption — does each factor weigh the same at every step of the grades? — overall and factor by
-  factor, with the odds ratio at each step (on Sunan Abi Dawud it does not hold for further weak narrators, who weigh
-  more between hasan and da'if than between sahih and hasan). Every matrix switches between each pair alone and the others held
-  equal; a pair that could be chance is outlined, not coloured; every figure on hover and every table as CSV.
-  Computed in pure Python and checked against SciPy and statsmodels (the same values to 1e-14); Brant's test checked
-  by simulation (5% false alarms when the shape holds, every violation found when it does not).
+- **Correlations and tests** (Statistics → Correlations and tests; `iy stats lab [--book] [--csv DIR]`): every
+  measure against every other by rank — Spearman's ρ with Benjamini–Hochberg q-values and the partial ρ with all
+  the others held equal (what each factor of the chain says of each scholar's grade on its own); the scholars'
+  grades compared pair by pair (Stuart–Maxwell); Brant's test of the hadith model's proportional-odds shape, with
+  the odds ratio at each step; the narrators' measures (rank, generation, death, times in the chains, teachers,
+  students, PageRank); the books compared (Kruskal–Wallis with ε², Mann–Whitney with Cliff's δ, Holm). Every matrix
+  switches between each pair alone and the others held equal; a pair that could be chance is outlined, not
+  coloured; every figure on hover and every table as CSV. Checked against SciPy and statsmodels; Brant's test by
+  simulation.
+- Saved computations are named by the book's full name (`derived/lab-sunan_abi_dawud.json`), and
+  `tools/publish_database.py` sends this computer's database (as a Release of isnady-data, without your own
+  sources) and every saved computation (`derived/`) to isnady-data.
 
 ## [0.1.7] — 2026-10-08
 

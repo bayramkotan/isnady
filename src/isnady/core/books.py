@@ -79,3 +79,37 @@ def grouped(conn: sqlite3.Connection, include_inactive: bool = False) -> list[tu
     return [(t, label, [b for b in books if (b["tradition"] if b["tradition"] in CANON else "other") == t])
             for t, label in TRADITIONS if any((b["tradition"] if b["tradition"] in CANON else "other") == t
                                               for b in books)]
+
+
+# ------------------------------------------------------------------ full names (NM2)
+_FULL: dict[str, str] | None = None
+
+
+def _full_names() -> dict[str, str]:
+    """database key → the book's full name as isnady-data names it (musnad_ahmad_ibn_hanbal), from the catalog
+    shipped with isnady."""
+    global _FULL
+    if _FULL is None:
+        _FULL = {}
+        try:
+            from isnady.core.repositories import bundled
+
+            for e in bundled().get("isnady", {}).get("entries", []):
+                if e.get("book"):
+                    _FULL[e["book"]] = e["id"]
+        except Exception:      # a broken install must not stop a file name
+            pass
+    return _FULL
+
+
+def full_name(key: str) -> str:
+    """The name a book is written as in files and folders: its full title with its compiler (never a bare name)."""
+    return _full_names().get(key, key)
+
+
+def resolve(name: str) -> str:
+    """The database key of a book given by its full name, its key, or the id of an earlier version."""
+    name = (name or "").strip()
+    name = name[len("fawaz-"):] if name.startswith("fawaz-") else name
+    back = {v: k for k, v in _full_names().items()}
+    return back.get(name, name)

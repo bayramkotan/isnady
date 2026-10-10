@@ -616,11 +616,14 @@ def write_csv(r: dict, folder: str) -> list[str]:
             w.writerows(rows)
         written.append(str(out / f"{name}.csv"))
 
+    from isnady.core import books as core_books
+
     head = ["a", "b", "spearman_rho", "n", "p", "q_bh"]
     for m in r["hadith"]:
-        write(f"lab_{m['key']}_hadith", ["book"] + head, [[m["book"]] + row for row in pairs_table(m)])
-        write(f"lab_{m['key']}_hadith_partial", ["book"] + head, [[m["book"]] + row for row in pairs_table(m, "partial")])
-        write(f"lab_{m['key']}_adjusted", ["outcome", "factor", "rho", "rho_others_equal", "n", "q_bh"], adjusted_table(m))
+        name = core_books.full_name(m["key"])
+        write(f"lab_{name}_hadith", ["book"] + head, [[m["book"]] + row for row in pairs_table(m)])
+        write(f"lab_{name}_hadith_partial", ["book"] + head, [[m["book"]] + row for row in pairs_table(m, "partial")])
+        write(f"lab_{name}_adjusted", ["outcome", "factor", "rho", "rho_others_equal", "n", "q_bh"], adjusted_table(m))
     if r.get("brant"):
         rows = []
         for b in r["brant"]:

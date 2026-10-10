@@ -186,7 +186,7 @@ def cache_name(prefix: str, collection: str | None) -> str:
 
     off = sorted(core_books.disabled())
     tail = "" if collection or not off else "-" + hashlib.md5(",".join(off).encode()).hexdigest()[:8]
-    return f"{prefix}-{collection or 'all'}{tail}.json"
+    return f"{prefix}-{core_books.full_name(collection) if collection else 'all'}{tail}.json"
 
 
 def _persons(conn: sqlite3.Connection) -> dict[int, dict]:

@@ -84,8 +84,15 @@ def main() -> int:
     if out.exists():
         shutil.rmtree(out)
     out.mkdir()
+    from isnady.core import books as core_books
+
+    # results kept under a book's short key by earlier versions are left behind: only the full names go out
+    short = {k for k, v in core_books._full_names().items() if k != v}
     n = 0
     for f in sorted(derived.glob("*.json")) if derived.exists() else []:
+        middle = f.stem.split("-", 1)[1] if "-" in f.stem else ""
+        if middle in short:
+            continue
         shutil.copy2(f, out / f.name)
         n += 1
     ignore = repo / ".gitignore"

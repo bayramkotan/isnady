@@ -292,7 +292,9 @@ def cached(conn: sqlite3.Connection, collection: str, progress=None, recompute: 
     """The analysis, from data_dir()/derived/ while the grades are unchanged; computed and written otherwise."""
     from isnady.data.paths import data_dir
 
-    path = data_dir() / "derived" / f"graders-{collection}.json"
+    from isnady.core import books as core_books
+
+    path = data_dir() / "derived" / f"graders-{core_books.full_name(collection)}.json"
     stamp = fingerprint(conn, collection)
     if not recompute and path.exists():
         try:
