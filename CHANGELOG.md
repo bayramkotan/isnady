@@ -3,6 +3,19 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Data from this computer**: a copy of isnady-data (a git clone, a USB stick, a shared folder) is a repository
+  too — **A folder on this computer…** in Settings → Data sources, or `iy repo add ~/Github/isnady-data` — and
+  every book is read from that folder, without the network. A whole ready database can be taken from a file —
+  the `isnady-db-<date>.zip` of the isnady-data Releases, or an `isnady.db` — with **Use a ready database…** (Data
+  folder) or `iy database use FILE`: it is checked (a zip must hold isnady.db, the schema must be one this version
+  reads, the sha256 must match a `database.json` beside it), takes the place of the database at the next start,
+  and the database it replaces is kept beside it (`isnady.<date-time>.bak.db`).
+- **README** on GitHub, PyPI and npm with new screenshots: search narrowed to a few books with the other
+  languages folded, the book list, the Narrators, hadith model and correlation sections of Statistics, Data
+  sources, Books and languages; the isnady-data README shows how to use it from this computer.
+
 ## [0.1.8] — 2026-10-10
 
 **isnady's own data repository with every Sunni and Shia source, books in order and in full name, search in a few

@@ -976,7 +976,7 @@ class StatisticsPage(QWidget):
                 headline = "With the other factors equal, no factor of the chain goes with the grades beyond chance."
             self._lab_finding(
                 "What goes with a weaker grade", headline,
-                [HeatMap(rows, factors, cells, -0.5, 0.5, diverging=True, cell=QSize(96, 50), label_w=200, tips=tips,
+                [HeatMap(rows, factors, cells, -0.5, 0.5, diverging=True, cell=QSize(84, 50), label_w=190, tips=tips,
                          head_h=60)],
                 "Each row is a scholar's grade of the hadith (sahih → fabricated: a higher rank is a weaker grade), the last "
                 "row how far the scholars are apart on it; each column a factor of the hadith's best chain. The figure is "
@@ -994,7 +994,7 @@ class StatisticsPage(QWidget):
                         f"</i> are the most bound together (ρ {rho:+.2f}{', the others equal' if fm['partial'] else ''}).")
             self._lab_finding(
                 "The factors with each other", headline,
-                [self._switchable(fm, factors, QSize(92, 46), 200)],
+                [self._switchable(fm, factors, QSize(84, 46), 190)],
                 "<br>".join(f"<b>{html.escape(n)}</b> — {html.escape(e)}" for n, e in zip(factors, m["explain"][:k]))
                 + "<br><br>Factors that rise together share their credit: the hadith model and the first finding hold "
                   "the others equal for this reason. “The others held equal” shows each pair with the rest removed.",
@@ -1117,7 +1117,7 @@ class StatisticsPage(QWidget):
             "lab", "The narrators' measures", headline,
             [_label(f"{m['people']:,} narrators identified in the chains; {m['complete']:,} with every measure known "
                     "(the partial view uses only these).", "Caption"),
-             self._switchable(m, names, QSize(92, 46), 190)],
+             self._switchable(m, names, QSize(84, 46), 180)],
             "<br>".join(f"<b>{html.escape(n)}</b>{' — ' + html.escape(e) if e else ''}" for n, e in zip(names, m["explain"]))
             + "<br><br>Rank runs from the Companions (1) to the liars (12), so a NEGATIVE ρ with it means the more of the "
               "other, the stronger the narrator. Generation and year of death move together by their nature; held equal, "

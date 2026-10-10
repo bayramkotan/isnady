@@ -33,6 +33,8 @@ Examples
   iy repo list
   iy repo use thaqalayn
   iy repo add https://github.com/owner/name
+  iy repo add ~/Github/isnady-data              (a copy on this computer, read without the network)
+  iy database use ~/Downloads/isnady-db-2026-10-10.zip
   iy datadir
   iy doctor
   iy update
@@ -235,6 +237,34 @@ def _print_report(report, narrators) -> None:
     if narrators.get("links"):
         print(f"  narrators identified: {narrators['identified']} of {narrators['links']} links "
               f"({100 * narrators['identified'] / narrators['links']:.1f}%)")
+
+
+def cmd_database(args) -> int:
+    """iy database use FILE: a ready database (isnady.db or the isnady-db zip of isnady-data) from this computer."""
+    from isnady.data import ready
+    from isnady.data.paths import db_path
+
+    if args.action == "use":
+        if not args.file:
+            print("Give the file: iy database use ~/Downloads/isnady-db-2026-10-10.zip", file=sys.stderr)
+            return 2
+        try:
+            info = ready.stage(args.file)
+        except ready.ReadyError as exc:
+            print(exc, file=sys.stderr)
+            return 1
+        try:
+            backup = ready.apply_pending()    # the command line holds no connection open: in place now
+        except OSError:
+            print(f"Ready: {info['books']} books, {info['hadith']:,} hadith. isnady is open and holds the database; "
+                  "it is used from the next start.")
+            return 0
+        print(f"Using the ready database: {info['books']} books, {info['hadith']:,} hadith (schema {info['schema']})"
+              + (f"; your previous database is kept as {backup}" if backup else "") + ".")
+        print("If the isnady window is open, close and start it again.")
+        return 0
+    print(f"database: {db_path()}" + ("  (a ready database is waiting for the next start)" if ready.pending() else ""))
+    return 0
 
 
 def cmd_repo(args) -> int:
@@ -1124,6 +1154,11 @@ def build_parser() -> argparse.ArgumentParser:
     cat.add_argument("--api-key-param", help="add: query parameter name for an API key")
     cat.add_argument("--repo", help="list / import: the sources of this repository instead of the chosen one")
     cat.set_defaults(func=cmd_catalog)
+    dbp = sub.add_parser("database", help="use a ready database from a file on this computer (isnady.db or the "
+                                           "isnady-db zip of isnady-data)")
+    dbp.add_argument("action", nargs="?", default="show", choices=["show", "use"])
+    dbp.add_argument("file", nargs="?", help="use: isnady.db or isnady-db-<date>.zip")
+    dbp.set_defaults(func=cmd_database)
     rp = sub.add_parser("repo", help="data repositories: list, use, show, add, remove (isnady's own is the default)")
     rp.add_argument("action", nargs="?", default="list", choices=["list", "use", "show", "add", "remove"])
     rp.add_argument("target", nargs="?", help="use/show/remove: a repository id; add: a GitHub or Hugging Face "

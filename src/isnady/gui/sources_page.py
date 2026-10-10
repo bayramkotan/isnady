@@ -296,6 +296,7 @@ class SourcesPage(QWidget):
         row = QHBoxLayout()
         row.addStretch(1)
         for label, slot, ok in (("Refresh", self._refresh_repo, True),
+                                ("A folder on this computer…", self._add_folder_repo, True),
                                 ("Add a repository…", self._add_repo, True),
                                 ("Remove from list", self._remove_repo, not repo.builtin),
                                 ("Use the default", lambda: self._use_repo(repositories.DEFAULT_ID), not repo.default)):
@@ -473,18 +474,19 @@ class SourcesPage(QWidget):
         where.setWordWrap(True)
         box.addWidget(where)
         note = QLabel("The database, your settings and your own sources live here. A new folder is used from the "
-                      "next start of isnady.")
+                      "next start of isnady. A ready database (isnady.db, or the isnady-db zip of isnady-data) can be "
+                      "taken from a file on this computer instead of importing book by book.")
         note.setObjectName("Caption")
         note.setWordWrap(True)
         box.addWidget(note)
         row = QHBoxLayout()
         row.addStretch(1)
         for label, slot in (("Open", self._open_folder), ("Change…", self._change_folder),
-                            ("Use default", self._default_folder)):
+                            ("Use default", self._default_folder), ("Use a ready database…", self._use_ready_database)):
             b = QPushButton(label)
             b.setObjectName("Quiet")
             b.clicked.connect(slot)
-            if label != "Open" and paths.data_dir_source() == "environment":
+            if label in ("Change…", "Use default") and paths.data_dir_source() == "environment":
                 b.setEnabled(False)
             if label == "Use default" and paths.data_dir_source() == "default":
                 b.setEnabled(False)
@@ -587,6 +589,43 @@ class SourcesPage(QWidget):
         repositories.select(repo.id)
         self.refresh()
         self.status.setText(f"Added {repo.name}; it is the repository now.")
+
+    def _add_folder_repo(self) -> None:
+        """A repository on this computer: a copy of isnady-data (git clone, a USB stick, a shared folder) or any
+        folder with a catalog.json — read without the network."""
+        folder = QFileDialog.getExistingDirectory(self, "A folder with a catalog.json (e.g. your copy of isnady-data)")
+        if not folder:
+            return
+        try:
+            repo = repositories.add_repository(folder)
+        except (ResourceError, ValueError) as exc:
+            QMessageBox.warning(self, "A folder on this computer", str(exc.args[0] if exc.args else exc))
+            return
+        repositories.select(repo.id)
+        self.refresh()
+        self.status.setText(f"Added {repo.name} ({folder}); it is the repository now, read from this computer.")
+
+    def _use_ready_database(self) -> None:
+        from isnady.data import ready
+
+        path, _f = QFileDialog.getOpenFileName(self, "A ready isnady database",
+                                               "", "isnady database (isnady-db-*.zip isnady*.db *.zip *.db)")
+        if not path:
+            return
+        try:
+            info = ready.stage(path)
+        except ready.ReadyError as exc:
+            QMessageBox.warning(self, "Ready database", str(exc))
+            return
+        answer = QMessageBox.question(
+            self, "Ready database",
+            f"{info['books']} books, {info['hadith']:,} hadith. It takes the place of your database at the next "
+            "start of isnady; your database is kept beside it as isnady.<date>.bak.db.\n\nQuit isnady now?")
+        self.status.setText("A ready database is waiting; it is used from the next start.")
+        if answer == QMessageBox.StandardButton.Yes:
+            from PySide6.QtWidgets import QApplication
+
+            QApplication.quit()
 
     def _remove_repo(self) -> None:
         repo = repositories.selected()

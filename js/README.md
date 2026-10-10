@@ -204,6 +204,8 @@ Importing takes a minute or two; the search index and the chains are built as pa
 With Ibn Hajar's *Taqrib al-Tahdhib* imported (8,824 narrators, his verdict on each), every
 chain is read narrator by narrator: `iy narrator الزهري`.
 
+No network? Read the books from a copy of isnady-data on this computer (`iy repo add ~/Github/isnady-data`), or take a whole ready database from a file (`iy database use isnady-db-2026-10-10.zip`).
+
 ---
 
 ## 🔎 Search
@@ -221,6 +223,13 @@ chain is read narrator by narrator: `iy narrator الزهري`.
 | **Highlighting** | On the original, diacritised text, diacritics included |
 
 Results appear at once and fill in as you read; the window never waits for them.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-folded.png" alt="Search in two books with Arabic chosen: the English and Turkish texts folded behind ▸ Other languages, opened with a click" width="850">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/book-picker.png" alt="Books — tick all books, all Sunni, all Shia, or any few one by one" width="420">
+</p>
 
 ### 👥 Narrators
 
@@ -321,7 +330,13 @@ scholar's grade on its own) — and tests what differs: the scholars' grades pai
 model's shape holds (Brant's test). `iy stats lab`.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/statistics.png" alt="Statistics — the graders of Sunan Abi Dawud: Krippendorff's alpha, agreement with intervals, the model's certainty" width="850">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/statistics.png" alt="Statistics — Narrators: the busiest 10% of narrators carry 75% of the transmission; the Lorenz curve and the pillars" width="850">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/statistics-model.png" alt="The hadith model — for al-Albani, a weak or unknown weakest narrator multiplies the odds of a weaker grade by 14; odds ratios with 95% intervals" width="850">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/statistics-lab.png" alt="Correlations and tests — each factor against each scholar's grade with the others held equal (partial Spearman's rho), Sunan Abi Dawud" width="850">
 </p>
 
 ### 🎓 Learn
@@ -469,6 +484,13 @@ Default button.
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/preferences.png" alt="Preferences — font, size, line spacing and colour for each script" width="760">
 </p>
 
+**Settings → Books and languages** switches imported books on and off (Sunni and Shia apart) and
+chooses the languages the texts are shown in; the others are folded behind an arrow on each hadith.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/books-languages.png" alt="Settings → Books and languages — books on and off, Sunni and Shia apart; the languages shown, the others folded behind an arrow" width="760">
+</p>
+
 The same settings from the command line:
 
 ```bash
@@ -503,6 +525,19 @@ its compiler — `sunni/sahih_al_bukhari/`, `sunni/musnad_ahmad_ibn_hanbal/`, `s
 | **Narrators** | Ibn Hajar, *Taqrib al-Tahdhib* | al-Najashi, *Rijal* |
 
 The credits for where each text was first published are in the repository's README.
+
+**On this computer, without the network:** a copy of isnady-data (a `git clone`, a USB stick,
+a shared folder) is a repository too — **A folder on this computer…** in Settings → Data sources,
+or `iy repo add ~/Github/isnady-data` — and every book is then read from that folder. A whole
+ready database can be taken from a file as well — the `isnady-db-<date>.zip` of the
+[isnady-data Releases](https://github.com/bayramkotan/isnady-data/releases), or an `isnady.db` —
+with **Use a ready database…** (Data folder) or `iy database use FILE`: it is checked (and its
+sha256 against the `database.json` beside it), takes the place of your database at the next start,
+and your database is kept beside it.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/data-sources.png" alt="Settings → Data sources — the repository (isnady-data by default, a folder on this computer, or one you add) and its books, Sunni and Shia apart" width="760">
+</p>
 
 **Optional repositories**, each the dataset as its authors publish it (their books under their
 own keys, e.g. `bukhari-lk`, so editions with other numbering never mix):
@@ -551,7 +586,8 @@ script. The command line never loads Qt.
 | `iy search --mode meaning WORDS` | `isnady search --mode meaning "komşu hakları"` | Search by meaning and across languages |
 | `iy narrator NAME` | `isnady narrator "Ibn Umar"` | A narrator: Ibn Hajar's verdict and rank, tabaqa, death year, books, other names; with `--limit 1` also teachers, students and hadith |
 | `iy import FORMAT FILE-OR-URL` | `isnady import …` | Import a source; `--book`, `--language`, `--license`, `--user`, `--token-env`, `--api-key-env` |
-| `iy repo [list\|use\|show\|add\|remove]` | `isnady repo use thaqalayn` | The data repositories: isnady's own (default), the optional ones, yours |
+| `iy repo [list\|use\|show\|add\|remove]` | `isnady repo add ~/Github/isnady-data` | The data repositories: isnady's own (default), the optional ones, yours — a GitHub or Hugging Face address, a URL, or a folder on this computer |
+| `iy database [use FILE]` | `isnady database use isnady-db-2026-10-10.zip` | A ready database from a file on this computer (`isnady.db` or the zip of the isnady-data Releases); your own is kept beside it |
 | `iy catalog list` | `isnady catalog list --repo lk-hadith-corpus` | The sources of the repository in use, and your own, with what is imported — the same as File → Data Sources |
 | `iy catalog import ID` | `isnady catalog import sahih_muslim --language tur` | Import a listed source; `remove`, `add`, `delete` manage the list |
 | `iy catalog import --all` | `isnady catalog import --all --language ara` | Every source of the repository at once |

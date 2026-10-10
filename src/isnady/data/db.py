@@ -363,6 +363,9 @@ def _set_aside(path: Path, version: int) -> Path:
     return backup
 
 
+_STARTED = False
+
+
 def connect(path: Path | None = None, *, reset_old: bool = False) -> sqlite3.Connection:
     """Open (and create or upgrade) the database.
 
@@ -371,6 +374,17 @@ def connect(path: Path | None = None, *, reset_old: bool = False) -> sqlite3.Con
     file is moved aside and SchemaReset is raised once, so the caller can tell
     the user; the next call opens a fresh database.
     """
+    global _STARTED
+    if path is None and not _STARTED:
+        # a ready database staged by "Use a ready database…" / iy database use takes its place now, at the first
+        # connection of a start — never under a window that already has the old one open (data/ready.py)
+        from isnady.data import ready
+
+        try:
+            ready.apply_pending()
+        except OSError:          # another isnady still has the database open (Windows): at a later start
+            pass
+    _STARTED = True
     path = Path(path or db_path())
     if path.exists():
         probe = sqlite3.connect(path)

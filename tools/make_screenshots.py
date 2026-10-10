@@ -1,7 +1,7 @@
 """Regenerate the README screenshots in assets/screenshots/.
 
-Needs an imported database with Sahih al-Bukhari and Sunan Abi Dawud (Arabic and
-Turkish). Run from the repository root:
+Needs a database imported from isnady-data with, at least, Sahih al-Bukhari, Sunan Abi Dawud (Arabic, Turkish,
+English), al-Kafi of al-Kulayni, Ibn Hajar's Taqrib and al-Najashi's Rijal. Run from the repository root:
 
     python tools/make_screenshots.py
 
@@ -10,49 +10,169 @@ On a machine without a display, set QT_QPA_PLATFORM=offscreen first.
 
 from pathlib import Path
 
-from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QTimer, QEventLoop
+from PySide6.QtCore import QEventLoop, Qt, QTimer
+from PySide6.QtWidgets import QApplication, QFrame, QPushButton, QTabWidget
+
 app = QApplication([])
-from isnady.gui import theme
-theme.load_fonts(); theme.apply(app, "light")
-from isnady.gui.main_window import MainWindow
+from isnady.gui import theme  # noqa: E402
+
+theme.load_fonts()
+theme.apply(app, "light")
+from isnady.core import language, repositories  # noqa: E402
+from isnady.gui.main_window import SECTIONS, MainWindow  # noqa: E402
+from isnady.gui.preferences import PreferencesDialog  # noqa: E402
+
 D = str(Path(__file__).resolve().parent.parent / "assets" / "screenshots") + "/"
+ROW = {k: i for i, (k, *_r) in enumerate(SECTIONS)}
+language.set_content_languages([])
+repositories.select(repositories.DEFAULT_ID)
+
+
 def settle(ms=900):
-    loop = QEventLoop(); QTimer.singleShot(ms, loop.quit); loop.exec()
-w = MainWindow(); w.resize(1400, 900); w.show(); settle()
+    loop = QEventLoop()
+    QTimer.singleShot(ms, loop.quit)
+    loop.exec()
+
+
+def wait_statistics(page):
+    for _ in range(600):
+        if page._thread is not None and not page._thread.isRunning():
+            break
+        settle(500)
+    settle(1500)
+
+
+def prefs(tab: str, name: str, size=(1000, 760), scroll_to: int = 0):
+    d = PreferencesDialog(w)
+    d.resize(*size)
+    tabs = d.findChild(QTabWidget)
+    tabs.setCurrentIndex([tabs.tabText(i) for i in range(tabs.count())].index(tab))
+    d.show()
+    settle(1200)
+    d.grab().save(D + name)
+    d.close()
+
+
+w = MainWindow()
+w.resize(1400, 900)
+w.show()
+settle()
 w.grab().save(D + "start.png")
 p = w.search_page
-p.search_for("النيات"); settle(); w.grab().save(D + "search-arabic.png")
-p.search_for("niyet"); p.book_combo.setCurrentIndex(p.book_combo.findData("abudawud")); settle(); w.grab().save(D + "search-grades.png")
-p.book_combo.setCurrentIndex(0); settle(300)
-w.nav.setCurrentRow(2); w.isnad_page._current = None; w.isnad_page.refresh(); settle(); w.grab().save(D + "chains-overview.png")
-hid = w.isnad_page.conn.execute("select h.id from hadiths h join collections c on c.id=h.collection_id where c.key='bukhari' and h.number='1'").fetchone()[0]
-w.isnad_page.show_hadith(hid); settle(); w.grab().save(D + "chain.png")
+p.book_combo._chosen = {"bukhari"}
+p.book_combo._label()
+p.search_for("النيات")
+settle()
+w.grab().save(D + "search-arabic.png")
+p.book_combo._chosen = {"abudawud"}
+p.book_combo._label()
+p.search_for("niyet")
+settle()
+w.grab().save(D + "search-grades.png")
+p.book_combo._chosen = None
+p.book_combo._label()
+p.book_combo._open()
+settle(600)
+popup = [x for x in app.topLevelWidgets() if isinstance(x, QFrame) and x.isVisible()
+         and x.windowFlags() & Qt.WindowType.Popup][0]
+popup.grab().save(D + "book-picker.png")
+popup.close()
+language.set_content_languages(["Arabic"])
+p.book_combo._chosen = {"riyad", "nawawi"}
+p.book_combo._label()
+p.search_for("الصلاة")
+settle(1500)
+for b in p.body.findChildren(QPushButton):
+    if b.text().startswith("▸"):
+        b.click()
+        settle(400)
+        p.scroll.ensureWidgetVisible(b, 0, 260)
+        break
+settle(600)
+w.grab().save(D + "search-folded.png")
+language.set_content_languages([])
+p.book_combo._chosen = None
+p.book_combo._label()
+
+w.nav.setCurrentRow(ROW["chains"])
+w.isnad_page._current = None
+w.isnad_page.refresh()
+settle()
+w.grab().save(D + "chains-overview.png")
+hid = w.isnad_page.conn.execute("select h.id from hadiths h join collections c on c.id=h.collection_id "
+                                "where c.key='bukhari' and h.number='1'").fetchone()[0]
+w.isnad_page.show_hadith(hid)
+settle()
+w.grab().save(D + "chain.png")
 w.isnad_page.body.grab().save(D + "chain-full.png")
 w._set_theme("dark")
-hid = w.isnad_page.conn.execute("select h.id from hadiths h join collections c on c.id=h.collection_id where c.key='abudawud' and h.number='1500'").fetchone()[0]
-w.isnad_page.show_hadith(hid); settle(); w.grab().save(D + "chain-dark.png")
-w.nav.setCurrentRow(0); p.search_for("namaz"); settle(); w.grab().save(D + "search-dark.png")
+hid = w.isnad_page.conn.execute("select h.id from hadiths h join collections c on c.id=h.collection_id "
+                                "where c.key='abudawud' and h.number='1500'").fetchone()[0]
+w.isnad_page.show_hadith(hid)
+settle()
+w.grab().save(D + "chain-dark.png")
+w.nav.setCurrentRow(ROW["search"])
+p.search_for("namaz")
+settle()
+w.grab().save(D + "search-dark.png")
 w._set_theme("light")
-w.nav.setCurrentRow(w._narrators_row); w.narrators_page.query.setText("Ibn Umar"); settle(1200)
-w.narrators_page.list.setCurrentRow(0); settle(); w.grab().save(D + "narrators.png")
-w.nav.setCurrentRow([k for k, *_ in __import__("isnady.gui.main_window", fromlist=["SECTIONS"]).SECTIONS].index("scholars"))
-w.scholars_page.select("albani"); settle(); w.grab().save(D + "scholars.png")
-w.nav.setCurrentRow(w._books_row); settle(1500)
-w.books_page.select_work("bukhari"); settle(); w.books_page.open_chapter(w.books_page._order[1]); settle(1500)
+
+w.nav.setCurrentRow(w._narrators_row)
+w.narrators_page.query.setText("Ibn Umar")
+settle(1200)
+w.narrators_page.list.setCurrentRow(0)
+settle()
+w.grab().save(D + "narrators.png")
+w.nav.setCurrentRow(ROW["scholars"])
+w.scholars_page.select("albani")
+settle()
+w.grab().save(D + "scholars.png")
+w.nav.setCurrentRow(w._books_row)
+settle(1500)
+w.books_page.select_work("bukhari")
+settle()
+w.books_page.open_chapter(w.books_page._order[1])
+settle(1500)
 w.grab().save(D + "books.png")
-w.books_page.select_work("taqrib"); settle(1500); w.grab().save(D + "books-taqrib.png")
-w.nav.setCurrentRow(w._shia_row); w.shia_page.query.setText("بابويه"); settle(1200)
-w.shia_page.list.setCurrentRow(0); settle(); w.grab().save(D + "shia-rijal.png")
-w.nav.setCurrentRow(w._statistics_row); settle(1500)
-for _ in range(240):
-    if w.statistics_page._thread is not None and not w.statistics_page._thread.isRunning():
+w.books_page.select_work("taqrib")
+settle(1500)
+w.grab().save(D + "books-taqrib.png")
+w.nav.setCurrentRow(w._shia_row)
+w.shia_page.query.setText("بابويه")
+settle(1200)
+w.shia_page.list.setCurrentRow(0)
+settle()
+w.grab().save(D + "shia-rijal.png")
+
+st = w.statistics_page
+w.nav.setCurrentRow(w._statistics_row)
+settle(1500)
+wait_statistics(st)
+keys = [st.rail.item(i).data(Qt.ItemDataRole.UserRole) for i in range(st.rail.count())]
+st.rail.setCurrentRow(keys.index("narrators"))
+settle(800)
+w.grab().save(D + "statistics.png")
+st.rail.setCurrentRow(keys.index("lab"))
+settle(800)
+from PySide6.QtWidgets import QComboBox  # noqa: E402
+
+for combo in st.stack.currentWidget().findChildren(QComboBox):
+    i = combo.findText("Sunan Abi Dawud")
+    if i >= 0:
+        combo.setCurrentIndex(i)
+        settle(1200)
         break
-    settle(500)
-settle(1500); w.grab().save(D + "statistics.png")
-from isnady.gui.main_window import SECTIONS as _SECTIONS
-w.nav.setCurrentRow([k for k, *_ in _SECTIONS].index("learn")); w.learn_page._set_lang("en"); w.learn_page.show_term("mursal")
-settle(); w.grab().save(D + "learn.png")
-from isnady.gui.preferences import PreferencesDialog
-d = PreferencesDialog(w); d.resize(900, 660); d.show(); settle(); d.grab().save(D + "preferences.png"); d.close()
+w.grab().save(D + "statistics-lab.png")
+st.rail.setCurrentRow(keys.index("model"))
+settle(800)
+w.grab().save(D + "statistics-model.png")
+
+w.nav.setCurrentRow(ROW["learn"])
+w.learn_page._set_lang("en")
+w.learn_page.show_term("mursal")
+settle()
+w.grab().save(D + "learn.png")
+prefs("Reading text", "preferences.png", (900, 660))
+prefs("Data sources", "data-sources.png", (1100, 900))
+prefs("Books and languages", "books-languages.png", (1000, 640))
 theme.set_theme_mode("system")

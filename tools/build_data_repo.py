@@ -651,13 +651,26 @@ def readme(cat: dict) -> str:
              "`sunni/musnad_ahmad_ibn_hanbal/`) — `book.json` (numbers, chapters, references, grades) and one file "
              "per language (`ara.json`, `eng.json` …)",
              "- `rijal/sunni/`, `rijal/shia/` — the works on the narrators",
-             "- `catalog.json` — the list isnady reads", ""]
+             "- `catalog.json` — the list isnady reads", "",
+             "## Use", "",
+             "In isnady: **Settings → Data sources** — this repository is the default; tick a book and Import. "
+             "Without the network, clone it and read it from this computer:", "",
+             "```bash",
+             "git clone https://github.com/bayramkotan/isnady-data ~/isnady-data",
+             "iy repo add ~/isnady-data            # every book is read from this folder",
+             "iy catalog import sahih_al_bukhari --language ara --language tur",
+             "iy database use isnady-db-<date>.zip   # or a whole ready database (Releases)",
+             "```", "",
+             '<p align="center"><img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/'
+             'screenshots/data-sources.png" alt="isnady — Settings → Data sources" width="760"></p>', ""]
     for tradition, heading in (("sunni", "Sunni collections"), ("shia", "Shia collections")):
         lines += [f"## {heading}", "", "| Book | | Compiler | Languages | Hadith |", "|---|---|---|---|---|"]
         for e in cat["entries"]:
             if e["kind"] == "hadith" and e["tradition"] == tradition:
-                comp = e["description"].split(". ")[0].removeprefix("Compiled by ") if e["description"].startswith(
-                    "Compiled by") else ""
+                import re
+                m = (re.match(r"Compiled by (.+?\))\.", e["description"])
+                     or re.match(r"Compiled by (.+?)\. Arabic", e["description"]))
+                comp = m.group(1) if m else ""
                 lines.append(f"| {e['title']} | {e['title_ar']} | {comp} | {', '.join(e['languages'])} | "
                              f"{(e.get('hadith') or 0):,} |")
         lines.append("")
