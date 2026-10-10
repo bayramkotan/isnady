@@ -30,7 +30,7 @@ from isnady.core import search as core
 from isnady.data import db
 from isnady.gui import theme
 from isnady.gui.chain_widgets import ChainStrip
-from isnady.gui.widgets import FlowLayout, TextBlock, expanding_width_policy
+from isnady.gui.widgets import BookPicker, FlowLayout, TextBlock, expanding_width_policy
 
 PAGE_SIZE = 25
 FIRST_BATCH = 4     # cards shown at once; the rest follow in small batches
@@ -78,7 +78,7 @@ def _label(text: str = "", name: str = "", wrap: bool = False, selectable: bool 
 class ResultCard(QFrame):
     def __init__(self, result: core.SearchResult, chain: dict | None = None, open_chain=None,
                  people: dict | None = None, score: float | None = None, related: list | None = None,
-                 open_book=None) -> None:
+                 open_book=None, folded: list | None = None) -> None:
         super().__init__()
         self.setObjectName("Card")
         t = theme.current()
@@ -161,24 +161,55 @@ class ResultCard(QFrame):
             box.addSpacing(4)
 
         for text in result.texts:
-            body = _highlight(text.text, text.spans, t.gilt)
-            script = config.script_for_language(text.language, text.direction)
-            style = (f"line-height:{theme.script_line_height(script)}%;"
-                     f"color:{theme.script_color(script)}")
-            if text.direction == "rtl":
-                box.addWidget(TextBlock(f"<div dir='rtl' align='right' style='{style}'>{body}</div>",
-                                        theme.script_font(script), rtl=True))
-            else:
-                frame = QFrame()
-                frame.setObjectName("Translation")
-                inner = QVBoxLayout(frame)
-                inner.setContentsMargins(16, 2, 0, 2)
-                inner.addWidget(TextBlock(f"<div style='{style}'>{body}</div>", theme.script_font(script)))
-                box.addWidget(frame)
-            caption = _label(f"{text.language}, {text.edition_key}", "Caption")
-            if text.direction == "rtl":
-                caption.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
-            box.addWidget(caption)
+            self._add_text(box, text, t)
+        if folded:
+            # the languages not chosen in Settings → Books and languages: behind an arrow, opened on a click
+            names = ", ".join(dict.fromkeys(x.language for x in folded))
+            more = QPushButton(f"▸  Other languages: {names}")
+            more.setObjectName("Link")
+            more.setCursor(Qt.CursorShape.PointingHandCursor)
+            more.setToolTip("Languages you chose not to show (Settings → Books and languages). Click to show them here.")
+            holder = QWidget()
+            inner = QVBoxLayout(holder)
+            inner.setContentsMargins(0, 0, 0, 0)
+            inner.setSpacing(10)
+            holder.hide()
+            built = []
+
+            def flip(_c=False, h=holder, b=more, lay=inner) -> None:
+                if not built:
+                    for x in folded:
+                        self._add_text(lay, x, theme.current())
+                    built.append(True)
+                h.setVisible(not h.isVisible())
+                b.setText(("▾  " if h.isVisible() else "▸  ") + b.text()[3:])
+            more.clicked.connect(flip)
+            row = QHBoxLayout()
+            row.addWidget(more)
+            row.addStretch(1)
+            box.addLayout(row)
+            box.addWidget(holder)
+
+    @staticmethod
+    def _add_text(box: QVBoxLayout, text, t) -> None:
+        body = _highlight(text.text, text.spans, t.gilt)
+        script = config.script_for_language(text.language, text.direction)
+        style = (f"line-height:{theme.script_line_height(script)}%;"
+                 f"color:{theme.script_color(script)}")
+        if text.direction == "rtl":
+            box.addWidget(TextBlock(f"<div dir='rtl' align='right' style='{style}'>{body}</div>",
+                                    theme.script_font(script), rtl=True))
+        else:
+            frame = QFrame()
+            frame.setObjectName("Translation")
+            inner = QVBoxLayout(frame)
+            inner.setContentsMargins(16, 2, 0, 2)
+            inner.addWidget(TextBlock(f"<div style='{style}'>{body}</div>", theme.script_font(script)))
+            box.addWidget(frame)
+        caption = _label(f"{text.language}, {text.edition_key}", "Caption")
+        if text.direction == "rtl":
+            caption.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
+        box.addWidget(caption)
 
 
 class SearchPage(QWidget):
@@ -233,9 +264,10 @@ class SearchPage(QWidget):
             "Off: النيات also finds بالنيات, because Arabic words carry attached prefixes.\n"
             "On: only the word standing on its own."
         )
-        self.book_combo = QComboBox()
+        self.book_combo = BookPicker()            # all books, all Sunni, all Shia, or any few ticked
+        self.book_combo.changed.connect(self._rerun_if_searched)
         self.language_combo = QComboBox()
-        for combo in (self.mode_combo, self.book_combo, self.language_combo):
+        for combo in (self.mode_combo, self.language_combo):
             combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
             combo.currentIndexChanged.connect(self._rerun_if_searched)
         self.whole_words.toggled.connect(self._rerun_if_searched)
@@ -277,7 +309,7 @@ class SearchPage(QWidget):
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
         for text, widget in (("Match", self.mode_combo), (None, self.whole_words),
-                             ("Book", self.book_combo), ("Language", self.language_combo)):
+                             ("Books", self.book_combo), ("Language", self.language_combo)):
             if text:
                 row.addSpacing(10)
                 row.addWidget(_label(text, "FilterLabel"))
@@ -380,29 +412,24 @@ class SearchPage(QWidget):
             self._show_start()
 
     def _fill_filters(self) -> None:
-        current_book = self.book_combo.currentData()
+        self.book_combo.fill(self._conn)
         current_lang = self.language_combo.currentData()
-        for combo in (self.book_combo, self.language_combo):
-            combo.blockSignals(True)
-            combo.clear()
-        self.book_combo.addItem("All books", None)
-        for key, name, count in core.list_collections(self._conn):
-            self.book_combo.addItem(f"{name} ({count:,})", key)
+        self.language_combo.blockSignals(True)
+        self.language_combo.clear()
         self.language_combo.addItem("All languages", None)
         for language in core.list_languages(self._conn):
             self.language_combo.addItem(language, language)
-        for combo, value in ((self.book_combo, current_book), (self.language_combo, current_lang)):
-            combo.setCurrentIndex(max(combo.findData(value), 0))
-            combo.blockSignals(False)
+        self.language_combo.setCurrentIndex(max(self.language_combo.findData(current_lang), 0))
+        self.language_combo.blockSignals(False)
 
     # -------------------------------------------------------------- search
     def _query(self, offset: int) -> core.SearchQuery:
-        book = self.book_combo.currentData()
+        books = self.book_combo.selected()
         language = self.language_combo.currentData()
         return core.SearchQuery(
             text=self.query_edit.text(), mode=self.mode_combo.currentData(),
             whole_words=self.whole_words.isChecked(),
-            collections=[book] if book else [], languages=[language] if language else [],
+            collections=books or [], languages=[language] if language else [],
             limit=PAGE_SIZE, offset=offset,
         )
 
@@ -850,19 +877,23 @@ class SearchPage(QWidget):
     def make_card(self, result: core.SearchResult, score: float | None = None, in_book: bool = False) -> "ResultCard":
         """The card of one hadith — its chain, identified narrators, other narrations — as every page shows it.
         in_book: the card is already in its book (the reader), so it has no "In its book" link."""
+        folded = []
         if not in_book:
-            # the content languages (L1): the texts in the languages chosen, and any text the search matched
+            # the content languages (L1): the texts in the languages chosen, and any text the search matched; the
+            # others folded behind an arrow (or left out, as Settings → Books and languages says)
             from dataclasses import replace
 
             from isnady.core import language
 
             kept = [t for t in result.texts if language.shows(t.language) or t.spans]
             if kept and len(kept) != len(result.texts):
+                if language.folds():
+                    folded = [t for t in result.texts if t not in kept]
                 result = replace(result, texts=kept)
         chains = core_isnad.chain(self._conn, result.hadith_id)
         chain = chains[0] if chains else None
         card = ResultCard(result, chain, self.open_chain.emit, self._people(chain), score, self._related(result.hadith_id),
-                          None if in_book else self.open_book.emit)
+                          None if in_book else self.open_book.emit, folded)
         card.setProperty("hadith_id", result.hadith_id)
         return card
 

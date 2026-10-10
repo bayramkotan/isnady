@@ -170,6 +170,7 @@ class PreferencesDialog(QDialog):
     changed = Signal()          # the main window redraws on this
 
     data_imported = Signal()   # a source was imported or removed; the main window refreshes its pages
+    languages_changed = Signal()   # the languages of the texts chosen here; the pages draw their texts again
 
     def __init__(self, parent=None, start_tab: str = "") -> None:
         super().__init__(parent)
@@ -186,6 +187,7 @@ class PreferencesDialog(QDialog):
         tabs.addTab(self._scroll(self._reading_tab()), "Reading text")
         tabs.addTab(self._scroll(self._colors_tab()), "Colours")
         tabs.addTab(self._scroll(self._interface_tab()), "Interface")
+        tabs.addTab(self._scroll(self._books_tab()), "Books and languages")
         tabs.addTab(self._scroll(self.sources), "Data sources")
         if start_tab == "sources":
             tabs.setCurrentIndex(tabs.count() - 1)
@@ -407,6 +409,128 @@ class PreferencesDialog(QDialog):
         return page
 
     # ------------------------------------------------------------ interface
+    def _books_tab(self) -> QWidget:
+        """Which imported books are active (searched, listed, measured), and which languages the texts are shown
+        in — the others folded behind an arrow on each hadith, or left out."""
+        from PySide6.QtWidgets import QCheckBox, QRadioButton
+
+        from isnady.core import books as core_books
+        from isnady.core import language
+        from isnady.core import search as core_search
+        from isnady.data import db
+        from isnady.gui.widgets import FlowLayout
+
+        page = QWidget()
+        page.setObjectName("Page")
+        box = QVBoxLayout(page)
+        box.setContentsMargins(6, 12, 12, 12)
+        box.setSpacing(12)
+        conn = db.connect()
+        try:
+            groups = core_books.grouped(conn, include_inactive=True)
+            available = core_search.list_languages(conn)
+        finally:
+            conn.close()
+
+        # ---- books
+        card = QFrame()
+        card.setObjectName("Card")
+        lay = QVBoxLayout(card)
+        lay.setContentsMargins(18, 14, 18, 14)
+        lay.setSpacing(8)
+        title = QLabel("Books")
+        title.setObjectName("CardTitle")
+        title.setFont(theme.reading_font(13.5, bold=True))
+        lay.addWidget(title)
+        lead = QLabel("A book switched off stays in the database but is left out of searches, book lists and "
+                      "statistics until you switch it on again. To choose a few books for one search, use Books "
+                      "on the Search page.")
+        lead.setObjectName("Caption")
+        lead.setWordWrap(True)
+        lay.addWidget(lead)
+        checks: dict[str, QCheckBox] = {}
+        if not groups:
+            none = QLabel("No books imported yet: Data sources.")
+            none.setObjectName("Caption")
+            lay.addWidget(none)
+        for _t, label, group in groups:
+            head = QHBoxLayout()
+            g = QLabel(f"{label} collections")
+            g.setObjectName("FilterTitle")
+            head.addWidget(g)
+            head.addStretch(1)
+            for text, on in (("All on", True), ("All off", False)):
+                b = QPushButton(text)
+                b.setObjectName("Quiet")
+                b.clicked.connect(lambda _c=False, grp=group, v=on: set_group(grp, v))
+                head.addWidget(b)
+            lay.addLayout(head)
+            holder = QWidget()
+            flow = FlowLayout(holder, spacing=10)
+            for b in group:
+                c = QCheckBox(f"{b['name']} ({b['count']:,})")
+                c.setChecked(b["active"])
+                c.toggled.connect(lambda on, k=b["key"]: toggle(k, on))
+                flow.addWidget(c)
+                checks[b["key"]] = c
+            lay.addWidget(holder)
+        box.addWidget(card)
+
+        def toggle(key: str, on: bool) -> None:
+            core_books.set_active(key, on)
+            self.data_imported.emit()
+
+        def set_group(group: list, on: bool) -> None:
+            for b in group:
+                c = checks[b["key"]]
+                c.blockSignals(True)
+                c.setChecked(on)
+                c.blockSignals(False)
+                core_books.set_active(b["key"], on)
+            self.data_imported.emit()
+
+        # ---- languages
+        card = QFrame()
+        card.setObjectName("Card")
+        lay = QVBoxLayout(card)
+        lay.setContentsMargins(18, 14, 18, 14)
+        lay.setSpacing(8)
+        title = QLabel("Languages of the texts")
+        title.setObjectName("CardTitle")
+        title.setFont(theme.reading_font(13.5, bold=True))
+        lay.addWidget(title)
+        lead = QLabel("The languages each hadith is shown in. A text that matches your search is always shown. "
+                      "The same as Content in the sidebar.")
+        lead.setObjectName("Caption")
+        lead.setWordWrap(True)
+        lay.addWidget(lead)
+        holder = QWidget()
+        flow = FlowLayout(holder, spacing=10)
+        chosen = language.content_languages()
+        lang_checks = []
+        for lang in available:
+            c = QCheckBox(lang)
+            c.setChecked(not chosen or lang in chosen)
+            c.toggled.connect(lambda _on: save_languages())
+            flow.addWidget(c)
+            lang_checks.append(c)
+        lay.addWidget(holder)
+        fold = QRadioButton("Fold the other languages behind an arrow on each hadith (▸ click to open)")
+        omit = QRadioButton("Leave the other languages out")
+        (fold if language.folds() else omit).setChecked(True)
+        fold.toggled.connect(lambda on: (language.set_folds(on), self.languages_changed.emit()))
+        lay.addWidget(fold)
+        lay.addWidget(omit)
+        box.addWidget(card)
+        box.addStretch(1)
+
+        def save_languages() -> None:
+            picked = [c.text() for c in lang_checks if c.isChecked()]
+            language.set_content_languages([] if not picked or len(picked) == len(lang_checks) else picked)
+            self.languages_changed.emit()
+
+        return page
+
     def _interface_tab(self) -> QWidget:
         page = QWidget()
         page.setObjectName("Page")

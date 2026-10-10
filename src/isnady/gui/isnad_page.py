@@ -22,7 +22,6 @@ from PySide6.QtWidgets import (
 
 from isnady.core import isnad as core_isnad
 from isnady.core import narrators as core_narrators
-from isnady.core import search as core_search
 from isnady.gui import theme
 from isnady.gui.chain_widgets import PROPHET, ChainNode
 from isnady.gui.widgets import TextBlock, expanding_width_policy
@@ -111,13 +110,9 @@ class IsnadPage(QWidget):
         """Fill the book list and show either the current hadith or the overview."""
         if self.conn is None:
             return
-        current = self.book_combo.currentData()
-        self.book_combo.blockSignals(True)
-        self.book_combo.clear()
-        for key, name, count in core_search.list_collections(self.conn):
-            self.book_combo.addItem(f"{name} ({count:,})", key)
-        self.book_combo.setCurrentIndex(max(self.book_combo.findData(current), 0))
-        self.book_combo.blockSignals(False)
+        from isnady.gui.widgets import fill_book_combo
+
+        fill_book_combo(self.book_combo, self.conn)
         if self._current:
             self.show_hadith(self._current["id"])
         else:

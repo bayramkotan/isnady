@@ -312,15 +312,9 @@ class StatisticsPage(QWidget):
             return
         from isnady.core import search as core_search
 
-        current = self.scope.currentData()
-        self.scope.blockSignals(True)
-        self.scope.clear()
-        books = core_search.list_collections(conn)
-        self.scope.addItem(f"All books ({len(books)})", None)
-        for key, name, count in books:
-            self.scope.addItem(f"{name} ({count:,})", key)
-        self.scope.setCurrentIndex(max(0, self.scope.findData(current)))
-        self.scope.blockSignals(False)
+        from isnady.gui.widgets import fill_book_combo
+
+        fill_book_combo(self.scope, conn, f"All books ({len(core_search.list_collections(conn))})")
         self._names.clear()
         self.compute_corpus(False)
         self._refresh_graders()

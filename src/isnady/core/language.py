@@ -36,3 +36,12 @@ def set_content_languages(languages: list[str]) -> None:
 def shows(language: str) -> bool:
     chosen = content_languages()
     return not chosen or language in chosen
+
+
+def folds() -> bool:
+    """Texts in languages not chosen: folded behind an arrow on each hadith (True), or left out (False)."""
+    return config.get("view.other_languages") != "omit"
+
+
+def set_folds(on: bool) -> None:
+    config.set("view.other_languages", "fold" if on else "omit")

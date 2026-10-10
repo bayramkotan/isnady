@@ -252,10 +252,13 @@ def search(conn: sqlite3.Connection, query: SearchQuery, min_score: float = 0.10
     ids, all_scores = scored
     order = np.argsort(-all_scores)
     allowed = None
-    if query.collections:
+    from isnady.core import books as core_books
+
+    keys = query.collections or core_books.active_keys(conn)
+    if keys is not None:
         allowed = {r[0] for r in conn.execute(
             f"SELECT h.id FROM hadiths h JOIN collections c ON c.id = h.collection_id "
-            f"WHERE c.key IN ({','.join('?' * len(query.collections))})", query.collections)}
+            f"WHERE c.key IN ({','.join('?' * len(keys)) or 'NULL'})", keys)}
     picked = []
     for i in order:
         if all_scores[i] < min_score:

@@ -28,7 +28,7 @@ def ensure_collection_works(conn: sqlite3.Connection) -> int:
     for cid, key, name in conn.execute("SELECT id, key, name FROM collections").fetchall():
         n, top = conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM hadiths WHERE collection_id = ?", (cid,)).fetchone()
         chapters = conn.execute("SELECT COUNT(*) FROM sections WHERE collection_id = ?", (cid,)).fetchone()[0]
-        stamp = f"collection|{n}|{top}|{chapters}"
+        stamp = f"collection|{n}|{top}|{chapters}|{name}"
         row = conn.execute("SELECT id, stamp FROM works WHERE key = ?", (key,)).fetchone()
         if row and row[1] == stamp:
             continue
@@ -78,8 +78,15 @@ def list_works(conn: sqlite3.Connection) -> list[dict]:
                   (SELECT COUNT(*) FROM work_nodes n WHERE n.work_id = w.id AND n.kind IN ('hadith', 'entry', 'paragraph')),
                   (SELECT COUNT(*) FROM work_nodes n WHERE n.work_id = w.id AND n.parent_id IS NULL)
            FROM works w ORDER BY (w.kind != 'hadith'), w.title""").fetchall()
-    return [{"id": r[0], "key": r[1], "kind": r[2], "title": r[3], "title_ar": r[4], "author": r[5],
-             "leaves": r[6], "chapters": r[7]} for r in rows]
+    from isnady.core import books as core_books
+
+    order = {b["key"]: i for i, b in enumerate(core_books.all_books(conn, include_inactive=True))}
+    off = core_books.disabled()
+    works = [{"id": r[0], "key": r[1], "kind": r[2], "title": r[3], "title_ar": r[4], "author": r[5],
+              "leaves": r[6], "chapters": r[7]} for r in rows if not (r[2] == "hadith" and r[1] in off)]
+    # hadith collections in reading order (Sunni, then Shia), the other works after them by title
+    return sorted(works, key=lambda w: (w["kind"] != "hadith", order.get(w["key"], len(order)),
+                                        core_books.sort_name(w["title"] or "")))
 
 
 def find_work(conn: sqlite3.Connection, key: str) -> dict | None:

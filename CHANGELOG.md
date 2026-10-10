@@ -5,6 +5,17 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **Books in order, Sunni and Shia apart**: every book list (Search, Isnad Chains, Statistics, Books) shows the
+  Sunni collections first — the six books, the Muwatta, the Musnad and al-Darimi in their classical order, then the
+  others by name, read without a leading 'ayn or article — and the Shia collections after them, al-Kafi first,
+  each group under its own heading.
+- **Search in a few books**: Books on the Search page opens a list to tick — all books, all Sunni, all Shia, or any
+  few one by one; a narrowed search is marked.
+- **Settings → Books and languages**: switch any imported book off (it stays in the database, but is left out of
+  searches, book lists and statistics until switched on again; statistics keep a saved result for each set of
+  active books, so switching back reads it instead of computing again); choose the languages the texts are shown
+  in, the others folded behind an arrow on each hadith (▸ Other languages: English) or left out.
+
 - **Data repositories** (Settings → Data sources; `iy repo`): isnady reads its sources from a repository — a
   `catalog.json` listing books and rijal works with their files, licences and tradition. The default is isnady's
   own, [isnady-data](https://github.com/bayramkotan/isnady-data), which holds every Sunni and Shia source isnady

@@ -199,7 +199,9 @@ chain is read narrator by narrator: `iy narrator الزهري`.
 | **Attached prefixes** | `النيات` finds `بالنيات`, because Arabic joins bi-, wa-, fa- and al- to the word. *Whole words only* turns this off |
 | **Latin-script text** | Case and accents are ignored: `NIYET`, `niyet` and `nîyet` are one word; `Muʿādh`, `Mu'adh` and `Muadh` too |
 | **Match** | All words, any word, or the exact phrase |
-| **Filters** | Book and language; the language filter also chooses which translations appear |
+| **Books** | All books, all Sunni, all Shia, or any few ticked one by one — Sunni collections listed first, Shia after them |
+| **Language** | One language to search in; the languages you do not read are folded behind an arrow on each hadith (**Settings → Books and languages**), a click opens them |
+| **Active books** | A book can be switched off in **Settings → Books and languages**: it stays imported but is left out of searches, book lists and statistics until switched on |
 | **Grades** | Shown under each hadith with the scholar's name, exactly as given |
 | **Highlighting** | On the original, diacritised text, diacritics included |
 

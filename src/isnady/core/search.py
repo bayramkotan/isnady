@@ -244,9 +244,12 @@ def search(conn: sqlite3.Connection, query: SearchQuery) -> SearchPage:
         conditions.append("instr(n.norm, ?) > 0")
         params.append(t)
     where = [f"({joiner.join(conditions)})"]
-    if query.collections:
-        where.append(f"c.key IN ({','.join('?' * len(query.collections))})")
-        params.extend(query.collections)
+    from isnady.core import books as core_books
+
+    keys = query.collections or core_books.active_keys(conn)       # "all books" = every ACTIVE book
+    if keys is not None:
+        where.append(f"c.key IN ({','.join('?' * len(keys)) or 'NULL'})")
+        params.extend(keys)
     if query.languages:
         where.append(f"e.language IN ({','.join('?' * len(query.languages))})")
         params.extend(query.languages)
@@ -308,12 +311,11 @@ def _load_result(conn: sqlite3.Connection, hadith_id: int, terms: list[str], que
 
 # ----------------------------------------------------------------- filters
 def list_collections(conn: sqlite3.Connection) -> list[tuple[str, str, int]]:
-    """(key, name, hadith count) of every collection that has texts."""
-    return [tuple(r) for r in conn.execute(
-        """SELECT c.key, c.name, COUNT(DISTINCT h.id) FROM collections c
-           JOIN hadiths h ON h.collection_id = c.id JOIN texts t ON t.hadith_id = h.id
-           GROUP BY c.id ORDER BY c.name"""
-    )]
+    """(key, name, hadith count) of every ACTIVE collection that has texts, Sunni first, in reading order
+    (core.books)."""
+    from isnady.core import books as core_books
+
+    return [(b["key"], b["name"], b["count"]) for b in core_books.all_books(conn)]
 
 
 def list_languages(conn: sqlite3.Connection) -> list[str]:

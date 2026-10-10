@@ -553,7 +553,7 @@ def cached(conn: sqlite3.Connection, collection: str | None = None, progress=Non
     """The laboratory from data_dir()/derived/ while the data is unchanged; computed and written otherwise (DX1)."""
     from isnady.data.paths import data_dir
 
-    path = data_dir() / "derived" / f"lab-{collection or 'all'}.json"
+    path = data_dir() / "derived" / sc.cache_name("lab", collection)
     stamp = sc.fingerprint(conn, collection) + METHOD
     if not recompute and path.exists():
         try:

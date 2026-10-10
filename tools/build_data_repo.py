@@ -148,7 +148,7 @@ TQ_ORIGIN = {"name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynA
 TQ = {      # key: (title, Arabic title, compiler, files (volumes in order))
     "kafi": ("al-Kafi — al-Kulayni", "الكافي", "al-Kulayni (d. 329)",
              [f"Al-Kafi-Volume-{v}-Kulayni" for v in range(1, 9)]),
-    "uyun": ("'Uyun Akhbar al-Rida — al-Saduq", "عيون أخبار الرضا", "al-Saduq (d. 381)",
+    "uyun": ("ʿUyun Akhbar al-Rida — al-Saduq", "عيون أخبار الرضا", "al-Saduq (d. 381)",
              ["Uyun-akhbar-al-Rida-Volume-1-Saduq", "Uyun-akhbar-al-Rida-Volume-2-Saduq"]),
     "amali-saduq": ("al-Amali — al-Saduq", "الأمالي (الصدوق)", "al-Saduq (d. 381)", ["Al-Amali-Saduq"]),
     "khisal": ("al-Khisal — al-Saduq", "الخصال", "al-Saduq (d. 381)", ["Al-Khisal-Saduq"]),

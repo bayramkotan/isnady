@@ -393,7 +393,7 @@
   },
   {
    "id": "uyun",
-   "title": "'Uyun Akhbar al-Rida — al-Saduq",
+   "title": "ʿUyun Akhbar al-Rida — al-Saduq",
    "title_ar": "عيون أخبار الرضا",
    "kind": "hadith",
    "tradition": "shia",
@@ -406,7 +406,7 @@
    ],
    "license": null,
    "hadith": 954,
-   "source_name": "isnady-data: 'Uyun Akhbar al-Rida — al-Saduq",
+   "source_name": "isnady-data: ʿUyun Akhbar al-Rida — al-Saduq",
    "source_key": "isnady-uyun",
    "description": "Compiled by al-Saduq (d. 381). Arabic and English; 2 volumes, numbered volume:hadith."
   },

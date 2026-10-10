@@ -432,6 +432,7 @@ class MainWindow(QMainWindow):
         dialog = PreferencesDialog(self, start_tab=tab)
         dialog.changed.connect(self._apply_settings)
         dialog.data_imported.connect(self._data_imported)
+        dialog.languages_changed.connect(self._languages_changed)
         dialog.exec()
 
     def _data_imported(self) -> None:
@@ -440,6 +441,8 @@ class MainWindow(QMainWindow):
         self.isnad_page.refresh()
         self.narrators_page.refresh()
         self.scholars_page.refresh()
+        self.books_page.refresh()
+        self.statistics_page.refresh()
 
     def _apply_settings(self) -> None:
         self._restyle(lambda: theme.apply(QApplication.instance()))

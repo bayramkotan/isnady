@@ -15,6 +15,7 @@ last is usually the Companion. A pair (p, p+1) is therefore (student, teacher).
 
 from __future__ import annotations
 
+import hashlib
 import json
 import random
 import sqlite3
@@ -156,18 +157,36 @@ def pagerank(edges: Counter, damping: float = 0.85, iterations: int = 60) -> dic
 
 # ------------------------------------------------------------------ loading
 def _books(conn: sqlite3.Connection, collection: str | None) -> list[tuple[int, str, str]]:
-    rows = conn.execute("SELECT id, key, name FROM collections ORDER BY name").fetchall()
-    return [tuple(r) for r in rows if collection in (None, r[1])]
+    """(id, key, name) of the books measured: one, or every ACTIVE one (core.books), in reading order."""
+    from isnady.core import books as core_books
+
+    ids = dict(conn.execute("SELECT key, id FROM collections").fetchall())
+    if collection:
+        row = conn.execute("SELECT id, key, name FROM collections WHERE key = ?", (collection,)).fetchone()
+        return [tuple(row)] if row else []
+    return [(ids[b["key"]], b["key"], b["name"]) for b in core_books.all_books(conn)]
 
 
 def fingerprint(conn: sqlite3.Connection, collection: str | None) -> str:
     one = lambda sql: tuple(conn.execute(sql).fetchone())  # noqa: E731
-    parts = [METHOD, collection or "*", one("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM hadiths"),
+    from isnady.core import books as core_books
+
+    parts = [METHOD, collection or "*", sorted(core_books.disabled()) if not collection else [], one("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM hadiths"),
              one("SELECT COUNT(*), SUM(person_id IS NOT NULL), SUM(COALESCE(person_id, 0)) FROM isnad_links"),
              one("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM verdicts"),
              one("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM grades"),
              one("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM persons")]
     return json.dumps(parts, default=str)
+
+
+def cache_name(prefix: str, collection: str | None) -> str:
+    """The file a result is kept in (DX1): one per book, and one per SET of active books for "all books", so
+    switching a book off and on again reads the earlier result instead of computing it again."""
+    from isnady.core import books as core_books
+
+    off = sorted(core_books.disabled())
+    tail = "" if collection or not off else "-" + hashlib.md5(",".join(off).encode()).hexdigest()[:8]
+    return f"{prefix}-{collection or 'all'}{tail}.json"
 
 
 def _persons(conn: sqlite3.Connection) -> dict[int, dict]:
@@ -390,7 +409,7 @@ def cached(conn: sqlite3.Connection, collection: str | None = None, progress=Non
     """The analysis from data_dir()/derived/ while the data is unchanged; computed and written otherwise (DX1)."""
     from isnady.data.paths import data_dir
 
-    path = data_dir() / "derived" / f"corpus-{collection or 'all'}.json"
+    path = data_dir() / "derived" / cache_name("corpus", collection)
     stamp = fingerprint(conn, collection)
     if not recompute and path.exists():
         try:
