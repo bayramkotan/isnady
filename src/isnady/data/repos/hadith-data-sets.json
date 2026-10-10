@@ -1,0 +1,279 @@
+{
+ "schema": "isnady-catalog/1",
+ "id": "hadith-data-sets",
+ "name": "Hadith-Data-Sets",
+ "description": "The nine books in Arabic (62,169 hadith).",
+ "homepage": "https://github.com/abdelrahmaan/Hadith-Data-Sets",
+ "entries": [
+  {
+   "id": "bukhari-hds",
+   "title": "Sahih al-Bukhari — Hadith-Data-Sets",
+   "title_ar": "صحيح البخاري",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/abdelrahmaan/Hadith-Data-Sets/master/All%20Hadith%20Books/Sahih%20Bukhari.csv",
+   "book": "bukhari-hds",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "skip_rows": 1,
+    "number": "@row",
+    "texts": [
+     {
+      "field": "#0",
+      "language": "Arabic"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "Hadith-Data-Sets",
+   "source_key": "hadith-data-sets",
+   "origin": {
+    "name": "abdelrahmaan/Hadith-Data-Sets",
+    "url": "https://github.com/abdelrahmaan/Hadith-Data-Sets"
+   },
+   "description": "Arabic with diacritics, one hadith per row, numbered in order (the nine books: 62,169 hadith)."
+  },
+  {
+   "id": "muslim-hds",
+   "title": "Sahih Muslim — Hadith-Data-Sets",
+   "title_ar": "صحيح مسلم",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/abdelrahmaan/Hadith-Data-Sets/master/All%20Hadith%20Books/Sahih%20Muslim.csv",
+   "book": "muslim-hds",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "skip_rows": 1,
+    "number": "@row",
+    "texts": [
+     {
+      "field": "#0",
+      "language": "Arabic"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "Hadith-Data-Sets",
+   "source_key": "hadith-data-sets",
+   "origin": {
+    "name": "abdelrahmaan/Hadith-Data-Sets",
+    "url": "https://github.com/abdelrahmaan/Hadith-Data-Sets"
+   },
+   "description": "Arabic with diacritics, one hadith per row, numbered in order (the nine books: 62,169 hadith)."
+  },
+  {
+   "id": "abudawud-hds",
+   "title": "Sunan Abi Dawud — Hadith-Data-Sets",
+   "title_ar": "سنن أبي داود",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/abdelrahmaan/Hadith-Data-Sets/master/All%20Hadith%20Books/Sunan%20Abu%20Dawud.csv",
+   "book": "abudawud-hds",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "skip_rows": 1,
+    "number": "@row",
+    "texts": [
+     {
+      "field": "#0",
+      "language": "Arabic"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "Hadith-Data-Sets",
+   "source_key": "hadith-data-sets",
+   "origin": {
+    "name": "abdelrahmaan/Hadith-Data-Sets",
+    "url": "https://github.com/abdelrahmaan/Hadith-Data-Sets"
+   },
+   "description": "Arabic with diacritics, one hadith per row, numbered in order (the nine books: 62,169 hadith)."
+  },
+  {
+   "id": "tirmidhi-hds",
+   "title": "Jami' al-Tirmidhi — Hadith-Data-Sets",
+   "title_ar": "جامع الترمذي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/abdelrahmaan/Hadith-Data-Sets/master/All%20Hadith%20Books/Sunan%20al%20Tirmidhi.csv",
+   "book": "tirmidhi-hds",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "skip_rows": 1,
+    "number": "@row",
+    "texts": [
+     {
+      "field": "#0",
+      "language": "Arabic"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "Hadith-Data-Sets",
+   "source_key": "hadith-data-sets",
+   "origin": {
+    "name": "abdelrahmaan/Hadith-Data-Sets",
+    "url": "https://github.com/abdelrahmaan/Hadith-Data-Sets"
+   },
+   "description": "Arabic with diacritics, one hadith per row, numbered in order (the nine books: 62,169 hadith)."
+  },
+  {
+   "id": "nasai-hds",
+   "title": "Sunan al-Nasa'i — Hadith-Data-Sets",
+   "title_ar": "سنن النسائي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/abdelrahmaan/Hadith-Data-Sets/master/All%20Hadith%20Books/Sunan%20al-Nasai.csv",
+   "book": "nasai-hds",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "skip_rows": 1,
+    "number": "@row",
+    "texts": [
+     {
+      "field": "#0",
+      "language": "Arabic"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "Hadith-Data-Sets",
+   "source_key": "hadith-data-sets",
+   "origin": {
+    "name": "abdelrahmaan/Hadith-Data-Sets",
+    "url": "https://github.com/abdelrahmaan/Hadith-Data-Sets"
+   },
+   "description": "Arabic with diacritics, one hadith per row, numbered in order (the nine books: 62,169 hadith)."
+  },
+  {
+   "id": "ibnmajah-hds",
+   "title": "Sunan Ibn Majah — Hadith-Data-Sets",
+   "title_ar": "سنن ابن ماجه",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/abdelrahmaan/Hadith-Data-Sets/master/All%20Hadith%20Books/Sunan%20Ibn%20Maja.csv",
+   "book": "ibnmajah-hds",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "skip_rows": 1,
+    "number": "@row",
+    "texts": [
+     {
+      "field": "#0",
+      "language": "Arabic"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "Hadith-Data-Sets",
+   "source_key": "hadith-data-sets",
+   "origin": {
+    "name": "abdelrahmaan/Hadith-Data-Sets",
+    "url": "https://github.com/abdelrahmaan/Hadith-Data-Sets"
+   },
+   "description": "Arabic with diacritics, one hadith per row, numbered in order (the nine books: 62,169 hadith)."
+  },
+  {
+   "id": "malik-hds",
+   "title": "Muwatta Malik — Hadith-Data-Sets",
+   "title_ar": "موطأ مالك",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/abdelrahmaan/Hadith-Data-Sets/master/All%20Hadith%20Books/Maliks%20Muwatta.csv",
+   "book": "malik-hds",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "skip_rows": 1,
+    "number": "@row",
+    "texts": [
+     {
+      "field": "#0",
+      "language": "Arabic"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "Hadith-Data-Sets",
+   "source_key": "hadith-data-sets",
+   "origin": {
+    "name": "abdelrahmaan/Hadith-Data-Sets",
+    "url": "https://github.com/abdelrahmaan/Hadith-Data-Sets"
+   },
+   "description": "Arabic with diacritics, one hadith per row, numbered in order (the nine books: 62,169 hadith)."
+  },
+  {
+   "id": "ahmad-hds",
+   "title": "Musnad Ahmad ibn Hanbal — Hadith-Data-Sets",
+   "title_ar": "مسند أحمد بن حنبل",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/abdelrahmaan/Hadith-Data-Sets/master/All%20Hadith%20Books/Musnad%20Ahmad%20ibn%20Hanbal.csv",
+   "book": "ahmad-hds",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "skip_rows": 1,
+    "number": "@row",
+    "texts": [
+     {
+      "field": "#0",
+      "language": "Arabic"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "Hadith-Data-Sets",
+   "source_key": "hadith-data-sets",
+   "origin": {
+    "name": "abdelrahmaan/Hadith-Data-Sets",
+    "url": "https://github.com/abdelrahmaan/Hadith-Data-Sets"
+   },
+   "description": "Arabic with diacritics, one hadith per row, numbered in order (the nine books: 62,169 hadith)."
+  },
+  {
+   "id": "darimi-hds",
+   "title": "Sunan al-Darimi — Hadith-Data-Sets",
+   "title_ar": "سنن الدارمي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/abdelrahmaan/Hadith-Data-Sets/master/All%20Hadith%20Books/Sunan%20al%20Darami.csv",
+   "book": "darimi-hds",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "skip_rows": 1,
+    "number": "@row",
+    "texts": [
+     {
+      "field": "#0",
+      "language": "Arabic"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "Hadith-Data-Sets",
+   "source_key": "hadith-data-sets",
+   "origin": {
+    "name": "abdelrahmaan/Hadith-Data-Sets",
+    "url": "https://github.com/abdelrahmaan/Hadith-Data-Sets"
+   },
+   "description": "Arabic with diacritics, one hadith per row, numbered in order (the nine books: 62,169 hadith)."
+  }
+ ]
+}

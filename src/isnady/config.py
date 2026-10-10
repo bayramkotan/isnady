@@ -58,7 +58,8 @@ _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 def defaults() -> dict:
     d = {"view.theme": "system", "view.text_scale": 1.0, "ui.family": "", "ui.size": 0.0,
          "view.ui_language": "en",            # the interface: how names and terms are read (L1)
-         "view.content_languages": ""}        # the hadith texts shown, by language, comma-separated; empty: all
+         "view.content_languages": "",        # the hadith texts shown, by language, comma-separated; empty: all
+         "sources.repository": ""}            # the data repository chosen (core.repositories); empty: isnady's own
     for script, (_label, _sample, family, size, line) in SCRIPTS.items():
         d[f"text.{script}.family"] = family
         d[f"text.{script}.size"] = size
@@ -125,6 +126,8 @@ def validate(key: str, value):
         if value not in ("en", "tr"):
             raise ConfigError("view.ui_language must be en or tr")
         return value
+    if key == "sources.repository":
+        return re.sub(r"[^a-z0-9._-]", "", str(value).strip().lower())
     if key == "view.content_languages":
         return ",".join(part.strip() for part in str(value).split(",") if part.strip())
     if key.endswith(".color") or key.startswith("colors."):

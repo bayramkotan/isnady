@@ -1,0 +1,318 @@
+{
+ "schema": "isnady-catalog/1",
+ "id": "open-hadith-data",
+ "name": "Open Hadith Data",
+ "description": "The nine books in Arabic with diacritics, seven with a commentary of every hadith (ODbL).",
+ "homepage": "https://github.com/mhashim6/Open-Hadith-Data",
+ "entries": [
+  {
+   "id": "bukhari-ohd",
+   "title": "Sahih al-Bukhari — Open Hadith Data",
+   "title_ar": "صحيح البخاري",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/mhashim6/Open-Hadith-Data/master/Sahih_Al-Bukhari/sahih_al-bukhari_ahadith_mushakkala_mufassala.utf8.csv",
+   "book": "bukhari-ohd",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "number": "#0",
+    "texts": [
+     {
+      "field": "#1",
+      "language": "Arabic"
+     },
+     {
+      "field": "#2",
+      "language": "Arabic",
+      "name": "Commentary",
+      "comments": "Commentary (tafsil)"
+     }
+    ]
+   },
+   "license": "ODbL-1.0",
+   "source_name": "Open Hadith Data",
+   "source_key": "open-hadith-data",
+   "origin": {
+    "name": "mhashim6/Open-Hadith-Data",
+    "url": "https://github.com/mhashim6/Open-Hadith-Data"
+   },
+   "description": "Arabic with full diacritics and a commentary (tafsil) of every hadith; numbered as in the Sakhr / al-Islam edition. Open Database License: credit the Open Hadith Data project; a database made from it stays under the ODbL."
+  },
+  {
+   "id": "muslim-ohd",
+   "title": "Sahih Muslim — Open Hadith Data",
+   "title_ar": "صحيح مسلم",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/mhashim6/Open-Hadith-Data/master/Sahih_Muslim/sahih_muslim_ahadith_mushakkala_mufassala.utf8.csv",
+   "book": "muslim-ohd",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "number": "#0",
+    "texts": [
+     {
+      "field": "#1",
+      "language": "Arabic"
+     },
+     {
+      "field": "#2",
+      "language": "Arabic",
+      "name": "Commentary",
+      "comments": "Commentary (tafsil)"
+     }
+    ]
+   },
+   "license": "ODbL-1.0",
+   "source_name": "Open Hadith Data",
+   "source_key": "open-hadith-data",
+   "origin": {
+    "name": "mhashim6/Open-Hadith-Data",
+    "url": "https://github.com/mhashim6/Open-Hadith-Data"
+   },
+   "description": "Arabic with full diacritics and a commentary (tafsil) of every hadith; numbered as in the Sakhr / al-Islam edition. Open Database License: credit the Open Hadith Data project; a database made from it stays under the ODbL."
+  },
+  {
+   "id": "abudawud-ohd",
+   "title": "Sunan Abi Dawud — Open Hadith Data",
+   "title_ar": "سنن أبي داود",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/mhashim6/Open-Hadith-Data/master/Sunan_Abu-Dawud/sunan_abu-dawud_ahadith_mushakkala_mufassala.utf8.csv",
+   "book": "abudawud-ohd",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "number": "#0",
+    "texts": [
+     {
+      "field": "#1",
+      "language": "Arabic"
+     },
+     {
+      "field": "#2",
+      "language": "Arabic",
+      "name": "Commentary",
+      "comments": "Commentary (tafsil)"
+     }
+    ]
+   },
+   "license": "ODbL-1.0",
+   "source_name": "Open Hadith Data",
+   "source_key": "open-hadith-data",
+   "origin": {
+    "name": "mhashim6/Open-Hadith-Data",
+    "url": "https://github.com/mhashim6/Open-Hadith-Data"
+   },
+   "description": "Arabic with full diacritics and a commentary (tafsil) of every hadith; numbered as in the Sakhr / al-Islam edition. Open Database License: credit the Open Hadith Data project; a database made from it stays under the ODbL."
+  },
+  {
+   "id": "tirmidhi-ohd",
+   "title": "Jami' al-Tirmidhi — Open Hadith Data",
+   "title_ar": "جامع الترمذي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/mhashim6/Open-Hadith-Data/master/Sunan_Al-Tirmidhi/sunan_al-tirmidhi_ahadith_mushakkala_mufassala.utf8.csv",
+   "book": "tirmidhi-ohd",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "number": "#0",
+    "texts": [
+     {
+      "field": "#1",
+      "language": "Arabic"
+     },
+     {
+      "field": "#2",
+      "language": "Arabic",
+      "name": "Commentary",
+      "comments": "Commentary (tafsil)"
+     }
+    ]
+   },
+   "license": "ODbL-1.0",
+   "source_name": "Open Hadith Data",
+   "source_key": "open-hadith-data",
+   "origin": {
+    "name": "mhashim6/Open-Hadith-Data",
+    "url": "https://github.com/mhashim6/Open-Hadith-Data"
+   },
+   "description": "Arabic with full diacritics and a commentary (tafsil) of every hadith; numbered as in the Sakhr / al-Islam edition. Open Database License: credit the Open Hadith Data project; a database made from it stays under the ODbL."
+  },
+  {
+   "id": "nasai-ohd",
+   "title": "Sunan al-Nasa'i — Open Hadith Data",
+   "title_ar": "سنن النسائي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/mhashim6/Open-Hadith-Data/master/Sunan_Al-Nasai/sunan_al-nasai_ahadith_mushakkala_mufassala.utf8.csv",
+   "book": "nasai-ohd",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "number": "#0",
+    "texts": [
+     {
+      "field": "#1",
+      "language": "Arabic"
+     },
+     {
+      "field": "#2",
+      "language": "Arabic",
+      "name": "Commentary",
+      "comments": "Commentary (tafsil)"
+     }
+    ]
+   },
+   "license": "ODbL-1.0",
+   "source_name": "Open Hadith Data",
+   "source_key": "open-hadith-data",
+   "origin": {
+    "name": "mhashim6/Open-Hadith-Data",
+    "url": "https://github.com/mhashim6/Open-Hadith-Data"
+   },
+   "description": "Arabic with full diacritics and a commentary (tafsil) of every hadith; numbered as in the Sakhr / al-Islam edition. Open Database License: credit the Open Hadith Data project; a database made from it stays under the ODbL."
+  },
+  {
+   "id": "ibnmajah-ohd",
+   "title": "Sunan Ibn Majah — Open Hadith Data",
+   "title_ar": "سنن ابن ماجه",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/mhashim6/Open-Hadith-Data/master/Sunan_Ibn-Maja/sunan_ibn-maja_ahadith_mushakkala_mufassala.utf8.csv",
+   "book": "ibnmajah-ohd",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "number": "#0",
+    "texts": [
+     {
+      "field": "#1",
+      "language": "Arabic"
+     },
+     {
+      "field": "#2",
+      "language": "Arabic",
+      "name": "Commentary",
+      "comments": "Commentary (tafsil)"
+     }
+    ]
+   },
+   "license": "ODbL-1.0",
+   "source_name": "Open Hadith Data",
+   "source_key": "open-hadith-data",
+   "origin": {
+    "name": "mhashim6/Open-Hadith-Data",
+    "url": "https://github.com/mhashim6/Open-Hadith-Data"
+   },
+   "description": "Arabic with full diacritics and a commentary (tafsil) of every hadith; numbered as in the Sakhr / al-Islam edition. Open Database License: credit the Open Hadith Data project; a database made from it stays under the ODbL."
+  },
+  {
+   "id": "malik-ohd",
+   "title": "Muwatta Malik — Open Hadith Data",
+   "title_ar": "موطأ مالك",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/mhashim6/Open-Hadith-Data/master/Maliks_Muwataa/maliks_muwataa_ahadith_mushakkala_mufassala.utf8.csv",
+   "book": "malik-ohd",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "number": "#0",
+    "texts": [
+     {
+      "field": "#1",
+      "language": "Arabic"
+     },
+     {
+      "field": "#2",
+      "language": "Arabic",
+      "name": "Commentary",
+      "comments": "Commentary (tafsil)"
+     }
+    ]
+   },
+   "license": "ODbL-1.0",
+   "source_name": "Open Hadith Data",
+   "source_key": "open-hadith-data",
+   "origin": {
+    "name": "mhashim6/Open-Hadith-Data",
+    "url": "https://github.com/mhashim6/Open-Hadith-Data"
+   },
+   "description": "Arabic with full diacritics and a commentary (tafsil) of every hadith; numbered as in the Sakhr / al-Islam edition. Open Database License: credit the Open Hadith Data project; a database made from it stays under the ODbL."
+  },
+  {
+   "id": "ahmad-ohd",
+   "title": "Musnad Ahmad ibn Hanbal — Open Hadith Data",
+   "title_ar": "مسند أحمد بن حنبل",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/mhashim6/Open-Hadith-Data/master/Musnad_Ahmad_Ibn-Hanbal/musnad_ahmad_ibn-hanbal_ahadith_mushakkala.utf8.csv",
+   "book": "ahmad-ohd",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "number": "#0",
+    "texts": [
+     {
+      "field": "#1",
+      "language": "Arabic"
+     }
+    ]
+   },
+   "license": "ODbL-1.0",
+   "source_name": "Open Hadith Data",
+   "source_key": "open-hadith-data",
+   "origin": {
+    "name": "mhashim6/Open-Hadith-Data",
+    "url": "https://github.com/mhashim6/Open-Hadith-Data"
+   },
+   "description": "Arabic with full diacritics; numbered as in the Sakhr / al-Islam edition. Open Database License: credit the Open Hadith Data project; a database made from it stays under the ODbL."
+  },
+  {
+   "id": "darimi-ohd",
+   "title": "Sunan al-Darimi — Open Hadith Data",
+   "title_ar": "سنن الدارمي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/mhashim6/Open-Hadith-Data/master/Sunan_Al-Darimi/sunan_al-darimi_ahadith_mushakkala_mufassala.utf8.csv",
+   "book": "darimi-ohd",
+   "mapping": {
+    "type": "csv",
+    "header": false,
+    "number": "#0",
+    "texts": [
+     {
+      "field": "#1",
+      "language": "Arabic"
+     },
+     {
+      "field": "#2",
+      "language": "Arabic",
+      "name": "Commentary",
+      "comments": "Commentary (tafsil)"
+     }
+    ]
+   },
+   "license": "ODbL-1.0",
+   "source_name": "Open Hadith Data",
+   "source_key": "open-hadith-data",
+   "origin": {
+    "name": "mhashim6/Open-Hadith-Data",
+    "url": "https://github.com/mhashim6/Open-Hadith-Data"
+   },
+   "description": "Arabic with full diacritics and a commentary (tafsil) of every hadith; numbered as in the Sakhr / al-Islam edition. Open Database License: credit the Open Hadith Data project; a database made from it stays under the ODbL."
+  }
+ ]
+}

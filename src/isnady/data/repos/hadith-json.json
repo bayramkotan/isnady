@@ -1,0 +1,604 @@
+{
+ "schema": "isnady-catalog/1",
+ "id": "hadith-json",
+ "name": "hadith-json (sunnah.com)",
+ "description": "Seventeen books in Arabic and English from sunnah.com (50,884 hadith; no licence given).",
+ "homepage": "https://github.com/AhmedBaset/hadith-json",
+ "entries": [
+  {
+   "id": "bukhari-hj",
+   "title": "Sahih al-Bukhari — sunnah.com (hadith-json)",
+   "title_ar": "صحيح البخاري",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/the_9_books/bukhari.json",
+   "book": "bukhari-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "muslim-hj",
+   "title": "Sahih Muslim — sunnah.com (hadith-json)",
+   "title_ar": "صحيح مسلم",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/the_9_books/muslim.json",
+   "book": "muslim-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "abudawud-hj",
+   "title": "Sunan Abi Dawud — sunnah.com (hadith-json)",
+   "title_ar": "سنن أبي داود",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/the_9_books/abudawud.json",
+   "book": "abudawud-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "tirmidhi-hj",
+   "title": "Jami' al-Tirmidhi — sunnah.com (hadith-json)",
+   "title_ar": "جامع الترمذي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/the_9_books/tirmidhi.json",
+   "book": "tirmidhi-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "nasai-hj",
+   "title": "Sunan al-Nasa'i — sunnah.com (hadith-json)",
+   "title_ar": "سنن النسائي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/the_9_books/nasai.json",
+   "book": "nasai-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "ibnmajah-hj",
+   "title": "Sunan Ibn Majah — sunnah.com (hadith-json)",
+   "title_ar": "سنن ابن ماجه",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/the_9_books/ibnmajah.json",
+   "book": "ibnmajah-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "malik-hj",
+   "title": "Muwatta Malik — sunnah.com (hadith-json)",
+   "title_ar": "موطأ مالك",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/the_9_books/malik.json",
+   "book": "malik-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "ahmad-hj",
+   "title": "Musnad Ahmad — sunnah.com (hadith-json)",
+   "title_ar": "مسند أحمد",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/the_9_books/ahmed.json",
+   "book": "ahmad-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "darimi-hj",
+   "title": "Sunan al-Darimi — sunnah.com (hadith-json)",
+   "title_ar": "سنن الدارمي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/the_9_books/darimi.json",
+   "book": "darimi-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "riyad-hj",
+   "title": "Riyad al-Salihin — sunnah.com (hadith-json)",
+   "title_ar": "رياض الصالحين",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/other_books/riyad_assalihin.json",
+   "book": "riyad-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "shamail-hj",
+   "title": "al-Shama'il al-Muhammadiyya — sunnah.com (hadith-json)",
+   "title_ar": "الشمائل المحمدية",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/other_books/shamail_muhammadiyah.json",
+   "book": "shamail-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "bulugh-hj",
+   "title": "Bulugh al-Maram — sunnah.com (hadith-json)",
+   "title_ar": "بلوغ المرام",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/other_books/bulugh_almaram.json",
+   "book": "bulugh-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "adab-hj",
+   "title": "al-Adab al-Mufrad — sunnah.com (hadith-json)",
+   "title_ar": "الأدب المفرد",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/other_books/aladab_almufrad.json",
+   "book": "adab-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "mishkat-hj",
+   "title": "Mishkat al-Masabih — sunnah.com (hadith-json)",
+   "title_ar": "مشكاة المصابيح",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/other_books/mishkat_almasabih.json",
+   "book": "mishkat-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "nawawi-hj",
+   "title": "Forty Hadith of al-Nawawi — sunnah.com (hadith-json)",
+   "title_ar": "الأربعون النووية",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/forties/nawawi40.json",
+   "book": "nawawi-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "qudsi-hj",
+   "title": "Forty Hadith Qudsi — sunnah.com (hadith-json)",
+   "title_ar": "الأربعون القدسية",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/forties/qudsi40.json",
+   "book": "qudsi-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  },
+  {
+   "id": "dehlawi-hj",
+   "title": "Forty Hadith of Shah Waliullah — sunnah.com (hadith-json)",
+   "title_ar": "أربعون الدهلوي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/forties/shahwaliullah40.json",
+   "book": "dehlawi-hj",
+   "mapping": {
+    "type": "json",
+    "records": "hadiths",
+    "number": "idInBook",
+    "section": "chapterId",
+    "texts": [
+     {
+      "field": "arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "english.text",
+      "language": "English",
+      "lead": "english.narrator"
+     }
+    ]
+   },
+   "license": null,
+   "source_name": "hadith-json (sunnah.com)",
+   "source_key": "hadith-json",
+   "origin": {
+    "name": "AhmedBaset/hadith-json (from sunnah.com)",
+    "url": "https://github.com/AhmedBaset/hadith-json"
+   },
+   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+  }
+ ]
+}

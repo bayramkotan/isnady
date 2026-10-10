@@ -1,0 +1,315 @@
+{
+ "schema": "isnady-catalog/1",
+ "id": "huggingface-meeatif",
+ "name": "Hugging Face — meeAtif/hadith_datasets",
+ "description": "The six books in Arabic and English with chapter titles and grades (MIT, as declared).",
+ "homepage": "https://huggingface.co/datasets/meeAtif/hadith_datasets",
+ "entries": [
+  {
+   "id": "bukhari-hf",
+   "title": "Sahih al-Bukhari — Hugging Face",
+   "title_ar": "صحيح البخاري",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://huggingface.co/datasets/meeAtif/hadith_datasets/resolve/main/Sahih%20al-Bukhari.json",
+   "book": "bukhari-hf",
+   "mapping": {
+    "type": "json",
+    "number": "Reference",
+    "number_pattern": "[:/](\\d+[a-z]?)\\s*$",
+    "section": "Chapter_Number",
+    "section_titles": [
+     {
+      "field": "Chapter_Title_Arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "Chapter_Title_English",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "Arabic_Text",
+      "language": "Arabic"
+     },
+     {
+      "field": "English_Text",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "Grade",
+      "grader": "Grade on sunnah.com (meeAtif dataset)"
+     }
+    ],
+    "url": "Reference"
+   },
+   "license": "MIT (as declared; text from sunnah.com)",
+   "source_name": "meeAtif/hadith_datasets",
+   "source_key": "hf-meeatif-hadith",
+   "origin": {
+    "name": "meeAtif/hadith_datasets (Hugging Face; text from sunnah.com)",
+    "url": "https://huggingface.co/datasets/meeAtif/hadith_datasets"
+   },
+   "description": "Arabic, English, chapter titles in both and the sunnah.com grade, from the Hugging Face dataset meeAtif/hadith_datasets."
+  },
+  {
+   "id": "muslim-hf",
+   "title": "Sahih Muslim — Hugging Face",
+   "title_ar": "صحيح مسلم",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://huggingface.co/datasets/meeAtif/hadith_datasets/resolve/main/Sahih%20Muslim.json",
+   "book": "muslim-hf",
+   "mapping": {
+    "type": "json",
+    "number": "Reference",
+    "number_pattern": "[:/](\\d+[a-z]?)\\s*$",
+    "section": "Chapter_Number",
+    "section_titles": [
+     {
+      "field": "Chapter_Title_Arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "Chapter_Title_English",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "Arabic_Text",
+      "language": "Arabic"
+     },
+     {
+      "field": "English_Text",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "Grade",
+      "grader": "Grade on sunnah.com (meeAtif dataset)"
+     }
+    ],
+    "url": "Reference"
+   },
+   "license": "MIT (as declared; text from sunnah.com)",
+   "source_name": "meeAtif/hadith_datasets",
+   "source_key": "hf-meeatif-hadith",
+   "origin": {
+    "name": "meeAtif/hadith_datasets (Hugging Face; text from sunnah.com)",
+    "url": "https://huggingface.co/datasets/meeAtif/hadith_datasets"
+   },
+   "description": "Arabic, English, chapter titles in both and the sunnah.com grade, from the Hugging Face dataset meeAtif/hadith_datasets."
+  },
+  {
+   "id": "abudawud-hf",
+   "title": "Sunan Abi Dawud — Hugging Face",
+   "title_ar": "سنن أبي داود",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://huggingface.co/datasets/meeAtif/hadith_datasets/resolve/main/Sunan%20Abi%20Dawud.json",
+   "book": "abudawud-hf",
+   "mapping": {
+    "type": "json",
+    "number": "Reference",
+    "number_pattern": "[:/](\\d+[a-z]?)\\s*$",
+    "section": "Chapter_Number",
+    "section_titles": [
+     {
+      "field": "Chapter_Title_Arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "Chapter_Title_English",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "Arabic_Text",
+      "language": "Arabic"
+     },
+     {
+      "field": "English_Text",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "Grade",
+      "grader": "Grade on sunnah.com (meeAtif dataset)"
+     }
+    ],
+    "url": "Reference"
+   },
+   "license": "MIT (as declared; text from sunnah.com)",
+   "source_name": "meeAtif/hadith_datasets",
+   "source_key": "hf-meeatif-hadith",
+   "origin": {
+    "name": "meeAtif/hadith_datasets (Hugging Face; text from sunnah.com)",
+    "url": "https://huggingface.co/datasets/meeAtif/hadith_datasets"
+   },
+   "description": "Arabic, English, chapter titles in both and the sunnah.com grade, from the Hugging Face dataset meeAtif/hadith_datasets."
+  },
+  {
+   "id": "tirmidhi-hf",
+   "title": "Jami' al-Tirmidhi — Hugging Face",
+   "title_ar": "جامع الترمذي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://huggingface.co/datasets/meeAtif/hadith_datasets/resolve/main/Jami%60%20at-Tirmidhi.json",
+   "book": "tirmidhi-hf",
+   "mapping": {
+    "type": "json",
+    "number": "Reference",
+    "number_pattern": "[:/](\\d+[a-z]?)\\s*$",
+    "section": "Chapter_Number",
+    "section_titles": [
+     {
+      "field": "Chapter_Title_Arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "Chapter_Title_English",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "Arabic_Text",
+      "language": "Arabic"
+     },
+     {
+      "field": "English_Text",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "Grade",
+      "grader": "Grade on sunnah.com (meeAtif dataset)"
+     }
+    ],
+    "url": "Reference"
+   },
+   "license": "MIT (as declared; text from sunnah.com)",
+   "source_name": "meeAtif/hadith_datasets",
+   "source_key": "hf-meeatif-hadith",
+   "origin": {
+    "name": "meeAtif/hadith_datasets (Hugging Face; text from sunnah.com)",
+    "url": "https://huggingface.co/datasets/meeAtif/hadith_datasets"
+   },
+   "description": "Arabic, English, chapter titles in both and the sunnah.com grade, from the Hugging Face dataset meeAtif/hadith_datasets."
+  },
+  {
+   "id": "nasai-hf",
+   "title": "Sunan al-Nasa'i — Hugging Face",
+   "title_ar": "سنن النسائي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://huggingface.co/datasets/meeAtif/hadith_datasets/resolve/main/Sunan%20an-Nasa%27i.json",
+   "book": "nasai-hf",
+   "mapping": {
+    "type": "json",
+    "number": "Reference",
+    "number_pattern": "[:/](\\d+[a-z]?)\\s*$",
+    "section": "Chapter_Number",
+    "section_titles": [
+     {
+      "field": "Chapter_Title_Arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "Chapter_Title_English",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "Arabic_Text",
+      "language": "Arabic"
+     },
+     {
+      "field": "English_Text",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "Grade",
+      "grader": "Grade on sunnah.com (meeAtif dataset)"
+     }
+    ],
+    "url": "Reference"
+   },
+   "license": "MIT (as declared; text from sunnah.com)",
+   "source_name": "meeAtif/hadith_datasets",
+   "source_key": "hf-meeatif-hadith",
+   "origin": {
+    "name": "meeAtif/hadith_datasets (Hugging Face; text from sunnah.com)",
+    "url": "https://huggingface.co/datasets/meeAtif/hadith_datasets"
+   },
+   "description": "Arabic, English, chapter titles in both and the sunnah.com grade, from the Hugging Face dataset meeAtif/hadith_datasets."
+  },
+  {
+   "id": "ibnmajah-hf",
+   "title": "Sunan Ibn Majah — Hugging Face",
+   "title_ar": "سنن ابن ماجه",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "table",
+   "location": "https://huggingface.co/datasets/meeAtif/hadith_datasets/resolve/main/Sunan%20Ibn%20Majah.json",
+   "book": "ibnmajah-hf",
+   "mapping": {
+    "type": "json",
+    "number": "Reference",
+    "number_pattern": "[:/](\\d+[a-z]?)\\s*$",
+    "section": "Chapter_Number",
+    "section_titles": [
+     {
+      "field": "Chapter_Title_Arabic",
+      "language": "Arabic"
+     },
+     {
+      "field": "Chapter_Title_English",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "Arabic_Text",
+      "language": "Arabic"
+     },
+     {
+      "field": "English_Text",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "Grade",
+      "grader": "Grade on sunnah.com (meeAtif dataset)"
+     }
+    ],
+    "url": "Reference"
+   },
+   "license": "MIT (as declared; text from sunnah.com)",
+   "source_name": "meeAtif/hadith_datasets",
+   "source_key": "hf-meeatif-hadith",
+   "origin": {
+    "name": "meeAtif/hadith_datasets (Hugging Face; text from sunnah.com)",
+    "url": "https://huggingface.co/datasets/meeAtif/hadith_datasets"
+   },
+   "description": "Arabic, English, chapter titles in both and the sunnah.com grade, from the Hugging Face dataset meeAtif/hadith_datasets."
+  }
+ ]
+}

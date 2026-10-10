@@ -5,6 +5,29 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **Data repositories** (Settings → Data sources; `iy repo`): isnady reads its sources from a repository — a
+  `catalog.json` listing books and rijal works with their files, formats, licences and tradition. The default is
+  isnady's own, [isnady-data](https://github.com/bayramkotan/isnady-data), listing every Sunni and Shia source isnady
+  can read (35): the ten fawazahmed0 collections and Musnad Ahmad and Sunan al-Darimi (Open Hadith Data) kept in the
+  repository itself; Riyad al-Salihin, al-Shama'il, Bulugh al-Maram, al-Adab al-Mufrad and Mishkat al-Masabih
+  (hadith-json); sixteen Shia collections from Thaqalayn — al-Kafi in eight volumes with al-Majlisi's and
+  al-Behbudi's grades, al-Saduq's books, al-Mufid, al-Tusi, al-Nu'mani, al-Ahwazi, al-Muhsini; and the Taqrib and
+  al-Najashi's Rijal. Sources without a licence to share are listed at their origin and never copied. Optional
+  repositories, chosen from the same list: fawazahmed0/hadith-api, Thaqalayn, Open Hadith Data, hadith-json, the LK
+  Hadith Corpus, Hugging Face meeAtif/hadith_datasets, Hadith-Data-Sets and OpenITI — each with its own books, kept
+  apart by key so editions numbered differently never mix. Any repository with a catalog can be added (a GitHub
+  repository, a Hugging Face dataset, a URL or a folder) and chosen. The catalog is read from the repository and
+  kept for a day; without the network, the copy shipped with isnady is used, and a book the repository has no copy
+  of yet is read from its origin.
+- The Data sources page lists the repository's sources as Sunni hadith, Shia hadith and narrators, each with its
+  Arabic title, tradition, licence, whether it is kept in the repository or read from its origin, and a link to
+  the origin. Shia collections are marked Shia in the database (`collections.tradition`).
+- **A new importer for tables** (format `table`): any CSV file or JSON list of hadith, the catalog naming which
+  column is the number, the Arabic, a translation, a commentary, a grade, the chapter and its title — a book in
+  several files (chapters, volumes numbered volume:hadith) read as one.
+- `iy repo list|use|show|add|remove`; `iy catalog list|import --repo ID`; the old ids (`fawaz-bukhari` …) still
+  work. `tools/build_data_repo.py` writes the shipped catalogs and builds the isnady-data repository.
+
 - **Correlations and tests** (Statistics → Correlations and tests; `iy stats lab [--book KEY] [--csv DIR]`): every
   measure against every other, by rank. For the hadith of a book: the factors of the best chain (weakest narrator,
   further weak narrators, length, names not identified, chains in the book, narrations elsewhere, stopping short of

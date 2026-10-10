@@ -72,12 +72,12 @@ def _build_request(url: str, auth: Auth) -> urllib.request.Request:
     return urllib.request.Request(url, headers=headers)
 
 
-def read_bytes(location: str, auth: Auth = NO_AUTH) -> bytes:
+def read_bytes(location: str, auth: Auth = NO_AUTH, timeout: float | None = None) -> bytes:
     """Return the raw bytes of a local file or a URL."""
     if is_url(location):
         request = _build_request(location, auth)
         try:
-            with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+            with urllib.request.urlopen(request, timeout=timeout or TIMEOUT_SECONDS) as response:
                 return response.read()
         except urllib.error.HTTPError as exc:
             if exc.code in (401, 403):
@@ -91,7 +91,7 @@ def read_bytes(location: str, auth: Auth = NO_AUTH) -> bytes:
         except urllib.error.URLError as exc:
             raise ResourceError(f"Could not reach {location}: {exc.reason}") from exc
         except TimeoutError as exc:
-            raise ResourceError(f"Timed out after {TIMEOUT_SECONDS}s: {location}") from exc
+            raise ResourceError(f"Timed out after {timeout or TIMEOUT_SECONDS}s: {location}") from exc
 
     path = Path(location).expanduser()
     if location.startswith("file://"):

@@ -1,0 +1,313 @@
+{
+ "schema": "isnady-catalog/1",
+ "id": "fawazahmed0",
+ "name": "fawazahmed0/hadith-api",
+ "description": "Ten collections in Arabic and up to eight translations, with grades (Unlicense).",
+ "homepage": "https://github.com/fawazahmed0/hadith-api",
+ "entries": [
+  {
+   "id": "bukhari",
+   "aliases": [
+    "fawaz-bukhari"
+   ],
+   "title": "Sahih al-Bukhari",
+   "title_ar": "صحيح البخاري",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "fawazahmed0",
+   "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json",
+   "book": "bukhari",
+   "languages": [
+    "ara",
+    "tur",
+    "eng",
+    "urd",
+    "ind",
+    "ben",
+    "fra",
+    "rus",
+    "tam"
+   ],
+   "license": "Unlicense",
+   "source_name": "fawazahmed0/hadith-api",
+   "source_key": "fawazahmed0-hadith-api",
+   "origin": {
+    "name": "fawazahmed0/hadith-api",
+    "url": "https://github.com/fawazahmed0/hadith-api"
+   },
+   "hadith": 7563,
+   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali, French, Russian, Tamil); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …)."
+  },
+  {
+   "id": "muslim",
+   "aliases": [
+    "fawaz-muslim"
+   ],
+   "title": "Sahih Muslim",
+   "title_ar": "صحيح مسلم",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "fawazahmed0",
+   "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json",
+   "book": "muslim",
+   "languages": [
+    "ara",
+    "tur",
+    "eng",
+    "urd",
+    "ind",
+    "ben",
+    "fra",
+    "rus",
+    "tam"
+   ],
+   "license": "Unlicense",
+   "source_name": "fawazahmed0/hadith-api",
+   "source_key": "fawazahmed0-hadith-api",
+   "origin": {
+    "name": "fawazahmed0/hadith-api",
+    "url": "https://github.com/fawazahmed0/hadith-api"
+   },
+   "hadith": 7563,
+   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali, French, Russian, Tamil); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …)."
+  },
+  {
+   "id": "abudawud",
+   "aliases": [
+    "fawaz-abudawud"
+   ],
+   "title": "Sunan Abi Dawud",
+   "title_ar": "سنن أبي داود",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "fawazahmed0",
+   "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json",
+   "book": "abudawud",
+   "languages": [
+    "ara",
+    "tur",
+    "eng",
+    "urd",
+    "ind",
+    "ben",
+    "fra",
+    "rus"
+   ],
+   "license": "Unlicense",
+   "source_name": "fawazahmed0/hadith-api",
+   "source_key": "fawazahmed0-hadith-api",
+   "origin": {
+    "name": "fawazahmed0/hadith-api",
+    "url": "https://github.com/fawazahmed0/hadith-api"
+   },
+   "hadith": 5274,
+   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali, French, Russian); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …)."
+  },
+  {
+   "id": "tirmidhi",
+   "aliases": [
+    "fawaz-tirmidhi"
+   ],
+   "title": "Jami' al-Tirmidhi",
+   "title_ar": "جامع الترمذي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "fawazahmed0",
+   "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json",
+   "book": "tirmidhi",
+   "languages": [
+    "ara",
+    "tur",
+    "eng",
+    "urd",
+    "ind",
+    "ben"
+   ],
+   "license": "Unlicense",
+   "source_name": "fawazahmed0/hadith-api",
+   "source_key": "fawazahmed0-hadith-api",
+   "origin": {
+    "name": "fawazahmed0/hadith-api",
+    "url": "https://github.com/fawazahmed0/hadith-api"
+   },
+   "hadith": 3956,
+   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …)."
+  },
+  {
+   "id": "nasai",
+   "aliases": [
+    "fawaz-nasai"
+   ],
+   "title": "Sunan al-Nasa'i",
+   "title_ar": "سنن النسائي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "fawazahmed0",
+   "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json",
+   "book": "nasai",
+   "languages": [
+    "ara",
+    "tur",
+    "eng",
+    "urd",
+    "ind",
+    "ben",
+    "fra"
+   ],
+   "license": "Unlicense",
+   "source_name": "fawazahmed0/hadith-api",
+   "source_key": "fawazahmed0-hadith-api",
+   "origin": {
+    "name": "fawazahmed0/hadith-api",
+    "url": "https://github.com/fawazahmed0/hadith-api"
+   },
+   "hadith": 5758,
+   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali, French); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …)."
+  },
+  {
+   "id": "ibnmajah",
+   "aliases": [
+    "fawaz-ibnmajah"
+   ],
+   "title": "Sunan Ibn Majah",
+   "title_ar": "سنن ابن ماجه",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "fawazahmed0",
+   "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json",
+   "book": "ibnmajah",
+   "languages": [
+    "ara",
+    "tur",
+    "eng",
+    "urd",
+    "ind",
+    "ben",
+    "fra"
+   ],
+   "license": "Unlicense",
+   "source_name": "fawazahmed0/hadith-api",
+   "source_key": "fawazahmed0-hadith-api",
+   "origin": {
+    "name": "fawazahmed0/hadith-api",
+    "url": "https://github.com/fawazahmed0/hadith-api"
+   },
+   "hadith": 4341,
+   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali, French); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …)."
+  },
+  {
+   "id": "malik",
+   "aliases": [
+    "fawaz-malik"
+   ],
+   "title": "Muwatta Malik",
+   "title_ar": "موطأ مالك",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "fawazahmed0",
+   "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json",
+   "book": "malik",
+   "languages": [
+    "ara",
+    "tur",
+    "eng",
+    "urd",
+    "ind",
+    "ben",
+    "fra"
+   ],
+   "license": "Unlicense",
+   "source_name": "fawazahmed0/hadith-api",
+   "source_key": "fawazahmed0-hadith-api",
+   "origin": {
+    "name": "fawazahmed0/hadith-api",
+    "url": "https://github.com/fawazahmed0/hadith-api"
+   },
+   "hadith": 1858,
+   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali, French); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …)."
+  },
+  {
+   "id": "nawawi",
+   "aliases": [
+    "fawaz-nawawi"
+   ],
+   "title": "Forty Hadith of al-Nawawi",
+   "title_ar": "الأربعون النووية",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "fawazahmed0",
+   "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json",
+   "book": "nawawi",
+   "languages": [
+    "ara",
+    "tur",
+    "eng",
+    "ben",
+    "fra"
+   ],
+   "license": "Unlicense",
+   "source_name": "fawazahmed0/hadith-api",
+   "source_key": "fawazahmed0-hadith-api",
+   "origin": {
+    "name": "fawazahmed0/hadith-api",
+    "url": "https://github.com/fawazahmed0/hadith-api"
+   },
+   "hadith": 42,
+   "description": "Arabic text and translations (Arabic, Turkish, English, Bengali, French); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …)."
+  },
+  {
+   "id": "qudsi",
+   "aliases": [
+    "fawaz-qudsi"
+   ],
+   "title": "Forty Hadith Qudsi",
+   "title_ar": "الأربعون القدسية",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "fawazahmed0",
+   "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json",
+   "book": "qudsi",
+   "languages": [
+    "ara",
+    "eng",
+    "fra"
+   ],
+   "license": "Unlicense",
+   "source_name": "fawazahmed0/hadith-api",
+   "source_key": "fawazahmed0-hadith-api",
+   "origin": {
+    "name": "fawazahmed0/hadith-api",
+    "url": "https://github.com/fawazahmed0/hadith-api"
+   },
+   "hadith": 40,
+   "description": "Arabic text and translations (Arabic, English, French); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …)."
+  },
+  {
+   "id": "dehlawi",
+   "aliases": [
+    "fawaz-dehlawi"
+   ],
+   "title": "Forty Hadith of Shah Waliullah Dehlawi",
+   "title_ar": "أربعون الدهلوي",
+   "kind": "hadith",
+   "tradition": "sunni",
+   "format": "fawazahmed0",
+   "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json",
+   "book": "dehlawi",
+   "languages": [
+    "ara",
+    "eng",
+    "fra"
+   ],
+   "license": "Unlicense",
+   "source_name": "fawazahmed0/hadith-api",
+   "source_key": "fawazahmed0-hadith-api",
+   "origin": {
+    "name": "fawazahmed0/hadith-api",
+    "url": "https://github.com/fawazahmed0/hadith-api"
+   },
+   "hadith": 40,
+   "description": "Arabic text and translations (Arabic, English, French); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …)."
+  }
+ ]
+}

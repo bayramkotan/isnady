@@ -330,6 +330,12 @@ def stylesheet(t: Tokens) -> str:
     QFrame#PersonCard QLabel {{ background: transparent; }}
     QFrame#PersonCard QLabel#Tag {{ background: {t.lapis_soft}; color: {t.lapis}; border: 1px solid {t.lapis};
                                    border-radius: 8px; padding: 1px 9px; font-size: 8.5pt; font-weight: 600; }}
+    QFrame#Card QLabel#Tag {{ background: {t.lapis_soft}; color: {t.lapis}; border: 1px solid {t.lapis};
+                             border-radius: 8px; padding: 1px 9px; font-size: 8.5pt; font-weight: 600; }}
+    QLabel#TagGold {{ background: transparent; color: {t.gold}; border: 1px solid {t.gold};
+                      border-radius: 8px; padding: 1px 9px; font-size: 8.5pt; font-weight: 600; }}
+    QLabel#TagMuted {{ background: transparent; color: {t.muted}; border: 1px solid {t.border};
+                       border-radius: 8px; padding: 1px 9px; font-size: 8.5pt; }}
     QLabel#CardTitle {{ color: {t.ink}; }}
     QLabel#CardNumber {{ color: {t.muted}; }}
     QLabel#Pill {{ background: {t.pill}; color: {t.ink}; border: 1px solid {t.pill}; border-radius: 7px;

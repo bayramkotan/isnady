@@ -1,0 +1,1151 @@
+{
+ "schema": "isnady-catalog/1",
+ "id": "thaqalayn",
+ "name": "Thaqalayn (Shia)",
+ "description": "Sixteen Shia collections — al-Kafi, al-Saduq's books, al-Mufid, al-Tusi, al-Nu'mani … — in Arabic and English, al-Kafi with al-Majlisi's and al-Behbudi's grades.",
+ "homepage": "https://github.com/MohammedArab1/ThaqalaynAPI",
+ "entries": [
+  {
+   "id": "kafi",
+   "title": "al-Kafi — al-Kulayni",
+   "title_ar": "الكافي",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-1-Kulayni.json",
+   "parts": [
+    {
+     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-1-Kulayni.json",
+     "volume": 1
+    },
+    {
+     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-2-Kulayni.json",
+     "volume": 2
+    },
+    {
+     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-3-Kulayni.json",
+     "volume": 3
+    },
+    {
+     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-4-Kulayni.json",
+     "volume": 4
+    },
+    {
+     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-5-Kulayni.json",
+     "volume": 5
+    },
+    {
+     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-6-Kulayni.json",
+     "volume": 6
+    },
+    {
+     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-7-Kulayni.json",
+     "volume": 7
+    },
+    {
+     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-8-Kulayni.json",
+     "volume": 8
+    }
+   ],
+   "book": "kafi",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Kulayni (d. 329). Arabic and English from thaqalayn.net, with the grades of al-Majlisi (Mir'at al-'Uqul) and al-Behbudi (Sahih al-Kafi); 8 volumes, numbered volume:hadith. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "uyun",
+   "title": "'Uyun Akhbar al-Rida — al-Saduq",
+   "title_ar": "عيون أخبار الرضا",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Uyun-akhbar-al-Rida-Volume-1-Saduq.json",
+   "parts": [
+    {
+     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Uyun-akhbar-al-Rida-Volume-1-Saduq.json",
+     "volume": 1
+    },
+    {
+     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Uyun-akhbar-al-Rida-Volume-2-Saduq.json",
+     "volume": 2
+    }
+   ],
+   "book": "uyun",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net; 2 volumes, numbered volume:hadith. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "amali-saduq",
+   "title": "al-Amali — al-Saduq",
+   "title_ar": "الأمالي (الصدوق)",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Amali-Saduq.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Amali-Saduq.json"
+   ],
+   "book": "amali-saduq",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "khisal",
+   "title": "al-Khisal — al-Saduq",
+   "title_ar": "الخصال",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Khisal-Saduq.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Khisal-Saduq.json"
+   ],
+   "book": "khisal",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "tawhid",
+   "title": "al-Tawhid — al-Saduq",
+   "title_ar": "التوحيد",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Tawhid-Saduq.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Tawhid-Saduq.json"
+   ],
+   "book": "tawhid",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "maani",
+   "title": "Ma'ani al-Akhbar — al-Saduq",
+   "title_ar": "معاني الأخبار",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Maani-al-Akhbar-Saduq.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Maani-al-Akhbar-Saduq.json"
+   ],
+   "book": "maani",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "thawab",
+   "title": "Thawab al-A'mal wa 'Iqab al-A'mal — al-Saduq",
+   "title_ar": "ثواب الأعمال وعقاب الأعمال",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Thawab-al-Amal-wa-iqab-al-Amal-Saduq.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Thawab-al-Amal-wa-iqab-al-Amal-Saduq.json"
+   ],
+   "book": "thawab",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "sifat-shia",
+   "title": "Sifat al-Shi'a — al-Saduq",
+   "title_ar": "صفات الشيعة",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Sifat-al-Shia-Saduq.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Sifat-al-Shia-Saduq.json"
+   ],
+   "book": "sifat-shia",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "fadail-shia",
+   "title": "Fada'il al-Shi'a — al-Saduq",
+   "title_ar": "فضائل الشيعة",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Fadail-al-Shia-Saduq.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Fadail-al-Shia-Saduq.json"
+   ],
+   "book": "fadail-shia",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "amali-mufid",
+   "title": "al-Amali — al-Mufid",
+   "title_ar": "الأمالي (المفيد)",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Amali-Mufid.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Amali-Mufid.json"
+   ],
+   "book": "amali-mufid",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Mufid (d. 413). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "kamil-ziyarat",
+   "title": "Kamil al-Ziyarat — Ibn Qulawayh",
+   "title_ar": "كامل الزيارات",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kamil-al-Ziyarat-Qummi.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kamil-al-Ziyarat-Qummi.json"
+   ],
+   "book": "kamil-ziyarat",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by Ibn Qulawayh al-Qummi (d. 368). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "ghayba-numani",
+   "title": "Kitab al-Ghayba — al-Nu'mani",
+   "title_ar": "كتاب الغيبة (النعماني)",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Ghayba-Numani.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Ghayba-Numani.json"
+   ],
+   "book": "ghayba-numani",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Nu'mani (d. c. 360). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "ghayba-tusi",
+   "title": "Kitab al-Ghayba — al-Tusi",
+   "title_ar": "كتاب الغيبة (الطوسي)",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Ghayba-Tusi.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Ghayba-Tusi.json"
+   ],
+   "book": "ghayba-tusi",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Tusi (d. 460). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "mumin",
+   "title": "Kitab al-Mu'min — al-Ahwazi",
+   "title_ar": "كتاب المؤمن",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Mumin-Ahwazi.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Mumin-Ahwazi.json"
+   ],
+   "book": "mumin",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Husayn b. Sa'id al-Ahwazi. Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "zuhd",
+   "title": "Kitab al-Zuhd — al-Ahwazi",
+   "title_ar": "كتاب الزهد",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Zuhd-Ahwazi.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Zuhd-Ahwazi.json"
+   ],
+   "book": "zuhd",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by al-Husayn b. Sa'id al-Ahwazi. Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  },
+  {
+   "id": "mujam-mutabara",
+   "title": "Mu'jam al-Ahadith al-Mu'tabara — al-Muhsini",
+   "title_ar": "معجم الأحاديث المعتبرة",
+   "kind": "hadith",
+   "tradition": "shia",
+   "format": "table",
+   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Mujam-al-Ahadith-al-Mutabara-Muhsini.json",
+   "parts": [
+    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Mujam-al-Ahadith-al-Mutabara-Muhsini.json"
+   ],
+   "book": "mujam-mutabara",
+   "mapping": {
+    "type": "json",
+    "number": "id",
+    "section": "categoryId",
+    "section_titles": [
+     {
+      "field": "category",
+      "language": "English"
+     }
+    ],
+    "texts": [
+     {
+      "field": "arabicText",
+      "language": "Arabic"
+     },
+     {
+      "field": "englishText",
+      "language": "English"
+     }
+    ],
+    "grades": [
+     {
+      "field": "majlisiGrading",
+      "grader": "al-Majlisi (Mir'at al-'Uqul)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "behdudiGrading",
+      "grader": "al-Behbudi (Sahih al-Kafi)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     },
+     {
+      "field": "mohseniGrading",
+      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
+      "pattern": ":\\s*([^\\n]+)",
+      "skip": [
+       "لم يخرجه"
+      ]
+     }
+    ],
+    "url": "URL"
+   },
+   "license": null,
+   "source_name": "Thaqalayn",
+   "source_key": "thaqalayn",
+   "origin": {
+    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
+    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
+   },
+   "description": "Compiled by Asif al-Muhsini. Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+  }
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "schema": "isnady-catalog/1",
+ "id": "openiti",
+ "name": "OpenITI (rijal)",
+ "description": "The rijal works isnady reads from the OpenITI corpus: Ibn Hajar's Taqrib and al-Najashi's Rijal.",
+ "homepage": "https://github.com/OpenITI",
+ "entries": [
+  {
+   "id": "taqrib",
+   "title": "Taqrib al-Tahdhib — Ibn Hajar al-'Asqalani",
+   "title_ar": "تقريب التهذيب",
+   "kind": "rijal",
+   "tradition": "sunni",
+   "format": "taqrib",
+   "location": "https://raw.githubusercontent.com/OpenITI/0875AH/master/data/0852IbnHajarCasqalani/0852IbnHajarCasqalani.TaqribTahdhib/0852IbnHajarCasqalani.TaqribTahdhib.JK000121-ara1.completed",
+   "license": null,
+   "source_name": "Ibn Hajar, Taqrib al-Tahdhib (OpenITI)",
+   "source_key": "openiti-taqrib",
+   "origin": {
+    "name": "OpenITI corpus",
+    "url": "https://github.com/OpenITI"
+   },
+   "description": "8,824 narrators of the six books with Ibn Hajar's verdict, rank, tabaqa, death year and book marks; identifies the narrators in every chain. From the OpenITI corpus (licence not stated there, so kept on this computer only)."
+  },
+  {
+   "id": "najashi",
+   "title": "Rijal al-Najashi — al-Najashi (Shia)",
+   "title_ar": "رجال النجاشي",
+   "kind": "rijal",
+   "tradition": "shia",
+   "format": "najashi",
+   "location": "https://raw.githubusercontent.com/OpenITI/0450AH/master/data/0450Najashi/0450Najashi.Rijal/0450Najashi.Rijal.Shia002931-ara1.mARkdown",
+   "license": null,
+   "source_name": "al-Najashi, Rijal (OpenITI)",
+   "source_key": "openiti-najashi",
+   "origin": {
+    "name": "OpenITI corpus",
+    "url": "https://github.com/OpenITI"
+   },
+   "description": "1,266 authors and narrators with al-Najashi's words, read on the Shia scale (thiqa, praised, muwaththaq, weak; creed: Imami, Waqifi, Fathi, Zaydi …); readable in Books. From the OpenITI corpus (licence not stated there, so kept on this computer only)."
+  }
+ ]
+}

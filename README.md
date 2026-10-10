@@ -156,21 +156,25 @@ it opens it.
 
 ## 🚀 Quick Start
 
-isnady ships without hadith data: you choose the sources. One command brings in Sahih
-al-Bukhari and Sunan Abi Dawud in Arabic and Turkish from the open
-[fawazahmed0/hadith-api](https://github.com/fawazahmed0/hadith-api) collection (public
-domain):
+isnady ships without hadith data; it reads it from a **data repository**. The default is
+isnady's own, [**bayramkotan/isnady-data**](https://github.com/bayramkotan/isnady-data), which
+lists every Sunni and Shia collection and rijal work isnady can read — 35 sources, from Sahih
+al-Bukhari to al-Kafi (see [Data sources](#-data-sources) below). Open the window with `iy`,
+choose **File → Data Sources**, and import any of them with one click — or **Import all** — in
+the languages you tick. The same from the command line:
 
 ```bash
-iy import fawazahmed0 https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json \
-   --book bukhari --book abudawud --language ara --language tur --license Unlicense
+iy catalog list                         # the sources of the repository in use
+iy catalog import bukhari --language ara --language tur
+iy catalog import kafi                  # al-Kafi, with al-Majlisi's and al-Behbudi's grades
+iy catalog import taqrib                # Ibn Hajar's Taqrib: identifies the narrators in the chains
+iy catalog import --all                 # everything
 ```
 
-Or open the window with `iy` and choose **File → Data Sources**: every built-in collection
-(al-Bukhari, Muslim, Abu Dawud, al-Tirmidhi, al-Nasa'i, Ibn Maja, the Muwatta and three
-forty-hadith books) and the Taqrib import with one click — or **Import all** — in the
-languages you tick. You can add your own files or links there too, and move the data
-folder anywhere you like.
+Other repositories can be chosen instead — the datasets others publish on GitHub and Hugging
+Face are in the list — and any repository with an isnady catalog can be added
+(`iy repo add https://github.com/owner/name`). Your own files and links can be added too, and
+the data folder can be moved anywhere you like.
 
 On the command line:
 
@@ -182,13 +186,8 @@ iy chain bukhari 1           # one chain, narrator by narrator
 
 Importing takes a minute or two; the search index and the chains are built as part of it.
 
-To identify the narrators in those chains, add Ibn Hajar's *Taqrib al-Tahdhib* — 8,824
-narrators with his verdict on each — from the [OpenITI](https://github.com/OpenITI) corpus:
-
-```bash
-iy import taqrib https://raw.githubusercontent.com/OpenITI/0875AH/master/data/0852IbnHajarCasqalani/0852IbnHajarCasqalani.TaqribTahdhib/0852IbnHajarCasqalani.TaqribTahdhib.JK000121-ara1.completed
-iy narrator الزهري
-```
+With Ibn Hajar's *Taqrib al-Tahdhib* imported (8,824 narrators, his verdict on each), every
+chain is read narrator by narrator: `iy narrator الزهري`.
 
 ---
 
@@ -468,24 +467,43 @@ command line.
 
 ---
 
-## 📚 Data and licences
+## 📚 Data sources
 
-isnady reads open formats and keeps the source of everything:
+isnady reads its sources from a **repository**: a `catalog.json` listing books and rijal works,
+where each file is, its format, its licence and its tradition. Choose one in **Settings → Data
+sources** (or `iy repo use ID`); add your own with **Add a repository…** (`iy repo add URL`: a
+GitHub repository, a Hugging Face dataset, a catalog URL or a folder).
 
-- **Supported now:** the [fawazahmed0/hadith-api](https://github.com/fawazahmed0/hadith-api)
-  JSON format, from a file or a URL, with or without authentication (username and
-  password, bearer token, or API key; credentials are never stored).
-- **Rijal:** Ibn Hajar's *Taqrib al-Tahdhib* in OpenITI mARkdown — each narrator's name,
-  kunya, verdict, rank, tabaqa, death year and book marks, read by the rules Ibn Hajar sets
-  out in his own introduction. The OpenITI release does not state its licence in the
-  repository, so it is kept as tier C (used on your computer, never redistributed) until
-  it is confirmed.
-- **Coming:** CSV, SQL/SQLite, OpenITI mARkdown, REST APIs and Shamela, so any collection
-  you have can be brought in.
+**The default — [isnady-data](https://github.com/bayramkotan/isnady-data)** lists every source
+below, each book once. Sources whose licence allows it are kept in the repository itself (the
+original behind it, should the copy be unreachable); the others are listed at their origin and
+read from there — they are never copied, and what you import from them stays on your computer.
 
-Every source records a licence **tier**: **A** may be redistributed, **B** may be
-redistributed under its conditions, **C** may not. Sources you add yourself stay on your
-computer. **Help → Licences** lists every source in your database with its licence.
+| | Sunni | Shia |
+|---|---|---|
+| **Hadith** | al-Bukhari, Muslim, Abu Dawud, al-Tirmidhi, al-Nasa'i, Ibn Maja, the Muwatta, three forty-hadith books — Arabic and up to eight translations, with grades ([fawazahmed0](https://github.com/fawazahmed0/hadith-api), Unlicense, kept in isnady-data) · Musnad Ahmad, Sunan al-Darimi ([Open Hadith Data](https://github.com/mhashim6/Open-Hadith-Data), ODbL, kept in isnady-data) · Riyad al-Salihin, al-Shama'il, Bulugh al-Maram, al-Adab al-Mufrad, Mishkat al-Masabih ([hadith-json](https://github.com/AhmedBaset/hadith-json), from origin) | al-Kafi (8 volumes, with al-Majlisi's and al-Behbudi's grades), 'Uyun Akhbar al-Rida, al-Saduq's al-Amali, al-Khisal, al-Tawhid, Ma'ani al-Akhbar, Thawab al-A'mal, Sifat and Fada'il al-Shi'a, al-Mufid's al-Amali, Kamil al-Ziyarat, al-Nu'mani's and al-Tusi's Kitab al-Ghayba, al-Ahwazi's al-Mu'min and al-Zuhd, al-Muhsini's Mu'jam al-Ahadith al-Mu'tabara — Arabic and English ([Thaqalayn](https://github.com/MohammedArab1/ThaqalaynAPI), from origin) |
+| **Narrators** | Ibn Hajar, *Taqrib al-Tahdhib* ([OpenITI](https://github.com/OpenITI), from origin) | al-Najashi, *Rijal* ([OpenITI](https://github.com/OpenITI), from origin) |
+
+**Optional repositories**, each the dataset as its authors publish it (their books under their
+own keys, e.g. `bukhari-lk`, so editions with other numbering never mix):
+
+| Repository | What it holds | Licence |
+|---|---|---|
+| [fawazahmed0/hadith-api](https://github.com/fawazahmed0/hadith-api) | 10 collections, Arabic + 8 languages, grades | Unlicense |
+| [Thaqalayn](https://github.com/MohammedArab1/ThaqalaynAPI) | 16 Shia collections, Arabic + English, grades of al-Kafi | not stated (from thaqalayn.net) |
+| [Open Hadith Data](https://github.com/mhashim6/Open-Hadith-Data) | the nine books in Arabic with diacritics, seven with a commentary of every hadith | ODbL |
+| [hadith-json](https://github.com/AhmedBaset/hadith-json) | 17 books, Arabic + English (50,884 hadith, from sunnah.com) | not stated |
+| [LK Hadith Corpus](https://github.com/ShathaTm/LK-Hadith-Corpus) | the six books, Arabic + English, isnad and matn marked apart, grades | not stated (cite the authors' paper) |
+| [Hugging Face — meeAtif/hadith_datasets](https://huggingface.co/datasets/meeAtif/hadith_datasets) | the six books, Arabic + English, chapter titles, grades | MIT (as declared; text from sunnah.com) |
+| [Hadith-Data-Sets](https://github.com/abdelrahmaan/Hadith-Data-Sets) | the nine books in Arabic (62,169 hadith) | not stated |
+| [OpenITI](https://github.com/OpenITI) | the Taqrib and al-Najashi's Rijal | not stated in the repository |
+
+Every source records a licence **tier**: **A** may be redistributed, **B** may be redistributed
+under its conditions, **C** may not. Sources you add yourself stay on your computer. **Help →
+Licences** lists every source in your database with its licence. Any CSV or JSON table of hadith
+can be read through a catalog that names its columns (format `table`); the fawazahmed0 JSON
+format, OpenITI mARkdown (the Taqrib, al-Najashi) and files of your own with or without
+authentication (credentials are never stored) are read as well.
 
 ---
 
@@ -513,9 +531,10 @@ script. The command line never loads Qt.
 | `iy search --mode meaning WORDS` | `isnady search --mode meaning "komşu hakları"` | Search by meaning and across languages |
 | `iy narrator NAME` | `isnady narrator "Ibn Umar"` | A narrator: Ibn Hajar's verdict and rank, tabaqa, death year, books, other names; with `--limit 1` also teachers, students and hadith |
 | `iy import FORMAT FILE-OR-URL` | `isnady import …` | Import a source; `--book`, `--language`, `--license`, `--user`, `--token-env`, `--api-key-env` |
-| `iy catalog list` | `isnady catalog list` | Built-in sources and your own, with what is imported — the same as File → Data Sources |
-| `iy catalog import ID` | `isnady catalog import fawaz-muslim --language tur` | Import a listed source; `remove`, `add`, `delete` manage the list |
-| `iy catalog import --all` | `isnady catalog import --all --language ara` | Every built-in source at once |
+| `iy repo [list\|use\|show\|add\|remove]` | `isnady repo use thaqalayn` | The data repositories: isnady's own (default), the optional ones, yours |
+| `iy catalog list` | `isnady catalog list --repo lk-hadith-corpus` | The sources of the repository in use, and your own, with what is imported — the same as File → Data Sources |
+| `iy catalog import ID` | `isnady catalog import muslim --language tur` | Import a listed source; `remove`, `add`, `delete` manage the list |
+| `iy catalog import --all` | `isnady catalog import --all --language ara` | Every source of the repository at once |
 | `iy datadir [FOLDER]` | `isnady datadir /data/isnady` | Show or change where the database and settings live; `--as-is`, `--default` |
 | `iy formats` | `isnady formats` | Formats that can be imported |
 | `iy sources` | `isnady sources` | Imported sources, their licence and tier |

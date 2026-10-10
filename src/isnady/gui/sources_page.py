@@ -1,4 +1,8 @@
-"""Settings → Data sources: import the built-in sources with one click, and add your own.
+"""Settings → Data sources: choose a repository, import its sources with one click, and add your own.
+
+The REPOSITORY is chosen at the top (core.repositories): isnady's own (bayramkotan/isnady-data) by default, which lists
+every Sunni and Shia source; the datasets others publish as options; and any repository the user adds. Its sources
+are listed below it, Sunni hadith, Shia hadith and rijal apart.
 
 Imports run in a background thread with their own database connection, so the
 window stays responsive; the shared pipeline (isnady.core.imports) indexes,
@@ -25,7 +29,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from isnady.core import catalog
+from isnady.core import catalog, repositories
 from isnady.data import db
 from isnady.data.fetch import Auth, ResourceError
 from isnady.data.importers import list_importers
@@ -52,7 +56,7 @@ class Worker(QThread):
         try:
             if self.action == "import_all":
                 imported, failed, narrators = catalog.import_all(conn, self.languages, self.progress.emit)
-                message = f"Imported {len(imported)} of {len(imported) + len(failed)} built-in sources"
+                message = f"Imported {len(imported)} of {len(imported) + len(failed)} sources of the repository"
                 if narrators.get("links"):
                     message += (f"; {narrators['identified']:,} of {narrators['links']:,} narrators in chains "
                                 f"identified ({100 * narrators['identified'] / narrators['links']:.1f}%)")
@@ -158,65 +162,151 @@ class SourcesPage(QWidget):
         self.refresh()
 
     # ------------------------------------------------------------ building
-    def _clear(self) -> None:
-        while self.box.count():
-            item = self.box.takeAt(0)
+    def _clear(self, layout=None) -> None:
+        """Everything on the page goes, rows of buttons and titles (inside layouts) included."""
+        layout = layout or self.box
+        while layout.count():
+            item = layout.takeAt(0)
             w = item.widget()
             if w is not None and w not in (self.status, self.bar):
                 w.setParent(None)
                 w.deleteLater()
+            elif item.layout() is not None:
+                self._clear(item.layout())
+                item.layout().deleteLater()
 
     def refresh(self) -> None:
         self._clear()
         self._buttons = []
+        self._lang_checks = {}
         conn = db.connect()
         try:
-            intro = QLabel("Import sources with one click. Built-in sources are defined by isnady; your own "
-                           "sources (User Resources) stay on this computer. The same list works from the "
-                           "command line: iy catalog list.")
+            intro = QLabel("isnady reads its sources from a REPOSITORY: its own by default, which lists every Sunni "
+                           "and Shia collection and rijal work it can read. Choose another, or add your own, and "
+                           "import with one click. Your own files (User Resources) stay on this computer. The same "
+                           "from the command line: iy repo, iy catalog.")
             intro.setObjectName("Lead")
             intro.setWordWrap(True)
             self.box.addWidget(intro)
-            self.box.addWidget(self._folder_card())
+            self.box.addWidget(self._repo_card())
             self.box.addWidget(self.bar)
             self.box.addWidget(self.status)
-            for heading, entries in (("Built-in sources", catalog.builtin_entries()),
-                                     ("Your sources", catalog.user_entries())):
-                title = QLabel(heading)
-                title.setObjectName("CardTitle")
-                title.setFont(theme.reading_font(15, bold=True))
-                head = QHBoxLayout()
-                head.addWidget(title)
-                head.addStretch(1)
-                if heading == "Built-in sources":
-                    all_button = QPushButton("Import all")
-                    all_button.setObjectName("Primary")
-                    all_button.setToolTip("Every built-in source, each in the languages ticked on its card; the "
-                                          "search index, chains and narrators are brought up to date once, at the end")
-                    all_button.clicked.connect(self._import_all)
-                    self._buttons.append(all_button)
-                    head.addWidget(all_button)
-                self.box.addLayout(head)
-                self._lang_checks = getattr(self, "_lang_checks", {}) if heading != "Built-in sources" else {}
-                for entry in entries:
+            try:
+                entries = catalog.builtin_entries()
+            except Exception as exc:          # a broken user repository must not empty the page
+                entries = []
+                self.status.setText(f"The repository cannot be read: {exc}")
+            head = QHBoxLayout()
+            title = QLabel(f"Sources of {repositories.selected().name}")
+            title.setObjectName("CardTitle")
+            title.setFont(theme.reading_font(15, bold=True))
+            head.addWidget(title)
+            head.addStretch(1)
+            all_button = QPushButton("Import all")
+            all_button.setObjectName("Primary")
+            all_button.setToolTip("Every source of this repository, each in the languages ticked on its card; the "
+                                  "search index, chains and narrators are brought up to date once, at the end")
+            all_button.clicked.connect(self._import_all)
+            all_button.setProperty("allowed", bool(entries))
+            self._buttons.append(all_button)
+            head.addWidget(all_button)
+            self.box.addLayout(head)
+            groups = [("Sunni hadith collections", [e for e in entries if e.kind == "hadith" and e.tradition != "shia"]),
+                      ("Shia hadith collections", [e for e in entries if e.kind == "hadith" and e.tradition == "shia"]),
+                      ("Narrators (rijal)", [e for e in entries if e.kind == "rijal"])]
+            for heading, group in groups:
+                if not group:
+                    continue
+                sub = QLabel(f"{heading}  ·  {len(group)}")
+                sub.setObjectName("FilterTitle")
+                self.box.addWidget(sub)
+                for entry in group:
                     self.box.addWidget(self._card(conn, entry))
-                if heading == "Your sources":
-                    if not entries:
-                        none = QLabel("None yet.")
-                        none.setObjectName("Caption")
-                        self.box.addWidget(none)
-                    add = QPushButton("Add a source…")
-                    add.setObjectName("Quiet")
-                    add.clicked.connect(self._add)
-                    self._buttons.append(add)
-                    row = QHBoxLayout()
-                    row.addWidget(add)
-                    row.addStretch(1)
-                    self.box.addLayout(row)
+
+            title = QLabel("Your sources")
+            title.setObjectName("CardTitle")
+            title.setFont(theme.reading_font(15, bold=True))
+            self.box.addWidget(title)
+            mine = catalog.user_entries()
+            for entry in mine:
+                self.box.addWidget(self._card(conn, entry))
+            if not mine:
+                none = QLabel("None yet: a file or a URL of your own, in any format isnady reads.")
+                none.setObjectName("Caption")
+                self.box.addWidget(none)
+            add = QPushButton("Add a source…")
+            add.setObjectName("Quiet")
+            add.clicked.connect(self._add)
+            self._buttons.append(add)
+            row = QHBoxLayout()
+            row.addWidget(add)
+            row.addStretch(1)
+            self.box.addLayout(row)
+            self.box.addWidget(self._folder_card())
             self.box.addStretch(1)
         finally:
             conn.close()
         self._set_busy(self._worker is not None)
+
+    def _repo_card(self) -> QFrame:
+        """The repository: chosen from the list (the default first), with where its catalog came from."""
+        repo = repositories.selected()
+        card = QFrame()
+        card.setObjectName("Card")
+        box = QVBoxLayout(card)
+        box.setContentsMargins(18, 12, 18, 12)
+        box.setSpacing(8)
+        head = QHBoxLayout()
+        title = QLabel("Repository")
+        title.setObjectName("CardTitle")
+        title.setFont(theme.reading_font(13.5, bold=True))
+        head.addWidget(title)
+        self.repo_combo = QComboBox()
+        self.repo_combo.setObjectName("FilterCombo")
+        self.repo_combo.setMinimumWidth(360)
+        for r in repositories.all_repositories():
+            label = r.name + ("" if r.builtin else "  (added by you)")
+            self.repo_combo.addItem(label, r.id)
+        self.repo_combo.setCurrentIndex(max(0, self.repo_combo.findData(repo.id)))
+        self.repo_combo.currentIndexChanged.connect(self._choose_repo)
+        head.addWidget(self.repo_combo, 1)
+        box.addLayout(head)
+        desc = QLabel(repo.description)
+        desc.setObjectName("Lead")
+        desc.setWordWrap(True)
+        box.addWidget(desc)
+        try:
+            _cat, where = repositories.catalog(repo)
+            where = "shipped-own" if where == "shipped" and not repo.url else where
+            how = {"network": "Catalog read from the repository just now.",
+                   "shipped-own": "This dataset publishes no catalog of its own; isnady ships one for it.",
+                   "saved": "Catalog read from the repository in the last day (Refresh reads it again).",
+                   "shipped": ("The repository cannot be reached now, so the catalog shipped with isnady is used; "
+                               "each source is read from the repository, or from its origin when the repository "
+                               "has no copy.")}[where]
+        except Exception as exc:
+            how = f"The catalog cannot be read: {exc}"
+        links = [f"<a href='{repo.homepage}'>{repo.homepage}</a>"] if repo.homepage else []
+        note = QLabel(" · ".join(links + [how]))
+        note.setObjectName("Caption")
+        note.setWordWrap(True)
+        note.setTextFormat(Qt.TextFormat.RichText)
+        note.setOpenExternalLinks(True)
+        box.addWidget(note)
+        row = QHBoxLayout()
+        row.addStretch(1)
+        for label, slot, ok in (("Refresh", self._refresh_repo, True),
+                                ("Add a repository…", self._add_repo, True),
+                                ("Remove from list", self._remove_repo, not repo.builtin),
+                                ("Use the default", lambda: self._use_repo(repositories.DEFAULT_ID), not repo.default)):
+            b = QPushButton(label)
+            b.setObjectName("Quiet")
+            b.clicked.connect(slot)
+            b.setProperty("allowed", ok)
+            row.addWidget(b)
+            self._buttons.append(b)
+        box.addLayout(row)
+        return card
 
     def _card(self, conn, entry: catalog.Entry) -> QFrame:
         st = catalog.status(conn, entry)
@@ -229,19 +319,53 @@ class SourcesPage(QWidget):
         name = QLabel(entry.title)
         name.setObjectName("CardTitle")
         name.setFont(theme.reading_font(13.5, bold=True))
+        head.addWidget(name)
+        if entry.title_ar:
+            ar = QLabel(entry.title_ar)
+            ar.setStyleSheet(f"color: {theme.script_color('arabic')}; "
+                             f"{theme.font_css(theme.script_font('arabic', factor=0.85))}")
+            head.addWidget(ar)
+        head.addStretch(1)
         state = QLabel(self._state_text(entry, st))
         state.setObjectName("Caption")
-        head.addWidget(name)
-        head.addStretch(1)
         head.addWidget(state)
         box.addLayout(head)
+        if entry.builtin:
+            tags = QHBoxLayout()
+            tags.setSpacing(8)
+            here = entry.fallback is not None          # a copy kept in the repository, the origin behind it
+            for text, name_, tip in (
+                    ("Shia" if entry.tradition == "shia" else "Sunni", "TagGold" if entry.tradition == "shia" else "Tag",
+                     "The tradition of the collection: Shia books are kept apart from Sunni ones, and their grades "
+                     "and narrators are read in their own terms."),
+                    (entry.license or "licence not stated", "TagMuted",
+                     "May be shared further (tier A/B)" if db.tier_for_license(entry.license) in "AB"
+                     else "No licence allowing it to be shared: imported for this computer only (tier C)"),
+                    ("kept in the repository" if here else "read from its origin",
+                     "TagMuted", (f"Origin: {entry.origin_name}\n{entry.origin_url}" if entry.origin_url else ""))):
+                tag = QLabel(text)
+                tag.setObjectName(name_)
+                tag.setToolTip(tip)
+                tags.addWidget(tag)
+            if entry.hadith:
+                count = QLabel(f"{entry.hadith:,} hadith")
+                count.setObjectName("Caption")
+                tags.addWidget(count)
+            tags.addStretch(1)
+            if entry.origin_url:
+                link = QLabel(f"<a href='{entry.origin_url}'>{entry.origin_name or entry.origin_url}</a>")
+                link.setObjectName("Caption")
+                link.setTextFormat(Qt.TextFormat.RichText)
+                link.setOpenExternalLinks(True)
+                tags.addWidget(link)
+            box.addLayout(tags)
         desc = QLabel(entry.description + (f"  ·  {entry.location}" if not entry.builtin else ""))
         desc.setObjectName("Caption")
         desc.setWordWrap(True)
         box.addWidget(desc)
 
         checks = []
-        if entry.builtin and entry.book:
+        if entry.builtin and entry.book and entry.languages:
             langs = QWidget()
             flow = FlowLayout(langs, spacing=10)
             chosen = st["languages"] or [catalog.language_label(c) for c in catalog.DEFAULT_LANGUAGES]
@@ -289,7 +413,7 @@ class SourcesPage(QWidget):
     # ------------------------------------------------------------ actions
     def _set_busy(self, busy: bool) -> None:
         for b in self._buttons:
-            b.setEnabled(not busy)
+            b.setEnabled(not busy and b.property("allowed") is not False)
         self.bar.setVisible(busy)
 
     def _start(self, worker: Worker, first_message: str) -> None:
@@ -425,13 +549,64 @@ class SourcesPage(QWidget):
         elif box.clickedButton() is as_is:
             self._relocate(None, "as-is")
 
+    def _choose_repo(self, _i: int) -> None:
+        self._use_repo(self.repo_combo.currentData())
+
+    def _use_repo(self, repo_id: str) -> None:
+        try:
+            repositories.select(repo_id)
+        except KeyError as exc:
+            QMessageBox.warning(self, "Repository", str(exc.args[0]))
+        self.refresh()
+
+    def _refresh_repo(self) -> None:
+        repo = repositories.selected()
+        try:
+            _cat, where = repositories.catalog(repo, refresh=True)
+            self.refresh()
+            self.status.setText("Catalog read again." if where == "network" else
+                                "The repository cannot be reached; the saved or shipped catalog is used.")
+        except Exception as exc:
+            self.status.setText(f"Failed: {exc}")
+
+    def _add_repo(self) -> None:
+        text, ok = QInputDialog.getText(
+            self, "Add a repository",
+            "The address of a repository with an isnady catalog (catalog.json):\n"
+            "  a GitHub repository   https://github.com/owner/name\n"
+            "  a Hugging Face dataset   https://huggingface.co/datasets/owner/name\n"
+            "  a catalog URL, or a folder on this computer")
+        if not ok or not text.strip():
+            return
+        try:
+            repo = repositories.add_repository(text.strip())
+        except (ResourceError, ValueError) as exc:
+            QMessageBox.warning(self, "Add a repository", str(exc.args[0] if exc.args else exc))
+            return
+        repositories.select(repo.id)
+        self.refresh()
+        self.status.setText(f"Added {repo.name}; it is the repository now.")
+
+    def _remove_repo(self) -> None:
+        repo = repositories.selected()
+        answer = QMessageBox.question(self, "Repository", f"Remove {repo.name} from the list? What you imported from "
+                                                          "it stays until you remove it.")
+        if answer == QMessageBox.StandardButton.Yes:
+            repositories.remove_repository(repo.id)
+            self.refresh()
+
     def _import_all(self) -> None:
         languages = {}
         for entry_id, checks in getattr(self, "_lang_checks", {}).items():
             chosen = [c.property("code") for c in checks if c.isChecked()]
             if chosen:
                 languages[entry_id] = chosen
-        self._start(Worker("import_all", None, languages), "Importing every built-in source…")
+        n = len(catalog.builtin_entries())
+        answer = QMessageBox.question(self, "Import all", f"Import all {n} sources of {repositories.selected().name}? "
+                                      "Large books are downloaded; this can take a while.")
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        self._start(Worker("import_all", None, languages), "Importing every source of the repository…")
 
     def _import(self, entry: catalog.Entry, checks: list) -> None:
         languages = [c.property("code") for c in checks if c.isChecked()] or None

@@ -30,6 +30,9 @@ Examples
   iy catalog import fawaz-muslim --language ara --language tur
   iy catalog import taqrib
   iy catalog import --all --language ara --language tur
+  iy repo list
+  iy repo use thaqalayn
+  iy repo add https://github.com/owner/name
   iy datadir
   iy doctor
   iy update
@@ -234,13 +237,71 @@ def _print_report(report, narrators) -> None:
               f"({100 * narrators['identified'] / narrators['links']:.1f}%)")
 
 
+def cmd_repo(args) -> int:
+    from isnady.core import repositories as R
+
+    if args.action == "list":
+        chosen = R.selected().id
+        for r in R.all_repositories():
+            mark = "*" if r.id == chosen else " "
+            kind = "default" if r.default else ("added by you" if not r.builtin else "optional")
+            print(f" {mark} {r.id:22} {r.name:46} {kind}")
+        print("\n* the repository in use. Choose: iy repo use ID · its sources: iy catalog list")
+        return 0
+    if args.action == "add":
+        if not args.target:
+            print("Give the repository: iy repo add https://github.com/owner/name", file=sys.stderr)
+            return 2
+        try:
+            repo = R.add_repository(args.target, args.name)
+        except (ResourceError, ValueError) as exc:
+            print(exc.args[0] if exc.args else exc, file=sys.stderr)
+            return 1
+        print(f"Added {repo.id}: {repo.name}. Use it: iy repo use {repo.id}")
+        return 0
+    repo = R.find(args.target) if args.target else R.selected()
+    if repo is None:
+        print(f"No repository '{args.target}'. See: iy repo list", file=sys.stderr)
+        return 1
+    if args.action == "use":
+        R.select(repo.id)
+        print(f"Using {repo.name}. Its sources: iy catalog list")
+        return 0
+    if args.action == "remove":
+        if repo.builtin:
+            print(f"{repo.name} ships with isnady and stays in the list.", file=sys.stderr)
+            return 1
+        R.remove_repository(repo.id)
+        print(f"Removed {repo.name} from the list (what you imported from it stays).")
+        return 0
+    try:
+        cat, where = R.catalog(repo, refresh=args.refresh)
+    except ResourceError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    print(f"{repo.name} ({repo.id})\n  {repo.description}")
+    if repo.homepage:
+        print(f"  {repo.homepage}")
+    print(f"  catalog: {repo.url} — read from " + {"network": "the repository now", "saved": "the copy saved in the "
+                                                    "last day", "shipped": "the copy shipped with isnady (not reachable)"}[where]
+          if repo.url else "  catalog: shipped with isnady (this dataset publishes none of its own)")
+    for e in cat["entries"]:
+        print(f"  {e['id']:20} {e.get('tradition', ''):6} {e['title']}")
+    return 0
+
+
 def cmd_catalog(args) -> int:
     from isnady.core import catalog
+    from isnady.core import repositories as R
 
     if args.action == "list":
         conn = _connect()
-        for kind, title in (("builtin", "Built-in sources"), ("user", "Your sources (User Resources)")):
-            entries = [e for e in catalog.all_entries() if (e.builtin if kind == "builtin" else not e.builtin)]
+        repo = R.find(args.repo) if args.repo else R.selected()
+        if repo is None:
+            print(f"No repository '{args.repo}'. See: iy repo list", file=sys.stderr)
+            return 1
+        for kind, title in (("builtin", f"Sources of {repo.name}"), ("user", "Your sources (User Resources)")):
+            entries = catalog.builtin_entries(repo.id) if kind == "builtin" else catalog.user_entries()
             print(f"\n{title}")
             if not entries:
                 print("  none yet — add one: iy catalog add TITLE FORMAT FILE-OR-URL")
@@ -249,7 +310,7 @@ def cmd_catalog(args) -> int:
                 state = ("imported" + (f" ({', '.join(catalog.language_label(l) if len(l) == 3 else l for l in st['languages'])})"
                                        if st["languages"] else "") + f", {st['count']:,}"
                          if st["imported"] else "not imported")
-                print(f"  {e.id:16} {e.title:42} {state}")
+                print(f"  {e.id:18} {e.tradition if e.builtin else '':6} {e.title:46} {state}")
         conn.close()
         return 0
     if args.action == "add":
@@ -284,7 +345,7 @@ def cmd_catalog(args) -> int:
             print(f"  narrators identified: {narrators['identified']} of {narrators['links']} links "
                   f"({100 * narrators['identified'] / narrators['links']:.1f}%)")
         return 0 if not failed else 1
-    entry = catalog.find(args.id or "")
+    entry = catalog.find(f"{args.repo}/{args.id}" if args.repo and args.id else (args.id or ""))
     if entry is None:
         print(f"No source '{args.id}'. See: iy catalog list", file=sys.stderr)
         return 1
@@ -1051,14 +1112,23 @@ def build_parser() -> argparse.ArgumentParser:
     cat.add_argument("format", nargs="?", help="add: data format, see 'iy formats'")
     cat.add_argument("location", nargs="?", help="add: file path or URL")
     cat.add_argument("--language", action="append", help="import: language code or name (repeatable; default ara, tur, eng)")
-    cat.add_argument("--all", action="store_true", help="import: every built-in source (hadith books, then the Taqrib)")
+    cat.add_argument("--all", action="store_true", help="import: every source of the repository (hadith books first, "
+                                                        "then the rijal works)")
     cat.add_argument("--license", help="add: licence of the data")
     cat.add_argument("--book", help="add: book key for index files (e.g. bukhari)")
     cat.add_argument("--auth", choices=["none", "basic", "bearer", "apikey"], default="none",
                      help="add: kind of authentication; credentials are asked at import and never stored")
     cat.add_argument("--api-key-header", help="add: header name for an API key")
     cat.add_argument("--api-key-param", help="add: query parameter name for an API key")
+    cat.add_argument("--repo", help="list / import: the sources of this repository instead of the chosen one")
     cat.set_defaults(func=cmd_catalog)
+    rp = sub.add_parser("repo", help="data repositories: list, use, show, add, remove (isnady's own is the default)")
+    rp.add_argument("action", nargs="?", default="list", choices=["list", "use", "show", "add", "remove"])
+    rp.add_argument("target", nargs="?", help="use/show/remove: a repository id; add: a GitHub or Hugging Face "
+                                              "repository, a catalog URL or a folder")
+    rp.add_argument("--name", help="add: the name shown for it")
+    rp.add_argument("--refresh", action="store_true", help="show: read the catalog again from the repository")
+    rp.set_defaults(func=cmd_repo)
 
     imp = sub.add_parser("import", help="import a file or URL")
     imp.add_argument("format", help="data format, see 'iy formats'")
