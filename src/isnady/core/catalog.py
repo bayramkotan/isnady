@@ -70,6 +70,11 @@ def entry_from_catalog(raw: dict, repo, base: str) -> Entry:
         parts = [dict(p, location=absolute(base, p["location"])) if isinstance(p, dict) else absolute(base, p)
                  for p in parts]
     origin = raw.get("origin") or {}
+    # the rijal works keep the database keys they always had, whatever repository lists them
+    fixed = {"taqrib": ("openiti-taqrib", "Ibn Hajar, Taqrib al-Tahdhib"),
+             "najashi": ("openiti-najashi", "al-Najashi, Rijal")}.get(raw["format"])
+    if fixed and not raw.get("source_key"):
+        raw = {**raw, "source_key": fixed[0], "source_name": raw.get("source_name") or fixed[1]}
     return Entry(
         id=raw["id"], title=raw["title"], kind=raw.get("kind", "hadith"), format_id=raw["format"],
         location=absolute(base, raw["location"]), description=raw.get("description", ""),
@@ -153,6 +158,8 @@ def find(entry_id: str) -> Entry | None:
     from isnady.core import repositories
 
     entry_id = (entry_id or "").strip()
+    if entry_id.startswith("fawaz-"):                # the ids before repositories (iy catalog import fawaz-bukhari)
+        entry_id = entry_id[len("fawaz-"):]
     if "/" in entry_id:
         rid, _, eid = entry_id.partition("/")
         return next((e for e in builtin_entries(rid) if eid in (e.id, *e.aliases)), None) if repositories.find(rid) \

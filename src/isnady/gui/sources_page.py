@@ -333,16 +333,17 @@ class SourcesPage(QWidget):
         if entry.builtin:
             tags = QHBoxLayout()
             tags.setSpacing(8)
-            here = entry.fallback is not None          # a copy kept in the repository, the origin behind it
-            for text, name_, tip in (
-                    ("Shia" if entry.tradition == "shia" else "Sunni", "TagGold" if entry.tradition == "shia" else "Tag",
-                     "The tradition of the collection: Shia books are kept apart from Sunni ones, and their grades "
-                     "and narrators are read in their own terms."),
-                    (entry.license or "licence not stated", "TagMuted",
-                     "May be shared further (tier A/B)" if db.tier_for_license(entry.license) in "AB"
-                     else "No licence allowing it to be shared: imported for this computer only (tier C)"),
-                    ("kept in the repository" if here else "read from its origin",
-                     "TagMuted", (f"Origin: {entry.origin_name}\n{entry.origin_url}" if entry.origin_url else ""))):
+            ours = entry.repo == repositories.DEFAULT_ID
+            items = [("Shia" if entry.tradition == "shia" else "Sunni", "TagGold" if entry.tradition == "shia" else "Tag",
+                      "The tradition of the collection: Shia books are kept apart from Sunni ones, and their grades "
+                      "and narrators are read in their own terms."),
+                     (entry.license or "licence not stated", "TagMuted",
+                      "May be shared further (tier A/B)" if db.tier_for_license(entry.license) in "AB"
+                      else "No licence allowing it to be shared further: for this computer (tier C)")]
+            if not ours and entry.origin_url:
+                items.append(("read from its publisher", "TagMuted",
+                              f"{entry.origin_name}\n{entry.origin_url}" if entry.origin_url else ""))
+            for text, name_, tip in items:
                 tag = QLabel(text)
                 tag.setObjectName(name_)
                 tag.setToolTip(tip)

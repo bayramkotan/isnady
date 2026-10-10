@@ -172,7 +172,7 @@ it opens it.
 
 isnady ships without hadith data; it reads it from a **data repository**. The default is
 isnady's own, [**bayramkotan/isnady-data**](https://github.com/bayramkotan/isnady-data), which
-lists every Sunni and Shia collection and rijal work isnady can read — 35 sources, from Sahih
+holds every Sunni and Shia collection and rijal work isnady can read — 35 sources, from Sahih
 al-Bukhari to al-Kafi (see [Data sources](#-data-sources) below). Open the window with `iy`,
 choose **File → Data Sources**, and import any of them with one click — or **Import all** — in
 the languages you tick. The same from the command line:
@@ -488,15 +488,16 @@ where each file is, its format, its licence and its tradition. Choose one in **S
 sources** (or `iy repo use ID`); add your own with **Add a repository…** (`iy repo add URL`: a
 GitHub repository, a Hugging Face dataset, a catalog URL or a folder).
 
-**The default — [isnady-data](https://github.com/bayramkotan/isnady-data)** lists every source
-below, each book once. Sources whose licence allows it are kept in the repository itself (the
-original behind it, should the copy be unreachable); the others are listed at their origin and
-read from there — they are never copied, and what you import from them stays on your computer.
+**The default — [isnady-data](https://github.com/bayramkotan/isnady-data)** holds every source
+below in one place and in isnady's own format: `sunni/<book>/`, `shia/<book>/` (a `book.json`
+and one file per language) and `rijal/sunni/`, `rijal/shia/`.
 
 | | Sunni | Shia |
 |---|---|---|
-| **Hadith** | al-Bukhari, Muslim, Abu Dawud, al-Tirmidhi, al-Nasa'i, Ibn Maja, the Muwatta, three forty-hadith books — Arabic and up to eight translations, with grades ([fawazahmed0](https://github.com/fawazahmed0/hadith-api), Unlicense, kept in isnady-data) · Musnad Ahmad, Sunan al-Darimi ([Open Hadith Data](https://github.com/mhashim6/Open-Hadith-Data), ODbL, kept in isnady-data) · Riyad al-Salihin, al-Shama'il, Bulugh al-Maram, al-Adab al-Mufrad, Mishkat al-Masabih ([hadith-json](https://github.com/AhmedBaset/hadith-json), from origin) | al-Kafi (8 volumes, with al-Majlisi's and al-Behbudi's grades), 'Uyun Akhbar al-Rida, al-Saduq's al-Amali, al-Khisal, al-Tawhid, Ma'ani al-Akhbar, Thawab al-A'mal, Sifat and Fada'il al-Shi'a, al-Mufid's al-Amali, Kamil al-Ziyarat, al-Nu'mani's and al-Tusi's Kitab al-Ghayba, al-Ahwazi's al-Mu'min and al-Zuhd, al-Muhsini's Mu'jam al-Ahadith al-Mu'tabara — Arabic and English ([Thaqalayn](https://github.com/MohammedArab1/ThaqalaynAPI), from origin) |
-| **Narrators** | Ibn Hajar, *Taqrib al-Tahdhib* ([OpenITI](https://github.com/OpenITI), from origin) | al-Najashi, *Rijal* ([OpenITI](https://github.com/OpenITI), from origin) |
+| **Hadith** | Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud, Jami' al-Tirmidhi, Sunan al-Nasa'i, Sunan Ibn Maja, the Muwatta, the Forty of al-Nawawi, Forty Hadith Qudsi, the Forty of Shah Waliullah — Arabic and up to eight translations, with grades · Musnad Ahmad, Sunan al-Darimi · Riyad al-Salihin, al-Shama'il al-Muhammadiyya, Bulugh al-Maram, al-Adab al-Mufrad, Mishkat al-Masabih | al-Kulayni's al-Kafi (8 volumes, with al-Majlisi's and al-Behbudi's grades) · al-Saduq's 'Uyun Akhbar al-Rida, al-Amali, al-Khisal, al-Tawhid, Ma'ani al-Akhbar, Thawab al-A'mal, Sifat al-Shi'a, Fada'il al-Shi'a · al-Mufid's al-Amali · Ibn Qulawayh's Kamil al-Ziyarat · al-Nu'mani's and al-Tusi's Kitab al-Ghayba · al-Ahwazi's al-Mu'min and al-Zuhd · al-Muhsini's Mu'jam al-Ahadith al-Mu'tabara — Arabic and English |
+| **Narrators** | Ibn Hajar, *Taqrib al-Tahdhib* | al-Najashi, *Rijal* |
+
+The credits for where each text was first published are in the repository's README.
 
 **Optional repositories**, each the dataset as its authors publish it (their books under their
 own keys, e.g. `bukhari-lk`, so editions with other numbering never mix):

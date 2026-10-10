@@ -2,27 +2,24 @@
  "schema": "isnady-catalog/1",
  "id": "isnady",
  "name": "isnady — all sources (default)",
- "description": "isnady's own repository: every hadith collection and rijal work isnady can read, Sunni and Shia. Sources whose licence allows it are kept in the repository itself; the others are read from their origin and stay on your computer.",
+ "description": "isnady's own repository: every hadith collection and rijal work isnady reads, Sunni and Shia, in one place and one format.",
  "homepage": "https://github.com/bayramkotan/isnady-data",
  "url": "https://raw.githubusercontent.com/bayramkotan/isnady-data/main/catalog.json",
  "default": true,
  "entries": [
   {
    "id": "bukhari",
-   "aliases": [
-    "fawaz-bukhari"
-   ],
    "title": "Sahih al-Bukhari",
    "title_ar": "صحيح البخاري",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "fawazahmed0",
-   "location": "fawazahmed0/bukhari/editions.json",
+   "format": "isnady",
+   "location": "sunni/bukhari/book.json",
    "book": "bukhari",
    "languages": [
     "ara",
-    "tur",
     "eng",
+    "tur",
     "urd",
     "ind",
     "ben",
@@ -31,35 +28,24 @@
     "tam"
    ],
    "license": "Unlicense",
-   "source_name": "fawazahmed0/hadith-api",
-   "source_key": "fawazahmed0-hadith-api",
-   "origin": {
-    "name": "fawazahmed0/hadith-api",
-    "url": "https://github.com/fawazahmed0/hadith-api"
-   },
-   "hadith": 7563,
-   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali, French, Russian, Tamil); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …).",
-   "fallback": {
-    "format": "fawazahmed0",
-    "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json"
-   }
+   "hadith": 7590,
+   "source_name": "isnady-data: Sahih al-Bukhari",
+   "source_key": "isnady-bukhari",
+   "description": "Compiled by al-Bukhari (d. 256). Arabic and 8 translations (English, Turkish, Urdu, Indonesian, Bengali, French, Russian, Tamil); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
    "id": "muslim",
-   "aliases": [
-    "fawaz-muslim"
-   ],
    "title": "Sahih Muslim",
    "title_ar": "صحيح مسلم",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "fawazahmed0",
-   "location": "fawazahmed0/muslim/editions.json",
+   "format": "isnady",
+   "location": "sunni/muslim/book.json",
    "book": "muslim",
    "languages": [
     "ara",
-    "tur",
     "eng",
+    "tur",
     "urd",
     "ind",
     "ben",
@@ -68,35 +54,24 @@
     "tam"
    ],
    "license": "Unlicense",
-   "source_name": "fawazahmed0/hadith-api",
-   "source_key": "fawazahmed0-hadith-api",
-   "origin": {
-    "name": "fawazahmed0/hadith-api",
-    "url": "https://github.com/fawazahmed0/hadith-api"
-   },
-   "hadith": 7563,
-   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali, French, Russian, Tamil); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …).",
-   "fallback": {
-    "format": "fawazahmed0",
-    "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json"
-   }
+   "hadith": 7564,
+   "source_name": "isnady-data: Sahih Muslim",
+   "source_key": "isnady-muslim",
+   "description": "Compiled by Muslim (d. 261). Arabic and 8 translations (English, Turkish, Urdu, Indonesian, Bengali, French, Russian, Tamil); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
    "id": "abudawud",
-   "aliases": [
-    "fawaz-abudawud"
-   ],
    "title": "Sunan Abi Dawud",
    "title_ar": "سنن أبي داود",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "fawazahmed0",
-   "location": "fawazahmed0/abudawud/editions.json",
+   "format": "isnady",
+   "location": "sunni/abudawud/book.json",
    "book": "abudawud",
    "languages": [
     "ara",
-    "tur",
     "eng",
+    "tur",
     "urd",
     "ind",
     "ben",
@@ -104,202 +79,136 @@
     "rus"
    ],
    "license": "Unlicense",
-   "source_name": "fawazahmed0/hadith-api",
-   "source_key": "fawazahmed0-hadith-api",
-   "origin": {
-    "name": "fawazahmed0/hadith-api",
-    "url": "https://github.com/fawazahmed0/hadith-api"
-   },
    "hadith": 5274,
-   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali, French, Russian); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …).",
-   "fallback": {
-    "format": "fawazahmed0",
-    "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json"
-   }
+   "source_name": "isnady-data: Sunan Abi Dawud",
+   "source_key": "isnady-abudawud",
+   "description": "Compiled by Abu Dawud (d. 275). Arabic and 7 translations (English, Turkish, Urdu, Indonesian, Bengali, French, Russian); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
    "id": "tirmidhi",
-   "aliases": [
-    "fawaz-tirmidhi"
-   ],
    "title": "Jami' al-Tirmidhi",
    "title_ar": "جامع الترمذي",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "fawazahmed0",
-   "location": "fawazahmed0/tirmidhi/editions.json",
+   "format": "isnady",
+   "location": "sunni/tirmidhi/book.json",
    "book": "tirmidhi",
    "languages": [
     "ara",
-    "tur",
     "eng",
+    "tur",
     "urd",
     "ind",
     "ben"
    ],
    "license": "Unlicense",
-   "source_name": "fawazahmed0/hadith-api",
-   "source_key": "fawazahmed0-hadith-api",
-   "origin": {
-    "name": "fawazahmed0/hadith-api",
-    "url": "https://github.com/fawazahmed0/hadith-api"
-   },
-   "hadith": 3956,
-   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …).",
-   "fallback": {
-    "format": "fawazahmed0",
-    "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json"
-   }
+   "hadith": 3998,
+   "source_name": "isnady-data: Jami' al-Tirmidhi",
+   "source_key": "isnady-tirmidhi",
+   "description": "Compiled by al-Tirmidhi (d. 279). Arabic and 5 translations (English, Turkish, Urdu, Indonesian, Bengali); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
    "id": "nasai",
-   "aliases": [
-    "fawaz-nasai"
-   ],
    "title": "Sunan al-Nasa'i",
    "title_ar": "سنن النسائي",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "fawazahmed0",
-   "location": "fawazahmed0/nasai/editions.json",
+   "format": "isnady",
+   "location": "sunni/nasai/book.json",
    "book": "nasai",
    "languages": [
     "ara",
-    "tur",
     "eng",
+    "tur",
     "urd",
     "ind",
     "ben",
     "fra"
    ],
    "license": "Unlicense",
-   "source_name": "fawazahmed0/hadith-api",
-   "source_key": "fawazahmed0-hadith-api",
-   "origin": {
-    "name": "fawazahmed0/hadith-api",
-    "url": "https://github.com/fawazahmed0/hadith-api"
-   },
-   "hadith": 5758,
-   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali, French); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …).",
-   "fallback": {
-    "format": "fawazahmed0",
-    "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json"
-   }
+   "hadith": 5765,
+   "source_name": "isnady-data: Sunan al-Nasa'i",
+   "source_key": "isnady-nasai",
+   "description": "Compiled by al-Nasa'i (d. 303). Arabic and 6 translations (English, Turkish, Urdu, Indonesian, Bengali, French); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
    "id": "ibnmajah",
-   "aliases": [
-    "fawaz-ibnmajah"
-   ],
    "title": "Sunan Ibn Majah",
    "title_ar": "سنن ابن ماجه",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "fawazahmed0",
-   "location": "fawazahmed0/ibnmajah/editions.json",
+   "format": "isnady",
+   "location": "sunni/ibnmajah/book.json",
    "book": "ibnmajah",
    "languages": [
     "ara",
-    "tur",
     "eng",
+    "tur",
     "urd",
     "ind",
     "ben",
     "fra"
    ],
    "license": "Unlicense",
-   "source_name": "fawazahmed0/hadith-api",
-   "source_key": "fawazahmed0-hadith-api",
-   "origin": {
-    "name": "fawazahmed0/hadith-api",
-    "url": "https://github.com/fawazahmed0/hadith-api"
-   },
-   "hadith": 4341,
-   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali, French); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …).",
-   "fallback": {
-    "format": "fawazahmed0",
-    "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json"
-   }
+   "hadith": 4343,
+   "source_name": "isnady-data: Sunan Ibn Majah",
+   "source_key": "isnady-ibnmajah",
+   "description": "Compiled by Ibn Maja (d. 273). Arabic and 6 translations (English, Turkish, Urdu, Indonesian, Bengali, French); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
    "id": "malik",
-   "aliases": [
-    "fawaz-malik"
-   ],
    "title": "Muwatta Malik",
    "title_ar": "موطأ مالك",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "fawazahmed0",
-   "location": "fawazahmed0/malik/editions.json",
+   "format": "isnady",
+   "location": "sunni/malik/book.json",
    "book": "malik",
    "languages": [
     "ara",
-    "tur",
     "eng",
+    "tur",
     "urd",
     "ind",
     "ben",
     "fra"
    ],
    "license": "Unlicense",
-   "source_name": "fawazahmed0/hadith-api",
-   "source_key": "fawazahmed0-hadith-api",
-   "origin": {
-    "name": "fawazahmed0/hadith-api",
-    "url": "https://github.com/fawazahmed0/hadith-api"
-   },
-   "hadith": 1858,
-   "description": "Arabic text and translations (Arabic, Turkish, English, Urdu, Indonesian, Bengali, French); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …).",
-   "fallback": {
-    "format": "fawazahmed0",
-    "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json"
-   }
+   "hadith": 1927,
+   "source_name": "isnady-data: Muwatta Malik",
+   "source_key": "isnady-malik",
+   "description": "Compiled by Malik (d. 179). Arabic and 6 translations (English, Turkish, Urdu, Indonesian, Bengali, French); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
    "id": "nawawi",
-   "aliases": [
-    "fawaz-nawawi"
-   ],
    "title": "Forty Hadith of al-Nawawi",
    "title_ar": "الأربعون النووية",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "fawazahmed0",
-   "location": "fawazahmed0/nawawi/editions.json",
+   "format": "isnady",
+   "location": "sunni/nawawi/book.json",
    "book": "nawawi",
    "languages": [
     "ara",
-    "tur",
     "eng",
+    "tur",
     "ben",
     "fra"
    ],
    "license": "Unlicense",
-   "source_name": "fawazahmed0/hadith-api",
-   "source_key": "fawazahmed0-hadith-api",
-   "origin": {
-    "name": "fawazahmed0/hadith-api",
-    "url": "https://github.com/fawazahmed0/hadith-api"
-   },
    "hadith": 42,
-   "description": "Arabic text and translations (Arabic, Turkish, English, Bengali, French); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …).",
-   "fallback": {
-    "format": "fawazahmed0",
-    "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json"
-   }
+   "source_name": "isnady-data: Forty Hadith of al-Nawawi",
+   "source_key": "isnady-nawawi",
+   "description": "Compiled by al-Nawawi (d. 676). Arabic and 4 translations (English, Turkish, Bengali, French); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
    "id": "qudsi",
-   "aliases": [
-    "fawaz-qudsi"
-   ],
    "title": "Forty Hadith Qudsi",
    "title_ar": "الأربعون القدسية",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "fawazahmed0",
-   "location": "fawazahmed0/qudsi/editions.json",
+   "format": "isnady",
+   "location": "sunni/qudsi/book.json",
    "book": "qudsi",
    "languages": [
     "ara",
@@ -307,30 +216,19 @@
     "fra"
    ],
    "license": "Unlicense",
-   "source_name": "fawazahmed0/hadith-api",
-   "source_key": "fawazahmed0-hadith-api",
-   "origin": {
-    "name": "fawazahmed0/hadith-api",
-    "url": "https://github.com/fawazahmed0/hadith-api"
-   },
    "hadith": 40,
-   "description": "Arabic text and translations (Arabic, English, French); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …).",
-   "fallback": {
-    "format": "fawazahmed0",
-    "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json"
-   }
+   "source_name": "isnady-data: Forty Hadith Qudsi",
+   "source_key": "isnady-qudsi",
+   "description": "Arabic and 2 translations (English, French); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
    "id": "dehlawi",
-   "aliases": [
-    "fawaz-dehlawi"
-   ],
    "title": "Forty Hadith of Shah Waliullah Dehlawi",
    "title_ar": "أربعون الدهلوي",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "fawazahmed0",
-   "location": "fawazahmed0/dehlawi/editions.json",
+   "format": "isnady",
+   "location": "sunni/dehlawi/book.json",
    "book": "dehlawi",
    "languages": [
     "ara",
@@ -338,18 +236,10 @@
     "fra"
    ],
    "license": "Unlicense",
-   "source_name": "fawazahmed0/hadith-api",
-   "source_key": "fawazahmed0-hadith-api",
-   "origin": {
-    "name": "fawazahmed0/hadith-api",
-    "url": "https://github.com/fawazahmed0/hadith-api"
-   },
    "hadith": 40,
-   "description": "Arabic text and translations (Arabic, English, French); grades by scholar where the source gives them (al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i …).",
-   "fallback": {
-    "format": "fawazahmed0",
-    "location": "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json"
-   }
+   "source_name": "isnady-data: Forty Hadith of Shah Waliullah Dehlawi",
+   "source_key": "isnady-dehlawi",
+   "description": "Compiled by Shah Waliullah (d. 1176). Arabic and 2 translations (English, French); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
    "id": "ahmad",
@@ -357,32 +247,17 @@
    "title_ar": "مسند أحمد بن حنبل",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "table",
-   "location": "open-hadith-data/Musnad_Ahmad_Ibn-Hanbal/musnad_ahmad_ibn-hanbal_ahadith_mushakkala.utf8.csv",
+   "format": "isnady",
+   "location": "sunni/ahmad/book.json",
    "book": "ahmad",
-   "mapping": {
-    "type": "csv",
-    "header": false,
-    "number": "#0",
-    "texts": [
-     {
-      "field": "#1",
-      "language": "Arabic"
-     }
-    ]
-   },
+   "languages": [
+    "ara"
+   ],
    "license": "ODbL-1.0",
-   "source_name": "Open Hadith Data",
-   "source_key": "open-hadith-data",
-   "origin": {
-    "name": "mhashim6/Open-Hadith-Data",
-    "url": "https://github.com/mhashim6/Open-Hadith-Data"
-   },
-   "description": "Arabic with full diacritics; numbered as in the Sakhr / al-Islam edition. Open Database License: credit the Open Hadith Data project; a database made from it stays under the ODbL.",
-   "fallback": {
-    "format": "table",
-    "location": "https://raw.githubusercontent.com/mhashim6/Open-Hadith-Data/master/Musnad_Ahmad_Ibn-Hanbal/musnad_ahmad_ibn-hanbal_ahadith_mushakkala.utf8.csv"
-   }
+   "hadith": 26363,
+   "source_name": "isnady-data: Musnad Ahmad ibn Hanbal",
+   "source_key": "isnady-ahmad",
+   "description": "Compiled by Ahmad ibn Hanbal (d. 241). Arabic with full diacritics."
   },
   {
    "id": "darimi",
@@ -390,38 +265,17 @@
    "title_ar": "سنن الدارمي",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "table",
-   "location": "open-hadith-data/Sunan_Al-Darimi/sunan_al-darimi_ahadith_mushakkala_mufassala.utf8.csv",
+   "format": "isnady",
+   "location": "sunni/darimi/book.json",
    "book": "darimi",
-   "mapping": {
-    "type": "csv",
-    "header": false,
-    "number": "#0",
-    "texts": [
-     {
-      "field": "#1",
-      "language": "Arabic"
-     },
-     {
-      "field": "#2",
-      "language": "Arabic",
-      "name": "Commentary",
-      "comments": "Commentary (tafsil)"
-     }
-    ]
-   },
+   "languages": [
+    "ara"
+   ],
    "license": "ODbL-1.0",
-   "source_name": "Open Hadith Data",
-   "source_key": "open-hadith-data",
-   "origin": {
-    "name": "mhashim6/Open-Hadith-Data",
-    "url": "https://github.com/mhashim6/Open-Hadith-Data"
-   },
-   "description": "Arabic with full diacritics and a commentary (tafsil) of every hadith; numbered as in the Sakhr / al-Islam edition. Open Database License: credit the Open Hadith Data project; a database made from it stays under the ODbL.",
-   "fallback": {
-    "format": "table",
-    "location": "https://raw.githubusercontent.com/mhashim6/Open-Hadith-Data/master/Sunan_Al-Darimi/sunan_al-darimi_ahadith_mushakkala_mufassala.utf8.csv"
-   }
+   "hadith": 3367,
+   "source_name": "isnady-data: Sunan al-Darimi",
+   "source_key": "isnady-darimi",
+   "description": "Compiled by al-Darimi (d. 255). Arabic with full diacritics."
   },
   {
    "id": "riyad",
@@ -429,34 +283,18 @@
    "title_ar": "رياض الصالحين",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/other_books/riyad_assalihin.json",
+   "format": "isnady",
+   "location": "sunni/riyad/book.json",
    "book": "riyad",
-   "mapping": {
-    "type": "json",
-    "records": "hadiths",
-    "number": "idInBook",
-    "section": "chapterId",
-    "texts": [
-     {
-      "field": "arabic",
-      "language": "Arabic"
-     },
-     {
-      "field": "english.text",
-      "language": "English",
-      "lead": "english.narrator"
-     }
-    ]
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "hadith-json (sunnah.com)",
-   "source_key": "hadith-json",
-   "origin": {
-    "name": "AhmedBaset/hadith-json (from sunnah.com)",
-    "url": "https://github.com/AhmedBaset/hadith-json"
-   },
-   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+   "hadith": 1896,
+   "source_name": "isnady-data: Riyad al-Salihin",
+   "source_key": "isnady-riyad",
+   "description": "Compiled by al-Nawawi (d. 676). Arabic and English, by chapter."
   },
   {
    "id": "shamail",
@@ -464,34 +302,18 @@
    "title_ar": "الشمائل المحمدية",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/other_books/shamail_muhammadiyah.json",
+   "format": "isnady",
+   "location": "sunni/shamail/book.json",
    "book": "shamail",
-   "mapping": {
-    "type": "json",
-    "records": "hadiths",
-    "number": "idInBook",
-    "section": "chapterId",
-    "texts": [
-     {
-      "field": "arabic",
-      "language": "Arabic"
-     },
-     {
-      "field": "english.text",
-      "language": "English",
-      "lead": "english.narrator"
-     }
-    ]
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "hadith-json (sunnah.com)",
-   "source_key": "hadith-json",
-   "origin": {
-    "name": "AhmedBaset/hadith-json (from sunnah.com)",
-    "url": "https://github.com/AhmedBaset/hadith-json"
-   },
-   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+   "hadith": 402,
+   "source_name": "isnady-data: al-Shama'il al-Muhammadiyya",
+   "source_key": "isnady-shamail",
+   "description": "Compiled by al-Tirmidhi (d. 279). Arabic and English, by chapter."
   },
   {
    "id": "bulugh",
@@ -499,34 +321,18 @@
    "title_ar": "بلوغ المرام",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/other_books/bulugh_almaram.json",
+   "format": "isnady",
+   "location": "sunni/bulugh/book.json",
    "book": "bulugh",
-   "mapping": {
-    "type": "json",
-    "records": "hadiths",
-    "number": "idInBook",
-    "section": "chapterId",
-    "texts": [
-     {
-      "field": "arabic",
-      "language": "Arabic"
-     },
-     {
-      "field": "english.text",
-      "language": "English",
-      "lead": "english.narrator"
-     }
-    ]
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "hadith-json (sunnah.com)",
-   "source_key": "hadith-json",
-   "origin": {
-    "name": "AhmedBaset/hadith-json (from sunnah.com)",
-    "url": "https://github.com/AhmedBaset/hadith-json"
-   },
-   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+   "hadith": 1767,
+   "source_name": "isnady-data: Bulugh al-Maram",
+   "source_key": "isnady-bulugh",
+   "description": "Compiled by Ibn Hajar (d. 852). Arabic and English, by chapter."
   },
   {
    "id": "adab",
@@ -534,34 +340,18 @@
    "title_ar": "الأدب المفرد",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/other_books/aladab_almufrad.json",
+   "format": "isnady",
+   "location": "sunni/adab/book.json",
    "book": "adab",
-   "mapping": {
-    "type": "json",
-    "records": "hadiths",
-    "number": "idInBook",
-    "section": "chapterId",
-    "texts": [
-     {
-      "field": "arabic",
-      "language": "Arabic"
-     },
-     {
-      "field": "english.text",
-      "language": "English",
-      "lead": "english.narrator"
-     }
-    ]
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "hadith-json (sunnah.com)",
-   "source_key": "hadith-json",
-   "origin": {
-    "name": "AhmedBaset/hadith-json (from sunnah.com)",
-    "url": "https://github.com/AhmedBaset/hadith-json"
-   },
-   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+   "hadith": 1326,
+   "source_name": "isnady-data: al-Adab al-Mufrad",
+   "source_key": "isnady-adab",
+   "description": "Compiled by al-Bukhari (d. 256). Arabic and English, by chapter."
   },
   {
    "id": "mishkat",
@@ -569,34 +359,18 @@
    "title_ar": "مشكاة المصابيح",
    "kind": "hadith",
    "tradition": "sunni",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/AhmedBaset/hadith-json/v1.2.0/db/by_book/other_books/mishkat_almasabih.json",
+   "format": "isnady",
+   "location": "sunni/mishkat/book.json",
    "book": "mishkat",
-   "mapping": {
-    "type": "json",
-    "records": "hadiths",
-    "number": "idInBook",
-    "section": "chapterId",
-    "texts": [
-     {
-      "field": "arabic",
-      "language": "Arabic"
-     },
-     {
-      "field": "english.text",
-      "language": "English",
-      "lead": "english.narrator"
-     }
-    ]
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "hadith-json (sunnah.com)",
-   "source_key": "hadith-json",
-   "origin": {
-    "name": "AhmedBaset/hadith-json (from sunnah.com)",
-    "url": "https://github.com/AhmedBaset/hadith-json"
-   },
-   "description": "Arabic and the sunnah.com English translation, by chapter. No licence is given, so it is read from its author's repository and kept on this computer only."
+   "hadith": 4428,
+   "source_name": "isnady-data: Mishkat al-Masabih",
+   "source_key": "isnady-mishkat",
+   "description": "Compiled by al-Khatib al-Tabrizi (d. 741). Arabic and English, by chapter."
   },
   {
    "id": "kafi",
@@ -604,99 +378,18 @@
    "title_ar": "الكافي",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-1-Kulayni.json",
-   "parts": [
-    {
-     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-1-Kulayni.json",
-     "volume": 1
-    },
-    {
-     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-2-Kulayni.json",
-     "volume": 2
-    },
-    {
-     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-3-Kulayni.json",
-     "volume": 3
-    },
-    {
-     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-4-Kulayni.json",
-     "volume": 4
-    },
-    {
-     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-5-Kulayni.json",
-     "volume": 5
-    },
-    {
-     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-6-Kulayni.json",
-     "volume": 6
-    },
-    {
-     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-7-Kulayni.json",
-     "volume": 7
-    },
-    {
-     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Kafi-Volume-8-Kulayni.json",
-     "volume": 8
-    }
-   ],
+   "format": "isnady",
+   "location": "shia/kafi/book.json",
    "book": "kafi",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Kulayni (d. 329). Arabic and English from thaqalayn.net, with the grades of al-Majlisi (Mir'at al-'Uqul) and al-Behbudi (Sahih al-Kafi); 8 volumes, numbered volume:hadith. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 14241,
+   "source_name": "isnady-data: al-Kafi — al-Kulayni",
+   "source_key": "isnady-kafi",
+   "description": "Compiled by al-Kulayni (d. 329). Arabic and English, with the grades of al-Majlisi (Mir'at al-'Uqul) and al-Behbudi (Sahih al-Kafi); 8 volumes, numbered volume:hadith."
   },
   {
    "id": "uyun",
@@ -704,75 +397,18 @@
    "title_ar": "عيون أخبار الرضا",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Uyun-akhbar-al-Rida-Volume-1-Saduq.json",
-   "parts": [
-    {
-     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Uyun-akhbar-al-Rida-Volume-1-Saduq.json",
-     "volume": 1
-    },
-    {
-     "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Uyun-akhbar-al-Rida-Volume-2-Saduq.json",
-     "volume": 2
-    }
-   ],
+   "format": "isnady",
+   "location": "shia/uyun/book.json",
    "book": "uyun",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net; 2 volumes, numbered volume:hadith. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 954,
+   "source_name": "isnady-data: 'Uyun Akhbar al-Rida — al-Saduq",
+   "source_key": "isnady-uyun",
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English; 2 volumes, numbered volume:hadith."
   },
   {
    "id": "amali-saduq",
@@ -780,68 +416,18 @@
    "title_ar": "الأمالي (الصدوق)",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Amali-Saduq.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Amali-Saduq.json"
-   ],
+   "format": "isnady",
+   "location": "shia/amali-saduq/book.json",
    "book": "amali-saduq",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 1082,
+   "source_name": "isnady-data: al-Amali — al-Saduq",
+   "source_key": "isnady-amali-saduq",
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
    "id": "khisal",
@@ -849,68 +435,18 @@
    "title_ar": "الخصال",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Khisal-Saduq.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Khisal-Saduq.json"
-   ],
+   "format": "isnady",
+   "location": "shia/khisal/book.json",
    "book": "khisal",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 1282,
+   "source_name": "isnady-data: al-Khisal — al-Saduq",
+   "source_key": "isnady-khisal",
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
    "id": "tawhid",
@@ -918,68 +454,18 @@
    "title_ar": "التوحيد",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Tawhid-Saduq.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Tawhid-Saduq.json"
-   ],
+   "format": "isnady",
+   "location": "shia/tawhid/book.json",
    "book": "tawhid",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 575,
+   "source_name": "isnady-data: al-Tawhid — al-Saduq",
+   "source_key": "isnady-tawhid",
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
    "id": "maani",
@@ -987,68 +473,18 @@
    "title_ar": "معاني الأخبار",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Maani-al-Akhbar-Saduq.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Maani-al-Akhbar-Saduq.json"
-   ],
+   "format": "isnady",
+   "location": "shia/maani/book.json",
    "book": "maani",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 832,
+   "source_name": "isnady-data: Ma'ani al-Akhbar — al-Saduq",
+   "source_key": "isnady-maani",
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
    "id": "thawab",
@@ -1056,68 +492,18 @@
    "title_ar": "ثواب الأعمال وعقاب الأعمال",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Thawab-al-Amal-wa-iqab-al-Amal-Saduq.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Thawab-al-Amal-wa-iqab-al-Amal-Saduq.json"
-   ],
+   "format": "isnady",
+   "location": "shia/thawab/book.json",
    "book": "thawab",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 1107,
+   "source_name": "isnady-data: Thawab al-A'mal wa 'Iqab al-A'mal — al-Saduq",
+   "source_key": "isnady-thawab",
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
    "id": "sifat-shia",
@@ -1125,68 +511,18 @@
    "title_ar": "صفات الشيعة",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Sifat-al-Shia-Saduq.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Sifat-al-Shia-Saduq.json"
-   ],
+   "format": "isnady",
+   "location": "shia/sifat-shia/book.json",
    "book": "sifat-shia",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 71,
+   "source_name": "isnady-data: Sifat al-Shi'a — al-Saduq",
+   "source_key": "isnady-sifat-shia",
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
    "id": "fadail-shia",
@@ -1194,68 +530,18 @@
    "title_ar": "فضائل الشيعة",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Fadail-al-Shia-Saduq.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Fadail-al-Shia-Saduq.json"
-   ],
+   "format": "isnady",
+   "location": "shia/fadail-shia/book.json",
    "book": "fadail-shia",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Saduq (d. 381). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 45,
+   "source_name": "isnady-data: Fada'il al-Shi'a — al-Saduq",
+   "source_key": "isnady-fadail-shia",
+   "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
    "id": "amali-mufid",
@@ -1263,68 +549,18 @@
    "title_ar": "الأمالي (المفيد)",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Amali-Mufid.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Al-Amali-Mufid.json"
-   ],
+   "format": "isnady",
+   "location": "shia/amali-mufid/book.json",
    "book": "amali-mufid",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Mufid (d. 413). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 387,
+   "source_name": "isnady-data: al-Amali — al-Mufid",
+   "source_key": "isnady-amali-mufid",
+   "description": "Compiled by al-Mufid (d. 413). Arabic and English."
   },
   {
    "id": "kamil-ziyarat",
@@ -1332,68 +568,18 @@
    "title_ar": "كامل الزيارات",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kamil-al-Ziyarat-Qummi.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kamil-al-Ziyarat-Qummi.json"
-   ],
+   "format": "isnady",
+   "location": "shia/kamil-ziyarat/book.json",
    "book": "kamil-ziyarat",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by Ibn Qulawayh al-Qummi (d. 368). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 750,
+   "source_name": "isnady-data: Kamil al-Ziyarat — Ibn Qulawayh",
+   "source_key": "isnady-kamil-ziyarat",
+   "description": "Compiled by Ibn Qulawayh al-Qummi (d. 368). Arabic and English."
   },
   {
    "id": "ghayba-numani",
@@ -1401,68 +587,18 @@
    "title_ar": "كتاب الغيبة (النعماني)",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Ghayba-Numani.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Ghayba-Numani.json"
-   ],
+   "format": "isnady",
+   "location": "shia/ghayba-numani/book.json",
    "book": "ghayba-numani",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Nu'mani (d. c. 360). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 468,
+   "source_name": "isnady-data: Kitab al-Ghayba — al-Nu'mani",
+   "source_key": "isnady-ghayba-numani",
+   "description": "Compiled by al-Nu'mani (d. c. 360). Arabic and English."
   },
   {
    "id": "ghayba-tusi",
@@ -1470,68 +606,18 @@
    "title_ar": "كتاب الغيبة (الطوسي)",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Ghayba-Tusi.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Ghayba-Tusi.json"
-   ],
+   "format": "isnady",
+   "location": "shia/ghayba-tusi/book.json",
    "book": "ghayba-tusi",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Tusi (d. 460). Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 774,
+   "source_name": "isnady-data: Kitab al-Ghayba — al-Tusi",
+   "source_key": "isnady-ghayba-tusi",
+   "description": "Compiled by al-Tusi (d. 460). Arabic and English."
   },
   {
    "id": "mumin",
@@ -1539,68 +625,18 @@
    "title_ar": "كتاب المؤمن",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Mumin-Ahwazi.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Mumin-Ahwazi.json"
-   ],
+   "format": "isnady",
+   "location": "shia/mumin/book.json",
    "book": "mumin",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Husayn b. Sa'id al-Ahwazi. Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 201,
+   "source_name": "isnady-data: Kitab al-Mu'min — al-Ahwazi",
+   "source_key": "isnady-mumin",
+   "description": "Compiled by al-Husayn b. Sa'id al-Ahwazi. Arabic and English."
   },
   {
    "id": "zuhd",
@@ -1608,68 +644,18 @@
    "title_ar": "كتاب الزهد",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Zuhd-Ahwazi.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Kitab-al-Zuhd-Ahwazi.json"
-   ],
+   "format": "isnady",
+   "location": "shia/zuhd/book.json",
    "book": "zuhd",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by al-Husayn b. Sa'id al-Ahwazi. Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 290,
+   "source_name": "isnady-data: Kitab al-Zuhd — al-Ahwazi",
+   "source_key": "isnady-zuhd",
+   "description": "Compiled by al-Husayn b. Sa'id al-Ahwazi. Arabic and English."
   },
   {
    "id": "mujam-mutabara",
@@ -1677,68 +663,18 @@
    "title_ar": "معجم الأحاديث المعتبرة",
    "kind": "hadith",
    "tradition": "shia",
-   "format": "table",
-   "location": "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Mujam-al-Ahadith-al-Mutabara-Muhsini.json",
-   "parts": [
-    "https://raw.githubusercontent.com/MohammedArab1/ThaqalaynAPI/main/V1/ThaqalaynData/Mujam-al-Ahadith-al-Mutabara-Muhsini.json"
-   ],
+   "format": "isnady",
+   "location": "shia/mujam-mutabara/book.json",
    "book": "mujam-mutabara",
-   "mapping": {
-    "type": "json",
-    "number": "id",
-    "section": "categoryId",
-    "section_titles": [
-     {
-      "field": "category",
-      "language": "English"
-     }
-    ],
-    "texts": [
-     {
-      "field": "arabicText",
-      "language": "Arabic"
-     },
-     {
-      "field": "englishText",
-      "language": "English"
-     }
-    ],
-    "grades": [
-     {
-      "field": "majlisiGrading",
-      "grader": "al-Majlisi (Mir'at al-'Uqul)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "behdudiGrading",
-      "grader": "al-Behbudi (Sahih al-Kafi)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     },
-     {
-      "field": "mohseniGrading",
-      "grader": "al-Muhsini (Mu'jam al-Ahadith al-Mu'tabara)",
-      "pattern": ":\\s*([^\\n]+)",
-      "skip": [
-       "لم يخرجه"
-      ]
-     }
-    ],
-    "url": "URL"
-   },
+   "languages": [
+    "ara",
+    "eng"
+   ],
    "license": null,
-   "source_name": "Thaqalayn",
-   "source_key": "thaqalayn",
-   "origin": {
-    "name": "Thaqalayn (thaqalayn.net, through MohammedArab1/ThaqalaynAPI)",
-    "url": "https://github.com/MohammedArab1/ThaqalaynAPI"
-   },
-   "description": "Compiled by Asif al-Muhsini. Arabic and English from thaqalayn.net. No licence is given, so it is read from its origin and kept on this computer only."
+   "hadith": 555,
+   "source_name": "isnady-data: Mu'jam al-Ahadith al-Mu'tabara — al-Muhsini",
+   "source_key": "isnady-mujam-mutabara",
+   "description": "Compiled by Asif al-Muhsini. Arabic and English."
   },
   {
    "id": "taqrib",
@@ -1747,15 +683,9 @@
    "kind": "rijal",
    "tradition": "sunni",
    "format": "taqrib",
-   "location": "https://raw.githubusercontent.com/OpenITI/0875AH/master/data/0852IbnHajarCasqalani/0852IbnHajarCasqalani.TaqribTahdhib/0852IbnHajarCasqalani.TaqribTahdhib.JK000121-ara1.completed",
+   "location": "rijal/sunni/taqrib-al-tahdhib.md",
    "license": null,
-   "source_name": "Ibn Hajar, Taqrib al-Tahdhib (OpenITI)",
-   "source_key": "openiti-taqrib",
-   "origin": {
-    "name": "OpenITI corpus",
-    "url": "https://github.com/OpenITI"
-   },
-   "description": "8,824 narrators of the six books with Ibn Hajar's verdict, rank, tabaqa, death year and book marks; identifies the narrators in every chain. From the OpenITI corpus (licence not stated there, so kept on this computer only)."
+   "description": "8,824 narrators of the six books with Ibn Hajar's verdict, rank, tabaqa, death year and book marks; identifies the narrators in every chain."
   },
   {
    "id": "najashi",
@@ -1764,15 +694,9 @@
    "kind": "rijal",
    "tradition": "shia",
    "format": "najashi",
-   "location": "https://raw.githubusercontent.com/OpenITI/0450AH/master/data/0450Najashi/0450Najashi.Rijal/0450Najashi.Rijal.Shia002931-ara1.mARkdown",
+   "location": "rijal/shia/rijal-al-najashi.md",
    "license": null,
-   "source_name": "al-Najashi, Rijal (OpenITI)",
-   "source_key": "openiti-najashi",
-   "origin": {
-    "name": "OpenITI corpus",
-    "url": "https://github.com/OpenITI"
-   },
-   "description": "1,266 authors and narrators with al-Najashi's words, read on the Shia scale (thiqa, praised, muwaththaq, weak; creed: Imami, Waqifi, Fathi, Zaydi …); readable in Books. From the OpenITI corpus (licence not stated there, so kept on this computer only)."
+   "description": "1,266 authors and narrators with al-Najashi's words, read on the Shia scale (thiqa, praised, muwaththaq, weak; creed: Imami, Waqifi, Fathi, Zaydi …); readable in Books."
   }
  ]
 }

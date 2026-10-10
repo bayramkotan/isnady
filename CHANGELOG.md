@@ -6,19 +6,22 @@ is taken from its section here.
 ## [Unreleased]
 
 - **Data repositories** (Settings → Data sources; `iy repo`): isnady reads its sources from a repository — a
-  `catalog.json` listing books and rijal works with their files, formats, licences and tradition. The default is
-  isnady's own, [isnady-data](https://github.com/bayramkotan/isnady-data), listing every Sunni and Shia source isnady
-  can read (35): the ten fawazahmed0 collections and Musnad Ahmad and Sunan al-Darimi (Open Hadith Data) kept in the
-  repository itself; Riyad al-Salihin, al-Shama'il, Bulugh al-Maram, al-Adab al-Mufrad and Mishkat al-Masabih
-  (hadith-json); sixteen Shia collections from Thaqalayn — al-Kafi in eight volumes with al-Majlisi's and
-  al-Behbudi's grades, al-Saduq's books, al-Mufid, al-Tusi, al-Nu'mani, al-Ahwazi, al-Muhsini; and the Taqrib and
-  al-Najashi's Rijal. Sources without a licence to share are listed at their origin and never copied. Optional
-  repositories, chosen from the same list: fawazahmed0/hadith-api, Thaqalayn, Open Hadith Data, hadith-json, the LK
-  Hadith Corpus, Hugging Face meeAtif/hadith_datasets, Hadith-Data-Sets and OpenITI — each with its own books, kept
-  apart by key so editions numbered differently never mix. Any repository with a catalog can be added (a GitHub
-  repository, a Hugging Face dataset, a URL or a folder) and chosen. The catalog is read from the repository and
-  kept for a day; without the network, the copy shipped with isnady is used, and a book the repository has no copy
-  of yet is read from its origin.
+  `catalog.json` listing books and rijal works with their files, licences and tradition. The default is isnady's
+  own, [isnady-data](https://github.com/bayramkotan/isnady-data), which holds every Sunni and Shia source isnady
+  reads (35) in one place and in isnady's own format (`sunni/bukhari/`, `shia/kafi/`, `rijal/sunni/` …): the six
+  books, the Muwatta, Musnad Ahmad, Sunan al-Darimi, Riyad al-Salihin, al-Shama'il, Bulugh al-Maram, al-Adab
+  al-Mufrad, Mishkat al-Masabih and three forty-hadith books (Arabic and up to eight translations, with grades);
+  sixteen Shia collections — al-Kafi in eight volumes with al-Majlisi's and al-Behbudi's grades, al-Saduq's books,
+  al-Mufid, al-Tusi, al-Nu'mani, Ibn Qulawayh, al-Ahwazi, al-Muhsini (Arabic and English); the Taqrib and
+  al-Najashi's Rijal. Optional repositories, chosen from the same list: the datasets others publish
+  (fawazahmed0/hadith-api, Thaqalayn, Open Hadith Data, hadith-json, the LK Hadith Corpus, Hugging Face
+  meeAtif/hadith_datasets, Hadith-Data-Sets, OpenITI), each book under its own key so editions numbered
+  differently never mix. Any repository with a catalog can be added (a GitHub repository, a Hugging Face dataset,
+  a URL or a folder) and chosen. The catalog is read from the repository and kept for a day; without the network,
+  the copy shipped with isnady is used.
+- **isnady's book format** (isnady-book/1, format `isnady`): a book is a folder with `book.json` (numbers,
+  chapters, references, grades) and one file per language, so only the languages chosen are downloaded. A book
+  imported earlier straight from its publisher is replaced by the isnady-data one, not shown twice.
 - The Data sources page lists the repository's sources as Sunni hadith, Shia hadith and narrators, each with its
   Arabic title, tradition, licence, whether it is kept in the repository or read from its origin, and a link to
   the origin. Shia collections are marked Shia in the database (`collections.tradition`).

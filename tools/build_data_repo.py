@@ -1,21 +1,19 @@
 """The repositories isnady reads its data from — defined here once, written as catalogs.
 
-    python tools/build_data_repo.py --catalogs            write src/isnady/data/repos/*.json (shipped with isnady)
     python tools/build_data_repo.py --mirror ../isnady-data [--languages ara,eng,tur]
-                                                          build the isnady-data repository: every source that may
-                                                          be redistributed (tier A/B) copied into it, catalog.json,
-                                                          README.md and SOURCES.md; then commit and push that folder
+                                          build the isnady-data repository: every book, Sunni and Shia, converted to
+                                          isnady's own format under our names (sunni/bukhari/, shia/kafi/,
+                                          rijal/sunni/…), catalog.json and README.md; its catalog is also written as
+                                          the copy shipped with isnady. Then commit and push that folder.
+    python tools/build_data_repo.py --catalogs
+                                          write the catalogs of the optional repositories shipped with isnady
 
-A REPOSITORY is a catalog.json (schema isnady-catalog/1) listing books and rijal works: where each file is, its
-format, the column mapping of a table, the licence, the tradition. isnady's own repository (bayramkotan/isnady-data)
-is the default and lists EVERY source, Sunni and Shia: the ones whose licence allows it are copied into the
-repository (location relative to catalog.json) with the original as a fallback; the others are listed at their
-origin, never copied (YAYIN KURALI: tier C is never redistributed). The other repositories are the datasets as
-their authors publish them, each with its own catalog shipped inside isnady (they have none of their own).
+isnady-data is isnady's own and default repository: everything is in it, in one format, under the names of the books
+and their compilers; where a text was first published is said only in the credits. The optional repositories are
+the datasets as their authors publish them, each with a catalog shipped inside isnady (they have none of their own).
 """
 
 import argparse
-import hashlib
 import json
 import sys
 import urllib.request
@@ -303,23 +301,81 @@ def rijal() -> list[dict]:
     ]
 
 
-def own_catalog(mirrored: bool) -> dict:
-    """isnady's own repository: every source, Sunni and Shia, each book once (the best edition of it)."""
-    entries = []
+# ================================================================== isnady's own repository
+# Every book under OUR names: sunni/<book>/, shia/<book>/, rijal/<tradition>/<work>; isnady's own book format
+# (isnady-book/1, read by isnady.data.importers.isnady_book). Where each book was first published is said once,
+# in the credits of README.md and in each book's "credit" — never in a path or a key.
+LANG = {"ara": ("Arabic", "rtl"), "eng": ("English", "ltr"), "tur": ("Turkish", "ltr"), "urd": ("Urdu", "rtl"),
+        "ind": ("Indonesian", "ltr"), "ben": ("Bengali", "ltr"), "fra": ("French", "ltr"), "rus": ("Russian", "ltr"),
+        "tam": ("Tamil", "ltr")}
+COMPILER = {"bukhari": "al-Bukhari (d. 256)", "muslim": "Muslim (d. 261)", "abudawud": "Abu Dawud (d. 275)",
+            "tirmidhi": "al-Tirmidhi (d. 279)", "nasai": "al-Nasa'i (d. 303)", "ibnmajah": "Ibn Maja (d. 273)",
+            "malik": "Malik (d. 179)", "nawawi": "al-Nawawi (d. 676)", "qudsi": "", "dehlawi": "Shah Waliullah (d. 1176)",
+            "ahmad": "Ahmad ibn Hanbal (d. 241)", "darimi": "al-Darimi (d. 255)", "riyad": "al-Nawawi (d. 676)",
+            "shamail": "al-Tirmidhi (d. 279)", "bulugh": "Ibn Hajar (d. 852)", "adab": "al-Bukhari (d. 256)",
+            "mishkat": "al-Khatib al-Tabrizi (d. 741)"}
+CREDIT = {
+    "fawaz": "Text and translations: fawazahmed0/hadith-api (The Unlicense).",
+    "ohd": "Text: the Open Hadith Data project (ODbL 1.0; contents under the Database Contents License). A database "
+           "made from it stays under the ODbL.",
+    "hj": "Text and English: sunnah.com, as collected by AhmedBaset/hadith-json.",
+    "tq": "Text, English and grades: thaqalayn.net, as collected by MohammedArab1/ThaqalaynAPI.",
+    "openiti": "Text: the OpenITI corpus.",
+}
+OWN_SUNNI = list(FAWAZ) + ["ahmad", "darimi", "riyad", "shamail", "bulugh", "adab", "mishkat"]
+GRADERS_FAWAZ = "graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it"
+
+
+def _book_entry(tradition: str, key: str, title: str, ar: str, languages: list[str], license: str | None,
+                credit: str, hadith: int | None, description: str) -> dict:
+    return {"id": key, "title": title, "title_ar": ar,
+            "kind": "hadith", "tradition": tradition, "format": "isnady", "location": f"{tradition}/{key}/book.json",
+            "book": key, "languages": languages, "license": license, "hadith": hadith,
+            "source_name": f"isnady-data: {title}", "source_key": f"isnady-{key}", "description": description}
+
+
+def own_entries(counts: dict | None = None, langs: dict | None = None) -> list[dict]:
+    """The catalog entries of isnady-data. counts / langs: what a mirror actually holds (else the known values)."""
+    counts, langs = counts or {}, langs or {}
+    out = []
     for key in FAWAZ:
-        entries.append(fawaz(key, f"fawazahmed0/{key}/editions.json" if mirrored else FAWAZ_INDEX, mirrored))
-    for key in ("ahmad", "darimi"):
-        _t, _a, folder, stem, _s = OHD[key]
-        entries.append(ohd(key, f"open-hadith-data/{folder}/{ohd_file(key)}" if mirrored else None, "", mirrored))
-    for key in ("riyad", "shamail", "bulugh", "adab", "mishkat"):
-        entries.append(hj(key, ""))
-    entries += [tq(k) for k in TQ]
-    entries += rijal()
+        title, ar, codes, n = FAWAZ[key]
+        codes = langs.get(key) or codes.split()
+        out.append(_book_entry("sunni", key, title, ar, codes, "Unlicense", CREDIT["fawaz"], counts.get(key, n),
+                               (f"Compiled by {COMPILER[key]}. " if COMPILER[key] else "")
+                               + f"Arabic and {len(codes) - 1} translations ("
+                               + ", ".join(LANG[c][0] for c in codes if c != "ara") + f"); {GRADERS_FAWAZ}."))
+    for key, n in (("ahmad", 26363), ("darimi", 3367)):
+        title, ar, *_ = OHD[key]
+        out.append(_book_entry("sunni", key, title, ar, langs.get(key) or ["ara"], "ODbL-1.0", CREDIT["ohd"],
+                               counts.get(key, n), f"Compiled by {COMPILER[key]}. Arabic with full diacritics."))
+    for key, n in (("riyad", 1896), ("shamail", 402), ("bulugh", 1358), ("adab", 1326), ("mishkat", 4427)):
+        title, ar, _path = HJ[key]
+        out.append(_book_entry("sunni", key, title, ar, langs.get(key) or ["ara", "eng"], None, CREDIT["hj"],
+                               counts.get(key, n), f"Compiled by {COMPILER[key]}. Arabic and English, by chapter."))
+    for key, (title, ar, compiler, files) in TQ.items():
+        out.append(_book_entry("shia", key, title, ar, langs.get(key) or ["ara", "eng"], None, CREDIT["tq"],
+                               counts.get(key),
+                               f"Compiled by {compiler}. Arabic and English"
+                               + (", with the grades of al-Majlisi (Mir'at al-'Uqul) and al-Behbudi (Sahih al-Kafi)"
+                                  if key == "kafi" else "")
+                               + (f"; {len(files)} volumes, numbered volume:hadith" if len(files) > 1 else "") + "."))
+    for e in rijal():
+        e = dict(e)
+        for k in ("origin", "source_name", "source_key"):      # the database keys of the rijal works: in isnady's code
+            e.pop(k, None)
+        e["location"] = f"rijal/{e['tradition']}/{'taqrib-al-tahdhib' if e['id'] == 'taqrib' else 'rijal-al-najashi'}.md"
+        e["description"] = e["description"].replace(" From the OpenITI corpus (licence not stated there, so kept on "
+                                                    "this computer only).", "")
+        out.append(e)
+    return out
+
+
+def own_catalog(counts: dict | None = None, langs: dict | None = None) -> dict:
     return {"schema": SCHEMA, "id": "isnady", "name": "isnady — all sources (default)",
-            "description": "isnady's own repository: every hadith collection and rijal work isnady can read, Sunni "
-                           "and Shia. Sources whose licence allows it are kept in the repository itself; the others "
-                           "are read from their origin and stay on your computer.",
-            "homepage": OWN, "url": OWN_CATALOG, "default": True, "entries": entries}
+            "description": "isnady's own repository: every hadith collection and rijal work isnady reads, Sunni and "
+                           "Shia, in one place and one format.",
+            "homepage": OWN, "url": OWN_CATALOG, "default": True, "entries": own_entries(counts, langs)}
 
 
 def external_catalogs() -> list[dict]:
@@ -354,97 +410,265 @@ def external_catalogs() -> list[dict]:
 
 
 # ================================================================== writing
-def write_json(path: Path, data: dict) -> None:
+def write_json(path: Path, data: dict, compact: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
+    text = json.dumps(data, ensure_ascii=False, separators=(",", ":")) if compact else \
+        json.dumps(data, ensure_ascii=False, indent=1)
+    path.write_text(text + "\n", encoding="utf-8", newline="\n")
+
+
+def fetch(url: str) -> bytes:
+    req = urllib.request.Request(url, headers={"User-Agent": "isnady-data builder"})
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=300) as r:
+                return r.read()
+        except OSError:
+            if attempt == 2:
+                raise
+    raise RuntimeError(url)
+
+
+def fetch_json(url: str):
+    return json.loads(fetch(url).decode("utf-8-sig"))
+
+
+def _clean(value) -> str:
+    from isnady.data.importers.table import _clean as clean
+    return clean(value)
+
+
+def _num(value) -> tuple[str, float | None]:
+    from isnady.data.importers.table import _number
+    return _number(value)
+
+
+def write_book(target: Path, tradition: str, key: str, title: str, ar: str, compiler: str, license: str | None,
+               credit: str, hadiths: list[dict], langs: dict[str, dict]) -> tuple[int, list[str]]:
+    """One book in isnady's format: book.json (numbers, chapters, references, grades) and a file per language."""
+    folder = target / tradition / key
+    codes = [c for c in LANG if c in langs and langs[c]["texts"]]
+    book = {"schema": "isnady-book/1", "key": key, "title": title, "title_ar": ar, "tradition": tradition,
+            "compiler": compiler, "license": license, "credit": credit,
+            "languages": {c: {"file": f"{c}.json", "name": LANG[c][0], "direction": LANG[c][1],
+                              **({"author": langs[c]["author"]} if langs[c].get("author")
+                                 and langs[c]["author"] != "Unknown" else {})} for c in codes},
+            "hadiths": hadiths}
+    book.pop("credit")                             # credits are in README.md only: no other name in the data
+    write_json(folder / "book.json", book, compact=True)
+    for c in codes:
+        write_json(folder / f"{c}.json", {"language": c, "sections": langs[c].get("sections", {}),
+                                          "texts": langs[c]["texts"]}, compact=True)
+    print(f"  {tradition}/{key}: {len(hadiths):,} hadith, {', '.join(codes)}")
+    return len(hadiths), codes
+
+
+def _unique(hadiths: dict) -> list[dict]:
+    out = []
+    for h in hadiths.values():
+        h = dict(h)
+        h["grades"] = [list(g) for g in dict.fromkeys(tuple(g) for g in h.get("grades", []))]
+        if not h["grades"]:
+            h.pop("grades")
+        if not h.get("refs"):
+            h.pop("refs", None)
+        out.append(h)
+    return sorted(out, key=lambda h: (h.get("sort") is None, h.get("sort") or 0, h["n"]))
+
+
+def convert_fawaz(target: Path, index: dict, key: str, only: set[str] | None):
+    title, ar, _codes, _n = FAWAZ[key]
+    hadiths: dict[str, dict] = {}
+    langs: dict[str, dict] = {}
+    for ed in index[key]["collection"]:
+        code = ed["name"].split("-")[0]
+        if (ed["name"].startswith("ara-") and ed["name"][-1].isdigit()) or code in langs or code not in LANG:
+            continue
+        if only and code not in only:
+            continue
+        data = fetch_json(f"{FAWAZ_RAW}/editions/{ed['name']}.min.json")
+        texts = {}
+        for item in data.get("hadiths", []):
+            n, sort = _num(item.get("hadithnumber"))
+            if not n:
+                continue
+            ref = item.get("reference") or {}
+            h = hadiths.setdefault(n, {"n": n, "sort": sort, "refs": {}, "grades": []})
+            if isinstance(ref.get("book"), int):
+                h["s"] = ref["book"]
+            if ref.get("book") is not None and ref.get("hadith") is not None:
+                h["refs"]["in-book"] = f"{ref['book']}:{ref['hadith']}"
+            an, _ = _num(item.get("arabicnumber"))
+            if an:
+                h["refs"]["arabic"] = an
+            for g in item.get("grades") or []:
+                if isinstance(g, dict) and g.get("grade"):
+                    h["grades"].append(((g.get("name") or "Unknown").strip(), g["grade"].strip()))
+            text = (item.get("text") or "").strip()
+            if text:
+                texts[n] = text
+        sections = {str(k): v for k, v in (data["metadata"].get("sections") or {}).items() if v and str(k) != "0"}
+        langs[code] = {"texts": texts, "sections": sections, "author": ed.get("author")}
+    return write_book(target, "sunni", key, title, ar, COMPILER[key], "Unlicense", CREDIT["fawaz"], _unique(hadiths),
+                      langs)
+
+
+def convert_ohd(target: Path, key: str):
+    import csv
+    import io
+    title, ar, folder, _stem, _s = OHD[key]
+    rows = list(csv.reader(io.StringIO(fetch(f"{OHD_URL}/{folder}/{ohd_file(key)}").decode("utf-8-sig"))))
+    hadiths, texts = {}, {}
+    for r in rows:
+        if len(r) < 2:
+            continue
+        n, sort = _num(r[0])
+        text = _clean(r[1])
+        if n and text:
+            hadiths[n] = {"n": n, "sort": sort}
+            texts[n] = text
+    return write_book(target, "sunni", key, title, ar, COMPILER[key], "ODbL-1.0", CREDIT["ohd"], _unique(hadiths),
+                      {"ara": {"texts": texts}})
+
+
+def convert_hj(target: Path, key: str):
+    title, ar, path = HJ[key]
+    data = fetch_json(f"{HJ_URL}/{path}.json")
+    hadiths, ara, eng = {}, {}, {}
+    for item in data.get("hadiths", []):
+        n, sort = _num(item.get("idInBook"))
+        if not n:
+            continue
+        hadiths[n] = {"n": n, "sort": sort, "s": item.get("chapterId")}
+        if item.get("arabic"):
+            ara[n] = _clean(item["arabic"])
+        en = item.get("english") or {}
+        text = " ".join(x for x in (_clean(en.get("narrator")), _clean(en.get("text"))) if x)
+        if text:
+            eng[n] = text
+    chapters = data.get("chapters") or []
+    return write_book(target, "sunni", key, title, ar, COMPILER[key], None, CREDIT["hj"], _unique(hadiths),
+                      {"ara": {"texts": ara, "sections": {str(c["id"]): c.get("arabic") for c in chapters if c.get("arabic")}},
+                       "eng": {"texts": eng, "sections": {str(c["id"]): c.get("english") for c in chapters
+                                                         if c.get("english")}}})
+
+
+def convert_tq(target: Path, key: str):
+    import re
+    title, ar, compiler, files = TQ[key]
+    hadiths, ara, eng, sections = {}, {}, {}, {}
+    graders = [(g["field"], g["grader"]) for g in TQ_MAPPING["grades"]]
+    for vol, f in enumerate(files, 1):
+        multi = len(files) > 1
+        for item in fetch_json(f"{TQ_URL}/{f}.json"):
+            n, sort = _num(item.get("id"))
+            if not n:
+                continue
+            if multi:
+                n, sort = f"{vol}:{n}", vol * 100000 + (sort or 0)
+            cat = item.get("categoryId")
+            s = (vol * 1000 + cat) if multi and isinstance(cat, int) else cat
+            h = {"n": n, "sort": sort, "s": s, "grades": []}
+            for field, grader in graders:
+                raw = _clean(item.get(field))
+                m = re.search(r":\s*([^\n]+)", raw)
+                grade = (m.group(1) if m else "").strip()
+                grade = re.split(r"\s+-\s+", grade)[0].strip()
+                if grade and "لم يخرجه" not in grade:
+                    h["grades"].append((grader, grade))
+            hadiths[n] = h
+            if item.get("arabicText"):
+                ara[n] = _clean(item["arabicText"])
+            if item.get("englishText"):
+                eng[n] = _clean(item["englishText"])
+            if s is not None and item.get("category"):
+                sections[str(s)] = item["category"] + (f" (volume {vol})" if multi else "")
+    return write_book(target, "shia", key, title, ar, compiler, None, CREDIT["tq"], _unique(hadiths),
+                      {"ara": {"texts": ara}, "eng": {"texts": eng, "sections": sections}})
+
+
+def mirror(target: Path, languages: set[str] | None) -> None:
+    """Build isnady-data in target: every book in isnady's format under our names, the rijal works, the catalog."""
+    target.mkdir(parents=True, exist_ok=True)
+    for child in target.iterdir():                 # a clean tree each time (the history stays in .git)
+        if child.name != ".git":
+            import shutil
+            shutil.rmtree(child) if child.is_dir() else child.unlink()
+    counts, langs = {}, {}
+    index = fetch_json(f"{FAWAZ_RAW}/editions.json")
+    for key in FAWAZ:
+        counts[key], langs[key] = convert_fawaz(target, index, key, languages)
+    for key in ("ahmad", "darimi"):
+        counts[key], langs[key] = convert_ohd(target, key)
+    for key in ("riyad", "shamail", "bulugh", "adab", "mishkat"):
+        counts[key], langs[key] = convert_hj(target, key)
+    for key in TQ:
+        counts[key], langs[key] = convert_tq(target, key)
+    for e in rijal():
+        path = target / "rijal" / e["tradition"] / ("taqrib-al-tahdhib.md" if e["id"] == "taqrib" else "rijal-al-najashi.md")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(fetch(e["location"]))
+        print(f"  rijal/{e['tradition']}/{path.name}")
+    cat = own_catalog(counts, langs)
+    write_json(target / "catalog.json", cat)
+    (target / "README.md").write_text(readme(cat), encoding="utf-8", newline="\n")
+    (target / ".gitattributes").write_text("*.json -diff\n*.md -diff\nREADME.md diff\n", encoding="utf-8", newline="\n")
+    write_json(BUNDLED / "isnady.json", cat)
+    print(f"isnady-data written to {target}: {len(cat['entries'])} sources (and the shipped copy of its catalog)")
+
+
+def readme(cat: dict) -> str:
+    lines = ["# isnady-data", "",
+             "The data of [isnady](https://github.com/bayramkotan/isnady): every hadith collection and rijal work it "
+             "reads, Sunni and Shia, in one format. isnady imports from here (Settings → Data sources, or "
+             "`iy catalog import ID`).", "",
+             "- `sunni/<book>/`, `shia/<book>/` — `book.json` (numbers, chapters, references, grades) and one file "
+             "per language (`ara.json`, `eng.json` …)",
+             "- `rijal/sunni/`, `rijal/shia/` — the works on the narrators",
+             "- `catalog.json` — the list isnady reads", ""]
+    for tradition, heading in (("sunni", "Sunni collections"), ("shia", "Shia collections")):
+        lines += [f"## {heading}", "", "| Book | | Compiler | Languages | Hadith |", "|---|---|---|---|---|"]
+        for e in cat["entries"]:
+            if e["kind"] == "hadith" and e["tradition"] == tradition:
+                comp = e["description"].split(". ")[0].removeprefix("Compiled by ") if e["description"].startswith(
+                    "Compiled by") else ""
+                lines.append(f"| {e['title']} | {e['title_ar']} | {comp} | {', '.join(e['languages'])} | "
+                             f"{(e.get('hadith') or 0):,} |")
+        lines.append("")
+    lines += ["## Narrators (rijal)", "", "| Work | | Tradition |", "|---|---|---|"]
+    for e in cat["entries"]:
+        if e["kind"] == "rijal":
+            lines.append(f"| {e['title']} | {e['title_ar']} | {e['tradition']} |")
+    lines += ["", "## Credits", "", "These texts were first made available by others; thank you.", ""]
+    lines += [f"- {c}" for c in CREDIT.values()]
+    lines.append("")
+    return "\n".join(lines)
 
 
 def write_catalogs() -> None:
-    write_json(BUNDLED / "isnady.json", own_catalog(mirrored=True))
+    """The catalogs shipped with isnady: the optional repositories (and isnady-data's, unless a mirror wrote it)."""
+    if not (BUNDLED / "isnady.json").exists():
+        write_json(BUNDLED / "isnady.json", own_catalog())
     for cat in external_catalogs():
         write_json(BUNDLED / f"{cat['id']}.json", cat)
     print(f"Catalogs written to {BUNDLED}")
 
 
-def fetch(url: str) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": "isnady-data builder"})
-    with urllib.request.urlopen(req, timeout=300) as r:
-        return r.read()
-
-
-def mirror(target: Path, languages: set[str] | None) -> None:
-    """Copy every tier A/B source into the isnady-data folder and write its catalog."""
-    target.mkdir(parents=True, exist_ok=True)
-    index = json.loads(fetch(f"{FAWAZ_RAW}/editions.json"))
-    for key in FAWAZ:
-        book = index[key]
-        kept = []
-        for ed in book["collection"]:
-            if ed["name"].startswith("ara-") and ed["name"][-1].isdigit():
-                continue                                # the diacritics-free copy
-            if languages and ed["name"].split("-")[0] not in languages:
-                continue
-            name = f"{ed['name']}.min.json"
-            out = target / "fawazahmed0" / key / name
-            if not out.exists():
-                print(f"  {key}: {name}")
-                out.parent.mkdir(parents=True, exist_ok=True)
-                out.write_bytes(fetch(f"{FAWAZ_RAW}/editions/{name}"))
-            kept.append({**ed, "link": name, "linkmin": name})
-        write_json(target / "fawazahmed0" / key / "editions.json", {key: {**book, "collection": kept}})
-    for key in ("ahmad", "darimi"):
-        folder = OHD[key][2]
-        out = target / "open-hadith-data" / folder / ohd_file(key)
-        if not out.exists():
-            print(f"  {key}: Open Hadith Data")
-            out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_bytes(fetch(f"{OHD_URL}/{folder}/{out.name}"))
-    cat = own_catalog(mirrored=True)
-    for e in cat["entries"]:
-        loc = target / e["location"] if not e["location"].startswith("http") else None
-        if loc and loc.exists():
-            e["sha256"] = hashlib.sha256(loc.read_bytes()).hexdigest()
-    write_json(target / "catalog.json", cat)
-    (target / "README.md").write_text(readme(cat), encoding="utf-8", newline="\n")
-    (target / ".gitattributes").write_text("*.json -diff\n*.csv -diff\n", encoding="utf-8", newline="\n")
-    print(f"isnady-data written to {target}: {len(cat['entries'])} sources")
-
-
-def readme(cat: dict) -> str:
-    lines = ["# isnady-data", "",
-             "The default data repository of [isnady](https://github.com/bayramkotan/isnady): every hadith collection "
-             "and rijal work isnady can read, Sunni and Shia, listed in one `catalog.json`.", "",
-             "isnady reads this catalog first (Settings → Data sources, or `iy repo`). Sources whose licence allows "
-             "it are kept here; the others are listed at their origin and read from there — they are never copied "
-             "into this repository.", "",
-             "| Source | Tradition | Kept here | Licence | Origin |", "|---|---|---|---|---|"]
-    for e in cat["entries"]:
-        here = "yes" if not e["location"].startswith("http") else "no — read from origin"
-        lines.append(f"| {e['title']} ({e['title_ar']}) | {e['tradition']} | {here} | {e.get('license') or 'not stated'} "
-                     f"| [{e['origin']['name']}]({e['origin']['url']}) |")
-    lines += ["", "## Licences", "",
-              "- fawazahmed0/hadith-api: The Unlicense (public domain).",
-              "- Open Hadith Data (Musnad Ahmad, Sunan al-Darimi): Open Database License (ODbL 1.0); contents under "
-              "the Database Contents License. Credit: the Open Hadith Data project (mhashim6). A database made from "
-              "it stays under the ODbL.",
-              "- Everything listed with “no — read from origin” belongs to its publisher and is not redistributed "
-              "here.", ""]
-    return "\n".join(lines)
-
-
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--catalogs", action="store_true", help="write the catalogs shipped with isnady")
-    ap.add_argument("--mirror", metavar="DIR", help="build the isnady-data repository in DIR")
-    ap.add_argument("--languages", help="with --mirror: only these fawazahmed0 languages, e.g. ara,eng,tur")
+    ap.add_argument("--mirror", metavar="DIR", help="build the isnady-data repository in DIR (its catalog is also "
+                                                    "written as the copy shipped with isnady)")
+    ap.add_argument("--languages", help="with --mirror: only these languages of the translated books, e.g. ara,eng,tur")
     a = ap.parse_args()
     if not (a.catalogs or a.mirror):
         ap.print_help()
         return 2
-    if a.catalogs:
-        write_catalogs()
+    sys.path.insert(0, str(ROOT / "src"))
     if a.mirror:
         mirror(Path(a.mirror).expanduser(), set(a.languages.split(",")) if a.languages else None)
+    if a.catalogs:
+        write_catalogs()
     return 0
 
 
