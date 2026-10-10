@@ -5,6 +5,11 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **Books named in full**: in isnady-data every book's folder and id is its full title with its compiler's name —
+  `sunni/musnad_ahmad_ibn_hanbal/`, `sunni/sahih_al_bukhari/`, `shia/al_kafi_al_kulayni/`,
+  `rijal/sunni/taqrib_al_tahdhib_ibn_hajar_al_asqalani.md` — never a bare name; `iy catalog import
+  musnad_ahmad_ibn_hanbal` (the short keys of earlier versions are still understood).
+
 - **Books in order, Sunni and Shia apart**: every book list (Search, Isnad Chains, Statistics, Books) shows the
   Sunni collections first — the six books, the Muwatta, the Musnad and al-Darimi in their classical order, then the
   others by name, read without a leading 'ayn or article — and the Shia collections after them, al-Kafi first,

@@ -326,10 +326,34 @@ OWN_SUNNI = list(FAWAZ) + ["ahmad", "darimi", "riyad", "shamail", "bulugh", "ada
 GRADERS_FAWAZ = "graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it"
 
 
+# The folder of each book in isnady-data, and the id it is imported by: the book's full title with its compiler's
+# full name — never a bare name ("ahmad"). The short key stays inside the database only (collections.key).
+FOLDER = {
+    "bukhari": "sahih_al_bukhari", "muslim": "sahih_muslim", "abudawud": "sunan_abi_dawud",
+    "tirmidhi": "jami_al_tirmidhi", "nasai": "sunan_al_nasai", "ibnmajah": "sunan_ibn_majah",
+    "malik": "muwatta_malik_ibn_anas", "nawawi": "al_arbain_al_nawawiyya", "qudsi": "al_arbain_al_qudsiyya",
+    "dehlawi": "al_arbain_shah_waliullah_al_dehlawi", "ahmad": "musnad_ahmad_ibn_hanbal",
+    "darimi": "sunan_al_darimi", "riyad": "riyad_al_salihin_al_nawawi",
+    "shamail": "al_shamail_al_muhammadiyya_al_tirmidhi", "bulugh": "bulugh_al_maram_ibn_hajar_al_asqalani",
+    "adab": "al_adab_al_mufrad_al_bukhari", "mishkat": "mishkat_al_masabih_al_khatib_al_tabrizi",
+    "kafi": "al_kafi_al_kulayni", "uyun": "uyun_akhbar_al_rida_al_shaykh_al_saduq",
+    "amali-saduq": "al_amali_al_shaykh_al_saduq", "khisal": "al_khisal_al_shaykh_al_saduq",
+    "tawhid": "al_tawhid_al_shaykh_al_saduq", "maani": "maani_al_akhbar_al_shaykh_al_saduq",
+    "thawab": "thawab_al_amal_wa_iqab_al_amal_al_shaykh_al_saduq", "sifat-shia": "sifat_al_shia_al_shaykh_al_saduq",
+    "fadail-shia": "fadail_al_shia_al_shaykh_al_saduq", "amali-mufid": "al_amali_al_shaykh_al_mufid",
+    "kamil-ziyarat": "kamil_al_ziyarat_ibn_qulawayh_al_qummi", "ghayba-numani": "kitab_al_ghayba_ibn_abi_zaynab_al_numani",
+    "ghayba-tusi": "kitab_al_ghayba_al_shaykh_al_tusi", "mumin": "kitab_al_mumin_al_husayn_ibn_said_al_ahwazi",
+    "zuhd": "kitab_al_zuhd_al_husayn_ibn_said_al_ahwazi",
+    "mujam-mutabara": "mujam_al_ahadith_al_mutabara_asif_al_muhsini",
+    "taqrib": "taqrib_al_tahdhib_ibn_hajar_al_asqalani", "najashi": "rijal_al_najashi_ahmad_ibn_ali_al_najashi",
+}
+
+
 def _book_entry(tradition: str, key: str, title: str, ar: str, languages: list[str], license: str | None,
                 credit: str, hadith: int | None, description: str) -> dict:
-    return {"id": key, "title": title, "title_ar": ar,
-            "kind": "hadith", "tradition": tradition, "format": "isnady", "location": f"{tradition}/{key}/book.json",
+    return {"id": FOLDER[key], "title": title, "title_ar": ar,
+            "kind": "hadith", "tradition": tradition, "format": "isnady",
+            "location": f"{tradition}/{FOLDER[key]}/book.json",
             "book": key, "languages": languages, "license": license, "hadith": hadith,
             "source_name": f"isnady-data: {title}", "source_key": f"isnady-{key}", "description": description}
 
@@ -364,7 +388,8 @@ def own_entries(counts: dict | None = None, langs: dict | None = None) -> list[d
         e = dict(e)
         for k in ("origin", "source_name", "source_key"):      # the database keys of the rijal works: in isnady's code
             e.pop(k, None)
-        e["location"] = f"rijal/{e['tradition']}/{'taqrib-al-tahdhib' if e['id'] == 'taqrib' else 'rijal-al-najashi'}.md"
+        e["location"] = f"rijal/{e['tradition']}/{FOLDER[e['id']]}.md"
+        e["id"] = FOLDER[e["id"]]
         e["description"] = e["description"].replace(" From the OpenITI corpus (licence not stated there, so kept on "
                                                     "this computer only).", "")
         out.append(e)
@@ -446,7 +471,7 @@ def _num(value) -> tuple[str, float | None]:
 def write_book(target: Path, tradition: str, key: str, title: str, ar: str, compiler: str, license: str | None,
                credit: str, hadiths: list[dict], langs: dict[str, dict]) -> tuple[int, list[str]]:
     """One book in isnady's format: book.json (numbers, chapters, references, grades) and a file per language."""
-    folder = target / tradition / key
+    folder = target / tradition / FOLDER[key]
     codes = [c for c in LANG if c in langs and langs[c]["texts"]]
     book = {"schema": "isnady-book/1", "key": key, "title": title, "title_ar": ar, "tradition": tradition,
             "compiler": compiler, "license": license, "credit": credit,
@@ -591,7 +616,7 @@ def mirror(target: Path, languages: set[str] | None) -> None:
     """Build isnady-data in target: every book in isnady's format under our names, the rijal works, the catalog."""
     target.mkdir(parents=True, exist_ok=True)
     for child in target.iterdir():                 # a clean tree each time (the history stays in .git)
-        if child.name != ".git":
+        if child.name not in (".git", ".gitignore", "derived", "database.json", "release"):   # DB1 keeps these
             import shutil
             shutil.rmtree(child) if child.is_dir() else child.unlink()
     counts, langs = {}, {}
@@ -605,7 +630,7 @@ def mirror(target: Path, languages: set[str] | None) -> None:
     for key in TQ:
         counts[key], langs[key] = convert_tq(target, key)
     for e in rijal():
-        path = target / "rijal" / e["tradition"] / ("taqrib-al-tahdhib.md" if e["id"] == "taqrib" else "rijal-al-najashi.md")
+        path = target / "rijal" / e["tradition"] / f"{FOLDER[e['id']]}.md"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(fetch(e["location"]))
         print(f"  rijal/{e['tradition']}/{path.name}")
@@ -622,7 +647,8 @@ def readme(cat: dict) -> str:
              "The data of [isnady](https://github.com/bayramkotan/isnady): every hadith collection and rijal work it "
              "reads, Sunni and Shia, in one format. isnady imports from here (Settings → Data sources, or "
              "`iy catalog import ID`).", "",
-             "- `sunni/<book>/`, `shia/<book>/` — `book.json` (numbers, chapters, references, grades) and one file "
+             "- `sunni/<book>/`, `shia/<book>/` (the book's full title and its compiler's name, e.g. "
+             "`sunni/musnad_ahmad_ibn_hanbal/`) — `book.json` (numbers, chapters, references, grades) and one file "
              "per language (`ara.json`, `eng.json` …)",
              "- `rijal/sunni/`, `rijal/shia/` — the works on the narrators",
              "- `catalog.json` — the list isnady reads", ""]

@@ -179,9 +179,10 @@ the languages you tick. The same from the command line:
 
 ```bash
 iy catalog list                         # the sources of the repository in use
-iy catalog import bukhari --language ara --language tur
-iy catalog import kafi                  # al-Kafi, with al-Majlisi's and al-Behbudi's grades
-iy catalog import taqrib                # Ibn Hajar's Taqrib: identifies the narrators in the chains
+iy catalog import sahih_al_bukhari --language ara --language tur
+iy catalog import musnad_ahmad_ibn_hanbal
+iy catalog import al_kafi_al_kulayni    # with al-Majlisi's and al-Behbudi's grades
+iy catalog import taqrib_al_tahdhib_ibn_hajar_al_asqalani   # identifies the narrators in the chains
 iy catalog import --all                 # everything
 ```
 
@@ -491,8 +492,10 @@ sources** (or `iy repo use ID`); add your own with **Add a repository…** (`iy 
 GitHub repository, a Hugging Face dataset, a catalog URL or a folder).
 
 **The default — [isnady-data](https://github.com/bayramkotan/isnady-data)** holds every source
-below in one place and in isnady's own format: `sunni/<book>/`, `shia/<book>/` (a `book.json`
-and one file per language) and `rijal/sunni/`, `rijal/shia/`.
+below in one place and in isnady's own format, each book in a folder named by its full title and
+its compiler — `sunni/sahih_al_bukhari/`, `sunni/musnad_ahmad_ibn_hanbal/`, `shia/al_kafi_al_kulayni/`
+(a `book.json` and one file per language) — and the works on the narrators in `rijal/sunni/`,
+`rijal/shia/`.
 
 | | Sunni | Shia |
 |---|---|---|
@@ -550,7 +553,7 @@ script. The command line never loads Qt.
 | `iy import FORMAT FILE-OR-URL` | `isnady import …` | Import a source; `--book`, `--language`, `--license`, `--user`, `--token-env`, `--api-key-env` |
 | `iy repo [list\|use\|show\|add\|remove]` | `isnady repo use thaqalayn` | The data repositories: isnady's own (default), the optional ones, yours |
 | `iy catalog list` | `isnady catalog list --repo lk-hadith-corpus` | The sources of the repository in use, and your own, with what is imported — the same as File → Data Sources |
-| `iy catalog import ID` | `isnady catalog import muslim --language tur` | Import a listed source; `remove`, `add`, `delete` manage the list |
+| `iy catalog import ID` | `isnady catalog import sahih_muslim --language tur` | Import a listed source; `remove`, `add`, `delete` manage the list |
 | `iy catalog import --all` | `isnady catalog import --all --language ara` | Every source of the repository at once |
 | `iy datadir [FOLDER]` | `isnady datadir /data/isnady` | Show or change where the database and settings live; `--as-is`, `--default` |
 | `iy formats` | `isnady formats` | Formats that can be imported |

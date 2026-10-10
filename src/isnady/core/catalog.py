@@ -162,13 +162,15 @@ def find(entry_id: str) -> Entry | None:
         entry_id = entry_id[len("fawaz-"):]
     if "/" in entry_id:
         rid, _, eid = entry_id.partition("/")
-        return next((e for e in builtin_entries(rid) if eid in (e.id, *e.aliases)), None) if repositories.find(rid) \
+        return next((e for e in builtin_entries(rid) if eid in (e.id, *e.aliases, e.book or "")), None) \
+            if repositories.find(rid) \
             else None
     order = [repositories.selected()] + [r for r in repositories.all_repositories()
                                          if r.id != repositories.selected().id]
     for repo in order:
         try:
-            found = next((e for e in repositories.entries(repo) if entry_id in (e.id, *e.aliases)), None)
+            found = next((e for e in repositories.entries(repo) if entry_id in (e.id, *e.aliases, e.book or "")
+                          or (e.kind == "rijal" and entry_id == e.source_key.removeprefix("openiti-"))), None)
         except ResourceError:
             continue
         if found:

@@ -8,13 +8,13 @@
  "default": true,
  "entries": [
   {
-   "id": "bukhari",
+   "id": "sahih_al_bukhari",
    "title": "Sahih al-Bukhari",
    "title_ar": "صحيح البخاري",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/bukhari/book.json",
+   "location": "sunni/sahih_al_bukhari/book.json",
    "book": "bukhari",
    "languages": [
     "ara",
@@ -34,13 +34,13 @@
    "description": "Compiled by al-Bukhari (d. 256). Arabic and 8 translations (English, Turkish, Urdu, Indonesian, Bengali, French, Russian, Tamil); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
-   "id": "muslim",
+   "id": "sahih_muslim",
    "title": "Sahih Muslim",
    "title_ar": "صحيح مسلم",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/muslim/book.json",
+   "location": "sunni/sahih_muslim/book.json",
    "book": "muslim",
    "languages": [
     "ara",
@@ -60,13 +60,13 @@
    "description": "Compiled by Muslim (d. 261). Arabic and 8 translations (English, Turkish, Urdu, Indonesian, Bengali, French, Russian, Tamil); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
-   "id": "abudawud",
+   "id": "sunan_abi_dawud",
    "title": "Sunan Abi Dawud",
    "title_ar": "سنن أبي داود",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/abudawud/book.json",
+   "location": "sunni/sunan_abi_dawud/book.json",
    "book": "abudawud",
    "languages": [
     "ara",
@@ -85,13 +85,13 @@
    "description": "Compiled by Abu Dawud (d. 275). Arabic and 7 translations (English, Turkish, Urdu, Indonesian, Bengali, French, Russian); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
-   "id": "tirmidhi",
+   "id": "jami_al_tirmidhi",
    "title": "Jami' al-Tirmidhi",
    "title_ar": "جامع الترمذي",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/tirmidhi/book.json",
+   "location": "sunni/jami_al_tirmidhi/book.json",
    "book": "tirmidhi",
    "languages": [
     "ara",
@@ -108,13 +108,13 @@
    "description": "Compiled by al-Tirmidhi (d. 279). Arabic and 5 translations (English, Turkish, Urdu, Indonesian, Bengali); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
-   "id": "nasai",
+   "id": "sunan_al_nasai",
    "title": "Sunan al-Nasa'i",
    "title_ar": "سنن النسائي",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/nasai/book.json",
+   "location": "sunni/sunan_al_nasai/book.json",
    "book": "nasai",
    "languages": [
     "ara",
@@ -132,13 +132,13 @@
    "description": "Compiled by al-Nasa'i (d. 303). Arabic and 6 translations (English, Turkish, Urdu, Indonesian, Bengali, French); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
-   "id": "ibnmajah",
+   "id": "sunan_ibn_majah",
    "title": "Sunan Ibn Majah",
    "title_ar": "سنن ابن ماجه",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/ibnmajah/book.json",
+   "location": "sunni/sunan_ibn_majah/book.json",
    "book": "ibnmajah",
    "languages": [
     "ara",
@@ -156,13 +156,13 @@
    "description": "Compiled by Ibn Maja (d. 273). Arabic and 6 translations (English, Turkish, Urdu, Indonesian, Bengali, French); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
-   "id": "malik",
+   "id": "muwatta_malik_ibn_anas",
    "title": "Muwatta Malik",
    "title_ar": "موطأ مالك",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/malik/book.json",
+   "location": "sunni/muwatta_malik_ibn_anas/book.json",
    "book": "malik",
    "languages": [
     "ara",
@@ -180,13 +180,13 @@
    "description": "Compiled by Malik (d. 179). Arabic and 6 translations (English, Turkish, Urdu, Indonesian, Bengali, French); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
-   "id": "nawawi",
+   "id": "al_arbain_al_nawawiyya",
    "title": "Forty Hadith of al-Nawawi",
    "title_ar": "الأربعون النووية",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/nawawi/book.json",
+   "location": "sunni/al_arbain_al_nawawiyya/book.json",
    "book": "nawawi",
    "languages": [
     "ara",
@@ -202,13 +202,13 @@
    "description": "Compiled by al-Nawawi (d. 676). Arabic and 4 translations (English, Turkish, Bengali, French); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
-   "id": "qudsi",
+   "id": "al_arbain_al_qudsiyya",
    "title": "Forty Hadith Qudsi",
    "title_ar": "الأربعون القدسية",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/qudsi/book.json",
+   "location": "sunni/al_arbain_al_qudsiyya/book.json",
    "book": "qudsi",
    "languages": [
     "ara",
@@ -222,13 +222,13 @@
    "description": "Arabic and 2 translations (English, French); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
-   "id": "dehlawi",
+   "id": "al_arbain_shah_waliullah_al_dehlawi",
    "title": "Forty Hadith of Shah Waliullah Dehlawi",
    "title_ar": "أربعون الدهلوي",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/dehlawi/book.json",
+   "location": "sunni/al_arbain_shah_waliullah_al_dehlawi/book.json",
    "book": "dehlawi",
    "languages": [
     "ara",
@@ -242,13 +242,13 @@
    "description": "Compiled by Shah Waliullah (d. 1176). Arabic and 2 translations (English, French); graded by al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded it."
   },
   {
-   "id": "ahmad",
+   "id": "musnad_ahmad_ibn_hanbal",
    "title": "Musnad Ahmad ibn Hanbal",
    "title_ar": "مسند أحمد بن حنبل",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/ahmad/book.json",
+   "location": "sunni/musnad_ahmad_ibn_hanbal/book.json",
    "book": "ahmad",
    "languages": [
     "ara"
@@ -260,13 +260,13 @@
    "description": "Compiled by Ahmad ibn Hanbal (d. 241). Arabic with full diacritics."
   },
   {
-   "id": "darimi",
+   "id": "sunan_al_darimi",
    "title": "Sunan al-Darimi",
    "title_ar": "سنن الدارمي",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/darimi/book.json",
+   "location": "sunni/sunan_al_darimi/book.json",
    "book": "darimi",
    "languages": [
     "ara"
@@ -278,13 +278,13 @@
    "description": "Compiled by al-Darimi (d. 255). Arabic with full diacritics."
   },
   {
-   "id": "riyad",
+   "id": "riyad_al_salihin_al_nawawi",
    "title": "Riyad al-Salihin",
    "title_ar": "رياض الصالحين",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/riyad/book.json",
+   "location": "sunni/riyad_al_salihin_al_nawawi/book.json",
    "book": "riyad",
    "languages": [
     "ara",
@@ -297,13 +297,13 @@
    "description": "Compiled by al-Nawawi (d. 676). Arabic and English, by chapter."
   },
   {
-   "id": "shamail",
+   "id": "al_shamail_al_muhammadiyya_al_tirmidhi",
    "title": "al-Shama'il al-Muhammadiyya",
    "title_ar": "الشمائل المحمدية",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/shamail/book.json",
+   "location": "sunni/al_shamail_al_muhammadiyya_al_tirmidhi/book.json",
    "book": "shamail",
    "languages": [
     "ara",
@@ -316,13 +316,13 @@
    "description": "Compiled by al-Tirmidhi (d. 279). Arabic and English, by chapter."
   },
   {
-   "id": "bulugh",
+   "id": "bulugh_al_maram_ibn_hajar_al_asqalani",
    "title": "Bulugh al-Maram",
    "title_ar": "بلوغ المرام",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/bulugh/book.json",
+   "location": "sunni/bulugh_al_maram_ibn_hajar_al_asqalani/book.json",
    "book": "bulugh",
    "languages": [
     "ara",
@@ -335,13 +335,13 @@
    "description": "Compiled by Ibn Hajar (d. 852). Arabic and English, by chapter."
   },
   {
-   "id": "adab",
+   "id": "al_adab_al_mufrad_al_bukhari",
    "title": "al-Adab al-Mufrad",
    "title_ar": "الأدب المفرد",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/adab/book.json",
+   "location": "sunni/al_adab_al_mufrad_al_bukhari/book.json",
    "book": "adab",
    "languages": [
     "ara",
@@ -354,13 +354,13 @@
    "description": "Compiled by al-Bukhari (d. 256). Arabic and English, by chapter."
   },
   {
-   "id": "mishkat",
+   "id": "mishkat_al_masabih_al_khatib_al_tabrizi",
    "title": "Mishkat al-Masabih",
    "title_ar": "مشكاة المصابيح",
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/mishkat/book.json",
+   "location": "sunni/mishkat_al_masabih_al_khatib_al_tabrizi/book.json",
    "book": "mishkat",
    "languages": [
     "ara",
@@ -373,13 +373,13 @@
    "description": "Compiled by al-Khatib al-Tabrizi (d. 741). Arabic and English, by chapter."
   },
   {
-   "id": "kafi",
+   "id": "al_kafi_al_kulayni",
    "title": "al-Kafi — al-Kulayni",
    "title_ar": "الكافي",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/kafi/book.json",
+   "location": "shia/al_kafi_al_kulayni/book.json",
    "book": "kafi",
    "languages": [
     "ara",
@@ -392,13 +392,13 @@
    "description": "Compiled by al-Kulayni (d. 329). Arabic and English, with the grades of al-Majlisi (Mir'at al-'Uqul) and al-Behbudi (Sahih al-Kafi); 8 volumes, numbered volume:hadith."
   },
   {
-   "id": "uyun",
+   "id": "uyun_akhbar_al_rida_al_shaykh_al_saduq",
    "title": "ʿUyun Akhbar al-Rida — al-Saduq",
    "title_ar": "عيون أخبار الرضا",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/uyun/book.json",
+   "location": "shia/uyun_akhbar_al_rida_al_shaykh_al_saduq/book.json",
    "book": "uyun",
    "languages": [
     "ara",
@@ -411,13 +411,13 @@
    "description": "Compiled by al-Saduq (d. 381). Arabic and English; 2 volumes, numbered volume:hadith."
   },
   {
-   "id": "amali-saduq",
+   "id": "al_amali_al_shaykh_al_saduq",
    "title": "al-Amali — al-Saduq",
    "title_ar": "الأمالي (الصدوق)",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/amali-saduq/book.json",
+   "location": "shia/al_amali_al_shaykh_al_saduq/book.json",
    "book": "amali-saduq",
    "languages": [
     "ara",
@@ -430,13 +430,13 @@
    "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
-   "id": "khisal",
+   "id": "al_khisal_al_shaykh_al_saduq",
    "title": "al-Khisal — al-Saduq",
    "title_ar": "الخصال",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/khisal/book.json",
+   "location": "shia/al_khisal_al_shaykh_al_saduq/book.json",
    "book": "khisal",
    "languages": [
     "ara",
@@ -449,13 +449,13 @@
    "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
-   "id": "tawhid",
+   "id": "al_tawhid_al_shaykh_al_saduq",
    "title": "al-Tawhid — al-Saduq",
    "title_ar": "التوحيد",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/tawhid/book.json",
+   "location": "shia/al_tawhid_al_shaykh_al_saduq/book.json",
    "book": "tawhid",
    "languages": [
     "ara",
@@ -468,13 +468,13 @@
    "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
-   "id": "maani",
+   "id": "maani_al_akhbar_al_shaykh_al_saduq",
    "title": "Ma'ani al-Akhbar — al-Saduq",
    "title_ar": "معاني الأخبار",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/maani/book.json",
+   "location": "shia/maani_al_akhbar_al_shaykh_al_saduq/book.json",
    "book": "maani",
    "languages": [
     "ara",
@@ -487,13 +487,13 @@
    "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
-   "id": "thawab",
+   "id": "thawab_al_amal_wa_iqab_al_amal_al_shaykh_al_saduq",
    "title": "Thawab al-A'mal wa 'Iqab al-A'mal — al-Saduq",
    "title_ar": "ثواب الأعمال وعقاب الأعمال",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/thawab/book.json",
+   "location": "shia/thawab_al_amal_wa_iqab_al_amal_al_shaykh_al_saduq/book.json",
    "book": "thawab",
    "languages": [
     "ara",
@@ -506,13 +506,13 @@
    "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
-   "id": "sifat-shia",
+   "id": "sifat_al_shia_al_shaykh_al_saduq",
    "title": "Sifat al-Shi'a — al-Saduq",
    "title_ar": "صفات الشيعة",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/sifat-shia/book.json",
+   "location": "shia/sifat_al_shia_al_shaykh_al_saduq/book.json",
    "book": "sifat-shia",
    "languages": [
     "ara",
@@ -525,13 +525,13 @@
    "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
-   "id": "fadail-shia",
+   "id": "fadail_al_shia_al_shaykh_al_saduq",
    "title": "Fada'il al-Shi'a — al-Saduq",
    "title_ar": "فضائل الشيعة",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/fadail-shia/book.json",
+   "location": "shia/fadail_al_shia_al_shaykh_al_saduq/book.json",
    "book": "fadail-shia",
    "languages": [
     "ara",
@@ -544,13 +544,13 @@
    "description": "Compiled by al-Saduq (d. 381). Arabic and English."
   },
   {
-   "id": "amali-mufid",
+   "id": "al_amali_al_shaykh_al_mufid",
    "title": "al-Amali — al-Mufid",
    "title_ar": "الأمالي (المفيد)",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/amali-mufid/book.json",
+   "location": "shia/al_amali_al_shaykh_al_mufid/book.json",
    "book": "amali-mufid",
    "languages": [
     "ara",
@@ -563,13 +563,13 @@
    "description": "Compiled by al-Mufid (d. 413). Arabic and English."
   },
   {
-   "id": "kamil-ziyarat",
+   "id": "kamil_al_ziyarat_ibn_qulawayh_al_qummi",
    "title": "Kamil al-Ziyarat — Ibn Qulawayh",
    "title_ar": "كامل الزيارات",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/kamil-ziyarat/book.json",
+   "location": "shia/kamil_al_ziyarat_ibn_qulawayh_al_qummi/book.json",
    "book": "kamil-ziyarat",
    "languages": [
     "ara",
@@ -582,13 +582,13 @@
    "description": "Compiled by Ibn Qulawayh al-Qummi (d. 368). Arabic and English."
   },
   {
-   "id": "ghayba-numani",
+   "id": "kitab_al_ghayba_ibn_abi_zaynab_al_numani",
    "title": "Kitab al-Ghayba — al-Nu'mani",
    "title_ar": "كتاب الغيبة (النعماني)",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/ghayba-numani/book.json",
+   "location": "shia/kitab_al_ghayba_ibn_abi_zaynab_al_numani/book.json",
    "book": "ghayba-numani",
    "languages": [
     "ara",
@@ -601,13 +601,13 @@
    "description": "Compiled by al-Nu'mani (d. c. 360). Arabic and English."
   },
   {
-   "id": "ghayba-tusi",
+   "id": "kitab_al_ghayba_al_shaykh_al_tusi",
    "title": "Kitab al-Ghayba — al-Tusi",
    "title_ar": "كتاب الغيبة (الطوسي)",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/ghayba-tusi/book.json",
+   "location": "shia/kitab_al_ghayba_al_shaykh_al_tusi/book.json",
    "book": "ghayba-tusi",
    "languages": [
     "ara",
@@ -620,13 +620,13 @@
    "description": "Compiled by al-Tusi (d. 460). Arabic and English."
   },
   {
-   "id": "mumin",
+   "id": "kitab_al_mumin_al_husayn_ibn_said_al_ahwazi",
    "title": "Kitab al-Mu'min — al-Ahwazi",
    "title_ar": "كتاب المؤمن",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/mumin/book.json",
+   "location": "shia/kitab_al_mumin_al_husayn_ibn_said_al_ahwazi/book.json",
    "book": "mumin",
    "languages": [
     "ara",
@@ -639,13 +639,13 @@
    "description": "Compiled by al-Husayn b. Sa'id al-Ahwazi. Arabic and English."
   },
   {
-   "id": "zuhd",
+   "id": "kitab_al_zuhd_al_husayn_ibn_said_al_ahwazi",
    "title": "Kitab al-Zuhd — al-Ahwazi",
    "title_ar": "كتاب الزهد",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/zuhd/book.json",
+   "location": "shia/kitab_al_zuhd_al_husayn_ibn_said_al_ahwazi/book.json",
    "book": "zuhd",
    "languages": [
     "ara",
@@ -658,13 +658,13 @@
    "description": "Compiled by al-Husayn b. Sa'id al-Ahwazi. Arabic and English."
   },
   {
-   "id": "mujam-mutabara",
+   "id": "mujam_al_ahadith_al_mutabara_asif_al_muhsini",
    "title": "Mu'jam al-Ahadith al-Mu'tabara — al-Muhsini",
    "title_ar": "معجم الأحاديث المعتبرة",
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/mujam-mutabara/book.json",
+   "location": "shia/mujam_al_ahadith_al_mutabara_asif_al_muhsini/book.json",
    "book": "mujam-mutabara",
    "languages": [
     "ara",
@@ -677,24 +677,24 @@
    "description": "Compiled by Asif al-Muhsini. Arabic and English."
   },
   {
-   "id": "taqrib",
+   "id": "taqrib_al_tahdhib_ibn_hajar_al_asqalani",
    "title": "Taqrib al-Tahdhib — Ibn Hajar al-'Asqalani",
    "title_ar": "تقريب التهذيب",
    "kind": "rijal",
    "tradition": "sunni",
    "format": "taqrib",
-   "location": "rijal/sunni/taqrib-al-tahdhib.md",
+   "location": "rijal/sunni/taqrib_al_tahdhib_ibn_hajar_al_asqalani.md",
    "license": null,
    "description": "8,824 narrators of the six books with Ibn Hajar's verdict, rank, tabaqa, death year and book marks; identifies the narrators in every chain."
   },
   {
-   "id": "najashi",
+   "id": "rijal_al_najashi_ahmad_ibn_ali_al_najashi",
    "title": "Rijal al-Najashi — al-Najashi (Shia)",
    "title_ar": "رجال النجاشي",
    "kind": "rijal",
    "tradition": "shia",
    "format": "najashi",
-   "location": "rijal/shia/rijal-al-najashi.md",
+   "location": "rijal/shia/rijal_al_najashi_ahmad_ibn_ali_al_najashi.md",
    "license": null,
    "description": "1,266 authors and narrators with al-Najashi's words, read on the Shia scale (thiqa, praised, muwaththaq, weak; creed: Imami, Waqifi, Fathi, Zaydi …); readable in Books."
   }
