@@ -2,7 +2,7 @@
 
 from PySide6.QtCore import QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
-from PySide6.QtWidgets import QSizePolicy, QWidget
+from PySide6.QtWidgets import QSizePolicy, QToolTip, QWidget
 
 from isnady.gui import theme
 
@@ -15,16 +15,21 @@ def _mix(a: QColor, b: QColor, t: float) -> QColor:
 
 class HeatMap(QWidget):
     """A square table of cells coloured by value. cells[r][c] = (value or None, [text lines]); diverging=True colours
-    below zero gold and above zero lapis (for signed measures), otherwise light → lapis."""
+    below zero gold and above zero lapis (for signed measures), otherwise light → lapis. A cell whose value is None
+    is drawn as an outline, its first line muted ("too few", or a figure that is not to be trusted).
+    tips[r][c], when given, is shown on hover."""
 
     def __init__(self, rows: list[str], cols: list[str], cells: list[list[tuple]], low: float = 0.0, high: float = 1.0,
-                 diverging: bool = False, cell: QSize = QSize(132, 58), label_w: int = 150, parent=None) -> None:
+                 diverging: bool = False, cell: QSize = QSize(132, 58), label_w: int = 150, parent=None,
+                 tips: list[list[str]] | None = None, head_h: int = 44) -> None:
         super().__init__(parent)
         self.rows, self.cols, self.cells = rows, cols, cells
         self.low, self.high, self.diverging = low, high, diverging
         self.cell = cell
         self.label_w = label_w
-        self.head_h = 44
+        self.head_h = head_h
+        self.tips = tips
+        self.setMouseTracking(bool(tips))
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self.setMinimumSize(self.sizeHint())
 
@@ -39,6 +44,18 @@ class HeatMap(QWidget):
             x = v / span
             return _mix(base, QColor(t.lapis), x) if x >= 0 else _mix(base, QColor(t.gold), -x)
         return _mix(base, QColor(t.lapis), (v - self.low) / ((self.high - self.low) or 1))
+
+    def mouseMoveEvent(self, e) -> None:  # noqa: N802
+        if not self.tips:
+            return
+        pos = e.position()
+        c = int((pos.x() - self.label_w) // self.cell.width())
+        r = int((pos.y() - self.head_h) // self.cell.height())
+        if pos.x() >= self.label_w and pos.y() >= self.head_h and 0 <= r < len(self.rows) and 0 <= c < len(self.cols) \
+                and self.tips[r][c]:
+            QToolTip.showText(e.globalPosition().toPoint(), self.tips[r][c], self)
+        else:
+            QToolTip.hideText()
 
     def paintEvent(self, _e) -> None:  # noqa: N802
         t = theme.current()
@@ -76,7 +93,7 @@ class HeatMap(QWidget):
                 p.setBrush(fill)
                 p.drawRoundedRect(box, 6, 6)
                 dark = fill.lightnessF() < 0.55
-                p.setPen(QColor("#FFFFFF") if dark else QColor(t.ink))
+                p.setPen(QColor("#FFFFFF") if dark else QColor("#1B1B1F"))
                 p.setFont(bold)
                 p.drawText(box.adjusted(0, 4, 0, -box.height() / 2), Qt.AlignmentFlag.AlignCenter, lines[0] if lines else "")
                 if len(lines) > 1:
@@ -145,7 +162,7 @@ class IntervalPlot(QWidget):
 
 from PySide6.QtCore import QPointF, Signal  # noqa: E402
 from PySide6.QtGui import QPainterPath  # noqa: E402
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QToolTip, QVBoxLayout  # noqa: E402
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout  # noqa: E402
 
 
 def _fmt(n: float) -> str:

@@ -297,7 +297,12 @@ al-Din 'Abd al-Hamid on Sunan Abi Dawud) and shows:
 
 Two graders who agree far too often to be independent (98.1%) count as one voice in the model,
 and the page says so. Results are computed once and kept in a file. `iy stats graders`.
-Narrators, books, hadith, chains, correlations and the models follow, tab by tab.
+Narrators, books, hadith, chains, correlations and the models follow, tab by tab. **Correlations
+and tests** sets every measure against every other — Spearman's ρ with Benjamini–Hochberg q-values,
+and the partial ρ with all the others held equal (what each factor of the chain says of each
+scholar's grade on its own) — and tests what differs: the scholars' grades pair by pair
+(Stuart–Maxwell), the books (Kruskal–Wallis, Mann–Whitney with Cliff's δ), and whether the hadith
+model's shape holds (Brant's test). `iy stats lab`.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/statistics.png" alt="Statistics — the graders of Sunan Abi Dawud: Krippendorff's alpha, agreement with intervals, the model's certainty" width="850">
@@ -500,6 +505,8 @@ script. The command line never loads Qt.
 | `iy shortcut` | `isnady shortcut --no-desktop` | A desktop and applications-menu shortcut, with isnady's icon |
 | `iy term [NAME]` | `isnady term --search tadlis` | The glossary: a term's meaning, English or Turkish (`--lang tr`) |
 | `iy stats graders` | `isnady stats graders --book abudawud` | The graders of a book in depth: agreement, model, strictness |
+| `iy stats model` | `isnady stats model --grader albani` | What each scholar's grade follows: ordinal regression, odds ratios, surprises |
+| `iy stats lab` | `isnady stats lab --csv ./lab` | Correlations (Spearman, partial, BH q) and tests (Stuart–Maxwell, Kruskal–Wallis, Mann–Whitney, Brant) |
 | `iy book [KEY [CHAPTER]]` | `isnady book bukhari 2` | The books; a book's chapters; a chapter read in order |
 | `iy scholar [NAME]` | `isnady scholar albani` | The scholars in the data, or one of them with his measured statistics |
 | `iy tahric BOOK NUMBER` | `isnady tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |

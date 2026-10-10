@@ -16,6 +16,7 @@ Examples
   iy book bukhari 2
   iy shortcut
   iy stats graders --book abudawud
+  iy stats lab --csv ./lab
   iy term mursal --lang tr
   iy import fawazahmed0 ./tur-bukhari.json
   iy import fawazahmed0 https://example.org/editions.json --book bukhari --language tur
@@ -467,6 +468,63 @@ def cmd_stats_model(args) -> int:
     return 0
 
 
+def _p(p: float | None) -> str:
+    return "" if p is None else ("< 0.001" if p < 0.001 else f"{p:.3f}")
+
+
+def cmd_stats_lab(args) -> int:
+    """iy stats lab — the correlation and test laboratory (ST7-C): Spearman matrices with Benjamini–Hochberg q,
+    each factor against each grade with the others held equal, the scholars' grade distributions compared pair by
+    pair (Stuart–Maxwell), the narrators' measures, and the books compared (Kruskal–Wallis, Mann–Whitney)."""
+    import math
+
+    from isnady.core import stats_lab as sl
+
+    conn = _connect()
+    r = sl.cached(conn, args.book, lambda m: print(f"  … {m}", file=sys.stderr), args.recompute)
+    for m in r["hadith"]:
+        print(f"\n{m['book']} — {m['hadith']:,} hadith with a chain split into names (Spearman's rho, BH q)")
+        print("  the strongest relations:")
+        for a, b, rho, n, _p0, q in sl.pairs_table(m)[:args.limit]:
+            print(f"    {a:30} {b:34} {rho:+.2f}  n {n:>5,}  q {_p(q)}")
+        print("  each factor against each grade, the other factors held equal (partial rho):")
+        for outcome, factor, plain, adj, n, q in sl.adjusted_table(m):
+            if adj is not None and q is not None and q < sl.ALPHA:
+                print(f"    {outcome:42} {factor:24} {plain:+.2f} → {adj:+.2f}  q {_p(q)}")
+    if r["graders"]:
+        print("\nDo two scholars grade alike overall? (Stuart–Maxwell, same hadith, Holm-adjusted)")
+        for t in r["graders"]:
+            print(f"  {t['a']} / {t['b']}: {t['n']:,} hadith; the first grades higher on {t['a_stronger']:,}, lower "
+                  f"on {t['a_weaker']:,}; χ² {t['chi2']:.1f} on {t['df']} df, p {_p(t['p_holm'])}")
+    if r.get("brant"):
+        print("\nDoes the hadith model's shape hold? (Brant: the same weight at every step of the grades)")
+        for b in r["brant"]:
+            o = b["overall"]
+            print(f"  {b['grader']} — {b['book']}: χ² {o['chi2']:.1f} on {o['df']} df, p {_p(o['p_holm'])}"
+                  + ("" if len(b["thresholds"]) == b["of"] else f" ({len(b['thresholds'])} of {b['of']} steps estimable)"))
+            for f in b["factors"]:
+                if f["p_holm"] < sl.ALPHA:
+                    print(f"    {f['name']:34} odds ratio at each step "
+                          + " → ".join(f"{math.exp(x):.2f}" for x in f["slopes"]) + f"  p {_p(f['p_holm'])}")
+    if r.get("narrators"):
+        n = r["narrators"]
+        print(f"\nNarrators — {n['people']:,} in the chains")
+        for a, b, rho, k, _p0, q in sl.pairs_table(n)[:args.limit]:
+            print(f"    {a:22} {b:22} {rho:+.2f}  n {k:>5,}  q {_p(q)}")
+    if r.get("books"):
+        print("\nThe books compared (Kruskal–Wallis; pairs: Mann–Whitney, Cliff's delta, Holm)")
+        for c in r["books"]:
+            kw = c["kruskal"]
+            if kw:
+                print(f"  {c['measure']}: H {kw['H']:.1f} on {kw['df']} df, p {_p(kw['p'])}, ε² {kw['epsilon2']:.3f}")
+            for p in c["pairs"]:
+                print(f"    {p['a']} / {p['b']}: delta {p['delta']:+.2f}, p {_p(p['p_holm'])}")
+    if args.csv:
+        files = sl.write_csv(r, args.csv)
+        print(f"\n{len(files)} CSV tables written to {args.csv}")
+    return 0
+
+
 def _write_corpus_csv(r: dict, folder: str) -> None:
     """Every table behind the statistics, one CSV each (UTF-8 with BOM: spreadsheets read the Arabic right)."""
     import csv
@@ -512,6 +570,8 @@ def cmd_stats(args) -> int:
         return cmd_stats_graders(args)
     if getattr(args, "topic", None) == "model":
         return cmd_stats_model(args)
+    if getattr(args, "topic", None) == "lab":
+        return cmd_stats_lab(args)
     if getattr(args, "topic", None) in ("corpus", "narrators", "chains", "grades", "books"):
         if args.topic == "corpus":
             args.topic = None
@@ -1087,16 +1147,16 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("sources", help="list imported sources").set_defaults(func=cmd_sources)
     st = sub.add_parser("stats", help="count what the database holds; corpus, narrators, chains, grades, books, graders "
                                       "for the statistics in depth")
-    st.add_argument("topic", nargs="?", choices=["corpus", "narrators", "chains", "grades", "books", "model", "graders"],
+    st.add_argument("topic", nargs="?", choices=["corpus", "narrators", "chains", "grades", "books", "model", "lab", "graders"],
                     help="corpus: everything below; narrators: reliability, concentration, pillars; chains: length, "
                          "weakest link, time gaps; grades: weakest narrator and length against the grade; books: the "
                          "books compared; model: what each scholar's grade follows (ordinal regression) and the hadith "
-                         "graded higher or lower than their chain; graders: agreement, model, strictness, disputed hadith")
+                         "graded higher or lower than their chain; lab: correlations (Spearman, partial, BH) and tests (Stuart–Maxwell, Kruskal–Wallis, Mann–Whitney); graders: agreement, model, strictness, disputed hadith")
     st.add_argument("--grader", help="with 'model': only the scholars whose name contains this")
     st.add_argument("--csv", metavar="DIR", help="also write every table behind the statistics as CSV files into DIR")
     st.add_argument("--book", help="collection key, e.g. abudawud (default: the book with most graders)")
     st.add_argument("--recompute", action="store_true", help="compute again instead of reading the saved results")
-    st.add_argument("--limit", type=int, default=10, help="disputed hadith to list")
+    st.add_argument("--limit", type=int, default=10, help="rows to list (disputed hadith, strongest relations)")
     st.set_defaults(func=cmd_stats)
     rm = sub.add_parser("remove", help="remove a source and everything imported from it")
     rm.add_argument("key", help="source key, see 'iy sources'")

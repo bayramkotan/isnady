@@ -4,8 +4,8 @@ the books, and the graders of each book.
 One section at a time, chosen on the left. Each section is a few FINDINGS: a sentence that says what the numbers
 show, the chart that shows it, the figures behind it on hover, and — folded until asked for — how to read it and
 how it was measured; every finding can be saved as CSV for a thesis or a paper. The numbers are computed once in the
-background and kept (core.stats_corpus, core.stats_graders); ranks and grades are ordered categories throughout:
-counted, cross-tabulated and rank-correlated, never averaged (SK).
+background and kept (core.stats_corpus, core.stats_models, core.stats_lab, core.stats_graders); ranks and grades are
+ordered categories throughout: counted, cross-tabulated and rank-correlated, never averaged (SK).
 """
 
 import csv
@@ -36,6 +36,7 @@ from PySide6.QtWidgets import (
 from isnady.core import narrators as core_narrators
 from isnady.core import stats_corpus as corpus
 from isnady.core import stats_graders as core
+from isnady.core import stats_lab as lab
 from isnady.core import stats_models as models
 from isnady.core.rijal import RANK_LABELS, TABAQA_LABELS
 from isnady.core.scholars import SCHOLARS
@@ -53,8 +54,10 @@ from isnady.gui.stats_charts import (
 
 
 def _corpus_and_models(conn, key, progress, recompute) -> dict:
-    """The two analyses of the corpus sections, in one background run: the descriptive one and the model."""
-    return {"corpus": corpus.cached(conn, key, progress, recompute), "models": models.cached(conn, key, progress, recompute)}
+    """The analyses of the corpus sections, in one background run: the descriptive one, the model, the laboratory."""
+    return {"corpus": corpus.cached(conn, key, progress, recompute), "models": models.cached(conn, key, progress, recompute),
+            "lab": lab.cached(conn, key, progress, recompute)}
+
 
 SECTIONS = [
     ("overview", "Overview", "the corpus at a glance"),
@@ -62,6 +65,7 @@ SECTIONS = [
     ("chains", "Chains", "length, weakest link, time"),
     ("grades", "Grades and chains", "do the chains explain the grades"),
     ("model", "The hadith model", "what a scholar's grade follows"),
+    ("lab", "Correlations and tests", "what goes with what, and is it real"),
     ("books", "Books", "the books compared"),
     ("graders", "Graders", "the scholars who graded"),
 ]
@@ -89,6 +93,14 @@ def _short(grader: str) -> str:
         if grader in s.get("grader_names", []):
             return s["name"]
     return grader
+
+
+def _q(q: float | None) -> str:
+    return "—" if q is None else ("q < 0.001" if q < 0.001 else f"q {q:.3f}")
+
+
+def _outcome(name: str) -> str:
+    return _short(name[len("Grade: "):]) if name.startswith("Grade: ") else name
 
 
 def _pct(x: float) -> str:
@@ -362,6 +374,7 @@ class StatisticsPage(QWidget):
         self._chains(r)
         self._grades(r)
         self._model_section()
+        self._lab_section(both.get("lab") or {})
         self._books(r)
         for box in self._boxes.values():
             box.addStretch(1)
@@ -816,6 +829,349 @@ class StatisticsPage(QWidget):
                       (["hadith", "side", "book", "graders", "weakest narrator"],
                        [[s["number"], s["side"], s["book"], "; ".join(f"{g}: {gr}" for g, gr, _l, _p in s["graders"]),
                          s["factors"]["weakest"]] for s in shared]))
+
+    # ------------------------------------------------------------------ the laboratory (ST7-C)
+    def _lab_section(self, r: dict) -> None:
+        box = self._boxes["lab"]
+        ms = r.get("hadith") or []
+        if not ms and not r.get("narrators"):
+            box.addWidget(_label("Nothing to correlate yet: it needs a book whose chains are split into names.", "Lead"))
+            return
+        box.addWidget(_label(
+            "Every measure against every other, by rank (Spearman's ρ): +1 the two rise together, −1 one falls as the "
+            "other rises, 0 no relation. Ranks and grades are ordered, never averaged. With so many pairs some look "
+            "related by chance, so each ρ carries a q-value (Benjamini–Hochberg): below 0.05 it is shown in colour, "
+            "otherwise only outlined.", "Lead"))
+        if len(ms) > 1:
+            row = QHBoxLayout()
+            row.addWidget(_label("Book", "FilterTitle"))
+            pick = QComboBox()
+            pick.setObjectName("FilterCombo")
+            for i, m in enumerate(ms):
+                pick.addItem(m["book"], i)
+            pick.setCurrentIndex(min(getattr(self, "_lab_index", 0), len(ms) - 1))
+            row.addWidget(pick)
+            row.addStretch(1)
+            holder = QWidget()
+            holder.setLayout(row)
+            box.addWidget(holder)
+        self._lab_box = QVBoxLayout()
+        self._lab_box.setContentsMargins(0, 0, 0, 0)
+        self._lab_box.setSpacing(16)
+        wrap = QWidget()
+        wrap.setLayout(self._lab_box)
+        box.addWidget(wrap)
+
+        def show(i: int) -> None:
+            self._lab_index = i
+            while self._lab_box.count():
+                w = self._lab_box.takeAt(0).widget()
+                if w is not None:
+                    w.setParent(None)
+                    w.deleteLater()
+            if ms:
+                self._lab_book(ms[i], [t for t in r.get("graders", []) if t["book"] == ms[i]["book"]])
+                self._lab_brant([b for b in r.get("brant", []) if b["book"] == ms[i]["book"]])
+        if len(ms) > 1:
+            pick.currentIndexChanged.connect(show)
+        show(min(getattr(self, "_lab_index", 0), max(0, len(ms) - 1)))
+        if r.get("narrators"):
+            self._lab_narrators(r["narrators"])
+        if r.get("books"):
+            self._lab_books(r["books"])
+
+    def _lab_finding(self, *args, **kwargs) -> QFrame:
+        card = self._finding("lab", *args, **kwargs)
+        self._boxes["lab"].removeWidget(card)
+        self._lab_box.addWidget(card)
+        return card
+
+    @staticmethod
+    def _rho_cell(c: dict | None, extra: str = "") -> tuple:
+        if not c or c.get("rho") is None:
+            return (None, ["—"])
+        text = f"{c['rho']:+.2f}"
+        if c.get("q") is not None and c["q"] < lab.ALPHA:
+            return (c["rho"], [text, extra or _q(c["q"])])
+        return (None, [text])
+
+    @staticmethod
+    def _rho_tip(a: str, b: str, c: dict | None, held: bool = False) -> str:
+        if not c or c.get("rho") is None:
+            return f"{a} × {b}: too few cases"
+        sure = "a relation beyond chance" if c.get("q") is not None and c["q"] < lab.ALPHA else "could be chance"
+        return (f"{a} × {b}{' — the others held equal' if held else ''}\nSpearman's ρ {c['rho']:+.3f} on {c['n']:,} "
+                f"cases\np {c['p']:.2g} · {_q(c.get('q'))} — {sure}")
+
+    def _matrix(self, m: dict, which: str, names: list[str], cell: QSize, label_w: int) -> HeatMap:
+        grid = m[which]
+        k = len(names)
+        cells = [[(None, []) if i == j else self._rho_cell(grid[i][j]) for j in range(k)] for i in range(k)]
+        tips = [["" if i == j else self._rho_tip(names[i], names[j], grid[i][j], which == "partial") for j in range(k)]
+                for i in range(k)]
+        return HeatMap(names, names, cells, -1, 1, diverging=True, cell=cell, label_w=label_w, tips=tips, head_h=60)
+
+    def _switchable(self, m: dict, names: list[str], cell: QSize, label_w: int) -> QWidget:
+        """A matrix with its two readings: each pair alone, and each pair with all the others held equal."""
+        holder = QWidget()
+        lay = QVBoxLayout(holder)
+        lay.setContentsMargins(0, 0, 0, 0)
+        row = QHBoxLayout()
+        row.addWidget(_label("Show", "FilterTitle"))
+        pick = QComboBox()
+        pick.setObjectName("FilterCombo")
+        pick.addItem("Each pair alone", "cells")
+        if m.get("partial"):
+            pick.addItem("The others held equal (partial)", "partial")
+        row.addWidget(pick)
+        row.addStretch(1)
+        lay.addLayout(row)
+        chart = [self._matrix(m, "cells", names, cell, label_w)]
+        lay.addWidget(chart[0])
+
+        def flip(_i: int) -> None:
+            new = self._matrix(m, pick.currentData(), names, cell, label_w)
+            lay.replaceWidget(chart[0], new)
+            chart[0].setParent(None)
+            chart[0].deleteLater()
+            chart[0] = new
+        pick.currentIndexChanged.connect(flip)
+        return holder
+
+    def _lab_book(self, m: dict, tests: list[dict]) -> None:
+        k = m["factors"]
+        factors = m["names"][:k]
+        adjusted = m.get("adjusted") or []
+        # 1. each grade against each factor, the others held equal
+        if adjusted:
+            rows = [_outcome(a["outcome"]) for a in adjusted]
+            cells, tips = [], []
+            for j, a in enumerate(adjusted):
+                line, tip = [], []
+                for i, c in enumerate(a["cells"]):
+                    plain = m["cells"][i][k + j]
+                    line.append(self._rho_cell(c, f"alone {plain['rho']:+.2f}" if plain and plain.get("rho") is not None
+                                                   else ""))
+                    tip.append(self._rho_tip(rows[j], factors[i], c, True)
+                               + (f"\nAlone (nothing held equal): ρ {plain['rho']:+.3f}" if plain and plain.get("rho")
+                                  is not None else ""))
+                cells.append(line)
+                tips.append(tip)
+            best: dict[str, tuple] = {}
+            for j, a in enumerate(adjusted):
+                if not a["outcome"].startswith("Grade: "):
+                    continue
+                sure = [(c["rho"], factors[i]) for i, c in enumerate(a["cells"])
+                        if c and c["q"] < lab.ALPHA and c["rho"] > 0]
+                if sure:
+                    best[rows[j]] = max(sure)
+            tops = {f for _r, f in best.values()}
+            if len(best) > 1 and len(tops) == 1:
+                f = tops.pop()
+                lo, hi = min(v for v, _f in best.values()), max(v for v, _f in best.values())
+                rest = [c["rho"] for a in adjusted if a["outcome"].startswith("Grade: ") for i, c in enumerate(a["cells"])
+                        if c and factors[i] != f and c["q"] < lab.ALPHA]
+                headline = (f"With the other factors equal, <i>{html.escape(f.lower())}</i> still goes with a weaker grade "
+                            f"for every scholar (ρ {lo:.2f}–{hi:.2f})"
+                            + (f"; no other factor passes {max(abs(x) for x in rest):.2f}." if rest else "; nothing else "
+                               "holds."))
+            elif best:
+                headline = "With the other factors equal: " + "; ".join(
+                    f"for {html.escape(g)}, <i>{html.escape(f.lower())}</i> (ρ {v:.2f})" for g, (v, f) in best.items()) + "."
+            else:
+                headline = "With the other factors equal, no factor of the chain goes with the grades beyond chance."
+            self._lab_finding(
+                "What goes with a weaker grade", headline,
+                [HeatMap(rows, factors, cells, -0.5, 0.5, diverging=True, cell=QSize(96, 50), label_w=200, tips=tips,
+                         head_h=60)],
+                "Each row is a scholar's grade of the hadith (sahih → fabricated: a higher rank is a weaker grade), the last "
+                "row how far the scholars are apart on it; each column a factor of the hadith's best chain. The figure is "
+                "the PARTIAL Spearman ρ: the relation left when every other factor is held equal, so a long chain is not "
+                "credited with what its weak narrator does. Below it, the plain ρ, nothing held equal. Blue: a weaker "
+                "grade with more of the factor; gold: a stronger one. Outlined: could be chance (BH q ≥ 0.05). It is the "
+                "rank counterpart of the hadith model, and does not assume its shape.",
+                (["outcome", "factor", "rho alone", "rho others equal", "n", "q"], lab.adjusted_table(m)))
+        # 2. the factors among themselves
+        fm = {"names": factors, "cells": [row[:k] for row in m["cells"][:k]], "partial": m.get("partial")}
+        pairs = lab.pairs_table(fm, "partial") or lab.pairs_table(fm)
+        if pairs:
+            a, b, rho, _n, _p, _q0 = pairs[0]
+            headline = (f"Of the chain's own factors, <i>{html.escape(a.lower())}</i> and <i>{html.escape(b.lower())}"
+                        f"</i> are the most bound together (ρ {rho:+.2f}{', the others equal' if fm['partial'] else ''}).")
+            self._lab_finding(
+                "The factors with each other", headline,
+                [self._switchable(fm, factors, QSize(92, 46), 200)],
+                "<br>".join(f"<b>{html.escape(n)}</b> — {html.escape(e)}" for n, e in zip(factors, m["explain"][:k]))
+                + "<br><br>Factors that rise together share their credit: the hadith model and the first finding hold "
+                  "the others equal for this reason. “The others held equal” shows each pair with the rest removed.",
+                (["a", "b", "rho alone", "n", "p", "q"], lab.pairs_table(fm)))
+        # 3. the scholars against each other
+        graders = [n for n in m["names"][k:] if n.startswith("Grade: ")]
+        if len(graders) >= 2:
+            idx = [m["names"].index(g) for g in graders]
+            gm = {"names": [_outcome(g) for g in graders], "cells": [[m["cells"][i][j] for j in idx] for i in idx]}
+            widgets = [self._matrix(gm, "cells", gm["names"], QSize(118, 50), 200)]
+            if tests:
+                table = QTableWidget(0, 5)
+                table.setHorizontalHeaderLabels(["Scholars", "Same hadith", "First grades higher", "First grades lower",
+                                                 "Alike overall?"])
+                table.verticalHeader().hide()
+                table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+                for t in tests:
+                    row = table.rowCount()
+                    table.insertRow(row)
+                    alike = ("no — χ² {:.0f}, {}".format(t["chi2"], _q(t["p_holm"]).replace("q", "p"))
+                             if t["p_holm"] < lab.ALPHA else "cannot tell apart")
+                    for j, v in enumerate([f"{_short(t['a'])} / {_short(t['b'])}", f"{t['n']:,}", f"{t['a_stronger']:,}",
+                                           f"{t['a_weaker']:,}", alike]):
+                        item = QTableWidgetItem(v)
+                        item.setToolTip(f"Stuart–Maxwell χ² {t['chi2']:.1f} on {t['df']} df; p {t['p']:.2g}, Holm-adjusted "
+                                        f"{t['p_holm']:.2g}")
+                        table.setItem(row, j, item)
+                table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+                table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+                table.setFixedHeight(len(tests) * 30 + 34)
+                widgets.append(table)
+                far = max(tests, key=lambda t: abs(t["a_stronger"] - t["a_weaker"]) / t["n"])
+                hi, lo = (far["a"], far["b"]) if far["a_stronger"] >= far["a_weaker"] else (far["b"], far["a"])
+                more, less = max(far["a_stronger"], far["a_weaker"]), min(far["a_stronger"], far["a_weaker"])
+                differ = sum(t["p_holm"] < lab.ALPHA for t in tests)
+                headline = (("No two scholars grade alike overall" if differ == len(tests) else
+                             f"{differ} of {len(tests)} pairs of scholars do not grade alike overall")
+                            + f": on the same hadith, {html.escape(_short(hi))} grades higher than "
+                              f"{html.escape(_short(lo))} {more:,} times, lower {less:,}.")
+            else:
+                headline = "How closely the scholars' grades follow each other."
+            self._lab_finding(
+                "Scholar against scholar", headline, widgets,
+                "The matrix: Spearman's ρ between two scholars' grades of the same hadith — how far one's order of the "
+                "hadith follows the other's. The table asks another question: even when they rank the hadith alike, does "
+                "one give stronger grades overall? Stuart–Maxwell's test compares the two distributions of grades on the "
+                "same hadith (paired, so the hadith each graded do not differ); “no” means one is milder beyond chance "
+                "(Holm-adjusted over the pairs). The counts are the hadith the first scholar grades higher or lower.",
+                (["book", "a", "b", "hadith", "a grades higher", "a grades lower", "chi2", "df", "p", "p holm"],
+                 [[t["book"], t["a"], t["b"], t["n"], t["a_stronger"], t["a_weaker"], round(t["chi2"], 3), t["df"], t["p"],
+                   t["p_holm"]] for t in tests]))
+
+    def _lab_brant(self, tests: list[dict]) -> None:
+        """Brant's test of the hadith model: does each factor weigh the same at every step of the grades?"""
+        if not tests:
+            return
+        table = QTableWidget(0, 4)
+        table.setHorizontalHeaderLabels(["Scholar", "Factor", "Odds ratio at each step", "Same at every step?"])
+        table.verticalHeader().hide()
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        csv_rows, broken = [], []
+        for b in tests:
+            steps = [f"{b['labels'][j]} | {b['labels'][j + 1]}" for j in b["thresholds"]]
+            o = b["overall"]
+            shown = [("all factors together", None, o)] + [(f["name"], f["slopes"], f) for f in b["factors"]
+                                                           if f["p_holm"] < lab.ALPHA]
+            for name, slopes, t in shown:
+                row = table.rowCount()
+                table.insertRow(row)
+                p_ = t.get("p_holm", t["p"])
+                same = "no — " + _q(p_).replace("q", "p") if p_ < lab.ALPHA else "yes, within chance"
+                for j, v in enumerate([_short(b["grader"]), name,
+                                       " → ".join(f"{math.exp(x):.2f}" for x in slopes) if slopes else "",
+                                       same]):
+                    item = QTableWidgetItem(v)
+                    item.setToolTip(f"Steps: {' ; '.join(steps)}\nWald χ² {t['chi2']:.1f} on {t['df']} df, p {t['p']:.2g}"
+                                    + ("" if len(b["thresholds"]) == b["of"] else
+                                       f"\n{b['of'] - len(b['thresholds'])} step(s) left out: a factor never seen "
+                                       "beyond them"))
+                    table.setItem(row, j, item)
+            broken += [(b["grader"], f["name"]) for f in b["factors"] if f["p_holm"] < lab.ALPHA]
+            csv_rows += [[b["book"], b["grader"], f["name"], f["chi2"], f["df"], f["p"], f["p_holm"],
+                          " ".join(f"{math.exp(x):.4f}" for x in f["slopes"])] for f in b["factors"]]
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        table.setFixedHeight(min(14, table.rowCount()) * 30 + 34)
+        if broken:
+            def say(n: str) -> str:
+                return (f"a weakest narrator who is {n[len('Weakest: '):].lower()}" if n.startswith("Weakest: ")
+                        else n.lower())
+            names = sorted({f for _g, f in broken})
+            who = sorted({_short(g) for g, _f in broken})
+            headline = ("The hadith model gives each factor one weight for every step of the grades; for "
+                        + " and ".join(html.escape(w) for w in who) + ", "
+                        + " and ".join(f"<i>{html.escape(say(n))}</i>" for n in names)
+                        + " weigh differently from step to step.")
+        else:
+            headline = "The hadith model's shape holds: each factor weighs the same at every step of the grades."
+        self._lab_finding(
+            "Does the model's shape hold?", headline, [table],
+            "The hadith model (an ordinal, proportional-odds regression) gives each factor ONE weight for every step of "
+            "the grades — from sahih to hasan as from hasan to da'if. Brant's test fits each step on its own and asks "
+            "whether the weights differ beyond chance (Wald χ², Holm-adjusted over the factors). Where they do, the "
+            "odds ratios at each step show how: a factor that weighs more at the later step decides between hasan and "
+            "da'if more than between sahih and hasan. The model's odds ratio is then an average of the steps, still "
+            "telling the direction. A step a factor never reaches cannot be estimated and is left out.",
+            (["book", "scholar", "factor", "chi2", "df", "p", "p holm", "odds ratio at each step"], csv_rows))
+
+    def _lab_narrators(self, m: dict) -> None:
+        names = m["names"]
+        cell = (m["cells"][names.index("Ibn Hajar's rank")][names.index("Times in the chains")]
+                if "Ibn Hajar's rank" in names and "Times in the chains" in names else None)
+        if cell and cell.get("rho") is not None and cell.get("q", 1) < lab.ALPHA:
+            headline = (f"The narrators the chains use most are the {'stronger' if cell['rho'] < 0 else 'weaker'} ones "
+                        f"(ρ {cell['rho']:+.2f} between Ibn Hajar's rank and how often they appear).")
+        else:
+            a, b, rho, *_rest = lab.pairs_table(m)[0]
+            headline = f"Among the narrators, {html.escape(a.lower())} and {html.escape(b.lower())} go together most (ρ {rho:+.2f})."
+        self._finding(
+            "lab", "The narrators' measures", headline,
+            [_label(f"{m['people']:,} narrators identified in the chains; {m['complete']:,} with every measure known "
+                    "(the partial view uses only these).", "Caption"),
+             self._switchable(m, names, QSize(92, 46), 190)],
+            "<br>".join(f"<b>{html.escape(n)}</b>{' — ' + html.escape(e) if e else ''}" for n, e in zip(names, m["explain"]))
+            + "<br><br>Rank runs from the Companions (1) to the liars (12), so a NEGATIVE ρ with it means the more of the "
+              "other, the stronger the narrator. Generation and year of death move together by their nature; held equal, "
+              "each shows what the other does not.",
+            (["a", "b", "rho alone", "n", "p", "q"], lab.pairs_table(m)))
+
+    def _lab_books(self, comparisons: list[dict]) -> None:
+        table = QTableWidget(0, 5)
+        table.setHorizontalHeaderLabels(["Measure", "Kruskal–Wallis", "Effect (ε²)", "Pairs that differ",
+                                         "Furthest apart (Cliff's δ)"])
+        table.verticalHeader().hide()
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        rows = []
+        strongest = None
+        for c in comparisons:
+            kw = c["kruskal"]
+            if not kw:
+                continue
+            far = max(c["pairs"], key=lambda p: abs(p["delta"])) if c["pairs"] else None
+            if far and far["p_holm"] < lab.ALPHA and (strongest is None or abs(far["delta"]) > abs(strongest[1]["delta"])):
+                strongest = (c["measure"], far)
+            differ = sum(p["p_holm"] < lab.ALPHA for p in c["pairs"])
+            row = table.rowCount()
+            table.insertRow(row)
+            for j, v in enumerate([c["measure"], f"H {kw['H']:.1f}, {_q(kw['p']).replace('q', 'p')}",
+                                   f"{kw['epsilon2']:.3f}", f"{differ} of {len(c['pairs'])}",
+                                   f"{far['delta']:+.2f}  ({far['a']} / {far['b']})" if far else "—"]):
+                table.setItem(row, j, QTableWidgetItem(v))
+            for p in c["pairs"]:
+                rows.append([c["measure"], p["a"], p["b"], p["U"], p["z"], p["p"], p["p_holm"], p["delta"]])
+        if not table.rowCount():
+            return
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        table.setFixedHeight(table.rowCount() * 30 + 34)
+        if strongest:
+            m_, p = strongest
+            headline = (f"The books differ most in {html.escape(m_.lower())}: {html.escape(p['a'])} against "
+                        f"{html.escape(p['b'])}, Cliff's δ {p['delta']:+.2f}.")
+        else:
+            headline = ("The books' chains cannot be told apart in "
+                        + ", ".join(html.escape(c["measure"].lower()) for c in comparisons if c["kruskal"]) + ".")
+        self._finding(
+            "lab", "Are the books different?", headline, [table],
+            "Kruskal–Wallis asks whether the books' chains could come from one distribution (ε² is its size: 0.01 small, "
+            "0.06 medium, 0.14 large). Mann–Whitney compares each pair, Holm-adjusted; Cliff's δ is how often a chain of "
+            "the first book is above one of the second minus how often it is below (−1 … +1). Weakest narrator: Ibn "
+            "Hajar's rank group, higher is weaker.",
+            (["measure", "a", "b", "U", "z", "p", "p holm", "cliffs delta"], rows))
 
     def _books(self, r: dict) -> None:
         b = r["books"]

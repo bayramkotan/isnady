@@ -3,6 +3,25 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Correlations and tests** (Statistics → Correlations and tests; `iy stats lab [--book KEY] [--csv DIR]`): every
+  measure against every other, by rank. For the hadith of a book: the factors of the best chain (weakest narrator,
+  further weak narrators, length, names not identified, chains in the book, narrations elsewhere, stopping short of
+  the Prophet, a doubtful link), the hadith's place in the book, every scholar's grade and how far the scholars are
+  apart — Spearman's ρ with Benjamini–Hochberg q-values, and the partial ρ with all the other factors held equal:
+  what each factor says of each scholar's grade on its own (the rank counterpart of the hadith model). For the
+  narrators: Ibn Hajar's rank, generation, year of death, times in the chains, teachers, students, PageRank. The
+  scholars against each other: how closely their grades follow one another, and Stuart–Maxwell's test of whether
+  one grades higher overall on the same hadith (Holm-adjusted). The books against each other: Kruskal–Wallis with
+  ε², pairwise Mann–Whitney with Cliff's δ (Holm). The hadith model's shape tested: Brant's test of the
+  proportional-odds assumption — does each factor weigh the same at every step of the grades? — overall and factor by
+  factor, with the odds ratio at each step (on Sunan Abi Dawud it does not hold for further weak narrators, who weigh
+  more between hasan and da'if than between sahih and hasan). Every matrix switches between each pair alone and the others held
+  equal; a pair that could be chance is outlined, not coloured; every figure on hover and every table as CSV.
+  Computed in pure Python and checked against SciPy and statsmodels (the same values to 1e-14); Brant's test checked
+  by simulation (5% false alarms when the shape holds, every violation found when it does not).
+
 ## [0.1.7] — 2026-10-08
 
 **Statistics in depth: the narrators, the chains and the grades measured, each finding said in a sentence.**
