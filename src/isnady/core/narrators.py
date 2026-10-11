@@ -872,4 +872,4 @@ def hadiths_of(conn: sqlite3.Connection, person_id: int, limit: int = 60) -> tup
            JOIN collections c ON c.id = h.collection_id
            WHERE l.person_id = ? ORDER BY {books.order_sql(conn)}, h.number_sort LIMIT ?""",
         (person_id, limit)).fetchall()
-    return [{"hadith_id": r[0], "book": r[1], "number": r[2]} for r in rows], total
+    return [{"hadith_id": r[0], "book": books.title(r[4], r[1]), "number": r[2]} for r in rows], total

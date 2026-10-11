@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.1.9-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.2.0-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.1.9-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.2.0-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.1.9).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.2.0).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -569,9 +569,9 @@ chain (mutawatir, mursal, munqati', mu'allaq, mudallas …), chain and text (mut
 takhrij, madar), the ways of receiving (sama', ijaza, haddathana, 'an), judging narrators (the
 twelve ranks of Ibn Hajar, thiqa, saduq, majhul, matruk, mudallis), generations, the parts of an
 Arabic name, the Imami grades (sahih, hasan, muwaththaq, da'if), the books, and isnady's own
-measures. Each with its Arabic, a one-line and a longer definition in **English or Turkish**,
-related terms one click away, and its source. The grades on every result explain themselves when
-you point at them. `iy term mursal --lang tr`.
+measures. Each with its Arabic, a one-line and a longer definition in **English, Turkish or Arabic** — in the interface language when the glossary
+has it — related terms one click away, and its source. The grades on every result explain themselves
+when you point at them. `iy term mursal --lang tr`, `iy term mursal --lang ar`.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/learn.png" alt="Learn — the term mursal: Arabic, definition, related terms and source" width="850">
@@ -680,7 +680,7 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | `iy scholar [NAME]` | `iy scholar albani` | The scholars in the data, or one of them with his measured statistics |
 | `iy tahric BOOK NUMBER` | `iy tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |
 | `iy stats [SECTION]` | `iy stats graders --book abudawud` | `corpus`, `narrators`, `chains`, `grades`, `books`, `graders`, `model`, `lab`; `--csv DIR`, `--recompute` |
-| `iy term [NAME]` | `iy term --search tadlis` | The glossary, English or Turkish (`--lang tr`) |
+| `iy term [NAME]` | `iy term --search tadlis` | The glossary, English, Turkish or Arabic (`--lang tr`, `--lang ar`) |
 | `iy ai build` | `iy ai status` | Learn the meaning index from the imported texts |
 | `iy catalog list` | `iy catalog list --repo lk-hadith-corpus` | The books of the repository in use, and your own, with what is imported |
 | `iy catalog import ID` | `iy catalog import sahih_muslim --language tur` | Import a book; `--all` imports every one; `remove`, `add`, `delete` manage the list |

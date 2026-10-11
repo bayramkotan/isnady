@@ -13,6 +13,7 @@ from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import (
     QComboBox,
     QFrame,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -26,13 +27,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from isnady.core import i18n
 from isnady.core import narrators as core_narrators
 from isnady.core.i18n import N_, n_, tr
 from isnady.core import shia_rijal, traditions
 from isnady.core.names import latin
 from isnady.core.rijal import BOOK_MARKS, RANK_LABELS, TABAQA_LABELS, display_name, short_name
 from isnady.gui import theme
-from isnady.gui.name_card import NameCard
+from isnady.gui.name_card import SPELLED, NameCard
 from isnady.gui.widgets import FlowLayout
 
 LIST_LIMIT = 200
@@ -189,6 +191,7 @@ class NarratorsPage(QWidget):
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidget(self.detail)
+        self.detail_scroll = scroll
         self.left = left
         root = QHBoxLayout(self)
         root.setContentsMargins(24, 22, 24, 22)
@@ -321,7 +324,9 @@ class NarratorsPage(QWidget):
             known = view["reading"] or view["full_reading"]
             if known:
                 title = _label(fm_ui.elidedText(known, Qt.TextElideMode.ElideRight, 190), "RowTitle", wrap=False)
-                title.setToolTip(tr("{full_reading}\nknown by {how}", full_reading=view['full_reading'], how=view['how']) if view["how"] else view["full_reading"])
+                tip = (tr("{full_reading}\nknown by {how}", full_reading=view['full_reading'], how=tr(view['how']))
+                       if view["how"] else view["full_reading"])
+                title.setToolTip(tip + ("\n" + tr(SPELLED) if view.get("spelled") else ""))
                 top.addWidget(title, 1)
             arabic_known = _arabic("", 0.7, bold=not known)
             arabic_known.setWordWrap(False)
@@ -478,7 +483,7 @@ class NarratorsPage(QWidget):
             arabic = theme.script_font("arabic", factor=0.75)
             line = _label(f"<b>{html.escape(tr(v['critic_name']))}</b>, <i>{html.escape(v['work'])}</i>:&nbsp; "
                           f"<span style='font-family:\"{arabic.family()}\"; font-size:{arabic.pointSizeF():.1f}pt'>"
-                          f"{html.escape(v['phrase'])}</span>{rank}", "NodeVerdict", rich=True)
+                          f"{html.escape(v['phrase'])}</span>{i18n.mark()}{rank}", "NodeVerdict", rich=True)
             from isnady.core import learn
 
             if v["rank_scheme"] == "shia":
@@ -563,11 +568,30 @@ class NarratorsPage(QWidget):
         hadith, total = core_narrators.hadiths_of(conn, person_id)
         card, box = self._card(tr("In the chains of {total:,} hadith", total=total))
         if hadith:
+            # one table of equal columns, so the links stand in straight columns; the book named once per run
             wrap = QWidget()
-            flow = FlowLayout(wrap, spacing=6)
+            grid = QGridLayout(wrap)
+            grid.setContentsMargins(0, 0, 0, 0)
+            grid.setHorizontalSpacing(14)
+            grid.setVerticalSpacing(2)
+            columns = 6
+            cell = 0
+            last_book = None
             for h in hadith:
-                flow.addWidget(_link(f"{h['book']} {h['number']}", lambda _c=False, hid=h["hadith_id"]: self.open_chain.emit(hid),
-                                     tr("Open this chain")))
+                if h["book"] != last_book:
+                    if cell % columns:
+                        cell += columns - cell % columns            # a new book starts a new row
+                    head = _label(html.escape(h["book"]), "FilterLabel", wrap=False, rich=True)
+                    grid.addWidget(head, cell // columns, 0, 1, columns)
+                    cell += columns
+                    last_book = h["book"]
+                link = _link(tr("hadith {number}", number=h["number"]),
+                             lambda _c=False, hid=h["hadith_id"]: self.open_chain.emit(hid),
+                             f"{h['book']} {h['number']}\n" + tr("Open this chain"))
+                grid.addWidget(link, cell // columns, cell % columns, Qt.AlignmentFlag.AlignLeft)
+                cell += 1
+            for c in range(columns):
+                grid.setColumnStretch(c, 1)
             box.addWidget(wrap)
             if total > len(hadith):
                 box.addWidget(_label(tr("… and {value:,} more.", value=total - len(hadith)), "Caption"))

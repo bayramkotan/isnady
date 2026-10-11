@@ -114,6 +114,27 @@ def _full_names() -> dict[str, str]:
     return _FULL
 
 
+_TITLES: dict[str, str] | None = None
+
+
+def title(key: str, fallback: str = "") -> str:
+    """The book's title as isnady writes it ("Sahih al-Bukhari"), whatever the source that was imported called it
+    ("Sahih al Bukhari"); the compiler after a dash is left out. The name in the database for a book isnady
+    does not know."""
+    global _TITLES
+    if _TITLES is None:
+        _TITLES = {}
+        try:
+            from isnady.core.repositories import bundled
+
+            for e in bundled().get("isnady", {}).get("entries", []):
+                if e.get("book") and e.get("title"):
+                    _TITLES[e["book"]] = e["title"].split(" — ")[0]
+        except Exception:      # a broken install must not stop a page
+            pass
+    return _TITLES.get(key) or fallback or key
+
+
 def full_name(key: str) -> str:
     """The name a book is written as in files and folders: its full title with its compiler (never a bare name)."""
     return _full_names().get(key, key)

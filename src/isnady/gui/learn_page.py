@@ -42,7 +42,10 @@ class LearnPage(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setObjectName("Page")
-        self.lang = config.state_get("learn.language") or (i18n.language() if i18n.language() in learn.LANGUAGES else "en")
+        # the glossary speaks the interface language when it has it; another one chosen here is kept for the session
+        saved = config.state_get("learn.language")
+        self.lang = (i18n.language() if i18n.language() in learn.LANGUAGES
+                     else saved if saved in learn.LANGUAGES else "en")
         self._current = None
 
         left = QFrame()
@@ -117,15 +120,17 @@ class LearnPage(QWidget):
             members = [t for t in learn.terms() if t["cat"] == key and t["id"] in found]
             if not members:
                 continue
-            head = QTreeWidgetItem([names[self.lang]])
+            head = QTreeWidgetItem([learn.category(key, self.lang)])
             font = head.font(0)
             font.setBold(True)
             head.setFont(0, font)
             self.tree.addTopLevelItem(head)
             for t in members:
-                item = QTreeWidgetItem([f"{learn.name(t, self.lang)}   {t['ar']}"])
+                shown = learn.name(t, self.lang)
+                second = t["ar"] if self.lang != "ar" else (t["en"] if t["ar"] else "")
+                item = QTreeWidgetItem([f"{shown}   {second}" if second and second != shown else shown])
                 item.setData(0, Qt.ItemDataRole.UserRole, t["id"])
-                item.setToolTip(0, t["short"][self.lang])
+                item.setToolTip(0, learn.text(t, "short", self.lang))
                 head.addChild(item)
             head.setExpanded(True)
 
@@ -150,24 +155,31 @@ class LearnPage(QWidget):
         head.setFont(theme.reading_font(28, bold=True))
         head.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         top.addWidget(head, 1)
-        if t["ar"]:
+        if t["ar"] and self.lang != "ar":
             ar = QLabel(t["ar"])
             ar.setStyleSheet(f"color: {theme.script_color('arabic')}; "
                              f"{theme.font_css(theme.script_font('arabic', bold=True, factor=1.3))}")
             ar.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             top.addWidget(ar)
         cb.addLayout(top)
-        other = "tr" if self.lang == "en" else "en"
-        cat = learn.categories()[t["cat"]][self.lang]
+        cat = learn.category(t["cat"], self.lang)
+        others = [f"{learn.LANGUAGES[o]}: <i>{html.escape(learn.name(t, o))}</i>" for o in learn.LANGUAGES
+                  if o != self.lang and o != "ar"]   # the Arabic stands large beside the name
         cb.addWidget(_label(f"<span style='color:{th.gold}'>●</span> {html.escape(cat)} &nbsp;·&nbsp; "
-                            f"{learn.LANGUAGES[other]}: <i>{html.escape(learn.name(t, other))}</i>", "Caption", rich=True))
-        short = _label(t["short"][self.lang], "Lead")
-        short.setFont(theme.reading_font(15, bold=True))
+                            + " &nbsp;·&nbsp; ".join(others), "Caption", rich=True))
+        arabic = self.lang == "ar"
+        short = _label(learn.text(t, "short", self.lang), "Lead")
+        short.setFont(theme.script_font("arabic", bold=True, factor=0.9) if arabic else theme.reading_font(15, bold=True))
         cb.addWidget(short)
-        if t["long"][self.lang]:
-            long = _label(t["long"][self.lang], "Lead")
-            long.setFont(theme.reading_font(14))
+        long_text = learn.text(t, "long", self.lang)
+        if long_text:
+            long = _label(long_text, "Lead")
+            long.setFont(theme.script_font("arabic", factor=0.85) if arabic else theme.reading_font(14))
             cb.addWidget(long)
+        if arabic:                                   # Arabic reads from the right, whatever the interface
+            for label in (short, *([long] if long_text else [])):
+                label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
+                label.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         if t["source"]:
             cb.addWidget(_label(f"<b>{tr('Source')}</b>: {html.escape(t['source'])}", "Caption", rich=True))
         self.box.addWidget(card)
@@ -181,10 +193,11 @@ class LearnPage(QWidget):
             flow = FlowLayout(flow_holder)
             for rid in t["related"]:
                 r = learn.get(rid)
-                chip = QPushButton(f"{learn.name(r, self.lang)}  {r['ar']}")
+                shown = learn.name(r, self.lang)
+                chip = QPushButton(f"{shown}  {r['ar']}" if r["ar"] and r["ar"] != shown else shown)
                 chip.setObjectName("Chip")
                 chip.setCursor(Qt.CursorShape.PointingHandCursor)
-                chip.setToolTip(r["short"][self.lang])
+                chip.setToolTip(learn.text(r, "short", self.lang))
                 chip.clicked.connect(lambda _c=False, x=rid: self.show_term(x))
                 flow.addWidget(chip)
             rb.addWidget(flow_holder)

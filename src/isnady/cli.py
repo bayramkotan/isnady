@@ -870,7 +870,7 @@ def cmd_term(args) -> int:
     if args.search or not args.name:
         found = learn.search(args.search or "", lang)
         for t in found:
-            print(f"  {t['id']:16} {learn.name(t, lang):30} {t['ar']:18} {t['short'][lang][:70]}")
+            print(f"  {t['id']:16} {learn.name(t, lang):30} {t['ar']:18} {learn.text(t, 'short', lang)[:70]}")
         print(f"{len(found)} term(s)")
         return 0
     found = learn.get(args.name) or next(iter(learn.search(args.name, lang)), None)
@@ -878,10 +878,11 @@ def cmd_term(args) -> int:
         print(f"No term '{args.name}'. Try: iy term --search {args.name}", file=sys.stderr)
         return 1
     t = found
-    print(f"{learn.name(t, lang)}  {t['ar']}   [{learn.categories()[t['cat']][lang]}]")
-    print(f"  {t['short'][lang]}")
-    if t["long"][lang]:
-        print(f"  {t['long'][lang]}")
+    arabic = f"  {t['ar']}" if t["ar"] and lang != "ar" else ""
+    print(f"{learn.name(t, lang)}{arabic}   [{learn.category(t['cat'], lang)}]")
+    print(f"  {learn.text(t, 'short', lang)}")
+    if learn.text(t, "long", lang):
+        print(f"  {learn.text(t, 'long', lang)}")
     if t["related"]:
         print("  related: " + ", ".join(learn.name(learn.get(r), lang) for r in t["related"]))
     if t["source"]:
@@ -1270,7 +1271,7 @@ def build_parser() -> argparse.ArgumentParser:
     tm = sub.add_parser("term", help="the glossary: a term of hadith and its sciences, or a search")
     tm.add_argument("name", nargs="?", help="e.g. sahih, mursal, tadlis, kunya")
     tm.add_argument("--search", help="words to look for in names and definitions")
-    tm.add_argument("--lang", choices=["en", "tr"], default="en")
+    tm.add_argument("--lang", choices=["en", "tr", "ar"], default="en")
     tm.set_defaults(func=cmd_term)
     sh = sub.add_parser("shortcut", help="put isnady on the desktop and in the applications menu, with its icon")
     sh.add_argument("--no-desktop", action="store_true", help="only the applications menu")

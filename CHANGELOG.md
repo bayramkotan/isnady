@@ -3,7 +3,26 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.2.0] — 2026-10-11
+
+**The interface in Turkish and Arabic, with 24 languages to choose from; every narrator's name in Latin letters;
+the glossary in Arabic; the Shia scholars on the Hadith Scholars page and the Statistics on two roads — the Sunni
+and the Shia books each measured in its own terms.**
+
+- **Every narrator's name in Latin letters.** A name with a word isnady's list of names did not know was shown
+  only in Arabic — 2,863 of 10,090 narrators (Yazid b. Ruman, Isma'il b. Raja', 'Ali b. Ri'ab, Jamil b. Darraj,
+  'Ali b. Mahziyar, al-Miswar b. Makhrama …), in the Narrators list, the teachers and students, Hadith Scholars and
+  Statistics. The list has 395 more words (Turkish and English, the most frequent first), and a word still unknown
+  is spelled letter by letter from the Arabic (`names.spell`): the consonants are the Arabic's, the short vowels a
+  guess, and the name card says so ("Latin letters spelled from the Arabic", the reason on hover). Words that end a
+  name — "غير منسوب", "وهو", reading notes — stop it instead of being read as names.
+- **"In the chains of … hadith" in straight columns**, the book named once above its own hadith ("Sahih al-Bukhari"
+  as isnady writes it, whatever the imported source called it — `books.title`), each link "hadith 1390.3".
+- **Learn in Arabic**: the 81 terms with their definitions in Arabic too, the categories, the search; the glossary
+  opens in the interface language (English, Türkçe, العربية), Arabic right to left. `iy term mursal --lang ar`.
+- Fixed: in Turkish, "rank 3 of 12" after the critic's Arabic words was turned around ("12 ● ثقة dereceden 3.");
+  "their client" and "(place)" are translated; the dates of the scholars ("d. 279 AH (892 CE)") and the books'
+  facts (kind, hadith, chapters, the language boxes) too.
 
 - **The interface in Türkçe and العربية** (sidebar, or View → Interface Language). Choosing Türkçe used to change
   only how names are read; now menus, every page, buttons, messages, explanations, the statistics (findings,

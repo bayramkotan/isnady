@@ -12,6 +12,7 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
+from isnady.core import i18n
 from isnady.core import isnad as core_isnad
 from isnady.core.i18n import tr
 from isnady.gui import theme
@@ -233,7 +234,7 @@ class ChainNode(QWidget):
                 arabic = theme.script_font("arabic", factor=0.68)
                 verdict = QLabel(f"{html.escape(_critic(v))}: <span style='font-family:\"{arabic.family()}\"; "
                                  f"font-size:{arabic.pointSizeF():.1f}pt'>{html.escape(_shorten(v['phrase'], 70))}</span>"
-                                 f"{rank_text}")
+                                 f"{i18n.mark()}{rank_text}")
                 verdict.setObjectName("NodeVerdict")
                 verdict.setTextFormat(Qt.TextFormat.RichText)
                 verdict.setWordWrap(True)

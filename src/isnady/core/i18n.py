@@ -156,3 +156,9 @@ def dates(text: str) -> str:
     if not text or language() == "en":
         return text
     return _DATE_WORDS.sub(lambda m: t(_DATE_LABELS[m.group(1)]), text)
+
+
+def mark() -> str:
+    """The direction mark of the interface (LRM, or RLM for a right-to-left language): put after Arabic words that
+    are followed by a number, so "ثقة" and "rank 3 of 12" keep their order."""
+    return "\u200f" if rtl() else "\u200e"

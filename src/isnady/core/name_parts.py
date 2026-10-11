@@ -10,7 +10,7 @@ and phrases in the entry ("يلقب", "المعروف ب…"). Unrecognised word
 import re
 
 from isnady.core.i18n import N_, t
-from isnady.core.names import latin
+from isnady.core.names import reading as latin_reading
 from isnady.core.normalize import normalize
 
 PLACES = {normalize(w) for w in (
@@ -45,7 +45,8 @@ def _r(words: list[str]) -> str:
     """The English reading of a part, written as inside a name: "al-Kahili", "b. Mihran", not "Al-…", "B. …"."""
     from isnady.core.language import ui_language
 
-    text = latin(" ".join(words), ui_language(), max_words=8) or ""     # the interface language (L1)
+    text = latin_reading(" ".join(words), ui_language(), max_words=8)[0]  # the interface language (L1); a word
+    # the word list does not know is spelled letter by letter (names.spell)
     if re.match(r"^(Al|El|Ez|Es|Et|Ed|En|Er|Eş|Ed)-|^B\. ", text):     # Turkish articles too: ez-Zührî
         text = text[0].lower() + text[1:]
     return text
@@ -208,8 +209,16 @@ def present(parts: dict) -> dict:
         rows.append(("nisba", [(" ".join(p), _r(p) + (" " + t("(place)") if normalize(p[0]) in PLACES else ""))
                                for p in parts["nisba"]], kind == "nisba"))
     if parts["wala"]:
-        rows.append(("wala", [(" ".join(p), "their client" if p[0] == "مولاهم" else _r(p)) for p in parts["wala"]], False))
+        rows.append(("wala", [(" ".join(p), t("their client") if p[0] == "مولاهم" else _r(p)) for p in parts["wala"]], False))
     if parts["also"]:
         rows.append(("also", [(" ".join(p), _r(p)) for p in parts["also"]], False))
     return {"arabic": arabic or " ".join(full), "reading": reading, "kind": kind,
-            "how": t(KNOWN_BY.get(kind, "")), "full_arabic": " ".join(full), "full_reading": _r(full), "rows": rows}
+            "how": t(KNOWN_BY.get(kind, "")), "full_arabic": " ".join(full), "full_reading": _r(full), "rows": rows,
+            "spelled": _spelled(words) or _spelled(full)}
+
+
+def _spelled(words: list[str]) -> bool:
+    """True when a word of these was spelled letter by letter, its short vowels guessed."""
+    from isnady.core.language import ui_language
+
+    return bool(words) and latin_reading(" ".join(words), ui_language(), max_words=8)[1]

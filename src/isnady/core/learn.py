@@ -8,7 +8,7 @@ from importlib import resources
 
 from isnady.core.normalize import normalize
 
-LANGUAGES = {"en": "English", "tr": "Türkçe"}
+LANGUAGES = {"en": "English", "tr": "Türkçe", "ar": "العربية"}
 # grade groups of core.grades → the term that explains them
 GROUP_TERM = {4: "sahih", 3: "hasan", 2: "daif", 1: "daif", 0: "mawdu"}
 
@@ -45,6 +45,12 @@ def name(term: dict, lang: str | None = None) -> str:
     return term.get(_lang(lang)) or term["en"]
 
 
+def category(key: str, lang: str | None = None) -> str:
+    """A category's name in a language, English where it has none."""
+    names = categories()[key]
+    return names.get(_lang(lang)) or names["en"]
+
+
 def text(term: dict, part: str, lang: str | None = None) -> str:
     """term's "short" or "long" text in a language, English where it has none yet."""
     return term[part].get(_lang(lang)) or term[part].get("en", "")
@@ -58,7 +64,7 @@ def search(text: str, lang: str = "en") -> list[dict]:
     hits = []
     for t in terms():
         names = normalize(" ".join([t["en"], t["tr"], t["ar"], t["id"].replace("_", " ")]))
-        body = normalize(" ".join([t["short"]["en"], t["short"]["tr"], t["long"]["en"], t["long"]["tr"]]))
+        body = normalize(" ".join(list(t["short"].values()) + list(t["long"].values())))
         if all(w in names for w in words):
             hits.append((0, t))
         elif all(w in names or w in body for w in words):

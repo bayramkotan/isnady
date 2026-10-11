@@ -10,6 +10,9 @@ from isnady.core.name_parts import PART_LABELS
 from isnady.core.i18n import N_, tr
 from isnady.gui import theme
 
+SPELLED = N_("A word of this name is not in isnady's list of names yet, so it is spelled letter by letter from the "
+             "Arabic: the consonants are right, the short vowels (not written in Arabic) are a guess.")
+
 EXPLAIN = N_("An Arabic name is made of parts: the <b>name</b> (ism), the <b>lineage</b> (nasab — b. means son of), "
            "the <b>kunya</b> (Abu … , father of …), a <b>by-name</b> (laqab) and <b>nisbas</b> telling where a man "
            "was from, his tribe or his trade. A narrator is usually known by one of them — marked ★.")
@@ -42,6 +45,8 @@ class NameCard(QFrame):
         reading.setFont(theme.reading_font(26, bold=True))
         reading.setStyleSheet(f"color: {t.ink};")
         reading.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        if view.get("spelled"):
+            reading.setToolTip(tr(SPELLED))
         top.addWidget(reading, 1, Qt.AlignmentFlag.AlignVCenter)
         top.addWidget(_arabic(view["arabic"], 1.25, bold=True), 0, Qt.AlignmentFlag.AlignVCenter)
         box.addLayout(top)
@@ -51,6 +56,9 @@ class NameCard(QFrame):
             sub.append(html.escape(view["full_reading"]))
         if view["how"]:
             sub.append(f"<span style='color:{t.gold}'>★</span> " + tr("known by {how}", how=html.escape(tr(view["how"]))))
+        if view.get("spelled"):
+            sub.append(f"<span style='color:{t.muted}'>"
+                       + html.escape(tr("Latin letters spelled from the Arabic")) + "</span>")
         if extra:
             sub.append(extra)
         if sub:
@@ -58,6 +66,8 @@ class NameCard(QFrame):
             line.setObjectName("Lead")
             line.setTextFormat(Qt.TextFormat.RichText)
             line.setWordWrap(True)
+            if view.get("spelled"):
+                line.setToolTip(tr(SPELLED))
             box.addWidget(line)
 
         if view["rows"]:
