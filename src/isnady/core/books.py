@@ -76,7 +76,9 @@ def order_sql(conn: sqlite3.Connection, column: str = "c.key") -> str:
     sorted alphabetically put al-Kafi and 'Uyun before Sahih al-Bukhari)."""
     keys = [r["key"] for r in all_books(conn, include_inactive=True)]
     if not keys:
-        return "0"
+        # no book known yet (a new installation): by key. Never a bare number — "ORDER BY 0" is read as a column
+        # number and fails ("1st ORDER BY term out of range"), which stopped isnady at start on a new computer
+        return column
     whens = " ".join(f"WHEN '{k.replace(chr(39), chr(39) * 2)}' THEN {i}" for i, k in enumerate(keys))
     return f"CASE {column} {whens} ELSE {len(keys)} END"
 

@@ -3,8 +3,12 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.2.4] — 2026-10-11
 
+- **Fixed: isnady stopped at start on a new computer** ("1st ORDER BY term out of range"). When the database held
+  books whose texts were not (yet) imported — an import cut short, say — the book order was empty and the SQL read
+  "ORDER BY 0" as a column number. The order now falls back to the book key; isnady opens and Data sources can
+  import the books again.
 - **The sidebar in a new order, and in your own:** Books comes second, after Search, and Learn last (Search, Books,
   Narrators, Isnad Chains, Hadith Scholars, Genealogies, Statistics, Bookmarks, Learn). **Preferences → Sidebar**
   reorders the sections — drag one to its place, or move it with the arrows; the page in view stays, Ctrl+1 …
