@@ -75,6 +75,7 @@ class NarratorsPage(QWidget):
     open_chain = Signal(int)        # hadith id → Isnad Chains page
     open_sources = Signal()         # no rijal work yet → Data Sources
     open_in_book = Signal(int)      # person id → the rijal work, at his entry (Books)
+    open_genealogy = Signal(int, str)   # person id, "family" | "learning" → Genealogies (GEN1)
 
     def __init__(self, connection_getter, parent=None, tradition: str | None = None) -> None:
         """tradition: the narrators shown first — "sunni", "shia", or None for both. The reader switches between
@@ -433,7 +434,21 @@ class NarratorsPage(QWidget):
         shia = (who.get("tradition") or "sunni") == "shia"
 
         # the name: known-as, full name, the parts (NM1)
-        self.detail_box.addWidget(NameCard(who["name_view"]))
+        from isnady.core import bookmarks
+        from isnady.gui.bookmarks_page import BookmarkButton
+
+        ref = bookmarks.narrator_ref(conn, person_id)
+        self.detail_box.addWidget(NameCard(who["name_view"], star=BookmarkButton("narrator", *ref) if ref else None))
+        trees = QHBoxLayout()
+        trees.addWidget(_label("🌳 " + tr("Genealogies:"), "Caption", wrap=False))
+        for text, which, tip in ((tr("his family"), "family", tr("His forefathers and descendants among the narrators, "
+                                                                 "read from their names")),
+                                 (tr("his line of learning"), "learning", tr("His teachers above him and his students "
+                                                                             "below him, from the imported chains"))):
+            link = _link(text, lambda _c=False, w=which: self.open_genealogy.emit(person_id, w), tip)
+            trees.addWidget(link)
+        trees.addStretch(1)
+        self.detail_box.addLayout(trees)
 
         # verdicts, tabaqa, death
         card, box = self._card(tr("What the critics say"))

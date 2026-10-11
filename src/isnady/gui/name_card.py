@@ -30,7 +30,7 @@ def _arabic(text: str, factor: float, bold: bool = False, color: str | None = No
 class NameCard(QFrame):
     """[known-as: Arabic | reading]  [full name · known by …]  [ the parts, one per row ]  [what the parts mean]"""
 
-    def __init__(self, view: dict, extra: str = "", parent: QWidget | None = None) -> None:
+    def __init__(self, view: dict, extra: str = "", parent: QWidget | None = None, star: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setObjectName("Card")
         t = theme.current()
@@ -49,6 +49,8 @@ class NameCard(QFrame):
             reading.setToolTip(tr(SPELLED))
         top.addWidget(reading, 1, Qt.AlignmentFlag.AlignVCenter)
         top.addWidget(_arabic(view["arabic"], 1.25, bold=True), 0, Qt.AlignmentFlag.AlignVCenter)
+        if star is not None:                          # ☆: bookmark (BM1)
+            top.addWidget(star, 0, Qt.AlignmentFlag.AlignTop)
         box.addLayout(top)
 
         sub = []

@@ -36,10 +36,13 @@ SECTIONS = [
                                       "and whether each link could have met the next.")),
     ("scholars", N_("Hadith Scholars"), N_("The scholars of hadith: their lives, books, teachers and students, "
                                            "and what their collections contain.")),
+    ("genealogy", N_("Genealogies"), N_("The prophets' lineage, Quraysh and the Prophet's family, a narrator's family "
+                                       "and his line of learning, drawn as trees.")),
     ("books", N_("Books"), N_("The hadith collections in the database and what each source adds.")),
     ("statistics", N_("Statistics"), N_("Narrators, books and grades counted and compared.")),
     ("learn", N_("Learn"), N_("The sciences of hadith: terms, grades, jarh wa ta'dil and the classical works, "
                               "shown on real hadith and real chains.")),
+    ("bookmarks", N_("Bookmarks"), N_("What you marked with ☆, in folders of your own.")),
 ]
 
 
@@ -152,6 +155,11 @@ class MainWindow(QMainWindow):
         self._books_loaded = False
 
         self.scholars_page = ScholarsPage(self.search_page.connection)
+        from isnady.gui.bookmarks_page import BookmarksPage
+        from isnady.gui.genealogy_page import GenealogyPage
+
+        self.genealogy_page = GenealogyPage(self.search_page.connection)
+        self.bookmarks_page = BookmarksPage(self.search_page.connection)
         for key, label, text in SECTIONS:
             self.nav.addItem(tr(label))
             self.nav.item(self.nav.count() - 1).setSizeHint(QSize(0, 38))
@@ -169,6 +177,10 @@ class MainWindow(QMainWindow):
                 page = self.statistics_page
             elif key == "learn":
                 page = self.learn_page
+            elif key == "genealogy":
+                page = self.genealogy_page
+            elif key == "bookmarks":
+                page = self.bookmarks_page
             else:
                 page = _placeholder(label, text)
             self.pages.addWidget(page)
@@ -202,6 +214,17 @@ class MainWindow(QMainWindow):
         self.statistics_page.open_narrator.connect(self._open_narrator)
         self.search_page.data_changed.connect(lambda: setattr(self, "_statistics_loaded", False))
         self.nav.currentRowChanged.connect(self._load_statistics_when_shown)
+        # GEN1 and BM1
+        self._genealogy_row = [k for k, _l, _t in SECTIONS].index("genealogy")
+        self._learn_row = [k for k, _l, _t in SECTIONS].index("learn")
+        self.nav.currentRowChanged.connect(lambda row: row == self._genealogy_row and self.genealogy_page.ensure())
+        self.genealogy_page.open_narrator.connect(self._open_narrator)
+        self.narrators_page.open_genealogy.connect(self._open_genealogy)
+        self.bookmarks_page.open_hadith.connect(self._open_in_book)
+        self.bookmarks_page.open_narrator.connect(self._open_narrator)
+        self.bookmarks_page.open_scholar.connect(self._open_scholar)
+        self.bookmarks_page.open_term.connect(self._open_term)
+        self.bookmarks_page.open_chapter.connect(self._open_chapter)
         self.nav.currentRowChanged.connect(self.pages.setCurrentIndex)
         self.nav.currentRowChanged.connect(self._retheme_when_shown)
         self.nav.setCurrentRow(0)
@@ -364,6 +387,19 @@ class MainWindow(QMainWindow):
     def _open_scholar(self, scholar_id: str) -> None:
         self.nav.setCurrentRow([k for k, _l, _t in SECTIONS].index("scholars"))
         self.scholars_page.select(scholar_id)
+
+    def _open_genealogy(self, person_id: int, which: str) -> None:
+        self.nav.setCurrentRow(self._genealogy_row)
+        self.genealogy_page.show_person(person_id, which)
+
+    def _open_term(self, term_id: str) -> None:
+        self.nav.setCurrentRow(self._learn_row)
+        self.learn_page.show_term(term_id)
+
+    def _open_chapter(self, chapter_id: int) -> None:
+        self._books_loaded = True
+        self.nav.setCurrentRow(self._books_row)
+        self.books_page.show_chapter(chapter_id)
 
     def _open_chain(self, hadith_id: int) -> None:
         self.nav.setCurrentRow(self._chains_row)

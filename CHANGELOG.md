@@ -3,6 +3,24 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Genealogies** (new section in the sidebar, `iy tree`): four trees one can zoom, move and click — **the
+  prophets** from Adam to Muhammad ﷺ as Ibn Hisham, Ibn Sa'd, al-Tabari and Ibn Kathir give it (unknown generations
+  drawn dashed, reports the sources differ on in a dashed box with their note); **Quraysh and the Prophet's family**
+  ﷺ — the four caliphs' lineages joining his, the Umayyads, the Imams of the Shia; **a narrator's family**, read from
+  the narrators' own names ("X b. Y b. Z" is the son of "Y b. Z" when exactly one narrator of that name, tradition
+  and an earlier or the same generation is found — 1,147 links in the Taqrib and al-Najashi); **a narrator's line of
+  learning**, his teachers above and his students below, from the imported chains. The Narrators page links to his
+  family and his line of learning. `core/genealogy.py`, `assets/genealogy/trees.json`.
+- **Bookmarks** (new section, `iy bookmark`): a ☆ on every hadith card, narrator, scholar, term of Learn and chapter
+  of Books; the Bookmarks page keeps them in folders of your own (nested, one bookmark in many folders, dragged onto
+  a folder), with notes, found by words or kind, opened with a click, exported and imported as a file
+  (`bookmarks.json` in the data folder; a hadith kept by its book and number, so it survives a new import).
+- **Learn in colour**: each category with its colour and sign — chips above the list (one category alone with a
+  click), dots before the terms, the band of the card, the "In short" box, the related terms; the card reads In
+  short, In detail, source, related terms, more of the same category.
+
 ## [0.2.1] — 2026-10-11
 
 **Book and chapter titles in Turkish and Arabic, statistics tables that can be read, the other languages one

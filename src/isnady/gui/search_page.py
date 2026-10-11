@@ -124,6 +124,13 @@ class ResultCard(QFrame):
             head.addSpacing(10)
             head.addWidget(meaning, 0, Qt.AlignmentFlag.AlignBaseline)
         head.addStretch(1)
+        from isnady.gui.bookmarks_page import BookmarkButton
+
+        first = next((x.text for x in result.texts if x.language != "Arabic"), result.texts[0].text if result.texts else "")
+        head.addWidget(BookmarkButton("hadith", f"{result.collection_key}:{result.number}",
+                                      f"{titles.book(result.collection_key, result.collection_name)} {result.number}",
+                                      " ".join((first or "").split())[:160]))
+        head.addSpacing(6)
         if open_book is not None:
             book = QPushButton(tr("In its book"))
             book.setObjectName("Link")

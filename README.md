@@ -568,8 +568,53 @@ measures. Each with its Arabic, a one-line and a longer definition in **English,
 has it — related terms one click away, and its source. The grades on every result explain themselves
 when you point at them. `iy term mursal --lang tr`, `iy term mursal --lang ar`.
 
+Each of the ten categories has its own colour and sign — on the chips above the list (a click shows that
+category alone), the dot before each term, the band of the term's card, its "In short" box and the chips of its
+related terms; the card reads from the top: the term large with its Arabic, its names in the other languages,
+*In short*, *In detail*, the source, the related terms, and more of the same category to read on.
+
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/learn.png" alt="Learn — the term mursal: Arabic, definition, related terms and source" width="850">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/learn.png" alt="Learn — the term mursal in its category's colour: Arabic, In short, In detail, source, related terms" width="850">
+</p>
+
+---
+
+## 🌳 Genealogies
+
+Four trees, drawn so they can be zoomed, moved and clicked (**Genealogies** in the sidebar, `iy tree`):
+
+| Tree | What it shows |
+|---|---|
+| **The prophets** | From Adam to Muhammad ﷺ as the classical historians give it — Ibn Hisham, Ibn Sa'd, al-Tabari, Ibn Kathir: Nuh, Ibrahim and his sons, the prophets of the Children of Israel, the line of Isma'il to 'Adnan and on to the Prophet ﷺ. A link whose generations are not known is drawn dashed; a report the sources differ on has a dashed box and says so |
+| **Quraysh and the Prophet's family** | From Ka'b b. Lu'ayy: the Prophet's family ﷺ, the lineages of the four caliphs joining his, the Umayyads, and the Imams of the Shia |
+| **A narrator's family** | Read from the narrators' own names: "X b. Y b. Z" is the son of "Y b. Z" when exactly one narrator of that name, of the same tradition and of an earlier or the same generation, is found — over a thousand such links in the Taqrib and al-Najashi (Ibn 'Umar's sons and grandsons, the family of al-Zubayr …). A reading of the names, said so on the page |
+| **A narrator's line of learning** | His teachers above him and theirs, his students below him and theirs, the most frequent at each step, counted from the imported chains |
+
+Click a name for what the sources say about it; a narrator opens on the Narrators page, which has the links to
+his family and his line of learning too. `iy tree prophets`, `iy tree prophets Musa`, `iy tree family "Ibn
+Umar"`, `iy tree learning al-Zuhri --depth 2 --width 4`.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/genealogy.png" alt="Genealogies — the prophets: Ibrahim, his sons Isma'il and Ishaq, Ya'qub and the tribes" width="850">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/genealogy-family.png" alt="Genealogies — a narrator's family read from the narrators' names: 'Umar b. al-Khattab, Ibn 'Umar, Salim and their sons" width="850">
+</p>
+
+---
+
+## ⭐ Bookmarks
+
+Every hadith card, narrator, scholar, term of Learn and chapter of Books has a ☆: one click keeps it among
+your **Bookmarks**. There they live in folders of your own — nested as deep as you like, one bookmark in as
+many folders as you want, dragged onto a folder to file it — each with a note of your own, found by words or by
+kind, opened with a click where it belongs. They are kept in `bookmarks.json` in isnady's data folder (yours
+alone, never published) and can be exported and imported as a file; a hadith is kept by its book and number, so a
+bookmark survives a new import. `iy bookmark add hadith bukhari:1 --folder "Intention/Deeds" --note "…"`,
+`iy bookmark list`, `iy bookmark folders`, `iy bookmark export file.json`.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/bookmarks.png" alt="Bookmarks — folders on the left, a hadith, a narrator, a scholar and a term with their folders and a note" width="850">
 </p>
 
 ---
@@ -676,6 +721,8 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | `iy tahric BOOK NUMBER` | `iy tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |
 | `iy stats [SECTION]` | `iy stats graders --book abudawud` | `corpus`, `narrators`, `chains`, `grades`, `books`, `graders`, `model`, `lab`; `--csv DIR`, `--recompute` |
 | `iy term [NAME]` | `iy term --search tadlis` | The glossary, English, Turkish or Arabic (`--lang tr`, `--lang ar`) |
+| `iy tree WHICH [NAME]` | `iy tree family "Ibn Umar"` | Genealogies: `prophets`, `quraysh`, a narrator's `family`, his line of `learning` (`--depth`, `--width`) |
+| `iy bookmark ACTION` | `iy bookmark add hadith bukhari:1 --folder Prayer` | Bookmarks: `list`, `folders`, `add`, `remove`, `export`, `import` |
 | `iy ai build` | `iy ai status` | Learn the meaning index from the imported texts |
 | `iy catalog list` | `iy catalog list --repo lk-hadith-corpus` | The books of the repository in use, and your own, with what is imported |
 | `iy catalog import ID` | `iy catalog import sahih_muslim --language tur` | Import a book; `--all` imports every one; `remove`, `add`, `delete` manage the list |

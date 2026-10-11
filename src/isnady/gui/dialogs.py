@@ -21,7 +21,7 @@ PYPI_URL = "https://pypi.org/project/isnady/"
 SHORTCUTS = (
     ("Ctrl+F", N_("Find: jump to the search field")),
     ("Enter", N_("Run the search")),
-    ("Ctrl+1 … Ctrl+8", N_("Switch between sections")),
+    ("Ctrl+1 … Ctrl+9", N_("Switch between sections")),
     ("Ctrl++ / Ctrl+− / Ctrl+0", N_("Larger, smaller or default reading text")),
     ("F11", N_("Full screen")),
     ("Ctrl+Q", N_("Quit")),

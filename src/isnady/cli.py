@@ -863,6 +863,120 @@ def cmd_ai(args) -> int:
     return 0
 
 
+def cmd_tree(args) -> int:
+    """The genealogies (GEN1): the prophets, Quraysh, a narrator's family, a narrator's line of learning."""
+    from isnady.core import genealogy
+
+    if args.which in genealogy.WRITTEN:
+        tree = genealogy.written(args.which, "en")
+        if args.name:
+            hits = genealogy.find(tree, args.name)
+            if not hits:
+                print(f"No one named '{args.name}' in this tree.", file=sys.stderr)
+                return 1
+            for n in hits[:5]:
+                line = genealogy.path_to(tree, n.id)
+                print(" → ".join(x.name("en") for x in line))
+                for which in ("note", "disputed"):
+                    if getattr(n, which):
+                        print(f"  {which}: {n.text(which, 'en')}")
+            return 0
+        print(genealogy.as_text(tree, "en"))
+        return 0
+    if not args.name:
+        print("Give a narrator's name: iy tree family \"Ibn Umar\"", file=sys.stderr)
+        return 2
+    from isnady.core import narrators
+
+    conn = _connect()
+    try:
+        rows, _total = narrators.find(conn, args.name)
+        if not rows:
+            print(f"No narrator found for '{args.name}'.", file=sys.stderr)
+            return 1
+        pid = rows[0]["id"]
+        if args.which == "family":
+            tree = genealogy.family(conn, pid)
+            if tree is None:
+                print("No kin among the narrators: no narrator's name makes him a father or a son.")
+                return 0
+        else:
+            tree = genealogy.learning(conn, pid, depth=args.depth, width=args.width)
+        print(genealogy.as_text(tree, "en"))
+        if args.which == "family":
+            print("\n(read from the narrators' names: \"X b. Y b. Z\" is the son of \"Y b. Z\" when exactly one narrator "
+                  "of that name and of an earlier or the same generation is found)")
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_bookmark(args) -> int:
+    """Bookmarks (BM1): list, add, remove, folders, export, import — the same file as the Bookmarks page."""
+    from isnady.core import bookmarks
+
+    store = bookmarks.Store.load()
+    if args.action == "list":
+        folder = store.folder_named(args.folder) if args.folder else None
+        if args.folder and folder is None:
+            print(f"No folder '{args.folder}'.", file=sys.stderr)
+            return 1
+        items = store.in_folder(folder.id) if folder else store.items
+        for i in items:
+            where = ", ".join(store.path_of(f) for f in i.folders)
+            print(f"  {i.id}  [{i.kind}] {i.title}" + (f"   — {where}" if where else "") + (f"\n      ✎ {i.note}" if i.note else ""))
+        print(f"{len(items)} bookmark(s)")
+        return 0
+    if args.action == "folders":
+        def show(parent, depth):
+            for f in store.children(parent):
+                print("  " + "  " * depth + f"📁 {f.name}  ({len(store.in_folder(f.id))})")
+                show(f.id, depth + 1)
+        show(None, 0)
+        return 0
+    if args.action == "add":
+        if not args.kind or not args.ref:
+            print("iy bookmark add KIND REF — kinds: hadith (bukhari:1), narrator (his key), scholar, term, chapter",
+                  file=sys.stderr)
+            return 2
+        title, subtitle, ref = args.title or args.ref, "", args.ref
+        if args.kind in ("hadith", "narrator", "chapter"):
+            conn = _connect()
+            try:
+                resolve = {"hadith": bookmarks.resolve_hadith, "narrator": bookmarks.resolve_narrator,
+                           "chapter": bookmarks.resolve_chapter}[args.kind]
+                target = resolve(conn, args.ref)
+                if target is None:
+                    print(f"No {args.kind} '{args.ref}' in the database.", file=sys.stderr)
+                    return 1
+                make = {"hadith": bookmarks.hadith_ref, "narrator": bookmarks.narrator_ref,
+                        "chapter": bookmarks.chapter_ref}[args.kind]
+                ref, title, subtitle = make(conn, target)
+            finally:
+                conn.close()
+        folder = store.ensure_path(args.folder).id if args.folder else None
+        item = store.add(args.kind, ref, args.title or title, subtitle, folder, args.note or "")
+        store.save()
+        print(f"Bookmarked: {item.title}  ({item.id})")
+        return 0
+    if args.action == "remove":
+        ok = store.remove(args.kind or "")
+        store.save()
+        print("Removed." if ok else "No bookmark with that id (iy bookmark list shows the ids).")
+        return 0 if ok else 1
+    if args.action == "export":
+        store.save(args.kind or "isnady_bookmarks.json")
+        print(f"Written: {args.kind or 'isnady_bookmarks.json'}")
+        return 0
+    if args.action == "import":
+        other = bookmarks.Store.load(args.kind)
+        items, folders = store.merge(other)
+        store.save()
+        print(f"{items} bookmark(s) and {folders} folder(s) added.")
+        return 0
+    return 2
+
+
 def cmd_term(args) -> int:
     from isnady.core import learn
 
@@ -1273,6 +1387,21 @@ def build_parser() -> argparse.ArgumentParser:
     tm.add_argument("--search", help="words to look for in names and definitions")
     tm.add_argument("--lang", choices=["en", "tr", "ar"], default="en")
     tm.set_defaults(func=cmd_term)
+    tr_ = sub.add_parser("tree", help="genealogies: the prophets, Quraysh, a narrator's family, his line of learning")
+    tr_.add_argument("which", choices=["prophets", "quraysh", "family", "learning"])
+    tr_.add_argument("name", nargs="?", help="a narrator (family, learning) or someone to find in the tree")
+    tr_.add_argument("--depth", type=int, default=2, help="learning: steps of teachers and of students (default 2)")
+    tr_.add_argument("--width", type=int, default=4, help="learning: how many at each step (default 4)")
+    tr_.set_defaults(func=cmd_tree)
+    bm = sub.add_parser("bookmark", help="bookmarks in folders: list, folders, add, remove, export, import")
+    bm.add_argument("action", choices=["list", "folders", "add", "remove", "export", "import"])
+    bm.add_argument("kind", nargs="?", help="add: hadith | narrator | scholar | term | chapter; remove: the id; "
+                                            "export/import: the file")
+    bm.add_argument("ref", nargs="?", help="add: bukhari:1, a narrator's key, a scholar's or term's id, bukhari:3")
+    bm.add_argument("--folder", help="a folder, Prayer or Prayer/Friday (made if missing)")
+    bm.add_argument("--title", help="the title to keep (default: isnady's)")
+    bm.add_argument("--note", help="a note of your own")
+    bm.set_defaults(func=cmd_bookmark)
     sh = sub.add_parser("shortcut", help="put isnady on the desktop and in the applications menu, with its icon")
     sh.add_argument("--no-desktop", action="store_true", help="only the applications menu")
     sh.add_argument("--no-menu", action="store_true", help="only the desktop")

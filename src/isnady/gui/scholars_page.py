@@ -273,7 +273,11 @@ class ScholarsPage(QWidget):
         shia = core_scholars.tradition_of(scholar) == "shia"
 
         # the name (NM1), as for every narrator: known-as, full name, the parts
-        self.box.addWidget(NameCard(core_scholars.name_view(scholar)))
+        from isnady.gui.bookmarks_page import BookmarkButton
+
+        view = core_scholars.name_view(scholar)
+        star = BookmarkButton("scholar", scholar["id"], core_scholars.short_name(scholar), scholar.get("arabic", ""))
+        self.box.addWidget(NameCard(view, star=star))
         card, box = self._card()
         facts = [i18n.dates(scholar["dates"])] if scholar["dates"] else []
         facts.append(", ".join(tr(ROLE_TEXT[r]) for r in roles))

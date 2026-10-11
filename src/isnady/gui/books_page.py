@@ -151,7 +151,11 @@ class BooksPage(QWidget):
         self.scroll.setWidget(self.body)
         right = QVBoxLayout()
         right.setSpacing(8)
-        right.addWidget(self.where)
+        where_row = QHBoxLayout()
+        where_row.addWidget(self.where, 1)
+        self.star_box = QHBoxLayout()           # the ☆ of the chapter shown (BM1)
+        where_row.addLayout(self.star_box)
+        right.addLayout(where_row)
         right.addLayout(bar)
         right.addWidget(self.scroll, 1)
         self.more = QPushButton()
@@ -337,6 +341,7 @@ class BooksPage(QWidget):
                               + "</span>" if position else ""))
         self.prev_button.setEnabled(position > 1)
         self.next_button.setEnabled(0 < position < len(self._order))
+        self._chapter_star(chapter_id)
         self._select_in_tree(chapter_id)
         items, total = core_works.leaves(conn, chapter_id)
         wanted = normalize(self.find.text()).split()
@@ -491,6 +496,33 @@ class BooksPage(QWidget):
             if not self._work or self._work["key"] != work["key"]:
                 self.select_work(work["key"])
             self.open_chapter(chapter, focus_person=person_id)
+
+    def _chapter_star(self, chapter_id: int) -> None:
+        while self.star_box.count():
+            w = self.star_box.takeAt(0).widget()
+            if w is not None:
+                w.setParent(None)
+                w.deleteLater()
+        from isnady.core import bookmarks
+        from isnady.gui.bookmarks_page import BookmarkButton
+
+        ref = bookmarks.chapter_ref(self.conn, chapter_id)
+        if ref:
+            self.star_box.addWidget(BookmarkButton("chapter", *ref))
+
+    def show_chapter(self, chapter_id: int) -> None:
+        """Open a chapter by its node (a bookmark)."""
+        conn = self.conn
+        if self.works.count() == 0:
+            self.refresh()
+        node = core_works.node(conn, chapter_id)
+        if node is None:
+            return
+        work = next((w for w in core_works.list_works(conn) if w["id"] == node["work_id"]), None)
+        if work:
+            if not self._work or self._work["key"] != work["key"]:
+                self.select_work(work["key"])
+            self.open_chapter(chapter_id)
 
     def show_hadith(self, hadith_id: int) -> None:
         """Open the book and chapter a hadith belongs to (from a search result or a chain)."""
