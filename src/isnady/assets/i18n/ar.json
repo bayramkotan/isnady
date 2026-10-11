@@ -454,7 +454,8 @@
  "Fit the whole tree in the window": "اعرض الشجرة كلها في النافذة",
  "dashed box: the reports differ": "إطار متقطع: الروايات مختلفة",
  "Find in this tree: Ibrahim, Musa, Hashim, Ali …": "ابحث في هذه الشجرة: إبراهيم، موسى، هاشم، علي …",
- "Sources: Ibn Hisham, al-Sira al-Nabawiyya; Ibn Sa'd, al-Tabaqat al-Kubra; al-Tabari, Tarikh; Ibn Kathir, Qisas al-Anbiya' and al-Bidaya wa-l-Nihaya; the Qur'an where it names a relation. Click a name for what the sources say.": "المصادر: ابن هشام، السيرة النبوية؛ ابن سعد، الطبقات الكبرى؛ الطبري، تاريخ الرسل والملوك؛ ابن كثير، قصص الأنبياء والبداية والنهاية؛ والقرآن حيث يذكر القرابة. انقر اسمًا لترى ما تقوله المصادر.",
+ "Sources: the Qur'an where it names a relation; al-Bukhari, Sahih (Manaqib al-Ansar: the Prophet's lineage up to 'Adnan); Ibn Hisham, al-Sira; Ibn Sa'd, al-Tabaqat; al-Tabari, Tarikh; Ibn Kathir, al-Bidaya wa-l-Nihaya. The names between Adam and Ibrahim and between Isma'il and 'Adnan are the historians'; they took them partly from the People of the Book, and neither the Qur'an nor an authentic hadith gives them. Click a name for what the sources say.": "المصادر: القرآن حيث يذكر قرابةً؛ البخاري، الصحيح (مناقب الأنصار: نسب النبي إلى عدنان)؛ ابن هشام، السيرة؛ ابن سعد، الطبقات؛ الطبري، التاريخ؛ ابن كثير، البداية والنهاية. الأسماء بين آدم وإبراهيم وبين إسماعيل وعدنان من كلام المؤرخين، أخذوا بعضها عن أهل الكتاب، ولا يذكرها القرآن ولا حديث صحيح. انقر اسمًا لترى ما تقوله المصادر.",
+ "Sources: Ibn Hisham, al-Sira; Ibn Sa'd, al-Tabaqat; Mus'ab al-Zubayri, Nasab Quraysh; Ibn Hazm, Jamharat Ansab al-'Arab. The line of the Prophet's family ﷺ down to the Imams is recorded by the Sunni genealogists too; that they are Imams is the Shia's belief and is shown as theirs. Click a name for what the sources say.": "المصادر: ابن هشام، السيرة؛ ابن سعد، الطبقات؛ مصعب الزبيري، نسب قريش؛ ابن حزم، جمهرة أنساب العرب. نسبُ آل بيت النبي ﷺ إلى الأئمة يذكره نسّابو أهل السنة أيضًا؛ أمّا كونهم أئمةً فهو اعتقاد الشيعة ويُعرض على أنه قولهم. انقر اسمًا لترى ما تقوله المصادر.",
  "A narrator: name, kunya or nisba — Arabic or Latin letters": "راوٍ: الاسم أو الكنية أو النسبة — بالحروف العربية أو اللاتينية",
  "No narrator is identified in the imported chains yet.": "لا راوي معيَّن في الأسانيد المستوردة بعد.",
  "No kin of {name} among the narrators: no narrator's name makes him a father or a son. Try another narrator, or his line of learning.": "لا أقارب لـ{name} بين الرواة: لا اسم راوٍ يجعله أبًا أو ابنًا. جرّب راويًا آخر أو سلسلته العلمية.",
@@ -1295,8 +1296,5 @@
  "Copy text": "انسخ النص",
  "Search all books, or tick the ones to search": "ابحث في كل الكتب، أو حدّد ما تبحث فيه",
  "{n} books": "{n} كتب",
- "Search these": "ابحث في هذه",
- "To update every copy where it is installed (nothing is removed), run in a terminal:  iy update      If an old copy starts even for that:  {rescue}": "لتحديث كل نسخة في مكان تثبيتها (لا يُحذف شيء)، شغّل في الطرفية:  iy update      وإن فُتحت نسخة قديمة حتى لهذا:  {rescue}",
- "{problems} thing(s) to update; see below. 'iy update' updates every copy where it is installed.": "{problems} أمر يحتاج إلى تحديث؛ انظر أدناه. ‏'iy update' يحدّث كل نسخة في مكان تثبيتها.",
- "Click for the report; 'iy update' updates every copy where it is installed.": "انقر للتقرير؛ ‏'iy update' يحدّث كل نسخة في مكان تثبيتها."
+ "Search these": "ابحث في هذه"
 }

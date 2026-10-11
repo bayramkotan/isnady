@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.2.1-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.2.2-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.2.1-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.2.2-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.2.1).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.2.2).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -585,10 +585,20 @@ Four trees, drawn so they can be zoomed, moved and clicked (**Genealogies** in t
 
 | Tree | What it shows |
 |---|---|
-| **The prophets** | From Adam to Muhammad ﷺ as the classical historians give it — Ibn Hisham, Ibn Sa'd, al-Tabari, Ibn Kathir: Nuh, Ibrahim and his sons, the prophets of the Children of Israel, the line of Isma'il to 'Adnan and on to the Prophet ﷺ. A link whose generations are not known is drawn dashed; a report the sources differ on has a dashed box and says so |
+| **The prophets** | From Adam to Muhammad ﷺ as the Qur'an, al-Bukhari and the classical historians give it — Ibn Hisham, Ibn Sa'd, al-Tabari, Ibn Kathir: Nuh, Ibrahim and his sons, the prophets of the Children of Israel, the line of Isma'il to 'Adnan and on to the Prophet ﷺ. A link whose generations are not known is drawn dashed; a report the sources differ on has a dashed box and says so |
 | **Quraysh and the Prophet's family** | From Ka'b b. Lu'ayy: the Prophet's family ﷺ, the lineages of the four caliphs joining his, the Umayyads, and the Imams of the Shia |
 | **A narrator's family** | Read from the narrators' own names: "X b. Y b. Z" is the son of "Y b. Z" when exactly one narrator of that name, of the same tradition and of an earlier or the same generation, is found — over a thousand such links in the Taqrib and al-Najashi (Ibn 'Umar's sons and grandsons, the family of al-Zubayr …). A reading of the names, said so on the page |
 | **A narrator's line of learning** | His teachers above him and theirs, his students below him and theirs, the most frequent at each step, counted from the imported chains |
+
+**Where the written trees come from.** Sunni sources, each link marked with how strong its source is: the Qur'an
+where it names a relation (Ibrahim's sons Isma'il and Ishaq, Ya'qub …); al-Bukhari's *Sahih* (Manaqib al-Ansar,
+the Prophet's lineage ﷺ up to 'Adnan, on which the scholars agree); the sira and history works (Ibn Hisham, Ibn
+Sa'd, al-Tabari, Ibn Kathir); the genealogists of Quraysh (Mus'ab al-Zubayri, Ibn Hazm). The names between Adam
+and Ibrahim and between Isma'il and 'Adnan are the historians' only — they took them partly from the People of the
+Book, and neither the Qur'an nor an authentic hadith gives them; the page says so on those names. The Imams of the
+Shia are shown as the line of the Prophet's family ﷺ that the Sunni genealogists record too; that they are Imams
+is the Shia's belief, shown as theirs (where the Sunni historians differ — a son of al-Hasan al-'Askari — the box
+is dashed and both are given).
 
 Click a name for what the sources say about it; a narrator opens on the Narrators page, which has the links to
 his family and his line of learning too. `iy tree prophets`, `iy tree prophets Musa`, `iy tree family "Ibn

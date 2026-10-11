@@ -1,5 +1,5 @@
 {
- "_about": "Genealogies isnady draws (GEN1). Each node: id, parent, names (en, tr, ar), kind (prophet, caliph, imam, person); gap: generations between it and its parent are not known or left out; disputed: the reports differ (with a note). Sources: Ibn Hisham, al-Sira al-Nabawiyya; Ibn Sa'd, al-Tabaqat al-Kubra; al-Tabari, Tarikh al-Rusul wa-l-Muluk; Ibn Kathir, Qisas al-Anbiya' and al-Bidaya wa-l-Nihaya; the Qur'an where it names a relation.",
+ "_about": "Genealogies isnady draws (GEN1). Each node: id, parent, names (en, tr, ar), kind (prophet, caliph, imam, person); gap: generations between it and its parent are not known or left out; disputed: the reports differ (with a note). Written for isnady from the Sunni sources, in this order of strength: (1) the Qur'an where it names a relation; (2) al-Bukhari, Sahih, Kitab Manaqib al-Ansar, Bab Mab'ath al-Nabi: the Prophet's lineage up to 'Adnan; (3) the sira and history works: Ibn Hisham, al-Sira al-Nabawiyya; Ibn Sa'd, al-Tabaqat al-Kubra; al-Tabari, Tarikh al-Rusul wa-l-Muluk; Ibn Kathir, Qisas al-Anbiya' and al-Bidaya wa-l-Nihaya; (4) the genealogists: Mus'ab al-Zubayri, Nasab Quraysh; Ibn Hazm, Jamharat Ansab al-'Arab. The names between Adam and Ibrahim and between Isma'il and 'Adnan come only from (3), who took them partly from the People of the Book. Not yet checked node by node against printed pages (TODO GEN1-K).",
  "trees": {
   "prophets": {
    "title": {
@@ -15,7 +15,11 @@
      "en": "Adam",
      "tr": "Âdem",
      "ar": "آدم",
-     "kind": "prophet"
+     "kind": "prophet",
+     "note": {
+      "en": "The first man and the first prophet (al-Baqara 2:30-37). The Qur'an names no son of his.",
+      "tr": "İlk insan ve ilk peygamber (Bakara 2:30-37). Kur'an oğullarından birinin adını vermez."
+     }
     },
     {
      "id": "shith",
@@ -23,7 +27,11 @@
      "en": "Seth (Shith)",
      "tr": "Şît",
      "ar": "شيث",
-     "kind": "prophet"
+     "kind": "prophet",
+     "note": {
+      "en": "The names from Seth down to Terah are given by Ibn Ishaq (in Ibn Hisham and al-Tabari); Ibn Kathir says they come from the People of the Book: neither confirmed nor denied. The Qur'an and the authentic hadith do not give this line.",
+      "tr": "Şît'ten Târah'a kadarki adları İbn İshak verir (İbn Hişâm ve Taberî'de); İbn Kesîr bunların Ehl-i Kitap'tan alındığını söyler: ne doğrulanır ne yalanlanır. Kur'an ve sahih hadisler bu silsileyi vermez."
+     }
     },
     {
      "id": "anush",
@@ -201,7 +209,11 @@
      "en": "Abraham (Ibrahim)",
      "tr": "İbrâhîm",
      "ar": "إبراهيم",
-     "kind": "prophet"
+     "kind": "prophet",
+     "note": {
+      "en": "The Qur'an names his sons Isma'il and Ishaq and his grandson Ya'qub (al-Baqara 2:133, Hud 11:71, Ibrahim 14:39).",
+      "tr": "Kur'an oğulları İsmâil ile İshak'ı ve torunu Ya'kûb'u adlarıyla anar (Bakara 2:133, Hûd 11:71, İbrâhîm 14:39)."
+     }
     },
     {
      "id": "haran",
@@ -657,8 +669,8 @@
      "ar": "محمد ﷺ",
      "kind": "prophet",
      "note": {
-      "en": "His lineage up to 'Adnan is agreed upon (Ibn Hisham, al-Sira; Ibn Sa'd, al-Tabaqat).",
-      "tr": "Nesebi Adnân'a kadar ittifakla bilinir (İbn Hişâm, es-Sîre; İbn Sa'd, et-Tabakât)."
+      "en": "His lineage up to 'Adnan is agreed upon: al-Bukhari, Sahih, Manaqib al-Ansar, Bab Mab'ath al-Nabi; Ibn Hisham, al-Sira; Ibn Sa'd, al-Tabaqat. Beyond 'Adnan the genealogists differ.",
+      "tr": "Nesebi Adnân'a kadar ittifakla bilinir: Buhârî, Sahîh, Menâkıbü'l-Ensâr, Bâbu Meb'asi'n-Nebî; İbn Hişâm, es-Sîre; İbn Sa'd, et-Tabakât. Adnân'dan ötesinde nesepçiler ayrılır."
      }
     }
    ]
@@ -677,7 +689,11 @@
      "en": "Ka'b b. Lu'ayy",
      "tr": "Ka'b b. Lüeyy",
      "ar": "كعب بن لؤي",
-     "kind": "person"
+     "kind": "person",
+     "note": {
+      "en": "From Ibn Hisham, Ibn Sa'd, Mus'ab al-Zubayri (Nasab Quraysh) and Ibn Hazm (Jamharat Ansab al-'Arab).",
+      "tr": "İbn Hişâm, İbn Sa'd, Mus'ab ez-Zübeyrî (Nesebü Kureyş) ve İbn Hazm'dan (Cemheretü ensâbi'l-Arab)."
+     }
     },
     {
      "id": "murra",
@@ -1177,6 +1193,10 @@
      "note": {
       "en": "The twelfth Imam of the Twelver Shia, in occultation in their belief.",
       "tr": "On İki İmam Şîası'na göre on ikinci İmam; onların inancında gaybettedir."
+     },
+     "disputed": {
+      "en": "Most Sunni historians and genealogists record that al-Hasan al-'Askari left no son; the Twelver Shia hold that this son was born and is in occultation.",
+      "tr": "Sünnî tarihçi ve nesepçilerin çoğu Hasan el-Askerî'nin oğul bırakmadığını kaydeder; On İki İmam Şîası bu oğlun doğduğunu ve gaybette olduğunu kabul eder."
      }
     },
     {

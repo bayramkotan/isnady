@@ -319,10 +319,19 @@ class GenealogyPage(QWidget):
             self.find.setPlaceholderText(tr("Find in this tree: Ibrahim, Musa, Hashim, Ali …"))
             self.tree = core.written(key)
             self.view.show_tree(self.tree)
-            self.caption.setText(legend + "<br>" + tr("Sources: Ibn Hisham, al-Sira al-Nabawiyya; Ibn Sa'd, al-Tabaqat "
-                                                      "al-Kubra; al-Tabari, Tarikh; Ibn Kathir, Qisas al-Anbiya' and "
-                                                      "al-Bidaya wa-l-Nihaya; the Qur'an where it names a relation. "
-                                                      "Click a name for what the sources say."))
+            if key == "prophets":
+                about = tr("Sources: the Qur'an where it names a relation; al-Bukhari, Sahih (Manaqib al-Ansar: the "
+                           "Prophet's lineage up to 'Adnan); Ibn Hisham, al-Sira; Ibn Sa'd, al-Tabaqat; al-Tabari, "
+                           "Tarikh; Ibn Kathir, al-Bidaya wa-l-Nihaya. The names between Adam and Ibrahim and between "
+                           "Isma'il and 'Adnan are the historians'; they took them partly from the People of the Book, "
+                           "and neither the Qur'an nor an authentic hadith gives them. Click a name for what the "
+                           "sources say.")
+            else:
+                about = tr("Sources: Ibn Hisham, al-Sira; Ibn Sa'd, al-Tabaqat; Mus'ab al-Zubayri, Nasab Quraysh; "
+                           "Ibn Hazm, Jamharat Ansab al-'Arab. The line of the Prophet's family ﷺ down to the Imams "
+                           "is recorded by the Sunni genealogists too; that they are Imams is the Shia's belief and "
+                           "is shown as theirs. Click a name for what the sources say.")
+            self.caption.setText(legend + "<br>" + about)
             self._show_node(self.tree.nodes[self.tree.root])
             return
         self.find.setPlaceholderText(tr("A narrator: name, kunya or nisba — Arabic or Latin letters"))

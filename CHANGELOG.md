@@ -3,7 +3,7 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.2.2] — 2026-10-11
 
 - **Genealogies** (new section in the sidebar, `iy tree`): four trees one can zoom, move and click — **the
   prophets** from Adam to Muhammad ﷺ as Ibn Hisham, Ibn Sa'd, al-Tabari and Ibn Kathir give it (unknown generations
@@ -12,7 +12,12 @@ is taken from its section here.
   the narrators' own names ("X b. Y b. Z" is the son of "Y b. Z" when exactly one narrator of that name, tradition
   and an earlier or the same generation is found — 1,147 links in the Taqrib and al-Najashi); **a narrator's line of
   learning**, his teachers above and his students below, from the imported chains. The Narrators page links to his
-  family and his line of learning. `core/genealogy.py`, `assets/genealogy/trees.json`.
+  family and his line of learning. The written trees name their Sunni sources by strength — the Qur'an, al-Bukhari
+  (the Prophet's lineage ﷺ to 'Adnan), the sira and history works, the genealogists of Quraysh — and say where a
+  name rests on the historians alone (between Adam and Ibrahim, between Isma'il and 'Adnan). `core/genealogy.py`,
+  `assets/genealogy/trees.json`.
+- **README screenshots** all retaken (the ☆ on every page, the two new sections); `tools/make_screenshots.py` makes
+  the Genealogies and Bookmarks pictures too, putting back the user's own bookmarks afterwards.
 - **Bookmarks** (new section, `iy bookmark`): a ☆ on every hadith card, narrator, scholar, term of Learn and chapter
   of Books; the Bookmarks page keeps them in folders of your own (nested, one bookmark in many folders, dragged onto
   a folder), with notes, found by words or kind, opened with a click, exported and imported as a file

@@ -182,6 +182,55 @@ w.learn_page._set_lang("en")
 w.learn_page.show_term("mursal")
 settle()
 w.grab().save(D + "learn.png")
+
+# Genealogies: the prophets around Ibrahim; a narrator's family (Salim b. 'Abdullah b. 'Umar)
+genealogy = w.genealogy_page
+w.nav.setCurrentRow(ROW["genealogy"])
+settle(1500)
+genealogy.show_view("prophets")
+genealogy.find.setText("Ibrahim")
+genealogy._find()
+settle(800)
+genealogy.view.centre("ibrahim")
+settle(400)
+w.grab().save(D + "genealogy.png")
+conn = w.search_page.connection()
+salim = conn.execute("SELECT id FROM persons WHERE name_ar LIKE 'سالم بن عبد الله بن عمر بن الخطاب%'").fetchone()
+if salim:
+    genealogy.find.clear()
+    genealogy.show_view("family", salim[0])
+    settle(1200)
+    genealogy.view.centre(f"p{salim[0]}")
+    settle(400)
+    w.grab().save(D + "genealogy-family.png")
+
+# Bookmarks: a few marked things in folders — the user's own bookmarks are put back afterwards
+from isnady.core import bookmarks  # noqa: E402
+from isnady.gui.bookmarks_page import HUB  # noqa: E402
+
+kept = bookmarks.path().read_bytes() if bookmarks.path().exists() else None
+store = bookmarks.Store()
+first = conn.execute("""SELECT h.id FROM hadiths h JOIN collections c ON c.id = h.collection_id
+                        WHERE c.key = 'bukhari' AND h.number = '1'""").fetchone()
+intention = store.ensure_path("Intention/Deeds")
+if first:
+    store.add("hadith", *bookmarks.hadith_ref(conn, first[0]), folder=intention.id,
+              note="Deeds are judged by intentions")
+if salim:
+    store.add("narrator", *bookmarks.narrator_ref(conn, salim[0]), folder=store.ensure_path("Families of narrators").id)
+store.add("scholar", "bukhari", "al-Bukhari", "محمد بن إسماعيل البخاري")
+store.add("term", "mursal", "mursal", "مرسل", folder=intention.id)
+store.save()
+HUB.changed.emit()
+w.nav.setCurrentRow(ROW["bookmarks"])
+settle(1200)
+w.grab().save(D + "bookmarks.png")
+if kept is None:
+    bookmarks.path().unlink()
+else:
+    bookmarks.path().write_bytes(kept)
+HUB.changed.emit()
+
 prefs("Reading text", "preferences.png", (900, 660))
 prefs("Data sources", "data-sources.png", (1100, 900))
 prefs("Books and languages", "books-languages.png", (1000, 640))

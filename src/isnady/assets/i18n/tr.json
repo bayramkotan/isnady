@@ -454,7 +454,8 @@
  "Fit the whole tree in the window": "Bütün ağacı pencereye sığdır",
  "dashed box: the reports differ": "kesik çerçeve: rivayetler farklı",
  "Find in this tree: Ibrahim, Musa, Hashim, Ali …": "Bu ağaçta bul: İbrâhîm, Mûsâ, Hâşim, Ali …",
- "Sources: Ibn Hisham, al-Sira al-Nabawiyya; Ibn Sa'd, al-Tabaqat al-Kubra; al-Tabari, Tarikh; Ibn Kathir, Qisas al-Anbiya' and al-Bidaya wa-l-Nihaya; the Qur'an where it names a relation. Click a name for what the sources say.": "Kaynaklar: İbn Hişâm, es-Sîretü'n-Nebeviyye; İbn Sa'd, et-Tabakâtü'l-Kübrâ; Taberî, Târîh; İbn Kesîr, Kısasü'l-Enbiyâ ve el-Bidâye ve'n-Nihâye; bir akrabalığı andığı yerde Kur'an. Kaynakların ne dediği için bir isme tıklayın.",
+ "Sources: the Qur'an where it names a relation; al-Bukhari, Sahih (Manaqib al-Ansar: the Prophet's lineage up to 'Adnan); Ibn Hisham, al-Sira; Ibn Sa'd, al-Tabaqat; al-Tabari, Tarikh; Ibn Kathir, al-Bidaya wa-l-Nihaya. The names between Adam and Ibrahim and between Isma'il and 'Adnan are the historians'; they took them partly from the People of the Book, and neither the Qur'an nor an authentic hadith gives them. Click a name for what the sources say.": "Kaynaklar: Kur'an (bir akrabalığı andığı yerde); Buhârî, Sahîh (Menâkıbü'l-Ensâr: Peygamber'in nesebi Adnân'a kadar); İbn Hişâm, es-Sîre; İbn Sa'd, et-Tabakât; Taberî, Târîh; İbn Kesîr, el-Bidâye ve'n-Nihâye. Âdem ile İbrâhîm ve İsmâil ile Adnân arasındaki adlar tarihçilerindir; bunları kısmen Ehl-i Kitap'tan almışlardır, Kur'an da sahih bir hadis de bunları vermez. Kaynakların ne dediği için bir ada tıklayın.",
+ "Sources: Ibn Hisham, al-Sira; Ibn Sa'd, al-Tabaqat; Mus'ab al-Zubayri, Nasab Quraysh; Ibn Hazm, Jamharat Ansab al-'Arab. The line of the Prophet's family ﷺ down to the Imams is recorded by the Sunni genealogists too; that they are Imams is the Shia's belief and is shown as theirs. Click a name for what the sources say.": "Kaynaklar: İbn Hişâm, es-Sîre; İbn Sa'd, et-Tabakât; Mus'ab ez-Zübeyrî, Nesebü Kureyş; İbn Hazm, Cemheretü ensâbi'l-Arab. Ehl-i Beyt'in ﷺ İmamlara kadar inen soyunu Sünnî nesepçiler de kaydeder; onların İmam olması Şîa'nın inancıdır ve onlarınki olarak gösterilir. Kaynakların ne dediği için bir ada tıklayın.",
  "A narrator: name, kunya or nisba — Arabic or Latin letters": "Bir râvi: isim, künye ya da nisbe — Arap ya da Latin harfleriyle",
  "No narrator is identified in the imported chains yet.": "İçe aktarılan senedlerde henüz tanımlanmış râvi yok.",
  "No kin of {name} among the narrators: no narrator's name makes him a father or a son. Try another narrator, or his line of learning.": "{name} için râviler arasında akraba yok: hiçbir râvinin adı onu baba ya da oğul yapmıyor. Başka bir râvi deneyin ya da ilmî şeceresine bakın.",
@@ -1295,8 +1296,5 @@
  "Copy text": "Metni kopyala",
  "Search all books, or tick the ones to search": "Bütün kitaplarda arayın ya da aranacakları işaretleyin",
  "{n} books": "{n} kitap",
- "Search these": "Bunlarda ara",
- "To update every copy where it is installed (nothing is removed), run in a terminal:  iy update      If an old copy starts even for that:  {rescue}": "Her kopyayı kurulu olduğu yerde güncellemek için (hiçbir şey silinmez) bir terminalde çalıştırın:  iy update      Bunun için bile eski bir kopya açılırsa:  {rescue}",
- "{problems} thing(s) to update; see below. 'iy update' updates every copy where it is installed.": "Güncellenecek {problems} şey var; aşağıya bakın. 'iy update' her kopyayı kurulu olduğu yerde günceller.",
- "Click for the report; 'iy update' updates every copy where it is installed.": "Rapor için tıklayın; 'iy update' her kopyayı kurulu olduğu yerde günceller."
+ "Search these": "Bunlarda ara"
 }
