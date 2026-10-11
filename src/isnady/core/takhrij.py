@@ -22,6 +22,7 @@ from typing import Callable
 
 from isnady.core.isnad import split_text
 from isnady.core.semantic import NotAvailable, requirements_message, tokens
+from isnady.core.i18n import tr
 
 METHOD_ID = "isnady-takhrij-1"
 SAME = 0.5                 # containment for "the same hadith"
@@ -51,7 +52,7 @@ def build(conn: sqlite3.Connection, progress: Callable[[str], None] | None = Non
 
     say = progress or (lambda _m: None)
     started = time.perf_counter()
-    say("Reading the texts of the hadith (the chains are left out)")
+    say(tr("Reading the texts of the hadith (the chains are left out)"))
     raw = {h: r for h, r in conn.execute("SELECT hadith_id, raw_text FROM isnads WHERE ordinal = 1")}
     matn: dict[int, list[str]] = {}
     for hid, text in conn.execute(
@@ -73,7 +74,7 @@ def build(conn: sqlite3.Connection, progress: Callable[[str], None] | None = Non
     if n < 2:
         raise NotAvailable("Import some hadith first.")
 
-    say(f"Finding candidate pairs among {n:,} texts")
+    say(tr("Finding candidate pairs among {n:,} texts", n=n))
     df = Counter()
     for h in ids:
         df.update(set(matn[h]))
@@ -105,7 +106,7 @@ def build(conn: sqlite3.Connection, progress: Callable[[str], None] | None = Non
                     found.append((a, b, "same", containment))
                 elif containment >= SAME_REPORT and companion.get(a) and companion.get(a) == companion.get(b):
                     found.append((a, b, "same_report", containment))
-        say(f"Compared {min(start + 1000, n):,} of {n:,} texts")
+        say(tr("Compared {value:,} of {n:,} texts", value=min(start + 1000, n), n=n))
     with conn:
         conn.execute("DELETE FROM hadith_relations WHERE method LIKE 'isnady-takhrij%'")
         conn.executemany("INSERT OR REPLACE INTO hadith_relations (hadith_a, hadith_b, kind, score, method) "
@@ -113,7 +114,7 @@ def build(conn: sqlite3.Connection, progress: Callable[[str], None] | None = Non
     kinds = Counter(k for _a, _b, k, _s in found)
     meta = {"method": METHOD_ID, "texts": n, "same": kinds["same"], "same_report": kinds["same_report"],
             "seconds": round(time.perf_counter() - started, 1)}
-    say(f"Takhrij ready: {kinds['same']:,} pairs of the same hadith, {kinds['same_report']:,} probably the same report")
+    say(tr("Takhrij ready: {same:,} pairs of the same hadith, {same_report:,} probably the same report", same=kinds['same'], same_report=kinds['same_report']))
     return meta
 
 

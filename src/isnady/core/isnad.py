@@ -30,6 +30,7 @@ from typing import Callable
 
 from isnady.core.normalize import normalize as normalize_name
 from isnady.core.normalize import normalize_with_map
+from isnady.core.i18n import N_, t, tr
 
 PARSER_ID = "isnady-isnad-6"   # bump when rules change
 
@@ -107,7 +108,7 @@ def _parse_sunni(text: str) -> ParsedIsnad:
     head = norm[:1200]
     first = _TERM_RE.match(head.lstrip("{ "))
     if not first:
-        result.problem = "does not start with a transmission term"
+        result.problem = N_("does not start with a transmission term")
         return result
 
     pos = 0
@@ -157,7 +158,7 @@ def _parse_sunni(text: str) -> ParsedIsnad:
         words = core_norm.strip(" ،,:-").split()
         if re.search(r"\.\s*\S", core_norm.strip()):          # a sentence ends inside: a second chain follows
             result.raw_isnad = _clean_name(orig(0, min(n, name_end + 80)))
-            result.problem = "a second chain follows the first; not split in version 1"
+            result.problem = N_("a second chain follows the first; not split in version 1")
             return result
         if not words or len(words) > _MAX_NAME_WORDS:
             break                                   # narrative has begun
@@ -186,27 +187,27 @@ def _parse_sunni(text: str) -> ParsedIsnad:
     # two teachers at one link (qiran): "حدثنا عثمان، وابو بكر ابنا ابي شيبه قالا حدثنا ..."
     if links and not result.reaches_prophet and _JOINT_START_RE.match(tail) and _JOINT_WORD_RE.search(tail):
         result.raw_isnad = _clean_name(orig(0, min(n, end_of_chain + 140)))
-        result.problem = "two narrators at one link (qiran); not split in version 1"
+        result.problem = N_("two narrators at one link (qiran); not split in version 1")
         return result
 
     if _TAHWIL_RE.search(norm[:end_of_chain + 60]):
         result.raw_isnad = _clean_name(orig(0, min(n, end_of_chain + 60)))
-        result.problem = "tahwil (a second chain joins); not split in version 1"
+        result.problem = N_("tahwil (a second chain joins); not split in version 1")
         return result
     goes_on = _CONTINUES_RE.match(tail)
     prophet_at = _PROPHET_RE.search(tail)
     if links and goes_on and (not prophet_at or goes_on.end() <= prophet_at.start()):
         result.raw_isnad = _clean_name(orig(0, min(n, end_of_chain + 140)))
-        result.problem = "chain continues after words that were not understood"
+        result.problem = N_("chain continues after words that were not understood")
         return result
 
     region = norm[:max(end_of_chain, pos) + 40]
     if _TAHWIL_RE.search(region):
         result.raw_isnad = _clean_name(orig(0, max(end_of_chain, 1)))
-        result.problem = "tahwil (a second chain joins); not split in version 1"
+        result.problem = N_("tahwil (a second chain joins); not split in version 1")
         return result
     if not links:
-        result.problem = "no narrator found after the transmission term"
+        result.problem = N_("no narrator found after the transmission term")
         return result
     result.raw_isnad = _clean_name(orig(0, end_of_chain))
     result.links = links
@@ -304,7 +305,7 @@ def _parse_shia(text: str) -> ParsedIsnad:
     pre = _PREAMBLE_RE.match(norm)
     pos = pre.end() if pre else 0
     if _ALL_START_RE.match(norm, pos):
-        result.problem = "refers to the chain of an earlier hadith (bi-isnadihi); not split"
+        result.problem = N_("refers to the chain of an earlier hadith (bi-isnadihi); not split")
         return result
     links: list[Link] = []
     end_of_chain = pos
@@ -361,7 +362,7 @@ def _parse_shia(text: str) -> ParsedIsnad:
         if honor is not None and honor.start() == name_end:
             pos = honor.end()                           # "… بن الحسين بن أبي طالب عليه السلام": an ancestor's honorific
         if links and len(links) == 1 and _SAME_CHAIN_RE.match(norm, pos):
-            result.problem = "refers to the chain of an earlier hadith (bi-isnadihi); not split"
+            result.problem = N_("refers to the chain of an earlier hadith (bi-isnadihi); not split")
             result.raw_isnad = _clean_name(orig(0, min(n, pos + 30)))
             return result
         if re.match(r"[\s،,]*ي?رفعه(?!\w)", norm[pos:]):
@@ -389,7 +390,7 @@ def _parse_shia(text: str) -> ParsedIsnad:
                     pos = meet.end()
                     continue
                 result.raw_isnad = _clean_name(orig(0, min(n, pos + 160)))
-                result.problem = "two roads from the compiler join without \"jami'an\"; not split"
+                result.problem = N_("two roads from the compiler join without \"jami'an\"; not split")
                 return result
             if road == "joined":
                 meet = _ALL_RE.search(norm, pos, min(n, pos + 400))
@@ -414,10 +415,10 @@ def _parse_shia(text: str) -> ParsedIsnad:
         elif _MUDMAR_RE.match(norm[end_of_chain:end_of_chain + 40]):
             result.ends_with = "mudmar"             # "سألته": an Imam not named
     if not links:
-        result.problem = "no narrator found before the text"
+        result.problem = N_("no narrator found before the text")
         return result
     if len(links) == 1 and links[0].term == "bare" and not result.reaches_prophet and not result.raised:
-        result.problem = "no chain: a name without a transmission after it"
+        result.problem = N_("no chain: a name without a transmission after it")
         return result
     result.raw_isnad = _clean_name(orig(0, end_of_chain))
     result.links = links
@@ -432,7 +433,7 @@ def ensure_isnads(conn: sqlite3.Connection, progress: Callable[[str], None] | No
     conn.execute("CREATE TABLE IF NOT EXISTS core_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
     row = conn.execute("SELECT value FROM core_meta WHERE key = 'isnad_parser'").fetchone()
     if rebuild or (row is not None and row[0] != PARSER_ID):
-        say("Isnad rules changed; parsing every chain again")
+        say(tr("Isnad rules changed; parsing every chain again"))
         conn.execute("DELETE FROM isnads WHERE derived_by IS NOT NULL")
     conn.execute("INSERT OR REPLACE INTO core_meta (key, value) VALUES ('isnad_parser', ?)", (PARSER_ID,))
 
@@ -449,7 +450,7 @@ def ensure_isnads(conn: sqlite3.Connection, progress: Callable[[str], None] | No
     if not todo:
         conn.commit()
         return stats
-    say(f"Reading isnads of {len(todo)} hadith")
+    say(tr("Reading isnads of {todo} hadith", todo=len(todo)))
     for hadith_id, text, source_id, tradition in todo:
         p = parse(text, tradition)
         isnad_id = conn.execute(
@@ -497,26 +498,26 @@ def chain(conn: sqlite3.Connection, hadith_id: int) -> list[dict]:
 # ----------------------------------------------------------------- reading aids
 # How each transmission term reads, and what the critics took it to mean.
 TERM_LABELS = {
-    "haddathana": ("حدثنا", "narrated to us",
-                   "The teacher recited it to a group that included the narrator: heard directly."),
-    "haddathani": ("حدثني", "narrated to me",
-                   "The teacher recited it to the narrator alone: heard directly."),
-    "akhbarana": ("أخبرنا", "informed us",
-                  "Many critics used it for a text read back to the teacher ('ard); others as haddathana."),
-    "akhbarani": ("أخبرني", "informed me", "As akhbarana, received alone."),
-    "anba'ana": ("أنبأنا", "told us", "Later scholars often used it for transmission by permission (ijaza)."),
-    "anba'ani": ("أنبأني", "told me", "As anba'ana, received alone."),
-    "sami'tu": ("سمعت", "I heard", "States direct hearing explicitly."),
-    "sami'a": ("سمع", "heard", "Reports that the narrator heard it directly."),
-    "qara'tu 'ala": ("قرأت على", "I read to", "The narrator read the text back to the teacher ('ard)."),
-    "quri'a 'ala": ("قرئ على", "it was read to", "The text was read back to the teacher while the narrator listened."),
-    "za'ama": ("زعم", "stated", "Reports a statement; says nothing about how it was received."),
-    "'an": ("عن", "from",
-            "Does not say how it was received ('an'ana). Counted as connected when the two narrators could "
-            "have met and the narrator is not known for concealing a gap (tadlis)."),
-    "anna": ("أن", "that", "Treated by most critics like 'an (mu'anna)."),
-    "bare": ("—", "(his teacher)", "The compiler names his teacher without a term, as al-Kulayni does: "
-             "it is his own transmission from that teacher."),
+    "haddathana": ("حدثنا", N_("narrated to us"),
+                   N_("The teacher recited it to a group that included the narrator: heard directly.")),
+    "haddathani": ("حدثني", N_("narrated to me"),
+                   N_("The teacher recited it to the narrator alone: heard directly.")),
+    "akhbarana": ("أخبرنا", N_("informed us"),
+                  N_("Many critics used it for a text read back to the teacher ('ard); others as haddathana.")),
+    "akhbarani": ("أخبرني", N_("informed me"), N_("As akhbarana, received alone.")),
+    "anba'ana": ("أنبأنا", N_("told us"), N_("Later scholars often used it for transmission by permission (ijaza).")),
+    "anba'ani": ("أنبأني", N_("told me"), N_("As anba'ana, received alone.")),
+    "sami'tu": ("سمعت", N_("I heard"), N_("States direct hearing explicitly.")),
+    "sami'a": ("سمع", N_("heard"), N_("Reports that the narrator heard it directly.")),
+    "qara'tu 'ala": ("قرأت على", N_("I read to"), N_("The narrator read the text back to the teacher ('ard).")),
+    "quri'a 'ala": ("قرئ على", N_("it was read to"), N_("The text was read back to the teacher while the narrator listened.")),
+    "za'ama": ("زعم", N_("stated"), N_("Reports a statement; says nothing about how it was received.")),
+    "'an": ("عن", N_("from"),
+            N_("Does not say how it was received ('an'ana). Counted as connected when the two narrators could "
+            "have met and the narrator is not known for concealing a gap (tadlis).")),
+    "anna": ("أن", N_("that"), N_("Treated by most critics like 'an (mu'anna).")),
+    "bare": ("—", N_("(his teacher)"), N_("The compiler names his teacher without a term, as al-Kulayni does: "
+             "it is his own transmission from that teacher.")),
 }
 
 
@@ -528,12 +529,12 @@ def link_note(raw_name: str, next_raw: str = "") -> str:
     kind = traditions.link_kind(raw_name)
     if kind == "group":
         members = traditions.group_members(raw_name, next_raw)
-        return ("A group of al-Kulayni's teachers" + (": " + "، ".join(members) + " (as al-Kulayni explained it)"
-                                                       if members else ""))
+        return (t("A group of al-Kulayni's teachers: {members} (as al-Kulayni explained it)", members="، ".join(members))
+                if members else t("A group of al-Kulayni's teachers"))
     if kind == "previous":
-        return "\"From him\": the narrator who heads the previous chain in the book"
+        return t("\"From him\": the narrator who heads the previous chain in the book")
     if kind == "vague":
-        return "A narrator not named (mubham): the chain does not say who"
+        return t("A narrator not named (mubham): the chain does not say who")
     return ""
 
 
@@ -544,14 +545,15 @@ def end_label(chain: dict) -> str:
     key = chain.get("ends_with") or ("prophet" if chain.get("reaches_prophet") else "")
     if not key:
         return ""
-    label = "an Imam" if key == "imam" else (traditions.masum_label(key) or key)
+    label = t("an Imam") if key == "imam" else (traditions.masum_label(key) or key)
     if key == "prophet":
-        label = "the Prophet ﷺ"
-    return ("raised (رفعه) to " if chain.get("raised") else "") + label
+        label = t("the Prophet ﷺ")
+    return t("raised (رفعه) to {whom}", whom=label) if chain.get("raised") else label
 
 
 def term_label(term: str) -> tuple[str, str, str]:
-    return TERM_LABELS.get(term, (term, term, ""))
+    arabic, meaning, why = TERM_LABELS.get(term, (term, term, ""))
+    return arabic, t(meaning), t(why)
 
 
 def short_name(raw_name: str) -> str:

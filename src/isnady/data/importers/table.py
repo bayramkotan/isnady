@@ -35,6 +35,7 @@ import sqlite3
 from isnady.data.db import now_iso, tier_for_license
 from isnady.data.fetch import ResourceError, read_bytes
 from isnady.data.importers.base import ImportReport, Importer, ProgressCallback, SourceInfo, register, slugify
+from isnady.core.i18n import tr
 
 RTL = {"Arabic", "Urdu", "Persian"}
 csv.field_size_limit(1 << 30)
@@ -150,7 +151,7 @@ class TableImporter(Importer):
         for n, part in enumerate(parts, 1):
             where = part["location"] if isinstance(part, dict) else part
             volume = part.get("volume") if isinstance(part, dict) else None
-            say(f"Reading {where}" + (f" ({n} of {len(parts)})" if len(parts) > 1 else ""))
+            say(f"Reading {where}" + (tr(" ({n} of {parts})", n=n, parts=len(parts)) if len(parts) > 1 else ""))
             recs = _records(read_bytes(where, source.auth), where, mapping)
             rows += [(r, volume, i) for i, r in enumerate(recs, 1)]
         if not rows:
@@ -244,8 +245,8 @@ class TableImporter(Importer):
         report.texts = sum(counts.values())
         report.new_hadiths = new_hadiths
         report.grades = new_grades
-        say(f"{title}: {len(seen):,} hadith, " + ", ".join(f"{c:,} {lang}" for lang, c in counts.items() if c)
-            + (f", {new_grades:,} grades" if new_grades else ""))
+        say(tr("{title}: {seen:,} hadith, ", title=title, seen=len(seen)) + ", ".join(f"{c:,} {lang}" for lang, c in counts.items() if c)
+            + (tr(", {new_grades:,} grades", new_grades=new_grades) if new_grades else ""))
         return report
 
 

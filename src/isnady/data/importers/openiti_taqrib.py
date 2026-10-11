@@ -24,6 +24,7 @@ from isnady.core.normalize import normalize
 from isnady.data.db import now_iso, tier_for_license
 from isnady.data.fetch import ResourceError, read_bytes
 from isnady.data.importers.base import ImportReport, Importer, ProgressCallback, SourceInfo, register
+from isnady.core.i18n import tr
 
 CRITIC = "Ibn Hajar al-'Asqalani"
 WORK = "Taqrib al-Tahdhib"
@@ -303,7 +304,7 @@ class TaqribImporter(Importer):
         entries, xrefs = read_entries(text)
         if len(entries) < 100:
             raise ResourceError(f"Only {len(entries)} entries found; is this the Taqrib al-Tahdhib?")
-        say(f"{len(entries)} narrators and {len(xrefs)} cross-references")
+        say(tr("{entries} narrators and {xrefs} cross-references", entries=len(entries), xrefs=len(xrefs)))
 
         name = source.name or "Ibn Hajar, Taqrib al-Tahdhib (OpenITI)"
         # one canonical work: the source key is fixed, whatever display name the caller gives, so the

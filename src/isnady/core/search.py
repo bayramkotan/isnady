@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from isnady.core.normalize import NORMALIZER_VERSION, normalize, normalize_with_map
+from isnady.core.i18n import tr
 
 MODES = ("all", "any", "phrase")
 _MIN_TRIGRAM = 3
@@ -87,7 +88,7 @@ def ensure_index(conn: sqlite3.Connection, progress: Callable[[str], None] | Non
     _create_index_tables(conn)
     row = conn.execute("SELECT value FROM core_meta WHERE key = 'normalizer_version'").fetchone()
     if row is not None and row[0] != str(NORMALIZER_VERSION):
-        say("Normalisation rules changed; rebuilding the search index")
+        say(tr("Normalisation rules changed; rebuilding the search index"))
         _drop_index(conn)
         _create_index_tables(conn)
     conn.execute(
@@ -99,7 +100,7 @@ def ensure_index(conn: sqlite3.Connection, progress: Callable[[str], None] | Non
     if not missing:
         conn.commit()
         return 0
-    say(f"Indexing {missing} texts for search")
+    say(tr("Indexing {missing} texts for search", missing=missing))
     added = 0
     while True:
         rows = conn.execute(

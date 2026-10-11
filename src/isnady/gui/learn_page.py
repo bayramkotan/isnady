@@ -1,6 +1,7 @@
 """Learn (G7): the terms of hadith and its sciences — search, categories, and a card for each term with its
 Arabic, its reading, a short and a long definition, related terms (one click away) and its classical source.
-English or Türkçe, remembered (the first step of the interface language, I1)."""
+The terms themselves are written in English and Türkçe so far (chosen here, remembered); the page around them follows
+the interface language (I1)."""
 
 import html
 
@@ -20,7 +21,8 @@ from PySide6.QtWidgets import (
 )
 
 from isnady import config
-from isnady.core import learn
+from isnady.core import i18n, learn
+from isnady.core.i18n import tr
 from isnady.gui import theme
 from isnady.gui.widgets import FlowLayout
 
@@ -40,7 +42,7 @@ class LearnPage(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setObjectName("Page")
-        self.lang = config.state_get("learn.language") or "en"
+        self.lang = config.state_get("learn.language") or (i18n.language() if i18n.language() in learn.LANGUAGES else "en")
         self._current = None
 
         left = QFrame()
@@ -49,11 +51,11 @@ class LearnPage(QWidget):
         lbox = QVBoxLayout(left)
         lbox.setContentsMargins(18, 16, 18, 14)
         lbox.setSpacing(8)
-        title = _label("Learn", "CardTitle")
+        title = _label(tr("Learn"), "CardTitle")
         title.setFont(theme.reading_font(18, bold=True))
         lbox.addWidget(title)
-        lbox.addWidget(_label(f"The terms of hadith and its sciences — {len(learn.terms())} terms, each with its "
-                              "Arabic, its meaning and its classical source.", "Caption"))
+        lbox.addWidget(_label(tr("The terms of hadith and its sciences — {terms} terms, each with its Arabic, its meaning and its "
+                                "classical source.", terms=len(learn.terms())), "Caption"))
         langs = QHBoxLayout()
         self._lang_group = QButtonGroup(self)
         for code, label in learn.LANGUAGES.items():
@@ -68,7 +70,7 @@ class LearnPage(QWidget):
         langs.addStretch(1)
         lbox.addLayout(langs)
         self.query = QLineEdit()
-        self.query.setPlaceholderText("Search: sahih, mursal, tadlis, künye …")
+        self.query.setPlaceholderText(tr("Search: sahih, mursal, tadlis, künye …"))
         self.query.setClearButtonEnabled(True)
         self.query.textChanged.connect(lambda _t: self._populate())
         lbox.addWidget(self.query)
@@ -167,15 +169,14 @@ class LearnPage(QWidget):
             long.setFont(theme.reading_font(14))
             cb.addWidget(long)
         if t["source"]:
-            word = "Kaynak" if self.lang == "tr" else "Source"
-            cb.addWidget(_label(f"<b>{word}</b>: {html.escape(t['source'])}", "Caption", rich=True))
+            cb.addWidget(_label(f"<b>{tr('Source')}</b>: {html.escape(t['source'])}", "Caption", rich=True))
         self.box.addWidget(card)
         if t["related"]:
             rel = QFrame()
             rel.setObjectName("Card")
             rb = QVBoxLayout(rel)
             rb.setContentsMargins(24, 14, 24, 16)
-            rb.addWidget(_label("Related terms" if self.lang == "en" else "İlgili terimler", "FilterTitle"))
+            rb.addWidget(_label(tr("Related terms"), "FilterTitle"))
             flow_holder = QWidget()
             flow = FlowLayout(flow_holder)
             for rid in t["related"]:

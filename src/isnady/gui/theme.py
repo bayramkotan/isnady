@@ -17,6 +17,7 @@ from isnady import config
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtGui import QColor, QFont, QFontDatabase, QGuiApplication, QPalette
 from PySide6.QtWidgets import QApplication, QStyleFactory
+from isnady.core.i18n import N_
 
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
 FONT_DIR = ASSETS / "fonts"
@@ -89,13 +90,13 @@ CONTRAST = Tokens(
     pill="#1A1A1A",
 )
 THEMES = {   # key: (name, description, tokens)
-    "light": ("Lapis", "Lapis and gold of illuminated manuscripts", LIGHT),
-    "dark": ("Lapis Night", "The same, by night", DARK),
-    "paper": ("Paper", "Warm cream and ink, for long reading", PAPER),
-    "slate": ("Slate", "Quiet and modern, a light sidebar", SLATE),
-    "emerald": ("Emerald", "Green and gold", EMERALD),
-    "midnight": ("Midnight", "Deep dark with teal", MIDNIGHT),
-    "contrast": ("High Contrast", "Black, white and yellow, for low vision", CONTRAST),
+    "light": (N_("Lapis"), N_("Lapis and gold of illuminated manuscripts"), LIGHT),
+    "dark": (N_("Lapis Night"), N_("The same, by night"), DARK),
+    "paper": (N_("Paper"), N_("Warm cream and ink, for long reading"), PAPER),
+    "slate": (N_("Slate"), N_("Quiet and modern, a light sidebar"), SLATE),
+    "emerald": (N_("Emerald"), N_("Green and gold"), EMERALD),
+    "midnight": (N_("Midnight"), N_("Deep dark with teal"), MIDNIGHT),
+    "contrast": (N_("High Contrast"), N_("Black, white and yellow, for low vision"), CONTRAST),
 }
 
 _current: Tokens = LIGHT

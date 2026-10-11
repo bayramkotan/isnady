@@ -58,18 +58,48 @@ def gui_main() -> int:
     theme.load_fonts()
     theme.migrate_qsettings()
     theme.apply(app)
-    window = MainWindow()
+    from PySide6.QtCore import Qt
+
+    from isnady.core import i18n, language
+
+    def _speak() -> None:
+        """The interface language (I1): the texts, and right to left for Arabic, Persian, Dari, Pashto, Urdu."""
+        i18n.set_language(language.ui_language())
+        app.setLayoutDirection(Qt.LayoutDirection.RightToLeft if i18n.rtl() else Qt.LayoutDirection.LeftToRight)
+
+    _speak()
+    windows: list = []
+
+    def _open(old=None) -> None:
+        window = MainWindow()
+        window.language_switched.connect(_switch)
+        if old is not None:
+            window.setGeometry(old.geometry())
+            window.nav.setCurrentRow(old.nav.currentRow())
+            if old.isMaximized():
+                window.showMaximized()
+        windows.append(window)
+        window.show()
+
+    def _switch() -> None:
+        """Another interface language: the window is built again in it, where the reader was."""
+        old = windows.pop()
+        _speak()
+        _open(old)
+        old.hide()
+        old.deleteLater()
+
+    _open()
 
     hints = QGuiApplication.styleHints()
     if hasattr(hints, "colorSchemeChanged"):
         def _follow_scheme(*_args):
             if theme.theme_mode() == "system":
                 theme.apply(app)
-                window.retheme()
+                windows[-1].retheme()
         hints.colorSchemeChanged.connect(_follow_scheme)
 
-    window.show()
-    window.check_installation_later()
+    windows[-1].check_installation_later()
     return app.exec()
 
 

@@ -30,6 +30,7 @@ from isnady.core.normalize import normalize
 from isnady.core.scholars import find as find_scholar
 from isnady.gui import theme
 from isnady.gui.widgets import TextBlock
+from isnady.core.i18n import N_, tr
 
 BATCH = 12           # items drawn at a time, so a long chapter never freezes the window
 PAGE = 60            # items per "show more"
@@ -74,17 +75,17 @@ class BooksPage(QWidget):
         lbox = QVBoxLayout(left)
         lbox.setContentsMargins(18, 16, 18, 14)
         lbox.setSpacing(8)
-        title = _label("Books", "CardTitle")
+        title = _label(tr("Books"), "CardTitle")
         title.setFont(theme.reading_font(18, bold=True))
         lbox.addWidget(title)
-        lbox.addWidget(_label("Open a book and read it in its own order, chapter by chapter.", "Caption"))
+        lbox.addWidget(_label(tr("Open a book and read it in its own order, chapter by chapter."), "Caption"))
         # Sunni and Shia on one shelf, each under its own heading; the switch shows one of them alone (SH1)
         self._shelf_tradition: str | None = config.state_get("reader.shelf") or None
         self._shelf_buttons = QButtonGroup(self)
         seg = QHBoxLayout()
         seg.setSpacing(6)
-        for key, text in ((None, "All"), ("sunni", "Sunni"), ("shia", "Shia")):
-            b = QPushButton(text)
+        for key, text in ((None, N_("All")), ("sunni", N_("Sunni")), ("shia", N_("Shia"))):
+            b = QPushButton(tr(text))
             b.setObjectName("Segment")
             b.setCheckable(True)
             b.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -102,7 +103,7 @@ class BooksPage(QWidget):
         self.works.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.works.currentItemChanged.connect(lambda item, _p: item and self.open_work(item.data(Qt.ItemDataRole.UserRole)))
         lbox.addWidget(self.works)
-        lbox.addWidget(_label("Contents", "FilterLabel"))
+        lbox.addWidget(_label(tr("Contents"), "FilterLabel"))
         self.tree = QTreeWidget()
         self.tree.setHeaderHidden(True)
         self.tree.setObjectName("Contents")
@@ -112,14 +113,14 @@ class BooksPage(QWidget):
 
         # the reading pane
         self.where = _label("", "Lead", rich=True)
-        self.prev_button = QPushButton("‹ Previous")
-        self.next_button = QPushButton("Next ›")
+        self.prev_button = QPushButton(tr("‹ Previous"))
+        self.next_button = QPushButton(tr("Next ›"))
         for b in (self.prev_button, self.next_button):
             b.setObjectName("Quiet")
         self.prev_button.clicked.connect(lambda: self._step(-1))
         self.next_button.clicked.connect(lambda: self._step(+1))
         self.find = QLineEdit()
-        self.find.setPlaceholderText("Find in this chapter")
+        self.find.setPlaceholderText(tr("Find in this chapter"))
         self.find.setClearButtonEnabled(True)
         self.find.setMaximumWidth(280)
         self._find_timer = QTimer(self)
@@ -183,9 +184,10 @@ class BooksPage(QWidget):
                 heading = w["tradition"]
                 head = QListWidgetItem()
                 head.setFlags(Qt.ItemFlag.NoItemFlags)          # a heading, not a book
-                text = {"sunni": "Sunni", "shia": "Shia"}.get(heading, "Other")
+                text = {"sunni": N_("Sunni books · {count}"), "shia": N_("Shia books · {count}")}.get(
+                    heading, N_("Other books · {count}"))
                 count = sum(1 for x in shelf if x["tradition"] == heading)
-                label = _label(f"{text} books · {count}", "FilterTitle", wrap=False)
+                label = _label(tr(text, count=count), "FilterTitle", wrap=False)
                 label.setContentsMargins(10, 10, 10, 2)
                 if heading == "shia":
                     label.setStyleSheet(f"color: {theme.current().gold};")
@@ -202,12 +204,12 @@ class BooksPage(QWidget):
             name.setFont(theme.reading_font(14, bold=True))
             box.addWidget(name)
             author = find_scholar(w["author"]) if w["author"] else None
-            unit = "hadith" if w["kind"] == "hadith" else "entries"
-            facts = [core_works.KIND_LABELS.get(w["kind"], "Book"), f"{w['leaves']:,} {unit}", f"{w['chapters']} chapters"]
+            leaves = (tr("{n:,} hadith", n=w["leaves"]) if w["kind"] == "hadith" else tr("{n:,} entries", n=w["leaves"]))
+            facts = [tr(core_works.KIND_LABELS.get(w["kind"], "Book")), leaves, tr("{n} chapters", n=w["chapters"])]
             if author:
                 facts.insert(0, html.escape(author.get("tr") or author["name"]))
             if w["tradition"] == "shia":
-                facts.insert(0, f"<span style='color:{theme.current().gold}'><b>Shia</b></span>")
+                facts.insert(0, f"<span style='color:{theme.current().gold}'><b>{tr('Shia')}</b></span>")
             box.addWidget(_label(" · ".join(facts), "Caption", wrap=False, rich=True))
             item.setSizeHint(row.sizeHint())
             self.works.addItem(item)
@@ -216,7 +218,7 @@ class BooksPage(QWidget):
         if not shelf:
             self._clear()
             self.where.setText("")
-            self.body_layout.addWidget(_label("No books yet: import a collection (File → Data Sources).", "Lead"))
+            self.body_layout.addWidget(_label(tr("No books yet: import a collection (File → Data Sources)."), "Lead"))
             return
         wanted = (self._work or {}).get("key") or config.state_get("reader.last_work") or shelf[0]["key"]
         keys = [w["key"] for w in shelf]
@@ -291,7 +293,7 @@ class BooksPage(QWidget):
         saved = (config.state_get(f"reader.languages.{self._work['key']}")
                  or [lang for lang in langs if language.shows(lang)] or langs)
         for lang in langs:
-            box = QCheckBox(lang)
+            box = QCheckBox(tr(lang))
             box.setChecked(lang in saved)
             box.toggled.connect(self._languages_changed)
             self._language_checks[lang] = box
@@ -330,8 +332,9 @@ class BooksPage(QWidget):
         position = self._order.index(chapter_id) + 1 if chapter_id in self._order else 0
         self.where.setText(" › ".join(f"<b>{html.escape(c)}</b>" if i == len(crumbs) - 1 else html.escape(c)
                                       for i, c in enumerate(crumbs))
-                           + (f"&nbsp;&nbsp;<span style='color:{theme.current().muted}'>chapter {position} of "
-                              f"{len(self._order)}</span>" if position else ""))
+                           + (f"&nbsp;&nbsp;<span style='color:{theme.current().muted}'>"
+                              + tr("chapter {position} of {count}", position=position, count=len(self._order))
+                              + "</span>" if position else ""))
         self.prev_button.setEnabled(position > 1)
         self.next_button.setEnabled(0 < position < len(self._order))
         self._select_in_tree(chapter_id)
@@ -341,7 +344,8 @@ class BooksPage(QWidget):
             items = [i for i in items if self._matches(i, wanted)]
         self._items = items
         self._clear()
-        note = f"{len(items):,} of {total:,} match “{self.find.text()}”" if wanted else f"{total:,} in this chapter"
+        note = (tr("{n:,} of {total:,} match “{words}”", n=len(items), total=total, words=self.find.text()) if wanted
+                else tr("{total:,} in this chapter", total=total))
         self.body_layout.addWidget(_label(note, "Caption"))
         self._shown = 0
         self._focus = ("hadith", focus_hadith) if focus_hadith is not None else (("person", focus_person) if focus_person else None)
@@ -352,7 +356,7 @@ class BooksPage(QWidget):
             at = next((i for i, it in enumerate(items) if it.get(f"{field}_id") == value), None)
             if at is not None and at > 3:
                 self._shown = at - 2
-                earlier = QPushButton(f"Show the {self._shown:,} earlier items in this chapter")
+                earlier = QPushButton(tr("Show the {shown:,} earlier items in this chapter", shown=self._shown))
                 earlier.setObjectName("Quiet")
                 earlier.clicked.connect(lambda: self.open_chapter(chapter_id, keep_find=True))
                 self.body_layout.addWidget(earlier, 0, Qt.AlignmentFlag.AlignHCenter)
@@ -396,7 +400,7 @@ class BooksPage(QWidget):
             QTimer.singleShot(450, self._scroll_to_focus)
         left = len(self._items) - self._shown
         if left > 0:
-            self.more.setText(f"Show {min(PAGE, left)} more ({left:,} left in this chapter)")
+            self.more.setText(tr("Show {page} more ({left:,} left in this chapter)", page=min(PAGE, left), left=left))
             self.body_layout.addWidget(self.more, 0, Qt.AlignmentFlag.AlignHCenter)
         self.body_layout.addStretch(1)
 
@@ -413,7 +417,7 @@ class BooksPage(QWidget):
         box.setSpacing(4)
         if item["kind"] == "reference":
             note = TextBlock(item["text"] or "", theme.script_font("arabic", factor=0.7), rtl=True)
-            box.addWidget(_label("Cross-reference", "Caption"))
+            box.addWidget(_label(tr("Cross-reference"), "Caption"))
             box.addWidget(note)
             return card
         head = QHBoxLayout()
@@ -426,7 +430,7 @@ class BooksPage(QWidget):
             if reading:
                 head.addWidget(_label(reading, "RowLatin", wrap=False))
             head.addStretch(1)
-            go = QPushButton("Open narrator")
+            go = QPushButton(tr("Open narrator"))
             go.setObjectName("Link")
             go.setCursor(Qt.CursorShape.PointingHandCursor)
             go.clicked.connect(lambda _c=False, pid=item["person_id"]: self.open_narrator.emit(pid))

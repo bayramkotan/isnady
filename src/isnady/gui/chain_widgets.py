@@ -13,6 +13,7 @@ from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 from isnady.core import isnad as core_isnad
+from isnady.core.i18n import tr
 from isnady.gui import theme
 from isnady.gui.widgets import FlowLayout, expanding_width_policy
 
@@ -55,8 +56,8 @@ SHIA_COLOR = {1: 2, 2: 4, 3: 5, 4: 9}   # the Shia categories drawn in the rank 
 def _critic(v: dict) -> str:
     """The critic by the name isnady gives him (NM2): "Ibn Hajar", "al-Najashi" …"""
     if v.get("rank_scheme") == "shia":
-        return v.get("critic_name") or "al-Najashi"
-    return "Ibn Hajar" if "حجر" in (v.get("critic_name") or "") or not v.get("critic_name") else v["critic_name"]
+        return tr(v.get("critic_name") or "al-Najashi")
+    return tr("Ibn Hajar") if "حجر" in (v.get("critic_name") or "") or not v.get("critic_name") else v["critic_name"]
 
 
 def person_summary(person: dict | None) -> str:
@@ -70,11 +71,12 @@ def person_summary(person: dict | None) -> str:
         if v.get("rank_scheme") == "shia":
             parts.append(f"{_critic(v)}: {v['phrase'][:80]}" + (f" ({v['rank_label']})" if v["rank"] else ""))
         else:
-            parts.append(f"Ibn Hajar: {v['phrase']}" + (f" (rank {v['rank']} of 12)" if v["rank"] else ""))
+            parts.append(f"{tr('Ibn Hajar')}: {v['phrase']}"
+                         + (" (" + tr("rank {rank} of 12", rank=v["rank"]) + ")" if v["rank"] else ""))
     if person.get("tabaqa"):
-        parts.append(f"tabaqa {person['tabaqa']}")
+        parts.append(tr("tabaqa {tabaqa}", tabaqa=person["tabaqa"]))
     if person.get("death_year_ah"):
-        parts.append(f"d. {person['death_year_ah']} AH")
+        parts.append(tr("d. {year} AH", year=person["death_year_ah"]))
     return " · ".join(parts)
 
 
@@ -101,14 +103,15 @@ class ChainStrip(QWidget):
                 flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChip", tip))
             else:
                 n = link.get("candidates")
-                why = core_isnad.link_note(link["raw_name"]) or ("not identified yet" if n is None else
-                       f"not identified: {n} narrators could have this name" if n else
-                       "not identified: no narrator of this name in the rijal work")
+                why = core_isnad.link_note(link["raw_name"]) or (tr("not identified yet") if n is None else
+                       tr("not identified: {n} narrators could have this name", n=n) if n else
+                       tr("not identified: no narrator of this name in the rijal work"))
                 flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChipUnknown",
                                      f"{link['raw_name']}\n{why}\n{arabic}: {meaning}"))
         if chain["reaches_prophet"] or chain.get("ends_with"):
             flow.addWidget(_arrow())
-            flow.addWidget(_chip(end_chip(chain), "ChainChipProphet", "The chain reaches " + core_isnad.end_label(chain)))
+            flow.addWidget(_chip(end_chip(chain), "ChainChipProphet",
+                                 tr("The chain reaches {whom}", whom=core_isnad.end_label(chain))))
         self.setSizePolicy(expanding_width_policy())
 
     def hasHeightForWidth(self) -> bool:  # noqa: N802
@@ -198,7 +201,7 @@ class ChainNode(QWidget):
             who.setWordWrap(True)
             who.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
             who.setToolTip(person["name_ar"] + (("\n" + "، ".join(person["other_names"][:8])) if person.get("other_names") else "")
-                           + ("\n\nClick to open this narrator." if on_person is not None else ""))
+                           + (tr("\n\nClick to open this narrator.") if on_person is not None else ""))
             who.setStyleSheet(f"color: {theme.current().muted}; "
                               f"{theme.font_css(theme.script_font('arabic', factor=0.62))}")
             box.addWidget(who)
@@ -211,7 +214,7 @@ class ChainNode(QWidget):
                                                       if view.get("full_reading") and view["full_reading"] != reading else ""))
                 roman.setObjectName("NodeFacts")
                 roman.setTextFormat(Qt.TextFormat.RichText)
-                roman.setToolTip(f"known by {view['how']}" if view.get("how") else "")
+                roman.setToolTip(tr("known by {how}", how=view['how']) if view.get("how") else "")
                 box.addWidget(roman)
             v = person["verdicts"][0] if person.get("verdicts") else None
             if v:
@@ -219,13 +222,14 @@ class ChainNode(QWidget):
                 if shia:                    # the Imami terms, never Ibn Hajar's twelve ranks (SK)
                     dot = theme.rank_color(SHIA_COLOR.get(v["rank"]))
                     rank_text = (f"&nbsp;&nbsp;<span style='color:{dot}'>●</span> {html.escape(v['rank_label'])}"
-                                 if v["rank"] else "&nbsp;&nbsp;<i>no judgment in these words</i>")
+                                 if v["rank"] else "&nbsp;&nbsp;<i>" + tr("no judgment in these words") + "</i>")
                     if v.get("madhhab_label"):
                         rank_text += f" · {html.escape(v['madhhab_label'])}"
                 else:
                     dot = theme.rank_color(v["rank"])
-                    rank_text = (f"&nbsp;&nbsp;<span style='color:{dot}'>●</span> rank {v['rank']} of 12: "
-                                 f"{html.escape(v['rank_label'])}") if v["rank"] else ""
+                    rank_text = (f"&nbsp;&nbsp;<span style='color:{dot}'>●</span> "
+                                 + tr("rank {rank} of 12", rank=v["rank"]) + f": {html.escape(v['rank_label'])}"
+                                 ) if v["rank"] else ""
                 arabic = theme.script_font("arabic", factor=0.68)
                 verdict = QLabel(f"{html.escape(_critic(v))}: <span style='font-family:\"{arabic.family()}\"; "
                                  f"font-size:{arabic.pointSizeF():.1f}pt'>{html.escape(_shorten(v['phrase'], 70))}</span>"
@@ -237,9 +241,9 @@ class ChainNode(QWidget):
                 box.addWidget(verdict)
             facts = []
             if person.get("tabaqa"):
-                facts.append(f"tabaqa {person['tabaqa']}: {person['tabaqa_label']}")
+                facts.append(tr("tabaqa {tabaqa}", tabaqa=person["tabaqa"]) + f": {person['tabaqa_label']}")
             if person.get("death_year_ah"):
-                facts.append(f"died {person['death_year_ah']} AH")
+                facts.append(tr("died {year} AH", year=person["death_year_ah"]))
             elif person.get("death_year_note"):
                 facts.append(person["death_year_note"])
             if facts:
@@ -253,8 +257,8 @@ class ChainNode(QWidget):
             unknown.setWordWrap(True)
             box.addWidget(unknown)
         elif candidates is not None and not prophet and not latin:
-            text = (f"Not identified yet: {candidates} narrators in the rijal work could have this name"
-                    if candidates else "Not identified: no narrator of this name in the rijal work")
+            text = (tr("Not identified yet: {n} narrators in the rijal work could have this name", n=candidates)
+                    if candidates else tr("Not identified: no narrator of this name in the rijal work"))
             unknown = QLabel(text)
             unknown.setObjectName("NodeUnknown")
             unknown.setWordWrap(True)

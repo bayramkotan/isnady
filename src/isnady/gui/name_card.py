@@ -7,9 +7,10 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QGridLayout, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from isnady.core.name_parts import PART_LABELS
+from isnady.core.i18n import N_, tr
 from isnady.gui import theme
 
-EXPLAIN = ("An Arabic name is made of parts: the <b>name</b> (ism), the <b>lineage</b> (nasab — b. means son of), "
+EXPLAIN = N_("An Arabic name is made of parts: the <b>name</b> (ism), the <b>lineage</b> (nasab — b. means son of), "
            "the <b>kunya</b> (Abu … , father of …), a <b>by-name</b> (laqab) and <b>nisbas</b> telling where a man "
            "was from, his tribe or his trade. A narrator is usually known by one of them — marked ★.")
 
@@ -49,7 +50,7 @@ class NameCard(QFrame):
         if view["full_reading"] and view["full_reading"] != view["reading"]:
             sub.append(html.escape(view["full_reading"]))
         if view["how"]:
-            sub.append(f"<span style='color:{t.gold}'>★</span> known by {html.escape(view['how'])}")
+            sub.append(f"<span style='color:{t.gold}'>★</span> " + tr("known by {how}", how=html.escape(tr(view["how"]))))
         if extra:
             sub.append(extra)
         if sub:
@@ -72,11 +73,11 @@ class NameCard(QFrame):
             grid.setColumnStretch(1, 1)
             for row, (key, values, star) in enumerate(view["rows"]):
                 title, term, arabic_term, meaning = PART_LABELS[key]
-                head = QLabel(f"<span style='color:{t.gold}'>{'★' if star else '&nbsp;&nbsp;'}</span> <b>{title}</b>"
+                head = QLabel(f"<span style='color:{t.gold}'>{'★' if star else '&nbsp;&nbsp;'}</span> <b>{tr(title)}</b>"
                               + (f"<br><span style='color:{t.muted}; font-size:small'>{term} · {arabic_term}</span>"
                                  if term else ""))
                 head.setTextFormat(Qt.TextFormat.RichText)
-                head.setToolTip(meaning)
+                head.setToolTip(tr(meaning))
                 head.setMinimumWidth(130)
                 readings = QLabel(" &nbsp;·&nbsp; ".join(html.escape(r) if r else "<span style='color:gray'>—</span>"
                                                          for _a, r in values))
@@ -88,7 +89,7 @@ class NameCard(QFrame):
                 grid.addWidget(readings, row, 1, Qt.AlignmentFlag.AlignVCenter)
                 grid.addWidget(_arabic("  ·  ".join(a for a, _r in values), 0.72), row, 2, Qt.AlignmentFlag.AlignVCenter)
             box.addLayout(grid)
-            note = QLabel(EXPLAIN)
+            note = QLabel(tr(EXPLAIN))
             note.setObjectName("Caption")
             note.setTextFormat(Qt.TextFormat.RichText)
             note.setWordWrap(True)

@@ -23,6 +23,7 @@ import sqlite3
 from collections import defaultdict
 from typing import Callable
 
+from isnady.core.i18n import t, tr
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
@@ -220,7 +221,7 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
     if not rebuild and row is not None and row[0] == stamp and pending == 0:
         return {"chains": 0, "links": 0, "identified": 0, "note": "up to date"}
 
-    say("Identifying narrators")
+    say(tr("Identifying narrators"))
     indexes: dict[str, Index] = {}
     chains = conn.execute(
         """SELECT i.id, i.reaches_prophet AND COALESCE(i.ends_with, 'prophet') = 'prophet', c.key,
@@ -312,10 +313,10 @@ def describe(conn: sqlite3.Connection, person_id: int) -> dict | None:
 
     for v in verdicts:
         if v["rank_scheme"] == "shia":
-            v["rank_label"] = shia_rijal.RANKS[v["rank"]][1] if v["rank"] else ""
-            v["madhhab_label"] = shia_rijal.MADHHAB_LABELS.get(v["madhhab"] or "", "")
+            v["rank_label"] = t(shia_rijal.RANKS[v["rank"]][1]) if v["rank"] else ""
+            v["madhhab_label"] = t(shia_rijal.MADHHAB_LABELS.get(v["madhhab"] or "", ""))
         else:
-            v["rank_label"] = RANK_LABELS.get(v["rank"], ("", ""))[1] if v["rank"] else ""
+            v["rank_label"] = t(RANK_LABELS.get(v["rank"], ("", ""))[1]) if v["rank"] else ""
             v["madhhab_label"] = ""
     marks = [m[0] for m in conn.execute("SELECT mark FROM person_marks WHERE person_id = ?", (person_id,))]
     names = [n[0] for n in conn.execute(
@@ -331,8 +332,8 @@ def describe(conn: sqlite3.Connection, person_id: int) -> dict | None:
     view = name_parts.present(name_parts.parse(shown, p["kunya"], known_aliases(conn, person_id), p["name_ar"]))
     return {**dict(p), "display_name": shown, "latin_tr": latin(shown, "tr"), "latin_en": latin(shown, "en"),
             "name_view": view,
-            "tabaqa_label": TABAQA_LABELS.get(p["tabaqa"], ""), "verdicts": verdicts,
-            "marks": [(m, BOOK_MARKS.get(m, m)) for m in marks], "other_names": names,
+            "tabaqa_label": t(TABAQA_LABELS.get(p["tabaqa"], "")), "verdicts": verdicts,
+            "marks": [(m, t(BOOK_MARKS.get(m, m))) for m in marks], "other_names": names,
             "in_chains": narrations}
 
 

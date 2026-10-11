@@ -21,17 +21,18 @@ import json
 import re
 from pathlib import Path
 
+from isnady.core.i18n import N_
 from isnady.data.paths import data_dir
 
 SETTINGS_FILE = "settings.json"
 
 # script -> (label, sample text, default family, default size, default line height %)
 SCRIPTS = {
-    "arabic": ("Arabic script (Arabic, Urdu, Persian)", "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ", "Amiri", 20.0, 125),
-    "latin": ("Latin script (Turkish, English, French, Indonesian)", "Ameller niyetlere göredir", "Amiri", 12.5, 115),
-    "cyrillic": ("Cyrillic script (Russian)", "Поистине, дела оцениваются по намерениям", "", 12.5, 120),
-    "bengali": ("Bengali script", "কর্মসমূহ নিয়তের উপর নির্ভরশীল", "", 13.0, 130),
-    "tamil": ("Tamil script", "செயல்கள் எண்ணங்களைப் பொறுத்தே", "", 13.0, 130),
+    "arabic": (N_("Arabic script (Arabic, Urdu, Persian)"), "إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ", "Amiri", 20.0, 125),
+    "latin": (N_("Latin script (Turkish, English, French, Indonesian)"), "Ameller niyetlere göredir", "Amiri", 12.5, 115),
+    "cyrillic": (N_("Cyrillic script (Russian)"), "Поистине, дела оцениваются по намерениям", "", 12.5, 120),
+    "bengali": (N_("Bengali script"), "কর্মসমূহ নিয়তের উপর নির্ভরশীল", "", 13.0, 130),
+    "tamil": (N_("Tamil script"), "செயல்கள் எண்ணங்களைப் பொறுத்தே", "", 13.0, 130),
 }
 SCRIPT_OF_LANGUAGE = {
     "arabic": "arabic", "urdu": "arabic", "persian": "arabic", "farsi": "arabic",
@@ -40,16 +41,16 @@ SCRIPT_OF_LANGUAGE = {
 
 # theme colour tokens a user may override, with a label for the Preferences window
 COLOR_TOKENS = {
-    "window": "Window background",
-    "surface": "Cards and fields",
-    "border": "Borders",
-    "ink": "Main text",
-    "muted": "Secondary text",
-    "lapis": "Accent (buttons, links, numbers)",
-    "gold": "Gold accent (terms, lines)",
-    "gilt": "Matched words",
-    "sidebar": "Sidebar",
-    "sidebar_ink": "Sidebar text",
+    "window": N_("Window background"),
+    "surface": N_("Cards and fields"),
+    "border": N_("Borders"),
+    "ink": N_("Main text"),
+    "muted": N_("Secondary text"),
+    "lapis": N_("Accent (buttons, links, numbers)"),
+    "gold": N_("Gold accent (terms, lines)"),
+    "gilt": N_("Matched words"),
+    "sidebar": N_("Sidebar"),
+    "sidebar_ink": N_("Sidebar text"),
 }
 
 _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
@@ -57,7 +58,7 @@ _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 def defaults() -> dict:
     d = {"view.theme": "system", "view.text_scale": 1.0, "ui.family": "", "ui.size": 0.0,
-         "view.ui_language": "en",            # the interface: how names and terms are read (L1)
+         "view.ui_language": "en",            # the interface language (I1) and how names and terms are read (L1)
          "view.content_languages": "",        # the hadith texts shown, by language, comma-separated; empty: all
          "sources.repository": "",            # the data repository chosen (core.repositories); empty: isnady's own
          "books.disabled": "",                # collections switched off (core.books), comma-separated keys
@@ -125,8 +126,10 @@ def validate(key: str, value):
             raise ConfigError("view.theme must be one of: " + ", ".join(allowed))
         return value
     if key == "view.ui_language":
-        if value not in ("en", "tr"):
-            raise ConfigError("view.ui_language must be en or tr")
+        from isnady.core.i18n import LANGUAGES
+
+        if value not in LANGUAGES:
+            raise ConfigError("view.ui_language must be one of: " + ", ".join(LANGUAGES))
         return value
     if key == "books.disabled":
         return ",".join(sorted({p.strip() for p in str(value).split(",") if p.strip()}))

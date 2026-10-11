@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 
 from isnady import config
 from isnady.gui import theme
+from isnady.core.i18n import tr
 
 
 class ColorButton(QPushButton):
@@ -48,7 +49,7 @@ class ColorButton(QPushButton):
         self._value, self._fallback = value, fallback
         shown = value or fallback
         ink = "#000000" if QColor(shown).lightness() > 140 else "#FFFFFF"
-        self.setText(value.upper() if value else f"Default  {fallback.upper()}")
+        self.setText(value.upper() if value else tr("Default") + f"  {fallback.upper()}")
         self.setStyleSheet(f"QPushButton#Swatch {{ background: {shown}; color: {ink}; border-radius: 6px;"
                            f" padding: 5px 10px; border: 1px solid {theme.current().border}; }}")
 
@@ -160,7 +161,7 @@ class ThemeTile(QPushButton):
 
 
 def _default_button() -> QPushButton:
-    button = QPushButton("Default")
+    button = QPushButton(tr("Default"))
     button.setObjectName("Quiet")
     button.setCursor(Qt.CursorShape.PointingHandCursor)
     return button
@@ -174,7 +175,7 @@ class PreferencesDialog(QDialog):
 
     def __init__(self, parent=None, start_tab: str = "") -> None:
         super().__init__(parent)
-        self.setWindowTitle("Preferences")
+        self.setWindowTitle(tr("Preferences"))
         self.resize(900, 700)
         self._rows = []           # callables that refresh a row from the settings
 
@@ -183,25 +184,25 @@ class PreferencesDialog(QDialog):
         self.sources = SourcesPage()
         self.sources.data_imported.connect(self.data_imported)
         tabs = QTabWidget()
-        tabs.addTab(self._scroll(self._themes_tab()), "Themes")
-        tabs.addTab(self._scroll(self._reading_tab()), "Reading text")
-        tabs.addTab(self._scroll(self._colors_tab()), "Colours")
-        tabs.addTab(self._scroll(self._interface_tab()), "Interface")
-        tabs.addTab(self._scroll(self._books_tab()), "Books and languages")
-        tabs.addTab(self._scroll(self.sources), "Data sources")
+        tabs.addTab(self._scroll(self._themes_tab()), tr("Themes"))
+        tabs.addTab(self._scroll(self._reading_tab()), tr("Reading text"))
+        tabs.addTab(self._scroll(self._colors_tab()), tr("Colours"))
+        tabs.addTab(self._scroll(self._interface_tab()), tr("Interface"))
+        tabs.addTab(self._scroll(self._books_tab()), tr("Books and languages"))
+        tabs.addTab(self._scroll(self.sources), tr("Data sources"))
         if start_tab == "sources":
             tabs.setCurrentIndex(tabs.count() - 1)
         elif start_tab == "themes":
             tabs.setCurrentIndex(0)
 
-        reset_all = QPushButton("Reset appearance")
+        reset_all = QPushButton(tr("Reset appearance"))
         reset_all.setObjectName("Quiet")
         reset_all.clicked.connect(self._reset_all)
-        close = QPushButton("Close")
+        close = QPushButton(tr("Close"))
         close.setObjectName("Primary")
         close.clicked.connect(self.accept)
         self._close = close
-        where = QLabel(f"Saved in {config.settings_path()}  ·  also:  iy config list")
+        where = QLabel(tr("Saved in {settings_path}  ·  also:  iy config list", settings_path=config.settings_path()))
         where.setObjectName("Caption")
         where.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
@@ -258,23 +259,23 @@ class PreferencesDialog(QDialog):
         box = QVBoxLayout(page)
         box.setContentsMargins(6, 12, 12, 12)
         box.setSpacing(14)
-        intro = QLabel("Choose how isnady looks. The change shows at once; View → Theme offers the same list.")
+        intro = QLabel(tr("Choose how isnady looks. The change shows at once; View → Theme offers the same list."))
         intro.setObjectName("Lead")
         intro.setWordWrap(True)
         box.addWidget(intro)
         grid = QGridLayout()
         grid.setHorizontalSpacing(16)
         grid.setVerticalSpacing(16)
-        tiles = [("system", "Follow system", "Lapis by day, Lapis Night by night — as the system is set",
+        tiles = [("system", tr("Follow system"), tr("Lapis by day, Lapis Night by night — as the system is set"),
                   theme.LIGHT, theme.DARK)]
-        tiles += [(k, name, text, tokens, None) for k, (name, text, tokens) in theme.THEMES.items()]
+        tiles += [(k, tr(name), tr(text), tokens, None) for k, (name, text, tokens) in theme.THEMES.items()]
         for n, (key, name, text, tokens, second) in enumerate(tiles):
             tile = ThemeTile(key, name, text, tokens, second)
             tile.clicked.connect(lambda _c=False, k=key: self._set("view.theme", k))
             grid.addWidget(tile, n // 3, n % 3)
             self._rows.append(lambda tile=tile: tile.setChecked(theme.theme_mode() == tile.key))
         box.addLayout(grid)
-        note = QLabel("Colours of your own (the Colours tab) apply to Lapis and Lapis Night.")
+        note = QLabel(tr("Colours of your own (the Colours tab) apply to Lapis and Lapis Night."))
         note.setObjectName("Caption")
         box.addWidget(note)
         box.addStretch(1)
@@ -287,9 +288,9 @@ class PreferencesDialog(QDialog):
         box = QVBoxLayout(page)
         box.setContentsMargins(6, 12, 12, 12)
         box.setSpacing(14)
-        intro = QLabel("Each script has its own font, size, colour and line spacing. A text uses the settings of "
-                       "the script its language is written in. View → Reading Text Size (Ctrl + / Ctrl −) "
-                       "scales them all together.")
+        intro = QLabel(tr("Each script has its own font, size, colour and line spacing. A text uses the settings of the "
+                         "script its language is written in. View → Reading Text Size (Ctrl + / Ctrl −) scales them all "
+                         "together."))
         intro.setObjectName("Lead")
         intro.setWordWrap(True)
         box.addWidget(intro)
@@ -305,7 +306,7 @@ class PreferencesDialog(QDialog):
         grid.setContentsMargins(18, 14, 18, 14)
         grid.setHorizontalSpacing(10)
         grid.setVerticalSpacing(8)
-        title = QLabel(label)
+        title = QLabel(tr(label))
         title.setObjectName("CardTitle")
         title.setFont(theme.reading_font(14, bold=True))
         grid.addWidget(title, 0, 0, 1, 6)
@@ -319,7 +320,7 @@ class PreferencesDialog(QDialog):
         line.setRange(80, 250)
         line.setSingleStep(5)
         line.setSuffix(" %")
-        color = ColorButton(f"{label}: text colour")
+        color = ColorButton(tr("{script}: text colour", script=tr(label)))
         reset = _default_button()
         preview = QLabel(sample)
         preview.setObjectName("Preview")
@@ -328,8 +329,8 @@ class PreferencesDialog(QDialog):
         preview.setAlignment((Qt.AlignmentFlag.AlignRight if rtl else Qt.AlignmentFlag.AlignLeft)
                              | Qt.AlignmentFlag.AlignAbsolute)
 
-        for col, (text, widget) in enumerate((("Font", family), ("Size", size), ("Line spacing", line),
-                                             ("Colour", color))):
+        for col, (text, widget) in enumerate(((tr("Font"), family), (tr("Size"), size), (tr("Line spacing"), line),
+                                             (tr("Colour"), color))):
             caption = QLabel(text)
             caption.setObjectName("FilterLabel")
             grid.addWidget(caption, 1, col)
@@ -367,13 +368,13 @@ class PreferencesDialog(QDialog):
         box = QVBoxLayout(page)
         box.setContentsMargins(6, 12, 12, 12)
         box.setSpacing(12)
-        intro = QLabel("The light and the dark theme keep their own colours. Choose which one to edit; the "
-                       "window shows the theme picked in View → Theme.")
+        intro = QLabel(tr("The light and the dark theme keep their own colours. Choose which one to edit; the window shows "
+                         "the theme picked in View → Theme."))
         intro.setObjectName("Lead")
         intro.setWordWrap(True)
         which = QComboBox()
-        which.addItem("Light theme", "light")
-        which.addItem("Dark theme", "dark")
+        which.addItem(tr("Light theme"), "light")
+        which.addItem(tr("Dark theme"), "dark")
         which.setCurrentIndex(1 if theme.current().dark else 0)
         head = QHBoxLayout()
         head.addWidget(which)
@@ -388,6 +389,7 @@ class PreferencesDialog(QDialog):
         grid.setVerticalSpacing(8)
         base = {"light": theme.LIGHT, "dark": theme.DARK}
         for row, (token, label) in enumerate(config.COLOR_TOKENS.items()):
+            label = tr(label)
             name = QLabel(label)
             button = ColorButton(label)
             reset = _default_button()
@@ -438,28 +440,27 @@ class PreferencesDialog(QDialog):
         lay = QVBoxLayout(card)
         lay.setContentsMargins(18, 14, 18, 14)
         lay.setSpacing(8)
-        title = QLabel("Books")
+        title = QLabel(tr("Books"))
         title.setObjectName("CardTitle")
         title.setFont(theme.reading_font(13.5, bold=True))
         lay.addWidget(title)
-        lead = QLabel("A book switched off stays in the database but is left out of searches, book lists and "
-                      "statistics until you switch it on again. To choose a few books for one search, use Books "
-                      "on the Search page.")
+        lead = QLabel(tr("A book switched off stays in the database but is left out of searches, book lists and statistics "
+                        "until you switch it on again. To choose a few books for one search, use Books on the Search page."))
         lead.setObjectName("Caption")
         lead.setWordWrap(True)
         lay.addWidget(lead)
         checks: dict[str, QCheckBox] = {}
         if not groups:
-            none = QLabel("No books imported yet: Data sources.")
+            none = QLabel(tr("No books imported yet: Data sources."))
             none.setObjectName("Caption")
             lay.addWidget(none)
         for _t, label, group in groups:
             head = QHBoxLayout()
-            g = QLabel(f"{label} collections")
+            g = QLabel(tr("{group} collections", group=tr(label)))
             g.setObjectName("FilterTitle")
             head.addWidget(g)
             head.addStretch(1)
-            for text, on in (("All on", True), ("All off", False)):
+            for text, on in ((tr("All on"), True), (tr("All off"), False)):
                 b = QPushButton(text)
                 b.setObjectName("Quiet")
                 b.clicked.connect(lambda _c=False, grp=group, v=on: set_group(grp, v))
@@ -495,12 +496,12 @@ class PreferencesDialog(QDialog):
         lay = QVBoxLayout(card)
         lay.setContentsMargins(18, 14, 18, 14)
         lay.setSpacing(8)
-        title = QLabel("Languages of the texts")
+        title = QLabel(tr("Languages of the texts"))
         title.setObjectName("CardTitle")
         title.setFont(theme.reading_font(13.5, bold=True))
         lay.addWidget(title)
-        lead = QLabel("The languages each hadith is shown in. A text that matches your search is always shown. "
-                      "The same as Content in the sidebar.")
+        lead = QLabel(tr("The languages each hadith is shown in. A text that matches your search is always shown. The same "
+                        "as Content in the sidebar."))
         lead.setObjectName("Caption")
         lead.setWordWrap(True)
         lay.addWidget(lead)
@@ -515,8 +516,8 @@ class PreferencesDialog(QDialog):
             flow.addWidget(c)
             lang_checks.append(c)
         lay.addWidget(holder)
-        fold = QRadioButton("Fold the other languages behind an arrow on each hadith (▸ click to open)")
-        omit = QRadioButton("Leave the other languages out")
+        fold = QRadioButton(tr("Fold the other languages behind an arrow on each hadith (▸ click to open)"))
+        omit = QRadioButton(tr("Leave the other languages out"))
         (fold if language.folds() else omit).setChecked(True)
         fold.toggled.connect(lambda on: (language.set_folds(on), self.languages_changed.emit()))
         lay.addWidget(fold)
@@ -537,7 +538,7 @@ class PreferencesDialog(QDialog):
         box = QVBoxLayout(page)
         box.setContentsMargins(6, 12, 12, 12)
         box.setSpacing(12)
-        intro = QLabel("The font of menus, buttons and labels. Reading text has its own settings.")
+        intro = QLabel(tr("The font of menus, buttons and labels. Reading text has its own settings."))
         intro.setObjectName("Lead")
         intro.setWordWrap(True)
         box.addWidget(intro)
@@ -550,13 +551,13 @@ class PreferencesDialog(QDialog):
         size = QDoubleSpinBox()
         size.setRange(0, 24)
         size.setSingleStep(0.5)
-        size.setSpecialValueText("System size")
+        size.setSpecialValueText(tr("System size"))
         size.setSuffix(" pt")
         reset = _default_button()
         theme_combo = QComboBox()
-        for mode, label in (("system", "Follow system"), ("light", "Light"), ("dark", "Dark")):
+        for mode, label in (("system", tr("Follow system")), ("light", tr("Light")), ("dark", tr("Dark"))):
             theme_combo.addItem(label, mode)
-        for row, (text, widget) in enumerate((("Font", family), ("Size", size), ("Theme", theme_combo))):
+        for row, (text, widget) in enumerate(((tr("Font"), family), (tr("Size"), size), (tr("Theme"), theme_combo))):
             caption = QLabel(text)
             caption.setObjectName("FilterLabel")
             grid.addWidget(caption, row, 0)

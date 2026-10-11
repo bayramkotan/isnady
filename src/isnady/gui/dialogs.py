@@ -10,6 +10,7 @@ from PySide6.QtCore import Qt, qVersion
 from PySide6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QScrollArea, QVBoxLayout, QWidget
 
 from isnady import __version__
+from isnady.core.i18n import N_, tr
 from isnady.data.paths import data_dir, db_path
 from isnady.gui import theme
 
@@ -18,12 +19,12 @@ ISSUES_URL = REPO_URL + "/issues"
 PYPI_URL = "https://pypi.org/project/isnady/"
 
 SHORTCUTS = (
-    ("Ctrl+F", "Find: jump to the search field"),
-    ("Enter", "Run the search"),
-    ("Ctrl+1 … Ctrl+8", "Switch between sections"),
-    ("Ctrl++ / Ctrl+− / Ctrl+0", "Larger, smaller or default reading text"),
-    ("F11", "Full screen"),
-    ("Ctrl+Q", "Quit"),
+    ("Ctrl+F", N_("Find: jump to the search field")),
+    ("Enter", N_("Run the search")),
+    ("Ctrl+1 … Ctrl+8", N_("Switch between sections")),
+    ("Ctrl++ / Ctrl+− / Ctrl+0", N_("Larger, smaller or default reading text")),
+    ("F11", N_("Full screen")),
+    ("Ctrl+Q", N_("Quit")),
 )
 
 
@@ -66,47 +67,50 @@ class InfoDialog(QDialog):
 
 
 def search_tips(parent) -> InfoDialog:
-    return InfoDialog(parent, "Search tips", """
-<p><b>Arabic is matched without diacritics.</b> الاعمال finds الأَعْمَالُ. Alef forms (أ إ آ ٱ), alef maqsura,
-hamza seats and ta marbuta are treated alike, so you can type the way you normally write.</p>
-<p><b>Attached prefixes are found.</b> النيات also finds بالنيات, because Arabic joins bi-, wa-, fa- and al- to
-the word. Turn on <i>Whole words only</i> to find the word standing on its own.</p>
-<p><b>Latin-script text ignores case and accents.</b> NIYET, niyet and nîyet are the same; Muʿādh, Mu'adh and
-Muadh are the same.</p>
-<p><b>Match.</b> <i>All words</i> needs every word in the same text. <i>Any word</i> needs one of them.
-<i>Exact phrase</i> needs the words together, in order.</p>
-<p><b>Book and Language</b> narrow the results. The language filter also decides which translations appear under
-each hadith.</p>
-<p><b>Grades</b> are shown exactly as each scholar gave them, with the scholar's name. isnady does not merge or
-rewrite them.</p>""")
+    tips = [
+        tr("<b>Arabic is matched without diacritics.</b> الاعمال finds الأَعْمَالُ. Alef forms (أ إ آ ٱ), alef "
+          "maqsura, hamza seats and ta marbuta are treated alike, so you can type the way you normally write."),
+        tr("<b>Attached prefixes are found.</b> النيات also finds بالنيات, because Arabic joins bi-, wa-, fa- and al- "
+          "to the word. Turn on <i>Whole words only</i> to find the word standing on its own."),
+        tr("<b>Latin-script text ignores case and accents.</b> NIYET, niyet and nîyet are the same; Muʿādh, Mu'adh "
+          "and Muadh are the same."),
+        tr("<b>Match.</b> <i>All words</i> needs every word in the same text. <i>Any word</i> needs one of them. "
+          "<i>Exact phrase</i> needs the words together, in order."),
+        tr("<b>Book and Language</b> narrow the results. The language filter also decides which translations appear "
+          "under each hadith."),
+        tr("<b>Grades</b> are shown exactly as each scholar gave them, with the scholar's name. isnady does not merge "
+          "or rewrite them."),
+    ]
+    return InfoDialog(parent, tr("Search tips"), "".join(f"<p>{p}</p>" for p in tips))
 
 
 def shortcuts(parent) -> InfoDialog:
     rows = "".join(f"<tr><td style='padding:4px 18px 4px 0'><b>{html.escape(k)}</b></td>"
-                   f"<td style='padding:4px 0'>{html.escape(v)}</td></tr>" for k, v in SHORTCUTS)
-    return InfoDialog(parent, "Keyboard shortcuts", f"<table>{rows}</table>", width=560)
+                   f"<td style='padding:4px 0'>{html.escape(tr(v))}</td></tr>" for k, v in SHORTCUTS)
+    return InfoDialog(parent, tr("Keyboard shortcuts"), f"<table>{rows}</table>", width=560)
 
 
 def licenses(parent, conn: sqlite3.Connection | None) -> InfoDialog:
-    tier_text = {"A": "may be redistributed", "B": "may be redistributed under its conditions",
-                 "C": "may not be redistributed"}
+    tier_text = {"A": tr("may be redistributed"), "B": tr("may be redistributed under its conditions"),
+                 "C": tr("may not be redistributed")}
     rows = []
     if conn is not None:
         for r in conn.execute("SELECT name, license, tier, origin, location FROM sources ORDER BY origin, name"):
-            origin = "User Resource" if r["origin"] == "user" else "Built-in"
+            origin = tr("User Resource") if r["origin"] == "user" else tr("Built-in")
             rows.append(
                 f"<p><b>{html.escape(r['name'])}</b> ({origin})<br>"
-                f"Licence: {html.escape(r['license'] or 'not stated')}; tier {r['tier']}, {tier_text[r['tier']]}.<br>"
-                f"<span style='font-size:9pt'>{html.escape(r['location'])}</span></p>")
-    data = "".join(rows) or "<p>No data sources imported yet.</p>"
-    return InfoDialog(parent, "Licences", f"""
-<p><b>isnady</b> — MIT licence. <a href="{REPO_URL}">{REPO_URL}</a></p>
-<p><b>Amiri</b> typeface by Khaled Hosny — SIL Open Font License 1.1.
+                + tr("Licence: {licence}; tier {tier}, {meaning}.", licence=html.escape(r["license"] or tr("not stated")),
+                    tier=r["tier"], meaning=tier_text[r["tier"]])
+                + f"<br><span style='font-size:9pt'>{html.escape(r['location'])}</span></p>")
+    data = "".join(rows) or "<p>" + tr("No data sources imported yet.") + "</p>"
+    return InfoDialog(parent, tr("Licences"), f"""
+<p><b>isnady</b> — {tr("MIT licence.")} <a href="{REPO_URL}">{REPO_URL}</a></p>
+<p><b>Amiri</b> — {tr("typeface by Khaled Hosny — SIL Open Font License 1.1.")}
 <a href="https://github.com/aliftype/amiri">github.com/aliftype/amiri</a></p>
 <p><b>Qt for Python (PySide6)</b> — LGPL v3.</p>
-<h3>Data in this database</h3>
-<p>Every hadith, grade and text belongs to the source it came from. Tier C sources and User Resources stay on
-this computer and are never published.</p>
+<h3>{tr("Data in this database")}</h3>
+<p>{tr("Every hadith, grade and text belongs to the source it came from. Tier C sources and User Resources stay on "
+      "this computer and are never published.")}</p>
 {data}""")
 
 
@@ -114,18 +118,19 @@ def about(parent) -> InfoDialog:
     try:
         con = sqlite3.connect(":memory:")
         con.execute("CREATE VIRTUAL TABLE t USING fts5(x, tokenize='trigram')")
-        fts = "available"
+        fts = tr("available")
     except sqlite3.OperationalError:
-        fts = "not available (search scans instead)"
-    return InfoDialog(parent, "About isnady", f"""
+        fts = tr("not available (search scans instead)")
+    cell = "style='padding:3px 16px 3px 0'"
+    return InfoDialog(parent, tr("About isnady"), f"""
 <p><span style='font-size:15pt'>isnady {__version__}</span><br>
-Hadith search built around the isnad, the chain of transmission.</p>
-<p>By Bayram Kotan. <a href="{REPO_URL}">GitHub</a>, <a href="{PYPI_URL}">PyPI</a>,
-<a href="{ISSUES_URL}">report an issue</a>.</p>
+{tr("Hadith search built around the isnad, the chain of transmission.")}</p>
+<p>{tr("By Bayram Kotan.")} <a href="{REPO_URL}">GitHub</a>, <a href="{PYPI_URL}">PyPI</a>,
+<a href="{ISSUES_URL}">{tr("report an issue")}</a>.</p>
 <table>
-<tr><td style='padding:3px 16px 3px 0'>Python</td><td>{platform.python_version()} ({html.escape(sys.platform)})</td></tr>
-<tr><td style='padding:3px 16px 3px 0'>PySide6 / Qt</td><td>{PySide6.__version__} / {qVersion()}</td></tr>
-<tr><td style='padding:3px 16px 3px 0'>SQLite</td><td>{sqlite3.sqlite_version}, FTS5 trigram {fts}</td></tr>
-<tr><td style='padding:3px 16px 3px 0'>Data folder</td><td>{html.escape(str(data_dir()))}</td></tr>
-<tr><td style='padding:3px 16px 3px 0'>Database</td><td>{html.escape(str(db_path()))}</td></tr>
+<tr><td {cell}>Python</td><td>{platform.python_version()} ({html.escape(sys.platform)})</td></tr>
+<tr><td {cell}>PySide6 / Qt</td><td>{PySide6.__version__} / {qVersion()}</td></tr>
+<tr><td {cell}>SQLite</td><td>{sqlite3.sqlite_version}, FTS5 trigram {fts}</td></tr>
+<tr><td {cell}>{tr("Data folder")}</td><td>{html.escape(str(data_dir()))}</td></tr>
+<tr><td {cell}>{tr("Database")}</td><td>{html.escape(str(db_path()))}</td></tr>
 </table>""", width=640)

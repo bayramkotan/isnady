@@ -163,6 +163,7 @@ class IntervalPlot(QWidget):
 from PySide6.QtCore import QPointF, Signal  # noqa: E402
 from PySide6.QtGui import QPainterPath  # noqa: E402
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout  # noqa: E402
+from isnady.core.i18n import tr
 
 
 def _fmt(n: float) -> str:
@@ -400,8 +401,9 @@ class Lorenz(QWidget):
         if 0 <= x <= 1:
             point = min(self.curve, key=lambda c: abs(c[0] - x))
             QToolTip.showText(e.globalPosition().toPoint(),
-                              f"The {100 * point[0]:.0f}% of narrators who carry least carry {100 * point[1]:.1f}% of the "
-                              f"links;\nthe other {100 - 100 * point[0]:.0f}% carry {100 - 100 * point[1]:.1f}%.", self)
+                              tr("The {least:.0f}% of narrators who carry least carry {share:.1f}% of the links;\nthe "
+                                 "other {rest:.0f}% carry {rest_share:.1f}%.", least=100 * point[0], share=100 * point[1],
+                                 rest=100 - 100 * point[0], rest_share=100 - 100 * point[1]), self)
 
 
 class PeopleBars(QWidget):
@@ -510,6 +512,7 @@ class Calibration(QWidget):
             c = self._xy(x, y)
             if (c - e.position()).manhattanLength() < 14:
                 QToolTip.showText(e.globalPosition().toPoint(),
-                                  f"{n:,} hadith: the model gave {100 * x:.0f}% on average, {100 * y:.0f}% got it", self)
+                                  tr("{n:,} hadith: the model gave {given:.0f}% on average, {got:.0f}% got it", n=n,
+                                     given=100 * x, got=100 * y), self)
                 return
         QToolTip.hideText()

@@ -21,13 +21,14 @@ from isnady.core.imports import ImportRequest, remove_source, run_import, run_ma
 from isnady.data import db
 from isnady.data.fetch import Auth, ResourceError
 from isnady.data.paths import data_dir
+from isnady.core.i18n import N_, tr
 
 FAWAZ_INDEX = "https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json"
 FAWAZ_SOURCE = "fawazahmed0/hadith-api"
 FAWAZ_KEY = "fawazahmed0-hadith-api"
 
-LANGUAGE_NAMES = {"ara": "Arabic", "tur": "Turkish", "eng": "English", "urd": "Urdu", "ind": "Indonesian",
-                  "ben": "Bengali", "fra": "French", "rus": "Russian", "tam": "Tamil"}
+LANGUAGE_NAMES = {"ara": N_("Arabic"), "tur": N_("Turkish"), "eng": N_("English"), "urd": N_("Urdu"), "ind": N_("Indonesian"),
+                  "ben": N_("Bengali"), "fra": N_("French"), "rus": N_("Russian"), "tam": N_("Tamil")}
 DEFAULT_LANGUAGES = ["ara", "tur", "eng"]
 
 
@@ -264,7 +265,7 @@ def import_entry(conn: sqlite3.Connection, entry: Entry, languages: list[str] | 
         if not entry.fallback:
             raise
         if progress:
-            progress(f"The repository's copy could not be read ({exc}); reading the original")
+            progress(tr("The repository's copy could not be read ({exc}); reading the original", exc=exc))
         result = run_import(conn, request_for(entry, languages, auth, use_fallback=True), progress)
     _set_tradition(conn, entry)
     return result

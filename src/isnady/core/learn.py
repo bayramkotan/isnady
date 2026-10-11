@@ -31,8 +31,23 @@ def get(term_id: str) -> dict | None:
     return next((t for t in terms() if t["id"] == term_id), None)
 
 
-def name(term: dict, lang: str = "en") -> str:
-    return term["tr"] if lang == "tr" else term["en"]
+def _lang(lang: str | None) -> str:
+    """The glossary's language: the one asked for, else the interface language, else English (a language the
+    glossary has no text in falls back to English, term by term)."""
+    if lang:
+        return lang
+    from isnady.core import i18n
+
+    return i18n.language()
+
+
+def name(term: dict, lang: str | None = None) -> str:
+    return term.get(_lang(lang)) or term["en"]
+
+
+def text(term: dict, part: str, lang: str | None = None) -> str:
+    """term's "short" or "long" text in a language, English where it has none yet."""
+    return term[part].get(_lang(lang)) or term[part].get("en", "")
 
 
 def search(text: str, lang: str = "en") -> list[dict]:
@@ -51,11 +66,11 @@ def search(text: str, lang: str = "en") -> list[dict]:
     return [t for _r, t in sorted(hits, key=lambda h: h[0])]
 
 
-def short(term_id: str, lang: str = "en") -> str:
+def short(term_id: str, lang: str | None = None) -> str:
     t = get(term_id)
-    return f"{name(t, lang)} ({t['ar']}): {t['short'][lang]}" if t else ""
+    return f"{name(t, lang)} ({t['ar']}): {text(t, 'short', lang)}" if t else ""
 
 
-def for_group(group: int | None, lang: str = "en") -> str:
+def for_group(group: int | None, lang: str | None = None) -> str:
     """The hover text of a grade group (sahih, hasan, da'if, very weak, fabricated)."""
     return short(GROUP_TERM[group], lang) if group in GROUP_TERM else ""

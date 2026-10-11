@@ -30,6 +30,7 @@ from isnady.data.importers.base import (
     register,
     slugify,
 )
+from isnady.core.i18n import tr
 
 # Language prefixes used in this repository's edition names.
 LANGUAGE_CODES = {
@@ -131,8 +132,8 @@ class FawazahmedJsonImporter(Importer):
                     else:
                         kept.append(entry)
                 entries = kept
-            say(f"{len(entries)} edition(s) selected from the index"
-                + (f", {len(report.skipped_editions)} diacritics-free cop{'y' if len(report.skipped_editions) == 1 else 'ies'} skipped"
+            say(tr("{entries} edition(s) selected from the index", entries=len(entries))
+                + (tr(", {skipped_editions} diacritics-free cop{value} skipped", skipped_editions=len(report.skipped_editions), value='y' if len(report.skipped_editions) == 1 else 'ies')
                    if report.skipped_editions else ""))
             for entry in entries:
                 link = entry.get("linkmin") or entry.get("link")
@@ -296,7 +297,7 @@ class FawazahmedJsonImporter(Importer):
         report.grades += new_grades
         if empty:
             report.warnings.append(f"{key}: {empty} hadith without text in this edition")
-        say(f"{key}: {texts} texts ({language}), {new_hadiths} new hadith, {new_grades} new grades")
+        say(tr("{key}: {texts} texts ({language}), {new_hadiths} new hadith, {new_grades} new grades", key=key, texts=texts, language=language, new_hadiths=new_hadiths, new_grades=new_grades))
 
 
 register(FawazahmedJsonImporter())

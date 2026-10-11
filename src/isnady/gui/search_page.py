@@ -31,26 +31,29 @@ from isnady.data import db
 from isnady.gui import theme
 from isnady.gui.chain_widgets import ChainStrip
 from isnady.gui.widgets import BookPicker, FlowLayout, TextBlock, expanding_width_policy
+from isnady.core.i18n import N_, n_, tr
 
 PAGE_SIZE = 25
 FIRST_BATCH = 4     # cards shown at once; the rest follow in small batches
 NEXT_BATCH = 3
-MODE_LABELS = (("all", "All words"), ("any", "Any word"), ("phrase", "Exact phrase"), ("meaning", "By meaning (AI)"))
+MODE_LABELS = (("all", N_("All words")), ("any", N_("Any word")), ("phrase", N_("Exact phrase")),
+               ("meaning", N_("By meaning (AI)")))
 EXAMPLES = ("النيات", "الصلاة", "niyet", "komşu")
-KINDS = (("hadith", "Hadith"), ("narrators", "Narrators"), ("scholars", "Scholars"))
+KINDS = (("hadith", N_("Hadith")), ("narrators", N_("Narrators")), ("scholars", N_("Scholars")))
 KIND_TEXT = {   # placeholder, start-page title, start-page lead, examples
-    "hadith": ("Search the hadith: a word or phrase in Arabic, Turkish or English", "Search the hadith", "", EXAMPLES),
-    "narrators": ("Search the narrators by name: Arabic, English or Turkish spelling", "Search the narrators",
-                  "Every narrator of both traditions — Ibn Hajar's Taqrib for the Sunni books, al-Najashi's Rijal for "
-                  "the Shia books — by any part of his name. Names are matched by their letters, without vowels or "
-                  "diacritics, so “Abu Hurayra”, “Ebû Hüreyre” and أبو هريرة all find him. Try one of these:",
+    "hadith": (N_("Search the hadith: a word or phrase in Arabic, Turkish or English"), N_("Search the hadith"), "",
+               EXAMPLES),
+    "narrators": (N_("Search the narrators by name: Arabic, English or Turkish spelling"), N_("Search the narrators"),
+                  N_("Every narrator of both traditions — Ibn Hajar's Taqrib for the Sunni books, al-Najashi's Rijal for "
+                     "the Shia books — by any part of his name. Names are matched by their letters, without vowels or "
+                     "diacritics, so “Abu Hurayra”, “Ebû Hüreyre” and أبو هريرة all find him. Try one of these:"),
                   ("Abu Hurayra", "الزهري", "Ibn Umar", "Âişe", "Zurara")),
-    "scholars": ("Search the scholars of hadith: a name or a book", "Search the scholars",
-                 "The compilers of the books, the scholars who graded their hadith and the critics of narrators — "
-                 "by name in any spelling, or by the title of a work. Try one of these:",
+    "scholars": (N_("Search the scholars of hadith: a name or a book"), N_("Search the scholars"),
+                 N_("The compilers of the books, the scholars who graded their hadith and the critics of narrators — "
+                    "by name in any spelling, or by the title of a work. Try one of these:"),
                  ("Buhârî", "Albani", "ابن حجر", "Riyad al-Salihin")),
 }
-TRADITIONS = (("", "Both traditions"), ("sunni", "Sunni"), ("shia", "Shia"))
+TRADITIONS = (("", N_("Both traditions")), ("sunni", N_("Sunni")), ("shia", N_("Shia")))
 
 
 def _highlight(text: str, spans: list[tuple[int, int]], gilt: str) -> str:
@@ -89,31 +92,30 @@ class ResultCard(QFrame):
         head = QHBoxLayout()
         title = _label(result.collection_name, "CardTitle")
         title.setFont(theme.reading_font(15, bold=True, scaled=True))
-        number = _label(f"hadith {result.number}", "CardNumber")
+        number = _label(tr("hadith {number}", number=result.number), "CardNumber")
         head.addWidget(title)
         head.addSpacing(8)
         head.addWidget(number, 0, Qt.AlignmentFlag.AlignBaseline)
         if score is not None:
             meaning = _label(f"meaning {score:.2f}", "CardNumber")
-            meaning.setToolTip("How close this hadith is in meaning to the search, from 0 to 1: shared words "
-                               "and shared concepts learnt from the Arabic texts and their translations.\n"
-                               "A measure of closeness, not of authenticity.")
+            meaning.setToolTip(tr("How close this hadith is in meaning to the search, from 0 to 1: shared words and shared concepts "
+                                 "learnt from the Arabic texts and their translations.\nA measure of closeness, not of authenticity."))
             head.addSpacing(10)
             head.addWidget(meaning, 0, Qt.AlignmentFlag.AlignBaseline)
         head.addStretch(1)
         if open_book is not None:
-            book = QPushButton("In its book")
+            book = QPushButton(tr("In its book"))
             book.setObjectName("Link")
             book.setCursor(Qt.CursorShape.PointingHandCursor)
-            book.setToolTip("Read this hadith where it stands in its book, among the hadith of its chapter")
+            book.setToolTip(tr("Read this hadith where it stands in its book, among the hadith of its chapter"))
             book.clicked.connect(lambda: open_book(result.hadith_id))
             head.addWidget(book)
             head.addSpacing(14)
         if open_chain is not None:
-            view = QPushButton("View chain")
+            view = QPushButton(tr("View chain"))
             view.setObjectName("Link")
             view.setCursor(Qt.CursorShape.PointingHandCursor)
-            view.setToolTip("Open this hadith's chain of transmission")
+            view.setToolTip(tr("Open this hadith's chain of transmission"))
             view.clicked.connect(lambda: open_chain(result.hadith_id))
             head.addWidget(view)
         box.addLayout(head)
@@ -131,11 +133,11 @@ class ResultCard(QFrame):
                     links.append(f"<a href='{r['hadith_id']}' style='color:{t.lapis};text-decoration:none;{style}'>"
                                  f"{html.escape(r['number'])}</a>")
                 parts.append(f"{html.escape(book)} " + " · ".join(links))
-            also = _label("Also narrated in: " + "&nbsp;&nbsp;|&nbsp;&nbsp;".join(parts), "Caption", wrap=True)
+            also = _label(tr("Also narrated in:") + " " + "&nbsp;&nbsp;|&nbsp;&nbsp;".join(parts), "Caption", wrap=True)
             also.setTextFormat(Qt.TextFormat.RichText)
-            also.setToolTip("Other narrations of this hadith found by comparing the texts (takhrij).\n"
-                            "Upright numbers: the same text. Italic: probably the same report "
-                            "(the texts overlap and the same Companion narrates both).\nClick a number to open it.")
+            also.setToolTip(tr("Other narrations of this hadith found by comparing the texts (takhrij).\nUpright numbers: the "
+                              "same text. Italic: probably the same report (the texts overlap and the same Companion narrates "
+                              "both).\nClick a number to open it."))
             if open_chain is not None:
                 also.linkActivated.connect(lambda hid: open_chain(int(hid)))
             box.addWidget(also)
@@ -143,7 +145,7 @@ class ResultCard(QFrame):
             box.addWidget(ChainStrip(chain, people))
             box.addSpacing(6)
         elif chain and chain["problem"]:
-            note = _label("Chain kept whole, not split: " + chain["problem"], "Caption", wrap=True)
+            note = _label(tr("Chain kept whole, not split: {reason}", reason=tr(chain["problem"])), "Caption", wrap=True)
             box.addWidget(note)
 
         if result.grades:
@@ -155,7 +157,7 @@ class ResultCard(QFrame):
                 from isnady.core.grades import group as grade_group
 
                 meaning = learn.for_group(grade_group(grade))
-                pill.setToolTip(f"{grader} graded this hadith: {grade}" + (f"\n\n{meaning}" if meaning else ""))
+                pill.setToolTip(tr("{grader} graded this hadith: {grade}", grader=grader, grade=grade) + (f"\n\n{meaning}" if meaning else ""))
                 pills.addWidget(pill)
             box.addLayout(pills)
             box.addSpacing(4)
@@ -165,10 +167,10 @@ class ResultCard(QFrame):
         if folded:
             # the languages not chosen in Settings → Books and languages: behind an arrow, opened on a click
             names = ", ".join(dict.fromkeys(x.language for x in folded))
-            more = QPushButton(f"▸  Other languages: {names}")
+            more = QPushButton(tr("▸  Other languages: {names}", names=names))
             more.setObjectName("Link")
             more.setCursor(Qt.CursorShape.PointingHandCursor)
-            more.setToolTip("Languages you chose not to show (Settings → Books and languages). Click to show them here.")
+            more.setToolTip(tr("Languages you chose not to show (Settings → Books and languages). Click to show them here."))
             holder = QWidget()
             inner = QVBoxLayout(holder)
             inner.setContentsMargins(0, 0, 0, 0)
@@ -206,7 +208,7 @@ class ResultCard(QFrame):
             inner.setContentsMargins(16, 2, 0, 2)
             inner.addWidget(TextBlock(f"<div style='{style}'>{body}</div>", theme.script_font(script)))
             box.addWidget(frame)
-        caption = _label(f"{text.language}, {text.edition_key}", "Caption")
+        caption = _label(f"{tr(text.language)}, {text.edition_key}", "Caption")
         if text.direction == "rtl":
             caption.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
         box.addWidget(caption)
@@ -237,18 +239,18 @@ class SearchPage(QWidget):
         self.kind_combo.setObjectName("SearchKind")
         self.kind_combo.setCursor(Qt.CursorShape.PointingHandCursor)
         for key, label in KINDS:
-            self.kind_combo.addItem(label, key)
-        self.kind_combo.setToolTip("What to search: the text of the hadith, the narrators of both traditions "
-                                   "by name, or the scholars of hadith")
+            self.kind_combo.addItem(tr(label), key)
+        self.kind_combo.setToolTip(tr("What to search: the text of the hadith, the narrators of both traditions by name, or the scholars "
+                                     "of hadith"))
         self.kind_combo.currentIndexChanged.connect(self._kind_changed)
 
         # search bar
         self.query_edit = QLineEdit()
         self.query_edit.setObjectName("SearchField")
-        self.query_edit.setPlaceholderText("Search the hadith: a word or phrase in Arabic, Turkish or English")
+        self.query_edit.setPlaceholderText(tr("Search the hadith: a word or phrase in Arabic, Turkish or English"))
         self.query_edit.setClearButtonEnabled(True)
         self.query_edit.returnPressed.connect(self.run_search)
-        self.search_button = QPushButton("Search")
+        self.search_button = QPushButton(tr("Search"))
         self.search_button.setObjectName("Primary")
         self.search_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.search_button.clicked.connect(self.run_search)
@@ -256,13 +258,13 @@ class SearchPage(QWidget):
         # filters
         self.mode_combo = QComboBox()
         for key, label in MODE_LABELS:
-            self.mode_combo.addItem(label, key)
+            self.mode_combo.addItem(tr(label), key)
         self.mode_combo.currentIndexChanged.connect(
             lambda _i: self.whole_words.setEnabled(self.mode_combo.currentData() != "meaning"))
-        self.whole_words = QCheckBox("Whole words only")
+        self.whole_words = QCheckBox(tr("Whole words only"))
         self.whole_words.setToolTip(
-            "Off: النيات also finds بالنيات, because Arabic words carry attached prefixes.\n"
-            "On: only the word standing on its own."
+            tr("Off: النيات also finds بالنيات, because Arabic words carry attached prefixes.\nOn: only the word "
+              "standing on its own.")
         )
         self.book_combo = BookPicker()            # all books, all Sunni, all Shia, or any few ticked
         self.book_combo.changed.connect(self._rerun_if_searched)
@@ -273,10 +275,10 @@ class SearchPage(QWidget):
         self.whole_words.toggled.connect(self._rerun_if_searched)
         self.tradition_combo = QComboBox()
         for key, label in TRADITIONS:
-            self.tradition_combo.addItem(label, key)
+            self.tradition_combo.addItem(tr(label), key)
         self.tradition_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-        self.tradition_combo.setToolTip("Sunni: the narrators of Ibn Hajar's Taqrib. Shia: those of al-Najashi's "
-                                        "Rijal.\nThe two are never matched to each other: each keeps its own terms.")
+        self.tradition_combo.setToolTip(tr("Sunni: the narrators of Ibn Hajar's Taqrib. Shia: those of al-Najashi's Rijal.\nThe two are never "
+                                          "matched to each other: each keeps its own terms."))
         self.tradition_combo.currentIndexChanged.connect(self._rerun_if_searched)
         self.summary = _label(name="Summary")
 
@@ -308,8 +310,8 @@ class SearchPage(QWidget):
         row = QHBoxLayout(self.hadith_filters)
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
-        for text, widget in (("Match", self.mode_combo), (None, self.whole_words),
-                             ("Books", self.book_combo), ("Language", self.language_combo)):
+        for text, widget in ((tr("Match"), self.mode_combo), (None, self.whole_words),
+                             (tr("Books"), self.book_combo), (tr("Language"), self.language_combo)):
             if text:
                 row.addSpacing(10)
                 row.addWidget(_label(text, "FilterLabel"))
@@ -319,7 +321,7 @@ class SearchPage(QWidget):
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
         row.addSpacing(10)
-        row.addWidget(_label("Tradition", "FilterLabel"))
+        row.addWidget(_label(tr("Tradition"), "FilterLabel"))
         row.addWidget(self.tradition_combo)
         self.people_filters.hide()
         filters.addWidget(self.hadith_filters)
@@ -369,23 +371,23 @@ class SearchPage(QWidget):
         box = QVBoxLayout(box_widget)
         box.setContentsMargins(8, 40, 8, 8)
         box.setSpacing(10)
-        title = _label("The database could not be opened", "Hero", wrap=True)
+        title = _label(tr("The database could not be opened"), "Hero", wrap=True)
         title.setFont(theme.reading_font(24, bold=True))
         message = str(exc)
         advice = ""
         if "newer than this isnady supports" in message:
-            advice = ("The data was last opened by a newer isnady than the one running now "
-                      f"({__version__}). Nothing is lost: update isnady, or if you work from the source folder, "
-                      "reinstall it there with <code>pip install -e .</code>")
+            advice = tr("The data was last opened by a newer isnady than the one running now ({version}). Nothing is "
+                        "lost: update isnady, or if you work from the source folder, reinstall it there with "
+                        "<code>pip install -e .</code>", version=__version__)
         detail = _label(
-            f"{html.escape(message)}<br><br>{advice}<br><br>Database: <code>{html.escape(str(db_path()))}</code>",
+            tr("{message}<br><br>{advice}<br><br>Database: <code>{db_path}</code>", message=html.escape(message), advice=advice, db_path=html.escape(str(db_path()))),
             "Lead", wrap=True, selectable=True)
         detail.setTextFormat(Qt.TextFormat.RichText)
         box.addWidget(title)
         box.addWidget(detail)
         self.body_layout.addWidget(box_widget)
         self.body_layout.addStretch(1)
-        self._status("Database not opened")
+        self._status(tr("Database not opened"))
 
     def _sync_with_database(self, force: bool = False) -> None:
         """Index new texts and refresh the filters when another program changed the data."""
@@ -407,7 +409,7 @@ class SearchPage(QWidget):
         self._fill_filters()
         hadith = self._conn.execute("SELECT COUNT(*) FROM hadiths").fetchone()[0]
         books = self._conn.execute("SELECT COUNT(*) FROM collections").fetchone()[0]
-        self._status(f"{hadith:,} hadith in {books} book{'s' if books != 1 else ''}")
+        self._status(n_("{hadith:,} hadith in {n} book", "{hadith:,} hadith in {n} books", books, hadith=hadith))
         if not self._page:
             self._show_start()
 
@@ -416,9 +418,9 @@ class SearchPage(QWidget):
         current_lang = self.language_combo.currentData()
         self.language_combo.blockSignals(True)
         self.language_combo.clear()
-        self.language_combo.addItem("All languages", None)
+        self.language_combo.addItem(tr("All languages"), None)
         for language in core.list_languages(self._conn):
-            self.language_combo.addItem(language, language)
+            self.language_combo.addItem(tr(language), language)
         self.language_combo.setCurrentIndex(max(self.language_combo.findData(current_lang), 0))
         self.language_combo.blockSignals(False)
 
@@ -468,15 +470,14 @@ class SearchPage(QWidget):
         box = QVBoxLayout(box_widget)
         box.setContentsMargins(8, 40, 8, 8)
         box.setSpacing(10)
-        title = _label("Search by meaning", "Hero", wrap=True)
+        title = _label(tr("Search by meaning"), "Hero", wrap=True)
         title.setFont(theme.reading_font(24, bold=True))
-        text = _label(message + "\n\nSearch by meaning finds hadith that say the same thing in other words or in "
-                      "another language. It learns from the texts imported here; building it takes a few seconds "
-                      "to a minute.", "Lead", wrap=True)
+        text = _label(message + "\n\n" + tr("Search by meaning finds hadith that say the same thing in other words or in another language. "
+                                  "It learns from the texts imported here; building it takes a few seconds to a minute."), "Lead", wrap=True)
         box.addWidget(title)
         box.addWidget(text)
         if "not built" in message:
-            build = QPushButton("Build the meaning index now")
+            build = QPushButton(tr("Build the meaning index now"))
             build.setObjectName("Primary")
             build.clicked.connect(self.build_meaning_index)
             row = QHBoxLayout()
@@ -513,10 +514,11 @@ class SearchPage(QWidget):
 
                     meta = semantic.build(conn, progress=self.progress.emit)
                     found = takhrij.build(conn, progress=self.progress.emit)
-                    self.done.emit(True, f"AI indexes ready: meaning ({meta['documents']:,} hadith, {meta['dims']} "
-                                         f"concepts); takhrij ({found['same']:,} + {found['same_report']:,} pairs)")
+                    self.done.emit(True, tr("AI indexes ready: meaning ({documents:,} hadith, {concepts} concepts); "
+                                            "takhrij ({same:,} + {report:,} pairs)", documents=meta["documents"],
+                                            concepts=meta["dims"], same=found["same"], report=found["same_report"]))
                 except Exception as exc:  # shown to the user, never lost
-                    self.done.emit(False, f"Meaning index failed: {exc}")
+                    self.done.emit(False, tr("Meaning index failed: {error}", error=exc))
                 finally:
                     conn.close()
 
@@ -525,7 +527,7 @@ class SearchPage(QWidget):
         worker.progress.connect(self._status)
         worker.done.connect(self._meaning_built)
         worker.finished.connect(lambda: setattr(self, "_meaning_worker", None))
-        self._status("Building the AI indexes (meaning, takhrij)…")
+        self._status(tr("Building the AI indexes (meaning, takhrij)…"))
         worker.start()
 
     def _meaning_built(self, ok: bool, message: str) -> None:
@@ -546,7 +548,7 @@ class SearchPage(QWidget):
         kind = self.kind()
         self.hadith_filters.setVisible(kind == "hadith")
         self.people_filters.setVisible(kind == "narrators")
-        self.query_edit.setPlaceholderText(KIND_TEXT[kind][0])
+        self.query_edit.setPlaceholderText(tr(KIND_TEXT[kind][0]))
         self.summary.setText("")
         if self.query_edit.text().strip():
             self.run_search()
@@ -630,7 +632,7 @@ class SearchPage(QWidget):
         arabic.setFont(theme.reading_font(26))
         arabic.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignAbsolute)
         kind = self.kind()
-        title = _label(KIND_TEXT[kind][1], "Hero")
+        title = _label(tr(KIND_TEXT[kind][1]), "Hero")
         title.setFont(theme.reading_font(30, bold=True))
         box.addWidget(arabic)
         box.addWidget(title)
@@ -639,19 +641,19 @@ class SearchPage(QWidget):
             box.addWidget(_label(html.escape(self._notice), "Lead", wrap=True))
         if hadith == 0 and kind == "hadith":
             lead = _label(
-                "The database is empty. Import a source from a terminal, for example:<br>"
-                "<code>iy import fawazahmed0 https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/"
-                "editions.json --book bukhari --language tur --language ara --license Unlicense</code><br>"
-                "Importing from inside the app arrives with User Resources.",
+                tr("The database is empty. Import a source from a terminal, for example:<br><code>iy import "
+                  "fawazahmed0 https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json --book bukhari "
+                  "--language tur --language ara --license Unlicense</code><br>Importing from inside the app arrives "
+                  "with User Resources."),
                 "Lead", wrap=True, selectable=True)
             lead.setTextFormat(Qt.TextFormat.RichText)
             box.addWidget(lead)
         elif kind == "narrators" and not self._conn.execute("SELECT 1 FROM persons LIMIT 1").fetchone():
-            box.addWidget(_label("No narrators yet: import Ibn Hajar's Taqrib or al-Najashi's Rijal "
-                                 "(File → Data Sources), or from a terminal: iy catalog import taqrib",
+            box.addWidget(_label(tr("No narrators yet: import Ibn Hajar's Taqrib or al-Najashi's Rijal (File → Data Sources), or from "
+                                   "a terminal: iy catalog import taqrib"),
                                  "Lead", wrap=True))
         else:
-            lead = _label(KIND_TEXT[kind][2] or (
+            lead = _label(tr(KIND_TEXT[kind][2]) if KIND_TEXT[kind][2] else tr(
                 "Arabic diacritics and letter forms are ignored, so الاعمال finds الأَعْمَالُ. "
                 "Turkish and other Latin-script text ignores case and accents. Try one of these:"),
                 "Lead", wrap=True)
@@ -679,10 +681,11 @@ class SearchPage(QWidget):
             empty = QWidget()
             box = QVBoxLayout(empty)
             box.setContentsMargins(8, 40, 8, 8)
-            title = _label(f"Nothing found for “{page.query.text.strip()}”", "Hero", wrap=True)
+            title = _label(tr("Nothing found for “{strip}”", strip=page.query.text.strip()), "Hero", wrap=True)
             title.setFont(theme.reading_font(20, bold=True))
-            hint = "Try fewer words, “Any word”, or turn off “Whole words only”." if (
-                len(page.terms) > 1 or page.query.whole_words) else "Try another spelling, or search in another language."
+            hint = tr("Try fewer words, “Any word”, or turn off “Whole words only”.") if (
+                len(page.terms) > 1 or page.query.whole_words) else tr("Try another spelling, or search in another "
+                                                                       "language.")
             box.addWidget(title)
             box.addWidget(_label(hint, "Lead", wrap=True))
             self.body_layout.addWidget(empty)
@@ -720,7 +723,7 @@ class SearchPage(QWidget):
             return
         remaining = self._page.total - len(self._results)
         if remaining > 0:
-            self.more_button.setText(f"Show {min(PAGE_SIZE, remaining)} more ({remaining:,} left)")
+            self.more_button.setText(tr("Show {page_size} more ({remaining:,} left)", page_size=min(PAGE_SIZE, remaining), remaining=remaining))
             self.body_layout.addWidget(self.more_button, 0, Qt.AlignmentFlag.AlignHCenter)
         self.body_layout.addStretch(1)
 
@@ -729,11 +732,11 @@ class SearchPage(QWidget):
         if page.total == 0:
             self.summary.setText("")
             return
-        note = "" if page.used_index else ", index unavailable"
+        note = "" if page.used_index else ", " + tr("index unavailable")
         if page.query.mode == "meaning":
-            note = " by meaning" + (" · index older than the data (Tools → Build Meaning Index)"
-                                    if getattr(self, "_meaning_stale", False) else "")
-        self.summary.setText(f"{page.total:,} hadith, {page.elapsed_ms} ms{note}")
+            note = " " + tr("by meaning") + (" · " + tr("index older than the data (Tools → Build Meaning Index)")
+                                             if getattr(self, "_meaning_stale", False) else "")
+        self.summary.setText(tr("{total:,} hadith, {ms} ms", total=page.total, ms=page.elapsed_ms) + note)
 
     # -------------------------------------------------------------- people (S3)
     def _search_people(self) -> None:
@@ -770,7 +773,9 @@ class SearchPage(QWidget):
             empty = QWidget()
             box = QVBoxLayout(empty)
             box.setContentsMargins(8, 40, 8, 8)
-            title = _label(f"No {kind} found for “{self.query_edit.text().strip()}”", "Hero", wrap=True)
+            typed = self.query_edit.text().strip()
+            title = _label(tr("No narrators found for “{typed}”", typed=typed) if kind == "narrators" else
+                           tr("No scholars found for “{typed}”", typed=typed), "Hero", wrap=True)
             title.setFont(theme.reading_font(20, bold=True))
             box.addWidget(title)
             box.addWidget(people_results.empty_hint(kind))
@@ -785,21 +790,21 @@ class SearchPage(QWidget):
         typed = self.query_edit.text().strip()
         if not more and all(r.get("weak") for r in self._found):
             self.body_layout.addWidget(_label(
-                f"No name reads “{typed}”. Arabic is written without its short vowels, so isnady first matches the "
-                "consonants — these names have the consonants typed, but their readings sound different.",
+                tr("No name reads “{typed}”. Arabic is written without its short vowels, so isnady first matches the "
+                  "consonants — these names have the consonants typed, but their readings sound different.", typed=typed),
                 "Lead", wrap=True))
         elif not more and all(r.get("close") for r in self._found):
             self.body_layout.addWidget(_label(
-                f"Nothing is written exactly “{typed}”. These are the closest spellings: a letter typed twice or "
-                "missing, or written as Turkish and English differ (h and kh, z and dh).", "Lead", wrap=True))
+                tr("Nothing is written exactly “{typed}”. These are the closest spellings: a letter typed twice or "
+                  "missing, or written as Turkish and English differ (h and kh, z and dh).", typed=typed), "Lead", wrap=True))
         batch = self._found[self._people_shown:self._people_shown + PAGE_SIZE]
         for index, row in enumerate(batch, start=self._people_shown):
             if row.get("weak") and index > 0 and not self._found[index - 1].get("weak"):
                 # the weaker matches, after the others, under their own heading (S4)
-                head = _label("Weaker matches", "CardTitle")
+                head = _label(tr("Weaker matches"), "CardTitle")
                 head.setFont(theme.reading_font(15, bold=True))
-                why = _label(f"The same consonants as “{typed}”, but the names read differently — Arabic is "
-                             "written without its short vowels, so the consonants are matched first.", "Caption",
+                why = _label(tr("The same consonants as “{typed}”, but the names read differently — Arabic is written without its "
+                               "short vowels, so the consonants are matched first.", typed=typed), "Caption",
                              wrap=True)
                 self.body_layout.addSpacing(10)
                 self.body_layout.addWidget(head)
@@ -812,23 +817,23 @@ class SearchPage(QWidget):
         self._people_shown += len(batch)
         remaining = len(self._found) - self._people_shown
         if remaining > 0:
-            self.more_button.setText(f"Show {min(PAGE_SIZE, remaining)} more ({remaining:,} left)")
+            self.more_button.setText(tr("Show {page_size} more ({remaining:,} left)", page_size=min(PAGE_SIZE, remaining), remaining=remaining))
             self.body_layout.addWidget(self.more_button, 0, Qt.AlignmentFlag.AlignHCenter)
         elif self._people_total > len(self._found):
-            note = _label(f"The {len(self._found):,} closest of {self._people_total:,} are shown: "
-                          "add a word to find the others.", "Caption")
+            note = _label(tr("The {found:,} closest of {people_total:,} are shown: add a word to find the others.", found=len(self._found), people_total=self._people_total), "Caption")
             note.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             self.body_layout.addWidget(note)
         self.body_layout.addStretch(1)
-        noun = {"narrators": ("narrator", "narrators"), "scholars": ("scholar", "scholars")}[kind]
         total = self._people_total
         close = sum(1 for r in self._found if r.get("close"))
         weak = sum(1 for r in self._found if r.get("weak"))
-        note = "" if not close else (" — by close spelling" if close == len(self._found)
-                                     else f", {close:,} by close spelling")
+        note = "" if not close else (" — " + tr("by close spelling") if close == len(self._found)
+                                     else ", " + tr("{n:,} by close spelling", n=close))
         if weak:
-            note += " — all weaker matches" if weak == len(self._found) else f", {weak:,} weaker"
-        self.summary.setText(f"{total:,} {noun[total != 1]}{note}, {self._people_ms} ms")
+            note += " — " + tr("all weaker matches") if weak == len(self._found) else ", " + tr("{n:,} weaker", n=weak)
+        count = (n_("{n:,} narrator", "{n:,} narrators", total) if kind == "narrators" else
+                 n_("{n:,} scholar", "{n:,} scholars", total))
+        self.summary.setText(count + note + f", {self._people_ms} ms")
 
     def release(self) -> None:
         """Let go of the cards before a new theme; retheme() draws them again (UI5-P). The start page and the

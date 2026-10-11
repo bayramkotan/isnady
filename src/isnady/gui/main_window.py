@@ -3,7 +3,7 @@
 Sections without their own page yet show a short description.
 """
 
-from PySide6.QtCore import QSize, Qt, QUrl
+from PySide6.QtCore import QSize, Qt, QUrl, Signal
 from PySide6.QtGui import QAction, QActionGroup, QDesktopServices, QGuiApplication, QKeySequence
 from PySide6.QtWidgets import (
     QMenu,
@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 )
 
 from isnady import __version__
+from isnady.core.i18n import N_, tr
 from isnady.data.paths import data_dir
 from isnady.gui import dialogs, theme
 from isnady.gui.isnad_page import IsnadPage
@@ -27,17 +28,18 @@ from isnady.gui.search_page import SearchPage
 
 # (key, sidebar label, description shown until the page is built)
 SECTIONS = [
-    ("search", "Search", "Search hadith text, books and grades."),
-    ("narrators", "Narrators", "Every narrator, Sunni and Shia on one page: biography, teachers and students, "
-                               "generation, narrations and every recorded verdict, each by its own tradition's measure."),
-    ("chains", "Isnad Chains", "Chains of transmission drawn link by link, with each narrator's standing "
-                               "and whether each link could have met the next."),
-    ("scholars", "Hadith Scholars", "The scholars of hadith: their lives, books, teachers and students, "
-                                     "and what their collections contain."),
-    ("books", "Books", "The hadith collections in the database and what each source adds."),
-    ("statistics", "Statistics", "Narrators, books and grades counted and compared."),
-    ("learn", "Learn", "The sciences of hadith: terms, grades, jarh wa ta'dil and the classical works, "
-                       "shown on real hadith and real chains."),
+    ("search", N_("Search"), N_("Search hadith text, books and grades.")),
+    ("narrators", N_("Narrators"), N_("Every narrator, Sunni and Shia on one page: biography, teachers and students, "
+                                      "generation, narrations and every recorded verdict, each by its own tradition's "
+                                      "measure.")),
+    ("chains", N_("Isnad Chains"), N_("Chains of transmission drawn link by link, with each narrator's standing "
+                                      "and whether each link could have met the next.")),
+    ("scholars", N_("Hadith Scholars"), N_("The scholars of hadith: their lives, books, teachers and students, "
+                                           "and what their collections contain.")),
+    ("books", N_("Books"), N_("The hadith collections in the database and what each source adds.")),
+    ("statistics", N_("Statistics"), N_("Narrators, books and grades counted and compared.")),
+    ("learn", N_("Learn"), N_("The sciences of hadith: terms, grades, jarh wa ta'dil and the classical works, "
+                              "shown on real hadith and real chains.")),
 ]
 
 
@@ -47,14 +49,14 @@ def _placeholder(title: str, text: str) -> QWidget:
     layout = QVBoxLayout(page)
     layout.setContentsMargins(48, 44, 48, 44)
     layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-    heading = QLabel(title)
+    heading = QLabel(tr(title))
     heading.setObjectName("PageTitle")
     heading.setFont(theme.reading_font(26, bold=True))
-    body = QLabel(text)
+    body = QLabel(tr(text))
     body.setObjectName("Lead")
     body.setWordWrap(True)
     body.setMaximumWidth(620)
-    note = QLabel("This section is being built.")
+    note = QLabel(tr("This section is being built."))
     note.setObjectName("Caption")
     layout.addWidget(heading)
     layout.addSpacing(6)
@@ -65,6 +67,8 @@ def _placeholder(title: str, text: str) -> QWidget:
 
 
 class MainWindow(QMainWindow):
+    language_switched = Signal()          # another interface language chosen: main.py builds the window again
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("isnady")
@@ -99,7 +103,7 @@ class MainWindow(QMainWindow):
         side.addWidget(self.nav, 1)
 
         # shown only when the check at start finds another copy of isnady (see check_installation_later)
-        self.install_notice = QPushButton("⚠  Check installation")
+        self.install_notice = QPushButton("⚠  " + tr("Check installation"))
         self.install_notice.setObjectName("SidebarNotice")
         self.install_notice.setCursor(Qt.CursorShape.PointingHandCursor)
         self.install_notice.clicked.connect(self._check_installation)
@@ -123,7 +127,7 @@ class MainWindow(QMainWindow):
         self.ui_lang_button.menu().aboutToShow.connect(lambda: self._fill_ui_language_menu(self.ui_lang_button.menu()))
         self.content_lang_button.menu().aboutToShow.connect(
             lambda: self._fill_content_language_menu(self.content_lang_button.menu()))
-        self.footer = QLabel(f"version {__version__}")
+        self.footer = QLabel(tr("version {version}", version=__version__))
         self.footer.setObjectName("SidebarFooter")
         self.footer.setContentsMargins(26, 0, 26, 0)
         self.footer.setWordWrap(True)
@@ -149,7 +153,7 @@ class MainWindow(QMainWindow):
 
         self.scholars_page = ScholarsPage(self.search_page.connection)
         for key, label, text in SECTIONS:
-            self.nav.addItem(label)
+            self.nav.addItem(tr(label))
             self.nav.item(self.nav.count() - 1).setSizeHint(QSize(0, 38))
             if key == "search":
                 page = self.search_page
@@ -228,33 +232,34 @@ class MainWindow(QMainWindow):
         bar = self.menuBar()
         search = self.pages.widget(0)
 
-        file_menu = bar.addMenu("&File")
-        self._action(file_menu, "Data Sources…", lambda: self._preferences("sources"), "Ctrl+Shift+I",
-                     tip="Import built-in sources with one click, or add your own")
-        self._action(file_menu, "Open Data Folder", self._open_data_folder,
-                     tip="Open the folder that holds the isnady database")
+        file_menu = bar.addMenu(tr("&File"))
+        self._action(file_menu, tr("Data Sources…"), lambda: self._preferences("sources"), "Ctrl+Shift+I",
+                     tip=tr("Import built-in sources with one click, or add your own"))
+        self._action(file_menu, tr("Open Data Folder"), self._open_data_folder,
+                     tip=tr("Open the folder that holds the isnady database"))
         file_menu.addSeparator()
-        self._action(file_menu, "Quit", QApplication.quit, "Ctrl+Q")
+        self._action(file_menu, tr("Quit"), QApplication.quit, "Ctrl+Q")
 
-        edit_menu = bar.addMenu("&Edit")
-        self._action(edit_menu, "Find", self._find, QKeySequence.StandardKey.Find)
-        self._action(edit_menu, "Copy", self._copy, QKeySequence.StandardKey.Copy)
+        edit_menu = bar.addMenu(tr("&Edit"))
+        self._action(edit_menu, tr("Find"), self._find, QKeySequence.StandardKey.Find)
+        self._action(edit_menu, tr("Copy"), self._copy, QKeySequence.StandardKey.Copy)
         edit_menu.addSeparator()
-        self._action(edit_menu, "Preferences…", lambda: self._preferences(), "Ctrl+,",
-                     tip="Fonts, sizes and colours for each script, theme colours, interface font")
+        self._action(edit_menu, tr("Preferences…"), lambda: self._preferences(), "Ctrl+,",
+                     tip=tr("Fonts, sizes and colours for each script, theme colours, interface font"))
 
-        view_menu = bar.addMenu("&View")
+        view_menu = bar.addMenu(tr("&View"))
         for i, (_key, label, _text) in enumerate(SECTIONS):
-            self._action(view_menu, label, lambda _c=False, row=i: self.nav.setCurrentRow(row), f"Ctrl+{i + 1}")
+            self._action(view_menu, tr(label), lambda _c=False, row=i: self.nav.setCurrentRow(row), f"Ctrl+{i + 1}")
         view_menu.addSeparator()
-        ui_menu = view_menu.addMenu("Interface Language")
+        ui_menu = view_menu.addMenu(tr("Interface Language"))
         ui_menu.aboutToShow.connect(lambda: self._fill_ui_language_menu(ui_menu))
-        content_menu = view_menu.addMenu("Content Languages")
+        content_menu = view_menu.addMenu(tr("Content Languages"))
         content_menu.aboutToShow.connect(lambda: self._fill_content_language_menu(content_menu))
-        theme_menu = view_menu.addMenu("Theme")
+        theme_menu = view_menu.addMenu(tr("Theme"))
         group = QActionGroup(self)
         self._theme_actions = {}
-        choices = [("system", "Follow system (Lapis / Lapis Night)")] + [(k, v[0]) for k, v in theme.THEMES.items()]
+        choices = ([("system", tr("Follow system (Lapis / Lapis Night)"))]
+                   + [(k, tr(v[0])) for k, v in theme.THEMES.items()])
         for n, (mode, label) in enumerate(choices):
             action = self._action(theme_menu, label, lambda _c=False, m=mode: self._set_theme(m))
             action.setCheckable(True)
@@ -264,40 +269,40 @@ class MainWindow(QMainWindow):
             if n == 0:
                 theme_menu.addSeparator()
         theme_menu.addSeparator()
-        self._action(theme_menu, "Choose with previews…", lambda: self._preferences("themes"))
-        text_menu = view_menu.addMenu("Reading Text Size")
-        self._action(text_menu, "Larger", lambda: self._change_text_scale(+1), "Ctrl++")
-        self._action(text_menu, "Smaller", lambda: self._change_text_scale(-1), "Ctrl+-")
-        self._action(text_menu, "Default Size", lambda: self._change_text_scale(0), "Ctrl+0")
+        self._action(theme_menu, tr("Choose with previews…"), lambda: self._preferences("themes"))
+        text_menu = view_menu.addMenu(tr("Reading Text Size"))
+        self._action(text_menu, tr("Larger"), lambda: self._change_text_scale(+1), "Ctrl++")
+        self._action(text_menu, tr("Smaller"), lambda: self._change_text_scale(-1), "Ctrl+-")
+        self._action(text_menu, tr("Default Size"), lambda: self._change_text_scale(0), "Ctrl+0")
         view_menu.addSeparator()
-        self._action(view_menu, "Full Screen", self._toggle_full_screen, "F11")
+        self._action(view_menu, tr("Full Screen"), self._toggle_full_screen, "F11")
 
-        tools_menu = bar.addMenu("&Tools")
-        self._action(tools_menu, "Rebuild Search Index", lambda: search.rebuild_index(),
-                     tip="Rebuild the search index from every imported text")
-        self._action(tools_menu, "Read Chains Again", lambda: search.rebuild_chains(),
-                     tip="Read every chain of transmission from the Arabic texts again")
-        self._action(tools_menu, "Identify Narrators Again", lambda: search.identify_narrators(),
-                     tip="Match every name in the chains against the imported rijal works again")
+        tools_menu = bar.addMenu(tr("&Tools"))
+        self._action(tools_menu, tr("Rebuild Search Index"), lambda: search.rebuild_index(),
+                     tip=tr("Rebuild the search index from every imported text"))
+        self._action(tools_menu, tr("Read Chains Again"), lambda: search.rebuild_chains(),
+                     tip=tr("Read every chain of transmission from the Arabic texts again"))
+        self._action(tools_menu, tr("Identify Narrators Again"), lambda: search.identify_narrators(),
+                     tip=tr("Match every name in the chains against the imported rijal works again"))
         tools_menu.addSeparator()
-        self._action(tools_menu, "Create Desktop Shortcut…", self._create_shortcut,
-                     tip="Put isnady on the desktop and in the applications menu, with its icon")
+        self._action(tools_menu, tr("Create Desktop Shortcut…"), self._create_shortcut,
+                     tip=tr("Put isnady on the desktop and in the applications menu, with its icon"))
         tools_menu.addSeparator()
-        self._action(tools_menu, "Build AI Indexes (Meaning, Takhrij)", lambda: search.build_meaning_index(),
-                     tip="Learn the meaning index (Match → By meaning) and find the narrations of each hadith "
-                         "across the books (Also narrated in)")
+        self._action(tools_menu, tr("Build AI Indexes (Meaning, Takhrij)"), lambda: search.build_meaning_index(),
+                     tip=tr("Learn the meaning index (Match → By meaning) and find the narrations of each hadith "
+                           "across the books (Also narrated in)"))
 
-        help_menu = bar.addMenu("&Help")
-        self._action(help_menu, "Search Tips", lambda: dialogs.search_tips(self).exec())
-        self._action(help_menu, "Keyboard Shortcuts", lambda: dialogs.shortcuts(self).exec())
+        help_menu = bar.addMenu(tr("&Help"))
+        self._action(help_menu, tr("Search Tips"), lambda: dialogs.search_tips(self).exec())
+        self._action(help_menu, tr("Keyboard Shortcuts"), lambda: dialogs.shortcuts(self).exec())
         help_menu.addSeparator()
-        self._action(help_menu, "Check Installation…", self._check_installation,
-                     tip="Every copy of isnady on this computer, and which one really runs")
-        self._action(help_menu, "Licences", lambda: dialogs.licenses(self, search.connection()).exec())
-        self._action(help_menu, "isnady on GitHub", lambda: QDesktopServices.openUrl(QUrl(dialogs.REPO_URL)))
-        self._action(help_menu, "Report an Issue", lambda: QDesktopServices.openUrl(QUrl(dialogs.ISSUES_URL)))
+        self._action(help_menu, tr("Check Installation…"), self._check_installation,
+                     tip=tr("Every copy of isnady on this computer, and which one really runs"))
+        self._action(help_menu, tr("Licences"), lambda: dialogs.licenses(self, search.connection()).exec())
+        self._action(help_menu, tr("isnady on GitHub"), lambda: QDesktopServices.openUrl(QUrl(dialogs.REPO_URL)))
+        self._action(help_menu, tr("Report an Issue"), lambda: QDesktopServices.openUrl(QUrl(dialogs.ISSUES_URL)))
         help_menu.addSeparator()
-        self._action(help_menu, "About isnady", lambda: dialogs.about(self).exec())
+        self._action(help_menu, tr("About isnady"), lambda: dialogs.about(self).exec())
 
     def _create_shortcut(self) -> None:
         import html as _html
@@ -310,18 +315,19 @@ class MainWindow(QMainWindow):
         try:
             made = shortcut.create()
         except OSError as exc:
-            QMessageBox.warning(self, "Create Desktop Shortcut", f"The shortcut could not be created.\n\n{exc}")
+            QMessageBox.warning(self, tr("Create Desktop Shortcut"),
+                                tr("The shortcut could not be created.") + f"\n\n{exc}")
             return
-        where = {"desktop": "On the desktop", "menu": "In the applications menu"}
+        where = {"desktop": tr("On the desktop"), "menu": tr("In the applications menu")}
         lines = "".join(f"<li><b>{where.get(w, w)}</b>: <code>{_html.escape(str(p))}</code></li>" for w, p in made)
         command = _html.escape(" ".join([program, *args]))
         box = QMessageBox(self)
-        box.setWindowTitle("Create Desktop Shortcut")
+        box.setWindowTitle(tr("Create Desktop Shortcut"))
         box.setTextFormat(Qt.TextFormat.RichText)
-        box.setText(f"<p>isnady now has a shortcut, with its own icon:</p><ul>{lines}</ul>"
-                    f"<p>It starts {_html.escape(how)}:<br><code>{command}</code></p>"
-                    "<p style='color:gray'>Making it again replaces it, so after moving isnady or changing how it is "
-                    "installed, create it once more.</p>")
+        box.setText("<p>" + tr("isnady now has a shortcut, with its own icon:") + f"</p><ul>{lines}</ul>"
+                    "<p>" + tr("It starts {how}:", how=_html.escape(how)) + f"<br><code>{command}</code></p>"
+                    "<p style='color:gray'>" + tr("Making it again replaces it, so after moving isnady or changing how "
+                                                  "it is installed, create it once more.") + "</p>")
         box.exec()
 
     def _load_statistics_when_shown(self, row: int) -> None:
@@ -403,8 +409,8 @@ class MainWindow(QMainWindow):
 
     def _install_checked(self, report) -> None:
         if report.problems:
-            self.install_notice.setToolTip("\n".join(report.problems) + "\n\nClick for the report; 'iy update' updates "
-                                           "every copy where it is installed.")
+            self.install_notice.setToolTip("\n".join(report.problems) + "\n\n" + tr(
+                "Click for the report; 'iy update' updates every copy where it is installed."))
             self.install_notice.show()
 
     def _check_installation(self) -> None:
@@ -445,29 +451,34 @@ class MainWindow(QMainWindow):
 
         ui = language.UI_LANGUAGES[language.ui_language()]
         chosen = language.content_languages()
-        content = ", ".join(chosen) if chosen else "all languages"
-        self.ui_lang_button.setText(f"Interface:  {ui}")
-        self.ui_lang_button.setToolTip(
-            "The interface language: how every Arabic name is read (Musaddad b. Musarhad / Müsedded b. Müserhed) and "
-            "the language of the glossary.\nMenus and page texts are in English for now.")
-        self.content_lang_button.setText(f"Content:  {content}")
-        self.content_lang_button.setToolTip(
-            f"The hadith texts are shown in: {content}.\nA text that matches a search is shown whatever its language; "
-            "each book in Books can still choose its own.")
+        content = ", ".join(tr(c) for c in chosen) if chosen else tr("all languages")
+        self.ui_lang_button.setText(tr("Interface:") + "  " + ui)
+        self.ui_lang_button.setToolTip(tr(
+            "The interface language: the menus, pages and explanations, how every Arabic name is read (Musaddad b. "
+            "Musarhad / Müsedded b. Müserhed) and the language of the glossary."))
+        self.content_lang_button.setText(tr("Content:") + "  " + content)
+        self.content_lang_button.setToolTip(tr(
+            "The hadith texts are shown in: {languages}.\nA text that matches a search is shown whatever its "
+            "language; each book in Books can still choose its own.", languages=content))
 
     def _fill_ui_language_menu(self, menu) -> None:
         from isnady.core import language
 
+        from isnady.core import i18n
+
         menu.clear()
         group = QActionGroup(menu)
-        for code, name in language.UI_LANGUAGES.items():
-            action = menu.addAction(name)
+        for code, (own, english, _rtl) in i18n.LANGUAGES.items():
+            share = i18n.coverage(code)
+            # its own name, the English one beside it, and how much of the interface is translated
+            label = own if code == "en" else f"{own}  ·  {english}" + ("" if share >= 0.995 else f"  ({share:.0%})")
+            action = menu.addAction(label)
             action.setCheckable(True)
             action.setChecked(code == language.ui_language())
             group.addAction(action)
             action.triggered.connect(lambda _c=False, c=code: self._set_ui_language(c))
         menu.addSeparator()
-        note = menu.addAction("Names and terms follow it; menus are in English for now")
+        note = menu.addAction(tr("A text not yet translated is shown in English"))
         note.setEnabled(False)
 
     def _fill_content_language_menu(self, menu) -> None:
@@ -478,18 +489,18 @@ class MainWindow(QMainWindow):
         conn = self.search_page.connection()
         available = core_search.list_languages(conn) if conn is not None else []
         chosen = language.content_languages()
-        every = menu.addAction("All languages")
+        every = menu.addAction(tr("All languages"))
         every.setCheckable(True)
         every.setChecked(not chosen)
         every.triggered.connect(lambda: self._set_content_languages([]))
         menu.addSeparator()
         for lang in available:
-            action = menu.addAction(lang)
+            action = menu.addAction(tr(lang))
             action.setCheckable(True)
             action.setChecked(lang in chosen)
             action.triggered.connect(lambda checked, l=lang: self._toggle_content_language(l, checked))
         if not available:
-            menu.addAction("No texts imported yet").setEnabled(False)
+            menu.addAction(tr("No texts imported yet")).setEnabled(False)
 
     def _toggle_content_language(self, lang: str, on: bool) -> None:
         from isnady.core import language
@@ -504,9 +515,15 @@ class MainWindow(QMainWindow):
     def _set_ui_language(self, code: str) -> None:
         from isnady.core import language
 
+        from isnady import config
+        from isnady.core import learn
+
+        if code == language.ui_language():
+            return
         language.set_ui_language(code)
-        self.learn_page._set_lang(code)          # the glossary in the same language
-        self._languages_changed()
+        if code in learn.LANGUAGES:
+            config.state_set("learn.language", code)    # the glossary in the same language, where it has one
+        self.language_switched.emit()                    # main.py builds the window again in the new language
 
     def _set_content_languages(self, languages: list[str]) -> None:
         from isnady.core import language
@@ -553,7 +570,7 @@ class MainWindow(QMainWindow):
         self.showNormal() if self.isFullScreen() else self.showFullScreen()
 
     def _set_footer(self, message: str) -> None:
-        self.footer.setText(f"{message}\nversion {__version__}")
+        self.footer.setText(message + "\n" + tr("version {version}", version=__version__))
 
     def retheme(self) -> None:
         """Called when the theme, the text size or any appearance setting changes: the page in view is redrawn

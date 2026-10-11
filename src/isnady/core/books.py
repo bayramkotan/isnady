@@ -16,8 +16,9 @@ import re
 import sqlite3
 
 from isnady import config
+from isnady.core.i18n import N_
 
-TRADITIONS = (("sunni", "Sunni"), ("shia", "Shia"), ("other", "Other"))
+TRADITIONS = (("sunni", N_("Sunni")), ("shia", N_("Shia")), ("other", N_("Other")))
 CANON = {"sunni": ["bukhari", "muslim", "abudawud", "tirmidhi", "nasai", "ibnmajah", "malik", "ahmad", "darimi"],
          "shia": ["kafi", "faqih", "tahdhib", "istibsar"]}
 

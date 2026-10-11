@@ -2,6 +2,7 @@
 
 from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
 from PySide6.QtWidgets import QLayout, QSizePolicy, QWidget
+from isnady.core.i18n import tr
 
 
 class FlowLayout(QLayout):
@@ -102,7 +103,7 @@ class TextBlock(QWidget):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
         from PySide6.QtGui import QAction
 
-        copy = QAction("Copy text", self)
+        copy = QAction(tr("Copy text"), self)
         copy.triggered.connect(self.copy)
         self.addAction(copy)
 
@@ -167,7 +168,7 @@ def fill_book_combo(combo, conn, all_label: str | None = None) -> None:
     for _t, label, group in core_books.grouped(conn):
         if combo.count():
             combo.insertSeparator(combo.count())
-        combo.addItem(f"{label} collections", "__heading__")
+        combo.addItem(tr("{group} collections", group=tr(label)), "__heading__")
         item = combo.model().item(combo.count() - 1)
         item.setEnabled(False)
         font = QFont(combo.font())
@@ -198,10 +199,10 @@ class BookPicker(QWidget):
         self._conn = None
         self._chosen: set[str] | None = None          # None: every book
         self._groups: list = []
-        self.button = QPushButton("All books")
+        self.button = QPushButton(tr("All books"))
         self.button.setObjectName("BookPicker")
         self.button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.button.setToolTip("Search all books, or tick the ones to search")
+        self.button.setToolTip(tr("Search all books, or tick the ones to search"))
         self.button.clicked.connect(self._open)
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
@@ -224,16 +225,16 @@ class BookPicker(QWidget):
 
     def _label(self) -> None:
         if self._chosen is None:
-            text = "All books"
+            text = tr("All books")
         else:
             whole = [label for _t, label, g in self._groups if {b["key"] for b in g} == self._chosen]
             if whole:
-                text = f"{whole[0]} ({len(self._chosen)})"
+                text = f"{tr(whole[0])} ({len(self._chosen)})"
             elif len(self._chosen) == 1:
                 key = next(iter(self._chosen))
                 text = next(b["name"] for _t, _l, g in self._groups for b in g if b["key"] == key)
             else:
-                text = f"{len(self._chosen)} books"
+                text = tr("{n} books", n=len(self._chosen))
         self.button.setText(text + "   ▾")
         self.button.setProperty("active", self._chosen is not None)      # a narrowed search is marked
         self.button.style().unpolish(self.button)
@@ -252,7 +253,7 @@ class BookPicker(QWidget):
         everything = {b["key"] for _t, _l, g in self._groups for b in g}
         chosen = everything if self._chosen is None else self._chosen
         for _t, label, group in self._groups:
-            head = QTreeWidgetItem(tree, [f"{label} collections"])
+            head = QTreeWidgetItem(tree, [tr("{group} collections", group=tr(label))])
             head.setFlags(head.flags() | Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsAutoTristate)
             font = head.font(0)
             font.setBold(True)
@@ -273,14 +274,14 @@ class BookPicker(QWidget):
                     c = head.child(j)
                     c.setCheckState(0, Qt.CheckState.Checked if c.data(0, Qt.ItemDataRole.UserRole) in keys
                                     else Qt.CheckState.Unchecked)
-        for text, keys in [("All", everything)] + [(label, {b["key"] for b in g}) for _t, label, g in self._groups] \
-                + [("None", set())]:
+        for text, keys in [(tr("All"), everything)] + [(tr(label), {b["key"] for b in g}) for _t, label, g in
+                                                         self._groups] + [(tr("None"), set())]:
             b = QPushButton(text)
             b.setObjectName("Quiet")
             b.clicked.connect(lambda _c=False, k=keys: tick(k))
             row.addWidget(b)
         row.addStretch(1)
-        done = QPushButton("Search these")
+        done = QPushButton(tr("Search these"))
         done.setObjectName("Primary")
         row.addWidget(done)
         lay.addLayout(row)

@@ -5,6 +5,23 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **The interface in Türkçe and العربية** (sidebar, or View → Interface Language). Choosing Türkçe used to change
+  only how names are read; now menus, every page, buttons, messages, explanations, the statistics (findings,
+  "How to read", tables and charts' words) and the progress messages are translated — 1,174 texts, all of them
+  in Turkish and Arabic. Arabic runs right to left, the whole window mirrored. The window is rebuilt in the new
+  language at once, nothing to restart; the place in it is kept.
+- **24 interface languages in the list**, each in its own name with how much of it is translated: English,
+  Türkçe, العربية, Deutsch, Français, Español, Português, Русский, Bahasa Indonesia, Bahasa Melayu, हिन्दी, اردو,
+  বাংলা, 中文, 日本語, 한국어, فارسی, دری, پښتو, Azərbaycanca, Oʻzbekcha, Bosanski, Kiswahili, Hausa (Urdu, Persian,
+  Dari and Pashto right to left). A text not translated yet is shown in English; the others follow release by
+  release.
+- **Translations are files**, one per language (`isnady/assets/i18n/<code>.json`, English text → translation),
+  so anyone can add or correct one. `python tools/i18n.py extract` collects every text of the program into
+  `en.json`; `check`, `missing CODE`, `merge CODE FILE` and `prune` keep the others in step (a translation that
+  drops a `{field}` is reported and English is shown instead).
+- Still in English: the command line, the chapter titles and texts of the books, scholars' names and works, the
+  glossary outside English and Türkçe.
+
 - **Shia scholars on the Hadith Scholars page**, each by his own road: the compilers al-Kulayni, al-Shaykh al-Saduq,
   al-Shaykh al-Mufid, Ibn Qulawayh, al-Nu'mani, al-Shaykh al-Tusi, al-Husayn b. Sa'id al-Ahwazi and Asif al-Muhsini;
   the graders al-'Allama al-Majlisi, Muhammad Baqir al-Behbudi and al-Muhsini; the critic al-Najashi. *All / Sunni /

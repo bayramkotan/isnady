@@ -21,6 +21,7 @@ import sqlite3
 from collections import Counter, defaultdict
 
 from isnady.core.grades import GROUP_LABELS, IMAMI_LABELS, group, imami_group, isnad_only
+from isnady.core.i18n import tr
 
 METHOD = "isnady-graders-4"
 MIN_GRADES = 20                         # a grader with fewer grades of a book is named, not measured (al-Muhsini: 1 of al-Kafi)
@@ -232,7 +233,7 @@ def analyse(conn: sqlite3.Connection, collection: str, progress=None) -> dict:
     out["graders"] = graders
     if len(graders) < 2:
         return out
-    say("Agreement between every pair of graders")
+    say(tr("Agreement between every pair of graders"))
     pairs_out = {}
     for i, a in enumerate(graders):
         for b in graders[i + 1:]:
@@ -254,7 +255,7 @@ def analyse(conn: sqlite3.Connection, collection: str, progress=None) -> dict:
                 "ci": {k: _interval(v) for k, v in boots.items()},
                 "table": [[sum(1 for x, y in pairs if x == r and y == c) for c in range(K)] for r in range(K)]}
     out["pairs"] = pairs_out
-    say("Krippendorff's alpha")
+    say(tr("Krippendorff's alpha"))
     units = [[data[g][h] for g in graders if h in data[g]] for h in sorted({h for d in data.values() for h in d})]
     units = [u for u in units if len(u) >= 2]
     alpha = _alpha(units)
@@ -262,7 +263,7 @@ def analyse(conn: sqlite3.Connection, collection: str, progress=None) -> dict:
     for _ in range(BOOT // 3):
         boots.append(_alpha([units[rng.randrange(len(units))] for _ in range(len(units))]))
     out["alpha"] = {"value": alpha, "ci": _interval([b for b in boots if b is not None]), "units": len(units)}
-    say("Dawid–Skene model (each grader's confusion matrix)")
+    say(tr("Dawid–Skene model (each grader's confusion matrix)"))
     # the model assumes graders judge independently. A pair agreeing on HIGH_AGREEMENT or more was probably filled
     # one from the other in the source (al-Albani and Muhyi al-Din: 98.1%): counted as two votes, that one view
     # would decide every hadith. In the model they are ONE voice — the one with more grades; the other is measured
@@ -292,7 +293,7 @@ def analyse(conn: sqlite3.Connection, collection: str, progress=None) -> dict:
     items = list(ds["votes"])
     strict_boot = defaultdict(list)
     for b in range(40):
-        say(f"Strictness intervals ({b + 1} of 40)")
+        say(tr("Strictness intervals ({value} of 40)", value=b + 1))
         sample = [items[rng.randrange(len(items))] for _ in range(len(items))]
         resampled: dict = defaultdict(dict)
         for n, h in enumerate(sample):

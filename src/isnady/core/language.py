@@ -1,8 +1,8 @@
 """The two languages of isnady (L1): the interface, and the content.
 
-  interface  how the reader reads: the Latin reading of every Arabic name (Musaddad b. Musarhad or Müsedded b.
-             Müserhed) and the language of the glossary (Learn). Menus and page texts are in English for now
-             (TODO I1: the whole interface in Turkish).
+  interface  the language of the window (menus, pages, explanations — core.i18n, I1), the Latin reading of every
+             Arabic name (Musaddad b. Musarhad in English and the other languages, Müsedded b. Müserhed in
+             Turkish) and the language of the glossary (Learn: English or Turkish so far).
   content    the languages the hadith texts are shown in — Arabic, Turkish, English, … as imported. Empty: every
              language imported. A text that matches a search is shown whatever its language.
 
@@ -10,8 +10,9 @@ Qt-free, like all of isnady.core: the window and the command line read the same 
 """
 
 from isnady import config
+from isnady.core.i18n import LANGUAGES
 
-UI_LANGUAGES = {"en": "English", "tr": "Türkçe"}
+UI_LANGUAGES = {code: own for code, (own, _english, _rtl) in LANGUAGES.items()}
 
 
 def ui_language() -> str:

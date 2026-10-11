@@ -9,8 +9,9 @@ words. A wording that fits no group stays ungrouped (None) rather than being gue
 """
 
 import re
+from isnady.core.i18n import N_
 
-GROUP_LABELS = {4: "sahih", 3: "hasan", 2: "da'if", 1: "very weak", 0: "fabricated"}
+GROUP_LABELS = {4: N_("sahih"), 3: N_("hasan"), 2: N_("da'if"), 1: N_("very weak"), 0: N_("fabricated")}
 
 
 def group(grade: str) -> int | None:
@@ -46,7 +47,7 @@ def attribution(grade: str) -> str | None:
 # sahih (every narrator an Imami thiqa), hasan (a praised Imami), muwaththaq (a thiqa of another school), da'if.
 # majhul (an unknown narrator), mursal and marfu' (a gap in the chain) are counted among the da'if, as that usage
 # does. These are NEVER mapped onto the Sunni groups above: each tradition is compared only within itself.
-IMAMI_LABELS = {4: "sahih", 3: "hasan", 2: "muwaththaq", 1: "da'if"}
+IMAMI_LABELS = {4: N_("sahih"), 3: N_("hasan"), 2: N_("muwaththaq"), 1: N_("da'if")}
 _IMAMI_WORDS = (("صحيح", 4), ("حسن", 3), ("موثق", 2), ("ضعيف", 1), ("مجهول", 1), ("مهول", 1), ("مرسل", 1),
                 ("مرفوع", 1))
 _IMAMI_RE = re.compile(r"(?<![\w])(" + "|".join(w for w, _g in _IMAMI_WORDS) + r")(?![\w])")

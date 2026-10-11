@@ -9,10 +9,12 @@ The reader, the CLI and isnady's own exchange format all speak this one shape.
 
 import sqlite3
 
+from isnady.core.i18n import N_
+
 CONTAINERS = ("volume", "kitab", "bab", "section")
 LEAVES = ("hadith", "entry", "reference", "paragraph")
-KIND_LABELS = {"hadith": "Hadith collection", "rijal": "Narrators (rijal)", "fiqh": "Fiqh", "commentary": "Commentary",
-               "other": "Book"}
+KIND_LABELS = {"hadith": N_("Hadith collection"), "rijal": N_("Narrators (rijal)"), "fiqh": N_("Fiqh"),
+               "commentary": N_("Commentary"), "other": N_("Book")}
 
 
 def _author_of(collection_key: str) -> str | None:

@@ -35,6 +35,7 @@ from isnady.data.fetch import Auth, ResourceError
 from isnady.data.importers import list_importers
 from isnady.gui import theme
 from isnady.gui.widgets import FlowLayout
+from isnady.core.i18n import N_, tr
 
 
 # A QThread must outlive the moment it reports "done": it only stops after run() returns. Dropping the
@@ -56,23 +57,28 @@ class Worker(QThread):
         try:
             if self.action == "import_all":
                 imported, failed, narrators = catalog.import_all(conn, self.languages, self.progress.emit)
-                message = f"Imported {len(imported)} of {len(imported) + len(failed)} sources of the repository"
+                message = tr("Imported {n} of {total} sources of the repository", n=len(imported),
+                             total=len(imported) + len(failed))
                 if narrators.get("links"):
-                    message += (f"; {narrators['identified']:,} of {narrators['links']:,} narrators in chains "
-                                f"identified ({100 * narrators['identified'] / narrators['links']:.1f}%)")
+                    message += "; " + tr("{identified:,} of {links:,} narrators in chains identified ({share:.1f}%)",
+                                         identified=narrators["identified"], links=narrators["links"],
+                                         share=100 * narrators["identified"] / narrators["links"])
                 if failed:
-                    message += ". Failed: " + "; ".join(f"{label} ({why})" for label, why in failed)
+                    message += ". " + tr("Failed:") + " " + "; ".join(f"{label} ({why})" for label, why in failed)
                 self.done.emit(not failed, message + ".")
                 return
             if self.action == "remove":
                 catalog.remove_entry(conn, self.entry)
-                self.done.emit(True, f"Removed {self.entry.title}.")
+                self.done.emit(True, tr("Removed {title}.", title=self.entry.title))
                 return
             report, narrators = catalog.import_entry(conn, self.entry, self.languages, self.auth, self.progress.emit)
-            message = f"Imported {self.entry.title}: {report.texts:,} " + ("narrators" if self.entry.kind == "rijal" else "texts")
+            message = (tr("Imported {title}: {n:,} narrators", title=self.entry.title, n=report.texts)
+                       if self.entry.kind == "rijal" else
+                       tr("Imported {title}: {n:,} texts", title=self.entry.title, n=report.texts))
             if narrators.get("links"):
-                message += (f"; {narrators['identified']:,} of {narrators['links']:,} narrators in chains identified "
-                            f"({100 * narrators['identified'] / narrators['links']:.1f}%)")
+                message += "; " + tr("{identified:,} of {links:,} narrators in chains identified ({share:.1f}%)",
+                                     identified=narrators["identified"], links=narrators["links"],
+                                     share=100 * narrators["identified"] / narrators["links"])
             self.done.emit(True, message + ".")
         except (ResourceError, KeyError, ValueError) as exc:
             self.done.emit(False, str(exc.args[0] if exc.args else exc))
@@ -87,39 +93,39 @@ class AddSourceDialog(QDialog):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Add a source")
+        self.setWindowTitle(tr("Add a source"))
         self.resize(620, 300)
         self.title = QLineEdit()
         self.format = QComboBox()
         for imp in list_importers():
             self.format.addItem(imp.title, imp.format_id)
         self.location = QLineEdit()
-        self.location.setPlaceholderText("https://… or a file on this computer")
-        browse = QPushButton("Browse…")
+        self.location.setPlaceholderText(tr("https://… or a file on this computer"))
+        browse = QPushButton(tr("Browse…"))
         browse.setObjectName("Quiet")
         browse.clicked.connect(self._browse)
         where = QHBoxLayout()
         where.addWidget(self.location, 1)
         where.addWidget(browse)
         self.book = QLineEdit()
-        self.book.setPlaceholderText("optional, for index files: bukhari, muslim …")
+        self.book.setPlaceholderText(tr("optional, for index files: bukhari, muslim …"))
         self.license = QLineEdit()
-        self.license.setPlaceholderText("e.g. CC-BY-4.0; empty = not redistributed (tier C)")
+        self.license.setPlaceholderText(tr("e.g. CC-BY-4.0; empty = not redistributed (tier C)"))
         self.auth = QComboBox()
-        for kind, label in (("none", "None"), ("basic", "Username and password"), ("bearer", "Bearer token"),
-                            ("apikey", "API key")):
+        for kind, label in (("none", tr("None")), ("basic", tr("Username and password")), ("bearer", tr("Bearer token")),
+                            ("apikey", tr("API key"))):
             self.auth.addItem(label, kind)
         self.key_name = QLineEdit()
-        self.key_name.setPlaceholderText("header name for an API key, e.g. X-API-Key")
+        self.key_name.setPlaceholderText(tr("header name for an API key, e.g. X-API-Key"))
         form = QFormLayout()
-        form.addRow("Title", self.title)
-        form.addRow("Format", self.format)
-        form.addRow("File or URL", where)
-        form.addRow("Book", self.book)
-        form.addRow("Licence", self.license)
-        form.addRow("Authentication", self.auth)
-        form.addRow("API key header", self.key_name)
-        note = QLabel("Passwords, tokens and keys are asked for when you import and are never stored.")
+        form.addRow(tr("Title"), self.title)
+        form.addRow(tr("Format"), self.format)
+        form.addRow(tr("File or URL"), where)
+        form.addRow(tr("Book"), self.book)
+        form.addRow(tr("Licence"), self.license)
+        form.addRow(tr("Authentication"), self.auth)
+        form.addRow(tr("API key header"), self.key_name)
+        note = QLabel(tr("Passwords, tokens and keys are asked for when you import and are never stored."))
         note.setObjectName("Caption")
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self.accept)
@@ -130,7 +136,7 @@ class AddSourceDialog(QDialog):
         layout.addWidget(buttons)
 
     def _browse(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Choose a source file")
+        path, _ = QFileDialog.getOpenFileName(self, tr("Choose a source file"))
         if path:
             self.location.setText(path)
 
@@ -181,10 +187,10 @@ class SourcesPage(QWidget):
         self._lang_checks = {}
         conn = db.connect()
         try:
-            intro = QLabel("isnady reads its sources from a REPOSITORY: its own by default, which lists every Sunni "
-                           "and Shia collection and rijal work it can read. Choose another, or add your own, and "
-                           "import with one click. Your own files (User Resources) stay on this computer. The same "
-                           "from the command line: iy repo, iy catalog.")
+            intro = QLabel(tr("isnady reads its sources from a REPOSITORY: its own by default, which lists every Sunni and Shia "
+                             "collection and rijal work it can read. Choose another, or add your own, and import with one "
+                             "click. Your own files (User Resources) stay on this computer. The same from the command line: iy "
+                             "repo, iy catalog."))
             intro.setObjectName("Lead")
             intro.setWordWrap(True)
             self.box.addWidget(intro)
@@ -195,25 +201,25 @@ class SourcesPage(QWidget):
                 entries = catalog.builtin_entries()
             except Exception as exc:          # a broken user repository must not empty the page
                 entries = []
-                self.status.setText(f"The repository cannot be read: {exc}")
+                self.status.setText(tr("The repository cannot be read: {exc}", exc=exc))
             head = QHBoxLayout()
-            title = QLabel(f"Sources of {repositories.selected().name}")
+            title = QLabel(tr("Sources of {name}", name=repositories.selected().name))
             title.setObjectName("CardTitle")
             title.setFont(theme.reading_font(15, bold=True))
             head.addWidget(title)
             head.addStretch(1)
-            all_button = QPushButton("Import all")
+            all_button = QPushButton(tr("Import all"))
             all_button.setObjectName("Primary")
-            all_button.setToolTip("Every source of this repository, each in the languages ticked on its card; the "
-                                  "search index, chains and narrators are brought up to date once, at the end")
+            all_button.setToolTip(tr("Every source of this repository, each in the languages ticked on its card; the search index, "
+                                    "chains and narrators are brought up to date once, at the end"))
             all_button.clicked.connect(self._import_all)
             all_button.setProperty("allowed", bool(entries))
             self._buttons.append(all_button)
             head.addWidget(all_button)
             self.box.addLayout(head)
-            groups = [("Sunni hadith collections", [e for e in entries if e.kind == "hadith" and e.tradition != "shia"]),
-                      ("Shia hadith collections", [e for e in entries if e.kind == "hadith" and e.tradition == "shia"]),
-                      ("Narrators (rijal)", [e for e in entries if e.kind == "rijal"])]
+            groups = [(tr("Sunni hadith collections"), [e for e in entries if e.kind == "hadith" and e.tradition != "shia"]),
+                      (tr("Shia hadith collections"), [e for e in entries if e.kind == "hadith" and e.tradition == "shia"]),
+                      (tr("Narrators (rijal)"), [e for e in entries if e.kind == "rijal"])]
             for heading, group in groups:
                 if not group:
                     continue
@@ -223,7 +229,7 @@ class SourcesPage(QWidget):
                 for entry in group:
                     self.box.addWidget(self._card(conn, entry))
 
-            title = QLabel("Your sources")
+            title = QLabel(tr("Your sources"))
             title.setObjectName("CardTitle")
             title.setFont(theme.reading_font(15, bold=True))
             self.box.addWidget(title)
@@ -231,10 +237,10 @@ class SourcesPage(QWidget):
             for entry in mine:
                 self.box.addWidget(self._card(conn, entry))
             if not mine:
-                none = QLabel("None yet: a file or a URL of your own, in any format isnady reads.")
+                none = QLabel(tr("None yet: a file or a URL of your own, in any format isnady reads."))
                 none.setObjectName("Caption")
                 self.box.addWidget(none)
-            add = QPushButton("Add a source…")
+            add = QPushButton(tr("Add a source…"))
             add.setObjectName("Quiet")
             add.clicked.connect(self._add)
             self._buttons.append(add)
@@ -257,7 +263,7 @@ class SourcesPage(QWidget):
         box.setContentsMargins(18, 12, 18, 12)
         box.setSpacing(8)
         head = QHBoxLayout()
-        title = QLabel("Repository")
+        title = QLabel(tr("Repository"))
         title.setObjectName("CardTitle")
         title.setFont(theme.reading_font(13.5, bold=True))
         head.addWidget(title)
@@ -265,27 +271,27 @@ class SourcesPage(QWidget):
         self.repo_combo.setObjectName("FilterCombo")
         self.repo_combo.setMinimumWidth(360)
         for r in repositories.all_repositories():
-            label = r.name + ("" if r.builtin else "  (added by you)")
+            label = r.name + ("" if r.builtin else "  " + tr("(added by you)"))
             self.repo_combo.addItem(label, r.id)
         self.repo_combo.setCurrentIndex(max(0, self.repo_combo.findData(repo.id)))
         self.repo_combo.currentIndexChanged.connect(self._choose_repo)
         head.addWidget(self.repo_combo, 1)
         box.addLayout(head)
-        desc = QLabel(repo.description)
+        desc = QLabel(tr(repo.description))
         desc.setObjectName("Lead")
         desc.setWordWrap(True)
         box.addWidget(desc)
         try:
             _cat, where = repositories.catalog(repo)
             where = "shipped-own" if where == "shipped" and not repo.url else where
-            how = {"network": "Catalog read from the repository just now.",
-                   "shipped-own": "This dataset publishes no catalog of its own; isnady ships one for it.",
-                   "saved": "Catalog read from the repository in the last day (Refresh reads it again).",
-                   "shipped": ("The repository cannot be reached now, so the catalog shipped with isnady is used; "
-                               "each source is read from the repository, or from its origin when the repository "
-                               "has no copy.")}[where]
+            how = tr({"network": N_("Catalog read from the repository just now."),
+                      "shipped-own": N_("This dataset publishes no catalog of its own; isnady ships one for it."),
+                      "saved": N_("Catalog read from the repository in the last day (Refresh reads it again)."),
+                      "shipped": N_("The repository cannot be reached now, so the catalog shipped with isnady is used; "
+                                    "each source is read from the repository, or from its origin when the repository "
+                                    "has no copy.")}[where])
         except Exception as exc:
-            how = f"The catalog cannot be read: {exc}"
+            how = tr("The catalog cannot be read: {exc}", exc=exc)
         links = [f"<a href='{repo.homepage}'>{repo.homepage}</a>"] if repo.homepage else []
         note = QLabel(" · ".join(links + [how]))
         note.setObjectName("Caption")
@@ -295,11 +301,12 @@ class SourcesPage(QWidget):
         box.addWidget(note)
         row = QHBoxLayout()
         row.addStretch(1)
-        for label, slot, ok in (("Refresh", self._refresh_repo, True),
-                                ("A folder on this computer…", self._add_folder_repo, True),
-                                ("Add a repository…", self._add_repo, True),
-                                ("Remove from list", self._remove_repo, not repo.builtin),
-                                ("Use the default", lambda: self._use_repo(repositories.DEFAULT_ID), not repo.default)):
+        for label, slot, ok in ((tr("Refresh"), self._refresh_repo, True),
+                                (tr("A folder on this computer…"), self._add_folder_repo, True),
+                                (tr("Add a repository…"), self._add_repo, True),
+                                (tr("Remove from list"), self._remove_repo, not repo.builtin),
+                                (tr("Use the default"), lambda: self._use_repo(repositories.DEFAULT_ID),
+                                 not repo.default)):
             b = QPushButton(label)
             b.setObjectName("Quiet")
             b.clicked.connect(slot)
@@ -335,14 +342,15 @@ class SourcesPage(QWidget):
             tags = QHBoxLayout()
             tags.setSpacing(8)
             ours = entry.repo == repositories.DEFAULT_ID
-            items = [("Shia" if entry.tradition == "shia" else "Sunni", "TagGold" if entry.tradition == "shia" else "Tag",
-                      "The tradition of the collection: Shia books are kept apart from Sunni ones, and their grades "
-                      "and narrators are read in their own terms."),
-                     (entry.license or "licence not stated", "TagMuted",
-                      "May be shared further (tier A/B)" if db.tier_for_license(entry.license) in "AB"
-                      else "No licence allowing it to be shared further: for this computer (tier C)")]
+            items = [(tr("Shia") if entry.tradition == "shia" else tr("Sunni"),
+                      "TagGold" if entry.tradition == "shia" else "Tag",
+                      tr("The tradition of the collection: Shia books are kept apart from Sunni ones, and their grades "
+                         "and narrators are read in their own terms.")),
+                     (entry.license or tr("licence not stated"), "TagMuted",
+                      tr("May be shared further (tier A/B)") if db.tier_for_license(entry.license) in "AB"
+                      else tr("No licence allowing it to be shared further: for this computer (tier C)"))]
             if not ours and entry.origin_url:
-                items.append(("read from its publisher", "TagMuted",
+                items.append((tr("read from its publisher"), "TagMuted",
                               f"{entry.origin_name}\n{entry.origin_url}" if entry.origin_url else ""))
             for text, name_, tip in items:
                 tag = QLabel(text)
@@ -350,7 +358,7 @@ class SourcesPage(QWidget):
                 tag.setToolTip(tip)
                 tags.addWidget(tag)
             if entry.hadith:
-                count = QLabel(f"{entry.hadith:,} hadith")
+                count = QLabel(tr("{n:,} hadith", n=entry.hadith))
                 count.setObjectName("Caption")
                 tags.addWidget(count)
             tags.addStretch(1)
@@ -372,7 +380,7 @@ class SourcesPage(QWidget):
             flow = FlowLayout(langs, spacing=10)
             chosen = st["languages"] or [catalog.language_label(c) for c in catalog.DEFAULT_LANGUAGES]
             for code in entry.languages:
-                check = QCheckBox(catalog.language_label(code))
+                check = QCheckBox(tr(catalog.language_label(code)))
                 check.setChecked(catalog.language_label(code) in chosen)
                 check.setProperty("code", code)
                 flow.addWidget(check)
@@ -382,19 +390,19 @@ class SourcesPage(QWidget):
 
         row = QHBoxLayout()
         row.addStretch(1)
-        imp = QPushButton("Update" if st["imported"] else "Import")
+        imp = QPushButton(tr("Update") if st["imported"] else tr("Import"))
         imp.setObjectName("Primary" if not st["imported"] else "Quiet")
         imp.clicked.connect(lambda _c=False, e=entry, cs=checks: self._import(e, cs))
         row.addWidget(imp)
         self._buttons.append(imp)
         if st["imported"]:
-            rem = QPushButton("Remove data")
+            rem = QPushButton(tr("Remove data"))
             rem.setObjectName("Quiet")
             rem.clicked.connect(lambda _c=False, e=entry: self._remove(e))
             row.addWidget(rem)
             self._buttons.append(rem)
         if not entry.builtin:
-            forget = QPushButton("Delete from list")
+            forget = QPushButton(tr("Delete from list"))
             forget.setObjectName("Quiet")
             forget.clicked.connect(lambda _c=False, e=entry: self._delete(e))
             row.addWidget(forget)
@@ -405,12 +413,13 @@ class SourcesPage(QWidget):
     @staticmethod
     def _state_text(entry, st) -> str:
         if not st["imported"]:
-            return "Not imported"
-        what = "narrators" if entry.kind == "rijal" else ("hadith" if entry.book else "texts")
+            return tr("Not imported")
+        what = (tr("Imported: {n:,} narrators", n=st["count"]) if entry.kind == "rijal" else
+                tr("Imported: {n:,} hadith", n=st["count"]) if entry.book else tr("Imported: {n:,} texts", n=st["count"]))
         langs = f" · {', '.join(st['languages'])}" if st["languages"] else ""
         when = f" · {st['when'][:10]}" if st.get("when") else ""
-        tier = f" · tier {st['tier']}" if st.get("tier") else ""
-        return f"Imported: {st['count']:,} {what}{langs}{when}{tier}"
+        tier = " · " + tr("tier {tier}", tier=st["tier"]) if st.get("tier") else ""
+        return what + langs + when + tier
 
     # ------------------------------------------------------------ actions
     def _set_busy(self, busy: bool) -> None:
@@ -431,7 +440,7 @@ class SourcesPage(QWidget):
     def _finished(self, ok: bool, message: str) -> None:
         self._worker = None
         self.refresh()
-        self.status.setText(("" if ok else "Failed: ") + message)
+        self.status.setText(("" if ok else tr("Failed: ")) + message)
         if ok:
             self.data_imported.emit()
 
@@ -439,12 +448,12 @@ class SourcesPage(QWidget):
         if entry.auth_kind == "none":
             return Auth()
         if entry.auth_kind == "basic":
-            user, ok = QInputDialog.getText(self, entry.title, "Username:")
+            user, ok = QInputDialog.getText(self, entry.title, tr("Username:"))
             if not ok:
                 return None
-            password, ok = QInputDialog.getText(self, entry.title, "Password:", QLineEdit.EchoMode.Password)
+            password, ok = QInputDialog.getText(self, entry.title, tr("Password:"), QLineEdit.EchoMode.Password)
             return Auth(kind="basic", username=user, password=password) if ok else None
-        secret, ok = QInputDialog.getText(self, entry.title, "Token:" if entry.auth_kind == "bearer" else "API key:",
+        secret, ok = QInputDialog.getText(self, entry.title, tr("Token:") if entry.auth_kind == "bearer" else tr("API key:"),
                                           QLineEdit.EchoMode.Password)
         return Auth(kind=entry.auth_kind, token=secret, key_name=entry.key_name, key_in=entry.key_in) if ok else None
 
@@ -457,11 +466,11 @@ class SourcesPage(QWidget):
         box.setContentsMargins(18, 12, 18, 12)
         box.setSpacing(6)
         head = QHBoxLayout()
-        title = QLabel("Data folder")
+        title = QLabel(tr("Data folder"))
         title.setObjectName("CardTitle")
         title.setFont(theme.reading_font(13.5, bold=True))
-        how = {"default": "the default for this system", "chosen": "chosen by you",
-               "environment": "set by the ISNADY_DATA_DIR environment variable"}[paths.data_dir_source()]
+        how = {"default": tr("the default for this system"), "chosen": tr("chosen by you"),
+               "environment": tr("set by the ISNADY_DATA_DIR environment variable")}[paths.data_dir_source()]
         state = QLabel(how)
         state.setObjectName("Caption")
         head.addWidget(title)
@@ -473,25 +482,26 @@ class SourcesPage(QWidget):
         where.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         where.setWordWrap(True)
         box.addWidget(where)
-        note = QLabel("The database, your settings and your own sources live here. A new folder is used from the "
-                      "next start of isnady. A ready database (isnady.db, or the isnady-db zip of isnady-data) can be "
-                      "taken from a file on this computer instead of importing book by book.")
+        note = QLabel(tr("The database, your settings and your own sources live here. A new folder is used from the next "
+                        "start of isnady. A ready database (isnady.db, or the isnady-db zip of isnady-data) can be taken "
+                        "from a file on this computer instead of importing book by book."))
         note.setObjectName("Caption")
         note.setWordWrap(True)
         box.addWidget(note)
         row = QHBoxLayout()
         row.addStretch(1)
-        for label, slot in (("Open", self._open_folder), ("Change…", self._change_folder),
-                            ("Use default", self._default_folder), ("Use a ready database…", self._use_ready_database)):
+        for key, label, slot in (("open", tr("Open"), self._open_folder), ("change", tr("Change…"), self._change_folder),
+                                 ("default", tr("Use default"), self._default_folder),
+                                 ("ready", tr("Use a ready database…"), self._use_ready_database)):
             b = QPushButton(label)
             b.setObjectName("Quiet")
             b.clicked.connect(slot)
-            if label in ("Change…", "Use default") and paths.data_dir_source() == "environment":
+            if key in ("change", "default") and paths.data_dir_source() == "environment":
                 b.setEnabled(False)
-            if label == "Use default" and paths.data_dir_source() == "default":
+            if key == "default" and paths.data_dir_source() == "default":
                 b.setEnabled(False)
             row.addWidget(b)
-            if label != "Open":
+            if key != "open":
                 self._buttons.append(b)
         box.addLayout(row)
         return card
@@ -510,13 +520,13 @@ class SourcesPage(QWidget):
         try:
             new = paths.relocate(target, mode)
         except paths.RelocateError as exc:
-            QMessageBox.warning(self, "Data folder", str(exc))
+            QMessageBox.warning(self, tr("Data folder"), str(exc))
             return
         answer = QMessageBox.question(
-            self, "Data folder",
-            f"isnady will use\n{new}\nfrom its next start"
-            + ("; your data was copied there and the old folder is kept." if mode == "copy" else ".")
-            + "\n\nQuit isnady now?")
+            self, tr("Data folder"),
+            (tr("isnady will use\n{new}\nfrom its next start; your data was copied there and the old folder is "
+                "kept.", new=new) if mode == "copy" else tr("isnady will use\n{new}\nfrom its next start.", new=new))
+            + "\n\n" + tr("Quit isnady now?"))
         self.refresh()
         if answer == QMessageBox.StandardButton.Yes:
             from PySide6.QtWidgets import QApplication
@@ -524,14 +534,14 @@ class SourcesPage(QWidget):
             QApplication.quit()
 
     def _change_folder(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, "Choose a folder for isnady's data")
+        folder = QFileDialog.getExistingDirectory(self, tr("Choose a folder for isnady's data"))
         if not folder:
             return
         box = QMessageBox(self)
-        box.setWindowTitle("Data folder")
-        box.setText(f"Use {folder} for isnady's data?")
-        copy = box.addButton("Copy my data there", QMessageBox.ButtonRole.AcceptRole)
-        as_is = box.addButton("Use the folder as it is", QMessageBox.ButtonRole.ActionRole)
+        box.setWindowTitle(tr("Data folder"))
+        box.setText(tr("Use {folder} for isnady's data?", folder=folder))
+        copy = box.addButton(tr("Copy my data there"), QMessageBox.ButtonRole.AcceptRole)
+        as_is = box.addButton(tr("Use the folder as it is"), QMessageBox.ButtonRole.ActionRole)
         box.addButton(QMessageBox.StandardButton.Cancel)
         box.exec()
         if box.clickedButton() is copy:
@@ -541,10 +551,10 @@ class SourcesPage(QWidget):
 
     def _default_folder(self) -> None:
         box = QMessageBox(self)
-        box.setWindowTitle("Data folder")
-        box.setText("Go back to the default folder for this system?")
-        copy = box.addButton("Copy my data there", QMessageBox.ButtonRole.AcceptRole)
-        as_is = box.addButton("Use it as it is", QMessageBox.ButtonRole.ActionRole)
+        box.setWindowTitle(tr("Data folder"))
+        box.setText(tr("Go back to the default folder for this system?"))
+        copy = box.addButton(tr("Copy my data there"), QMessageBox.ButtonRole.AcceptRole)
+        as_is = box.addButton(tr("Use it as it is"), QMessageBox.ButtonRole.ActionRole)
         box.addButton(QMessageBox.StandardButton.Cancel)
         box.exec()
         if box.clickedButton() is copy:
@@ -559,7 +569,7 @@ class SourcesPage(QWidget):
         try:
             repositories.select(repo_id)
         except KeyError as exc:
-            QMessageBox.warning(self, "Repository", str(exc.args[0]))
+            QMessageBox.warning(self, tr("Repository"), str(exc.args[0]))
         self.refresh()
 
     def _refresh_repo(self) -> None:
@@ -567,61 +577,60 @@ class SourcesPage(QWidget):
         try:
             _cat, where = repositories.catalog(repo, refresh=True)
             self.refresh()
-            self.status.setText("Catalog read again." if where == "network" else
-                                "The repository cannot be reached; the saved or shipped catalog is used.")
+            self.status.setText(tr("Catalog read again.") if where == "network" else
+                                tr("The repository cannot be reached; the saved or shipped catalog is used."))
         except Exception as exc:
-            self.status.setText(f"Failed: {exc}")
+            self.status.setText(tr("Failed: {exc}", exc=exc))
 
     def _add_repo(self) -> None:
         text, ok = QInputDialog.getText(
-            self, "Add a repository",
-            "The address of a repository with an isnady catalog (catalog.json):\n"
-            "  a GitHub repository   https://github.com/owner/name\n"
-            "  a Hugging Face dataset   https://huggingface.co/datasets/owner/name\n"
-            "  a catalog URL, or a folder on this computer")
+            self, tr("Add a repository"),
+            tr("The address of a repository with an isnady catalog (catalog.json):\n  a GitHub repository   "
+              "https://github.com/owner/name\n  a Hugging Face dataset   "
+              "https://huggingface.co/datasets/owner/name\n  a catalog URL, or a folder on this computer"))
         if not ok or not text.strip():
             return
         try:
             repo = repositories.add_repository(text.strip())
         except (ResourceError, ValueError) as exc:
-            QMessageBox.warning(self, "Add a repository", str(exc.args[0] if exc.args else exc))
+            QMessageBox.warning(self, tr("Add a repository"), str(exc.args[0] if exc.args else exc))
             return
         repositories.select(repo.id)
         self.refresh()
-        self.status.setText(f"Added {repo.name}; it is the repository now.")
+        self.status.setText(tr("Added {name}; it is the repository now.", name=repo.name))
 
     def _add_folder_repo(self) -> None:
         """A repository on this computer: a copy of isnady-data (git clone, a USB stick, a shared folder) or any
         folder with a catalog.json — read without the network."""
-        folder = QFileDialog.getExistingDirectory(self, "A folder with a catalog.json (e.g. your copy of isnady-data)")
+        folder = QFileDialog.getExistingDirectory(self, tr("A folder with a catalog.json (e.g. your copy of isnady-data)"))
         if not folder:
             return
         try:
             repo = repositories.add_repository(folder)
         except (ResourceError, ValueError) as exc:
-            QMessageBox.warning(self, "A folder on this computer", str(exc.args[0] if exc.args else exc))
+            QMessageBox.warning(self, tr("A folder on this computer"), str(exc.args[0] if exc.args else exc))
             return
         repositories.select(repo.id)
         self.refresh()
-        self.status.setText(f"Added {repo.name} ({folder}); it is the repository now, read from this computer.")
+        self.status.setText(tr("Added {name} ({folder}); it is the repository now, read from this computer.", name=repo.name, folder=folder))
 
     def _use_ready_database(self) -> None:
         from isnady.data import ready
 
-        path, _f = QFileDialog.getOpenFileName(self, "A ready isnady database",
-                                               "", "isnady database (isnady-db-*.zip isnady*.db *.zip *.db)")
+        path, _f = QFileDialog.getOpenFileName(self, tr("A ready isnady database"),
+                                               "", tr("isnady database") + " (isnady-db-*.zip isnady*.db *.zip *.db)")
         if not path:
             return
         try:
             info = ready.stage(path)
         except ready.ReadyError as exc:
-            QMessageBox.warning(self, "Ready database", str(exc))
+            QMessageBox.warning(self, tr("Ready database"), str(exc))
             return
         answer = QMessageBox.question(
-            self, "Ready database",
-            f"{info['books']} books, {info['hadith']:,} hadith. It takes the place of your database at the next "
-            "start of isnady; your database is kept beside it as isnady.<date>.bak.db.\n\nQuit isnady now?")
-        self.status.setText("A ready database is waiting; it is used from the next start.")
+            self, tr("Ready database"),
+            tr("{books} books, {hadith:,} hadith. It takes the place of your database at the next start of "
+              "isnady; your database is kept beside it as isnady.<date>.bak.db.\n\nQuit isnady now?", books=info['books'], hadith=info['hadith']))
+        self.status.setText(tr("A ready database is waiting; it is used from the next start."))
         if answer == QMessageBox.StandardButton.Yes:
             from PySide6.QtWidgets import QApplication
 
@@ -629,8 +638,7 @@ class SourcesPage(QWidget):
 
     def _remove_repo(self) -> None:
         repo = repositories.selected()
-        answer = QMessageBox.question(self, "Repository", f"Remove {repo.name} from the list? What you imported from "
-                                                          "it stays until you remove it.")
+        answer = QMessageBox.question(self, tr("Repository"), tr("Remove {name} from the list? What you imported from it stays until you remove it.", name=repo.name))
         if answer == QMessageBox.StandardButton.Yes:
             repositories.remove_repository(repo.id)
             self.refresh()
@@ -642,26 +650,25 @@ class SourcesPage(QWidget):
             if chosen:
                 languages[entry_id] = chosen
         n = len(catalog.builtin_entries())
-        answer = QMessageBox.question(self, "Import all", f"Import all {n} sources of {repositories.selected().name}? "
-                                      "Large books are downloaded; this can take a while.")
+        answer = QMessageBox.question(self, tr("Import all"), tr("Import all {n} sources of {name}? Large books are downloaded; this can take a while.", n=n, name=repositories.selected().name))
         if answer != QMessageBox.StandardButton.Yes:
             return
-        self._start(Worker("import_all", None, languages), "Importing every source of the repository…")
+        self._start(Worker("import_all", None, languages), tr("Importing every source of the repository…"))
 
     def _import(self, entry: catalog.Entry, checks: list) -> None:
         languages = [c.property("code") for c in checks if c.isChecked()] or None
         if checks and not languages:
-            self.status.setText("Choose at least one language.")
+            self.status.setText(tr("Choose at least one language."))
             return
         auth = self._ask_auth(entry)
         if auth is None:
             return
-        self._start(Worker("import", entry, languages, auth), f"Importing {entry.title}…")
+        self._start(Worker("import", entry, languages, auth), tr("Importing {title}…", title=entry.title))
 
     def _remove(self, entry: catalog.Entry) -> None:
-        answer = QMessageBox.question(self, "Remove data", f"Remove everything imported from {entry.title}?")
+        answer = QMessageBox.question(self, tr("Remove data"), tr("Remove everything imported from {title}?", title=entry.title))
         if answer == QMessageBox.StandardButton.Yes:
-            self._start(Worker("remove", entry), f"Removing {entry.title}…")
+            self._start(Worker("remove", entry), tr("Removing {title}…", title=entry.title))
 
     def _delete(self, entry: catalog.Entry) -> None:
         catalog.delete_user_entry(entry.id)
@@ -674,7 +681,7 @@ class SourcesPage(QWidget):
         try:
             catalog.add_user_entry(**dialog.values())
         except (KeyError, ValueError) as exc:
-            QMessageBox.warning(self, "Add a source", str(exc.args[0] if exc.args else exc))
+            QMessageBox.warning(self, tr("Add a source"), str(exc.args[0] if exc.args else exc))
             return
         self.refresh()
 

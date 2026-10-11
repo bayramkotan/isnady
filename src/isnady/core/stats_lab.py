@@ -31,6 +31,7 @@ from collections import Counter, defaultdict
 
 from isnady.core import stats_corpus as sc
 from isnady.core import stats_models as sm
+from isnady.core.i18n import N_, tr
 
 METHOD = "isnady-lab-3"
 ALPHA = 0.05                 # a q or Holm-adjusted p below this is called beyond chance
@@ -376,24 +377,24 @@ def brant_for(conn: sqlite3.Connection, key: str, grader: str, by_hadith: dict[i
 
 # ------------------------------------------------------------------ the analysis
 HADITH_VARS = [
-    ("weakest", "Weakest narrator", "the weakest identified narrator of the best chain, as Ibn Hajar's rank group"),
-    ("weak_count", "More weak narrators", "weak or unknown narrators beyond the first"),
-    ("length", "Length", "names in the chain"),
-    ("unidentified", "Names not identified", "names not matched to a narrator"),
-    ("routes", "Chains in the book", "the hadith's chains in the same book"),
-    ("takhrij", "Narrations elsewhere", "its narrations found in other books"),
-    ("mawquf", "Stops short", "the chain ends with a Companion or Successor (1) or reaches the Prophet (0)"),
-    ("doubtful", "Doubtful link", "a pair implausible in time or generation (1)"),
-    ("position", "Place in the book", "the hadith's place in the book, from first to last"),
+    ("weakest", N_("Weakest narrator"), N_("the weakest identified narrator of the best chain, as Ibn Hajar's rank group")),
+    ("weak_count", N_("More weak narrators"), N_("weak or unknown narrators beyond the first")),
+    ("length", N_("Length"), N_("names in the chain")),
+    ("unidentified", N_("Names not identified"), N_("names not matched to a narrator")),
+    ("routes", N_("Chains in the book"), N_("the hadith's chains in the same book")),
+    ("takhrij", N_("Narrations elsewhere"), N_("its narrations found in other books")),
+    ("mawquf", N_("Stops short"), N_("the chain ends with a Companion or Successor (1) or reaches the Prophet (0)")),
+    ("doubtful", N_("Doubtful link"), N_("a pair implausible in time or generation (1)")),
+    ("position", N_("Place in the book"), N_("the hadith's place in the book, from first to last")),
 ]
 NARRATOR_VARS = [
-    ("rank", "Ibn Hajar's rank", "1 Companion … 12 liar — a higher number is a WEAKER narrator"),
-    ("tabaqa", "Generation", "Ibn Hajar's tabaqa, 1 Companions … 12"),
-    ("death", "Year of death", "AH"),
-    ("links", "Times in the chains", ""),
-    ("teachers", "Teachers", "different narrators he narrates from in these chains"),
-    ("students", "Students", "different narrators who narrate from him"),
-    ("pagerank", "PageRank", "his share of the flow of transmission"),
+    ("rank", N_("Ibn Hajar's rank"), N_("1 Companion … 12 liar — a higher number is a WEAKER narrator")),
+    ("tabaqa", N_("Generation"), N_("Ibn Hajar's tabaqa, 1 Companions … 12")),
+    ("death", N_("Year of death"), N_("AH")),
+    ("links", N_("Times in the chains"), ""),
+    ("teachers", N_("Teachers"), N_("different narrators he narrates from in these chains")),
+    ("students", N_("Students"), N_("different narrators who narrate from him")),
+    ("pagerank", N_("PageRank"), N_("his share of the flow of transmission")),
 ]
 
 
@@ -401,9 +402,11 @@ def hadith_vars(road: "sc.Road") -> list[tuple[str, str, str]]:
     """HADITH_VARS in the words of the road (SH1)."""
     if not road.shia:
         return HADITH_VARS
-    words = {"weakest": ("Weakest narrator", "the weakest identified narrator of the best chain, in al-Najashi's categories"),
-             "weak_count": ("More weak narrators", "narrators al-Najashi calls weak beyond the first"),
-             "mawquf": ("Stops short", "the chain does not reach a Ma'sum (1) or reaches the Prophet or an Imam (0)")}
+    words = {"weakest": (N_("Weakest narrator"), N_("the weakest identified narrator of the best chain, in "
+                                                     "al-Najashi's categories")),
+             "weak_count": (N_("More weak narrators"), N_("narrators al-Najashi calls weak beyond the first")),
+             "mawquf": (N_("Stops short"), N_("the chain does not reach a Ma'sum (1) or reaches the Prophet or an Imam "
+                                              "(0)"))}
     return [(k, *words[k]) if k in words else (k, lab, e) for k, lab, e in HADITH_VARS]
 
 
@@ -411,8 +414,9 @@ def narrator_vars(road: "sc.Road") -> list[tuple[str, str, str]]:
     """NARRATOR_VARS in the words of the road: road B has al-Najashi's four categories and no generations (tabaqat)."""
     if not road.shia:
         return NARRATOR_VARS
-    return [("rank", "al-Najashi's category", "1 trustworthy, 2 praised, 3 muwaththaq, 4 weak — a higher number is a "
-                                              "WEAKER narrator")] + [v for v in NARRATOR_VARS if v[0] not in ("rank", "tabaqa")]
+    return [("rank", N_("al-Najashi's category"), N_("1 trustworthy, 2 praised, 3 muwaththaq, 4 weak — a higher "
+                                                     "number is a WEAKER narrator"))] + \
+        [v for v in NARRATOR_VARS if v[0] not in ("rank", "tabaqa")]
 
 
 def _hadith_table(conn: sqlite3.Connection, key: str, road: "sc.Road" = sm.SUNNI) -> dict | None:
@@ -448,7 +452,7 @@ def _hadith_table(conn: sqlite3.Connection, key: str, road: "sc.Road" = sm.SUNNI
         for h in hadith:
             gs = [order_g.index(data[g][h]) for g in graders if h in data[g]]
             spread.append(max(gs) - min(gs) if len(gs) >= 2 else None)
-        outcomes.append(("Disagreement", "how many grade steps apart the scholars are on this hadith", spread))
+        outcomes.append((N_("Disagreement"), N_("how many grade steps apart the scholars are on this hadith"), spread))
     outcomes = [o for o in outcomes if len({v for v in o[2] if v is not None}) > 1]
     return {"factors": factors, "outcomes": outcomes, "hadith": len(hadith)}
 
@@ -508,7 +512,7 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     out: dict = {"method": METHOD, "collection": collection, "tradition": road.tradition, "critic": road.critic,
                  "grade_labels": road.grade_labels, "hadith": [], "graders": [], "brant": [], "books": None}
     for _id, key, name in books:
-        say(f"Correlating the hadith of {name}")
+        say(tr("Correlating the hadith of {name}", name=name))
         table = _hadith_table(conn, key, road)
         if table and len(table["factors"]) + len(table["outcomes"]) >= 3:
             fs, os_ = table["factors"], table["outcomes"]
@@ -524,7 +528,7 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
         graders = sorted(g for g, d in data.items() if len(d) >= 100 and len(set(d.values())) > 1)
         feats = sm.hadith_features(conn, key, road)
         for g in graders:
-            say(f"Testing the shape of the model of {g}")
+            say(tr("Testing the shape of the model of {g}", g=g))
             b = brant_for(conn, key, g, data[g], feats, road)
             if b:
                 out["brant"].append(dict(b, book=name, key=key))
@@ -548,7 +552,7 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
         t["p_holm"] = adj
     for t, adj in zip(out["brant"], sm.holm([b["overall"]["p"] for b in out["brant"]])):
         t["overall"]["p_holm"] = adj
-    say("Correlating the narrators")
+    say(tr("Correlating the narrators"))
     names, cols, explain = _narrator_table(conn, collection, road)
     if len(cols) >= 2 and len(cols[0]) >= 30:
         m = correlation_matrix(names, cols)
@@ -556,8 +560,8 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
         out["narrators"] = m
     # the books compared
     if len(books) >= 2:
-        say("Comparing the books")
-        measures = {"Weakest narrator": [], "Length": [], "Names identified": []}
+        say(tr("Comparing the books"))
+        measures = {N_("Weakest narrator"): [], N_("Length"): [], N_("Names identified"): []}
         persons = sc._persons(conn, road.tradition)
         for bid, _key, name in books:
             weakest, length, ident = [], [], []

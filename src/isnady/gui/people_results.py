@@ -12,18 +12,19 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 from isnady.core import shia_rijal
 from isnady.core.rijal import RANK_LABELS, TABAQA_LABELS
 from isnady.core.scholars import ROLE_HELP
+from isnady.core.i18n import N_, tr
 from isnady.gui import theme
 
-CLOSE_TIP = ("Found by a close spelling, not by the letters typed: a letter typed twice or missing, or one that "
+CLOSE_TIP = N_("Found by a close spelling, not by the letters typed: a letter typed twice or missing, or one that "
              "Turkish and English write differently (h and kh, z and dh).")
-WEAK_TIP = ("The consonants typed are in this name, but its reading sounds different (Bayram and al-Barmaki are "
+WEAK_TIP = N_("The consonants typed are in this name, but its reading sounds different (Bayram and al-Barmaki are "
             "both b-r-m). Arabic is written without its short vowels, so consonants are matched first.")
-UNREAD_TIP = ("The consonants typed are in this name, and isnady has no reading of it to compare the vowels with, "
+UNREAD_TIP = N_("The consonants typed are in this name, and isnady has no reading of it to compare the vowels with, "
               "so it cannot say whether it sounds like what you typed.")
 SHIA_COLOR = {1: 2, 2: 4, 3: 5, 4: 9}    # as on the Narrators page: Shia categories in the colours of like standing
-TRADITION = {"sunni": ("Sunni", "A narrator of the Sunni books, as Ibn Hajar's Taqrib al-Tahdhib records him."),
-             "shia": ("Shia", "A narrator of the Shia books, as al-Najashi's Rijal records him. His judgment is "
-                              "given in its own terms, not mapped to Ibn Hajar's ranks.")}
+TRADITION = {"sunni": (N_("Sunni"), N_("A narrator of the Sunni books, as Ibn Hajar's Taqrib al-Tahdhib records him.")),
+             "shia": (N_("Shia"), N_("A narrator of the Shia books, as al-Najashi's Rijal records him. His judgment is "
+                                     "given in its own terms, not mapped to Ibn Hajar's ranks."))}
 
 
 def _label(text: str, name: str = "", rich: bool = False, wrap: bool = False) -> QLabel:
@@ -103,8 +104,8 @@ def _facts(box: QVBoxLayout, tags: list[tuple[str, str]], parts: list[tuple[str,
 def person_card(row: dict, open_person) -> QFrame:
     """A narrator found by Search, from either tradition (core.narrators.find)."""
     shia = row["tradition"] == "shia"
-    page = "Narrators"
-    card = _ClickCard(lambda: open_person(row["id"], row["tradition"]), f"Open {row['name']} on the {page} page")
+    card = _ClickCard(lambda: open_person(row["id"], row["tradition"]),
+                      tr("Open {name} on the Narrators page", name=row["name"]))
     box = QVBoxLayout(card)
     box.setContentsMargins(22, 14, 22, 12)
     box.setSpacing(4)
@@ -114,44 +115,52 @@ def person_card(row: dict, open_person) -> QFrame:
     _head(box, known, view["arabic"] or row["name"], full)
 
     tag, why = TRADITION[row["tradition"]]
-    tags = [(tag, f"{why}\nSource: {row['source']}" if row.get("source") else why)]
+    tag, why = tr(tag), tr(why)
+    tags = [(tag, why + "\n" + tr("Source: {source}", source=row["source"]) if row.get("source") else why)]
     parts = []
     rank = row["rank"]
     if shia:
         if rank:
             ar, en, meaning = shia_rijal.RANKS[rank]
             dot = theme.rank_color(SHIA_COLOR.get(rank))
+            en = tr(en)
             parts.append((f"<span style='color:{dot}'>●</span> {html.escape(en.split(' (')[0])}",
-                          f"{ar} — {en}\n{meaning}"))
+                          f"{ar} — {en}\n{tr(meaning)}"))
         else:
-            parts.append(("no judgment", "al-Najashi names him without judging him."))
+            parts.append((tr("no judgment"), tr("al-Najashi names him without judging him.")))
         if row.get("madhhab"):
-            parts.append((html.escape(shia_rijal.MADHHAB_LABELS.get(row["madhhab"], row["madhhab"])),
-                          "His school, as the critic gives it."))
+            parts.append((html.escape(tr(shia_rijal.MADHHAB_LABELS.get(row["madhhab"], row["madhhab"]))),
+                          tr("His school, as the critic gives it.")))
     elif rank:
         ar, en = RANK_LABELS[rank]
+        en = tr(en)
         parts.append((f"<span style='color:{theme.rank_color(rank)}'>●</span> {html.escape(en.split(' (')[0])}",
-                      f"Ibn Hajar's rank {rank} of 12: {ar} — {en}" + (f"\nHis words: {row['verdict']}"
-                                                                         if row.get("verdict") else "")))
+                      tr("Ibn Hajar's rank {rank} of 12: {arabic} — {meaning}", rank=rank, arabic=ar, meaning=en)
+                      + ("\n" + tr("His words: {words}", words=row["verdict"]) if row.get("verdict") else "")))
     if row["tabaqa"]:
-        parts.append((f"tabaqa {row['tabaqa']}",
-                      f"Generation (tabaqa) {row['tabaqa']} of 12 in Ibn Hajar's count: "
-                      f"{TABAQA_LABELS.get(row['tabaqa'], '')}"))
+        parts.append((tr("tabaqa {tabaqa}", tabaqa=row["tabaqa"]),
+                      tr("Generation (tabaqa) {tabaqa} of 12 in Ibn Hajar's count: {meaning}", tabaqa=row["tabaqa"],
+                         meaning=tr(TABAQA_LABELS.get(row["tabaqa"], "")))))
     if row["death"]:
-        parts.append((f"d. {row['death']} AH", "Year of death in the Hijri calendar, as the source gives it."))
+        parts.append((tr("d. {year} AH", year=row["death"]), tr("Year of death in the Hijri calendar, as the source "
+                                                                "gives it.")))
     if not shia:
-        parts.append((f"{row['in_chains']:,} in chains" if row["in_chains"] else "not in the imported chains",
-                      "How often he is identified in the chains of the imported books."))
+        parts.append((tr("{n:,} in chains", n=row["in_chains"]) if row["in_chains"] else
+                      tr("not in the imported chains"),
+                      tr("How often he is identified in the chains of the imported books.")))
     matched = " ".join(row.get("matched") or [])
     shown = (f" <span style='font-family:\"{theme.script_font('arabic').family()}\"; font-size:11pt'>"
              f"{html.escape(matched)}</span>") if matched else ""
     if row.get("weak"):
-        parts.append((f"<span style='color:{theme.current().muted}'>≈ same consonants:{shown}</span>", WEAK_TIP))
+        parts.append((f"<span style='color:{theme.current().muted}'>≈ {tr('same consonants:')}{shown}</span>",
+                      tr(WEAK_TIP)))
     elif row.get("close"):
-        parts.append((f"<span style='color:{theme.current().gold}'>≈ close spelling:{shown}</span>", CLOSE_TIP))
+        parts.append((f"<span style='color:{theme.current().gold}'>≈ {tr('close spelling:')}{shown}</span>",
+                      tr(CLOSE_TIP)))
     elif row.get("unread"):
-        parts.append((f"<span style='color:{theme.current().muted}'>≈ same consonants:{shown}</span>", UNREAD_TIP))
-    _facts(box, tags, parts, f"Open in {page}")
+        parts.append((f"<span style='color:{theme.current().muted}'>≈ {tr('same consonants:')}{shown}</span>",
+                      tr(UNREAD_TIP)))
+    _facts(box, tags, parts, tr("Open in Narrators"))
     return card
 
 
@@ -159,7 +168,8 @@ def scholar_card(scholar: dict, open_scholar) -> QFrame:
     """A scholar found by Search (core.scholars.search): who he is and what of his work is in this database."""
     from isnady.core import scholars as core_scholars
 
-    card = _ClickCard(lambda: open_scholar(scholar["id"]), f"Open {scholar['name']} on the Hadith Scholars page")
+    card = _ClickCard(lambda: open_scholar(scholar["id"]),
+                      tr("Open {name} on the Hadith Scholars page", name=scholar["name"]))
     box = QVBoxLayout(card)
     box.setContentsMargins(22, 14, 22, 12)
     box.setSpacing(4)
@@ -167,24 +177,24 @@ def scholar_card(scholar: dict, open_scholar) -> QFrame:
     sub = " · ".join(x for x in (scholar["full"] if scholar["full"] != scholar["name"] else "", scholar["tr"],
                                  scholar["dates"]) if x)
     _head(box, scholar["name"], scholar.get("known_ar") or view["arabic"], sub)
-    works = _label("Works: " + ", ".join(scholar["works"]), "Caption", wrap=True)
+    works = _label(tr("Works: ") + ", ".join(scholar["works"]), "Caption", wrap=True)
     box.addWidget(works)
     tags, parts = [], []
     for role in scholar["roles"]:
-        title, meaning = ROLE_HELP[role]
+        title, meaning = tr(ROLE_HELP[role][0]), tr(ROLE_HELP[role][1])
         tags.append((title.split(" (")[0].split(" · ")[0], f"{title}\n{meaning}"))
     if not tags:
-        parts.append(("nothing of his is imported yet",
-                      "Import his book or his grades (File → Data Sources) to see his work measured."))
+        parts.append((tr("nothing of his is imported yet"),
+                      tr("Import his book or his grades (File → Data Sources) to see his work measured.")))
     if scholar.get("close"):
-        parts.append((f"<span style='color:{theme.current().gold}'>≈ close spelling</span>", CLOSE_TIP))
-    _facts(box, tags, parts, "Open in Hadith Scholars")
+        parts.append((f"<span style='color:{theme.current().gold}'>≈ {tr('close spelling')}</span>", tr(CLOSE_TIP)))
+    _facts(box, tags, parts, tr("Open in Hadith Scholars"))
     return card
 
 
 def empty_hint(kind: str) -> QWidget:
     """Under "Nothing found": how names are matched, so the reader knows what to try."""
-    text = {"narrators": "Names are matched by their letters, without vowels or diacritics: “Abu Hurayra”, "
-                         "“Ebû Hüreyre” and أبو هريرة all find him. Try fewer words, or the name he is known by.",
-            "scholars": "Try his best-known name (al-Bukhari, Buhârî, البخاري) or the title of one of his works."}
+    text = {"narrators": tr("Names are matched by their letters, without vowels or diacritics: “Abu Hurayra”, "
+                            "“Ebû Hüreyre” and أبو هريرة all find him. Try fewer words, or the name he is known by."),
+            "scholars": tr("Try his best-known name (al-Bukhari, Buhârî, البخاري) or the title of one of his works.")}
     return _label(text.get(kind, ""), "Lead", wrap=True)

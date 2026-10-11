@@ -17,6 +17,7 @@ import sqlite3
 from collections import Counter, defaultdict
 
 from isnady.core.grades import GROUP_LABELS, IMAMI_LABELS, group, imami_group, isnad_only
+from isnady.core.i18n import N_, t
 
 SCHOLARS = [
     {"id": "bukhari", "known_ar": "البخاري", "tr": "Buhârî (Muhammed b. İsmâil)", "name": "al-Bukhari", "full": "Muhammad b. Isma'il al-Bukhari",
@@ -112,28 +113,28 @@ SCHOLARS = [
 
 # what each role and each measure means — shown to the reader (isnady is a teaching tool)
 ROLE_HELP = {
-    "compiler": ("Compiler (musannif) · Kitap sahibi",
-                 "A scholar who gathered hadith into a book, each with the chain he heard it through. The first "
-                 "link of every chain is his own teacher; the last is usually the Companion who heard the Prophet."),
-    "grader": ("Grader · Derece veren âlim",
-               "A scholar who judged each hadith of a book: sahih (sound), hasan (good), da'if (weak), and so on. "
-               "Different scholars can judge the same hadith differently; comparing them shows how strict each one is."),
-    "critic": ("Critic of narrators (münekkit) · Ricâl âlimi",
-               "A scholar who judged the narrators themselves — their honesty and the accuracy of their memory — "
-               "in fixed words that rank them, from Companion down to liar (Ibn Hajar uses twelve ranks)."),
+    "compiler": (N_("Compiler (musannif)"),
+                 N_("A scholar who gathered hadith into a book, each with the chain he heard it through. The first "
+                 "link of every chain is his own teacher; the last is usually the Companion who heard the Prophet.")),
+    "grader": (N_("Grader"),
+               N_("A scholar who judged each hadith of a book: sahih (sound), hasan (good), da'if (weak), and so on. "
+               "Different scholars can judge the same hadith differently; comparing them shows how strict each one is.")),
+    "critic": (N_("Critic of narrators (rijal)"),
+               N_("A scholar who judged the narrators themselves — their honesty and the accuracy of their memory — "
+               "in fixed words that rank them, from Companion down to liar (Ibn Hajar uses twelve ranks).")),
 }
 MEASURE_HELP = {
-    "imami": "The Imami grades: sahih — every narrator an Imami thiqa; hasan — a praised Imami among them; "
+    "imami": N_("The Imami grades: sahih — every narrator an Imami thiqa; hasan — a praised Imami among them; "
              "muwaththaq — a thiqa of another school among them; da'if — the rest (al-Majlisi's majhul, mursal and "
-             "marfu' counted here). Compared only among the Shia graders, never with the Sunni ones.",
-    "agreement": "Agreement: on how many of the hadith both scholars graded they gave the same group "
-                 "(sahih, hasan, da'if, very weak, fabricated).",
-    "kappa": "Cohen's kappa: agreement after removing what chance alone would give. 1 = always the same, 0 = no "
-             "better than chance; above 0.8 is very strong, 0.6–0.8 strong, 0.4–0.6 moderate.",
-    "strictness": "Strictness: comparing his grade with each other grader's on the same hadith, how often his is LOWER "
+             "marfu' counted here). Compared only among the Shia graders, never with the Sunni ones."),
+    "agreement": N_("Agreement: on how many of the hadith both scholars graded they gave the same group "
+                 "(sahih, hasan, da'if, very weak, fabricated)."),
+    "kappa": N_("Cohen's kappa: agreement after removing what chance alone would give. 1 = always the same, 0 = no "
+             "better than chance; above 0.8 is very strong, 0.6–0.8 strong, 0.4–0.6 moderate."),
+    "strictness": N_("Strictness: comparing his grade with each other grader's on the same hadith, how often his is LOWER "
                   "minus how often it is HIGHER — by order only (grades are ordered categories, not numbers). Below "
                   "zero he is stricter (classically mutashaddid), above zero more lenient (mutasahil). Statistics → "
-                  "Graders measures it against a model of the true grade, with intervals."}
+                  "Graders measures it against a model of the true grade, with intervals.")}
 
 
 def tradition_of(scholar: dict) -> str:
@@ -428,9 +429,9 @@ def critic_stats(conn: sqlite3.Connection, scholar: dict) -> dict | None:
 
         creeds = Counter(r[2] for r in rows if r[2])
         return {"verdicts": len(rows), "works": sorted({r[1] for r in rows}), "tradition": "shia",
-                "ranks": [(k, shia_rijal.RANKS[k][1].split(" (")[0], ranks[k]) for k in sorted(shia_rijal.RANKS)],
-                "creeds": [(shia_rijal.MADHHAB_LABELS.get(k, k), n) for k, n in creeds.most_common()],
+                "ranks": [(k, t(shia_rijal.RANKS[k][1]).split(" (")[0], ranks[k]) for k in sorted(shia_rijal.RANKS)],
+                "creeds": [(t(shia_rijal.MADHHAB_LABELS.get(k, k)), n) for k, n in creeds.most_common()],
                 "unranked": ranks[None]}
     return {"verdicts": len(rows), "works": sorted({r[1] for r in rows}), "tradition": "sunni",
-            "ranks": [(k, RANK_LABELS[k][1].split(" (")[0], ranks[k]) for k in sorted(RANK_LABELS)],
+            "ranks": [(k, t(RANK_LABELS[k][1]).split(" (")[0], ranks[k]) for k in sorted(RANK_LABELS)],
             "unranked": ranks[None]}

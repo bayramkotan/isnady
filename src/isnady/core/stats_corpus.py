@@ -25,6 +25,7 @@ from collections import Counter, defaultdict
 
 from isnady.core import stats_graders
 from isnady.core.grades import GROUP_LABELS, IMAMI_LABELS, group, isnad_only
+from isnady.core.i18n import N_, tr
 
 METHOD = "isnady-corpus-3"
 SHIA_SCOPE = "@shia"           # every active Shia book (road B)
@@ -33,20 +34,20 @@ SEED = 1405
 
 # Ibn Hajar's twelve ranks in six ordered groups (1 strongest … 6 weakest) — for drawing; the ranks stay in the data
 RANK_GROUPS = [
-    ("Companion", "Companions (rank 1): their uprightness is not examined", (1,)),
-    ("Trustworthy", "thiqa and above (ranks 2–3)", (2, 3)),
-    ("Truthful", "saduq, with or without lapses (ranks 4–5)", (4, 5)),
-    ("Acceptable", "maqbul — acceptable when followed, weak otherwise (rank 6)", (6,)),
-    ("Weak / unknown", "mastur, da'if, majhul (ranks 7–9)", (7, 8, 9)),
-    ("Rejected", "abandoned, accused of lying, liar (ranks 10–12)", (10, 11, 12)),
+    (N_("Companion"), N_("Companions (rank 1): their uprightness is not examined"), (1,)),
+    (N_("Trustworthy"), N_("thiqa and above (ranks 2–3)"), (2, 3)),
+    (N_("Truthful"), N_("saduq, with or without lapses (ranks 4–5)"), (4, 5)),
+    (N_("Acceptable"), N_("maqbul — acceptable when followed, weak otherwise (rank 6)"), (6,)),
+    (N_("Weak / unknown"), N_("mastur, da'if, majhul (ranks 7–9)"), (7, 8, 9)),
+    (N_("Rejected"), N_("abandoned, accused of lying, liar (ranks 10–12)"), (10, 11, 12)),
 ]
 GROUP_OF_RANK = {r: i for i, (_n, _d, ranks) in enumerate(RANK_GROUPS) for r in ranks}
 # road B: the Imami categories of the critic's own words (core.shia_rijal), strongest first
 RANK_GROUPS_SHIA = [
-    ("Trustworthy", "thiqa — an Imami the critic calls trustworthy", (1,)),
-    ("Praised", "mamduh — praised (jalil, wajh, 'ayn …) without the word thiqa", (2,)),
-    ("Muwaththaq", "a thiqa of another school (Waqifi, Fathi, 'ammi …)", (3,)),
-    ("Weak", "da'if — weak, confused, accused, extremist", (4,)),
+    (N_("Trustworthy"), N_("thiqa — an Imami the critic calls trustworthy"), (1,)),
+    (N_("Praised"), N_("mamduh — praised (jalil, wajh, 'ayn …) without the word thiqa"), (2,)),
+    (N_("Muwaththaq"), N_("a thiqa of another school (Waqifi, Fathi, 'ammi …)"), (3,)),
+    (N_("Weak"), N_("da'if — weak, confused, accused, extremist"), (4,)),
 ]
 GROUP_OF_RANK_SHIA = {r: i for i, (_n, _d, ranks) in enumerate(RANK_GROUPS_SHIA) for r in ranks}
 
@@ -81,8 +82,8 @@ class Road:
         self.grade_labels = [self.grade_names[g] for g in self.grade_order]
         # the weakest narrator of a chain, as a level: the rank groups by name ("Companion only": every ranked
         # narrator a Companion, whose uprightness is not examined), and "None ranked"
-        self.levels = [("Companion only" if not self.shia and i == 0 else n) for i, (n, _d, _r) in
-                       enumerate(self.rank_groups)] + ["None ranked"]
+        self.levels = [(N_("Companion only") if not self.shia and i == 0 else n) for i, (n, _d, _r) in
+                       enumerate(self.rank_groups)] + [N_("None ranked")]
         self.reference = "Trustworthy"
         self.critic = "al-Najashi" if self.shia else "Ibn Hajar"
         self.rank_name = "al-Najashi's category" if self.shia else "Ibn Hajar's rank"
@@ -293,9 +294,9 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     rank_groups = road.rank_groups
     group_of = road.group_of
     ngroups = len(rank_groups)
-    say("Reading the narrators")
+    say(tr("Reading the narrators"))
     persons = _persons(conn, tradition)
-    say("Reading the chains")
+    say(tr("Reading the chains"))
     chains = _chains(conn, [b[0] for b in books])
     hadith_count = conn.execute(
         f"SELECT COUNT(*) FROM hadiths WHERE collection_id IN ({','.join('?' * len(books))})",
@@ -317,7 +318,7 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     weakest_dist = [0] * ngroups
     weakest_full = [0] * ngroups
 
-    say("Measuring the chains")
+    say(tr("Measuring the chains"))
     for c in chains:
         b = per_book[c["book"]]
         links = c["links"]
@@ -376,7 +377,7 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     }
 
     # ---- narrators
-    say("Measuring the narrators")
+    say(tr("Measuring the narrators"))
     rank_all = [0] * ngroups
     for p in persons.values():
         if p["rank"] in group_of:
@@ -407,7 +408,7 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     weak_pillars = [person_row(p) for p, _n in sorted(
         ((p, n) for p, n in link_count.items() if (persons[p]["rank"] or 0) >= weak_from), key=lambda x: -x[1])[:15]]
     concentration = lorenz(list(link_count.values()))
-    say("Ranking the narrators in the network")
+    say(tr("Ranking the narrators in the network"))
     pr = pagerank(edges)
     central = [dict(person_row(p), score=s) for p, s in sorted(pr.items(), key=lambda kv: -kv[1])[:15]]
     teachers_of: Counter = Counter()
@@ -427,7 +428,7 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
                       for (s, t), n in order_pairs.most_common(15)]
 
     # ---- grades: does the weakest narrator foretell the grade? does the length?
-    say("Comparing the grades with the chains")
+    say(tr("Comparing the grades with the chains"))
     grades_out = []
     order = road.grade_order
     for _bid, key, name in books:

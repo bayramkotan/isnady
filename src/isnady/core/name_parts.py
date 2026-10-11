@@ -9,6 +9,7 @@ and phrases in the entry ("يلقب", "المعروف ب…"). Unrecognised word
 
 import re
 
+from isnady.core.i18n import N_, t
 from isnady.core.names import latin
 from isnady.core.normalize import normalize
 
@@ -18,16 +19,16 @@ PLACES = {normalize(w) for w in (
     "الترمذي النسائي القزويني الإفريقي الهروي البيروتي الأنطاكي الرملي الموصلي العراقي الحجازي الحراني "
     "الكرماني البلدي الأهوازي المدائني الكرخي التنيسي اليمامي الطرسوسي العسكري").split()}
 PART_LABELS = {
-    "ism": ("Name", "ism", "الاسم", "the given name"),
-    "nasab": ("Lineage", "nasab", "النسب", "son of … (b. = ibn, son of)"),
-    "kunya": ("Kunya", "kunya", "الكنية", "Abu … / Umm …: father or mother of …"),
-    "laqab": ("By-name", "laqab", "اللقب", "a nickname or title"),
-    "nisba": ("Nisbas", "nisba", "النسبة", "where he was from, his tribe or his trade"),
-    "wala": ("Client of", "wala'", "الولاء", "a freedman or client of a tribe"),
-    "also": ("Also called", "", "", "other names the work gives"),
+    "ism": (N_("Name"), "ism", "الاسم", N_("the given name")),
+    "nasab": (N_("Lineage"), "nasab", "النسب", N_("son of … (b. = ibn, son of)")),
+    "kunya": (N_("Kunya"), "kunya", "الكنية", N_("Abu … / Umm …: father or mother of …")),
+    "laqab": (N_("By-name"), "laqab", "اللقب", N_("a nickname or title")),
+    "nisba": (N_("Nisbas"), "nisba", "النسبة", N_("where he was from, his tribe or his trade")),
+    "wala": (N_("Client of"), "wala'", "الولاء", N_("a freedman or client of a tribe")),
+    "also": (N_("Also called"), "", "", N_("other names the work gives")),
 }
-KNOWN_BY = {"laqab": "his by-name (laqab)", "nisba": "his nisba", "ibn": "his father's or an ancestor's name",
-            "kunya": "his kunya", "ism": "his name", "given": "this name"}
+KNOWN_BY = {"laqab": N_("his by-name (laqab)"), "nisba": N_("his nisba"), "ibn": N_("his father's or an ancestor's name"),
+            "kunya": N_("his kunya"), "ism": N_("his name"), "given": N_("this name")}
 _KUNYA = ("أبو", "أبي", "أبا", "أم")
 # the names of letters and the words of Ibn Hajar's reading notes: never a person's name
 _NOT_NAMES = {normalize(w) for w in (
@@ -204,11 +205,11 @@ def present(parts: dict) -> dict:
     if parts["laqab"]:
         rows.append(("laqab", [(" ".join(p), _r(p)) for p in parts["laqab"]], kind == "laqab"))
     if parts["nisba"]:
-        rows.append(("nisba", [(" ".join(p), _r(p) + (" (place)" if normalize(p[0]) in PLACES else ""))
+        rows.append(("nisba", [(" ".join(p), _r(p) + (" " + t("(place)") if normalize(p[0]) in PLACES else ""))
                                for p in parts["nisba"]], kind == "nisba"))
     if parts["wala"]:
         rows.append(("wala", [(" ".join(p), "their client" if p[0] == "مولاهم" else _r(p)) for p in parts["wala"]], False))
     if parts["also"]:
         rows.append(("also", [(" ".join(p), _r(p)) for p in parts["also"]], False))
     return {"arabic": arabic or " ".join(full), "reading": reading, "kind": kind,
-            "how": KNOWN_BY.get(kind, ""), "full_arabic": " ".join(full), "full_reading": _r(full), "rows": rows}
+            "how": t(KNOWN_BY.get(kind, "")), "full_arabic": " ".join(full), "full_reading": _r(full), "rows": rows}

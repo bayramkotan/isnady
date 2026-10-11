@@ -10,15 +10,16 @@ when the critic does not state it, it stays unknown.
 """
 
 import re
+from isnady.core.i18n import N_
 
 RANKS = {
-    1: ("ثقة إمامي", "trustworthy (thiqa)", "The critic calls him thiqa; his creed is Imami or not said to differ."),
-    2: ("ممدوح", "praised (mamduh)", "Praised (jalil, wajh, 'ayn, la ba's bihi …) without the word thiqa."),
-    3: ("موثق", "trustworthy, not Imami (muwaththaq)", "Called thiqa, but of another school: Waqifi, Fathi, Zaydi, 'ammi …"),
-    4: ("ضعيف", "weak (da'if)", "Called weak, confused, a liar, an extremist (ghali) or the like."),
+    1: ("ثقة إمامي", N_("trustworthy (thiqa)"), N_("The critic calls him thiqa; his creed is Imami or not said to differ.")),
+    2: ("ممدوح", N_("praised (mamduh)"), N_("Praised (jalil, wajh, 'ayn, la ba's bihi …) without the word thiqa.")),
+    3: ("موثق", N_("trustworthy, not Imami (muwaththaq)"), N_("Called thiqa, but of another school: Waqifi, Fathi, Zaydi, 'ammi …")),
+    4: ("ضعيف", N_("weak (da'if)"), N_("Called weak, confused, a liar, an extremist (ghali) or the like.")),
 }
-MADHHAB_LABELS = {"imami": "Imami", "waqifi": "Waqifi", "fathi": "Fathi", "zaydi": "Zaydi", "ammi": "'Ammi (Sunni)",
-                  "nawusi": "Nawusi", "kaysani": "Kaysani", "ghali": "Ghali (extremist)"}
+MADHHAB_LABELS = {"imami": N_("Imami"), "waqifi": N_("Waqifi"), "fathi": N_("Fathi"), "zaydi": N_("Zaydi"), "ammi": N_("'Ammi (Sunni)"),
+                  "nawusi": N_("Nawusi"), "kaysani": N_("Kaysani"), "ghali": N_("Ghali (extremist)")}
 NON_IMAMI = {"waqifi", "fathi", "zaydi", "ammi", "nawusi", "kaysani"}
 
 _CHAIN_START = re.compile(r"(?<!\w)(أخبرنا|أخبرني|أخبرناه|حدثنا|حدثني|حدثناه|أنبأنا|عنه بكتاب|بكتابه)(?!\w)")

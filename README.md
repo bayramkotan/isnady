@@ -607,6 +607,15 @@ Bengali and Tamil today. The light and the dark theme each keep their own colour
 font can be changed too. **Edit → Preferences** (Ctrl + ,) applies every change at once; each row
 has its own Default button.
 
+**Interface language** (sidebar, or **View → Interface Language**): menus, pages, buttons, messages and the
+statistics are in **English, Türkçe and العربية** — Arabic right to left, the whole window mirrored. The list
+already names 24 languages, each in its own name with how much of it is translated (Deutsch, Français,
+Español, Português, Русский, Bahasa Indonesia, Bahasa Melayu, हिन्दी, اردو, বাংলা, 中文, 日本語, 한국어,
+فارسی, دری, پښتو, Azərbaycanca, Oʻzbekcha, Bosanski, Kiswahili, Hausa); a text not translated yet is shown in
+English, and the translations follow release by release. The window is rebuilt in the new language at once,
+nothing to restart. `iy config set view.ui_language tr`. The hadith texts keep their own languages
+(**Content languages**), the command line stays in English.
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/preferences.png" alt="Preferences — font, size, line spacing and colour for each script" width="760">
 </p>
@@ -714,7 +723,8 @@ Sunan Abu Dawud #472
 - **Statistics in plain words** — every finding said simply first, the method after.
 - **Settings and export** — every setting in one place, export in every common format (named by the
   books' full names), reset and remove from inside the window.
-- **Twenty interface languages.**
+- **Every interface language in full** — the 21 listed after English, Türkçe and العربية; the command line
+  and the glossary in them too.
 - **isnady.net** — the same engine on the web.
 
 ---

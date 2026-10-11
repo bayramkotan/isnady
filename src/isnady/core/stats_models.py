@@ -26,6 +26,7 @@ import sqlite3
 from collections import Counter, defaultdict
 
 from isnady.core import stats_corpus as sc
+from isnady.core.i18n import N_, tr
 
 METHOD = "isnady-models-2"
 MIN_CATEGORY = 15             # a grade given fewer times than this joins its weaker neighbour (thresholds need data)
@@ -35,16 +36,16 @@ SURPRISE = 0.05               # below this probability a surprise is called stro
 WEAKEST_LEVELS = ["Companion only", "Trustworthy", "Truthful", "Acceptable", "Weak / unknown", "Rejected", "None ranked"]
 REFERENCE = "Trustworthy"
 BLOCKS = [
-    ("weakest", "Weakest narrator", "the weakest identified narrator of the hadith's best chain, against a chain whose "
-                                    "weakest is trustworthy (thiqa)"),
-    ("weak_count", "More weak narrators", "each further narrator of rank 7 or weaker (mastur, da'if, majhul …) in that "
-                                          "chain beyond the first"),
-    ("length", "Length", "each further name in the chain"),
-    ("unidentified", "Names not identified", "each name of the chain not matched to a narrator of the Taqrib"),
-    ("routes", "Chains in the book", "each further chain the hadith has in the same book (mutaba'at within the book)"),
-    ("takhrij", "Narrations elsewhere", "each further narration of the hadith found in another book (takhrij)"),
-    ("mawquf", "Stops short of the Prophet", "the chain ends with a Companion or a Successor (mawquf, maqtu')"),
-    ("doubtful", "A doubtful link", "the chain has a pair too far apart in time, or out of the order of generations"),
+    ("weakest", N_("Weakest narrator"), N_("the weakest identified narrator of the hadith's best chain, against a chain whose "
+                                    "weakest is trustworthy (thiqa)")),
+    ("weak_count", N_("More weak narrators"), N_("each further narrator of rank 7 or weaker (mastur, da'if, majhul …) in that "
+                                          "chain beyond the first")),
+    ("length", N_("Length"), N_("each further name in the chain")),
+    ("unidentified", N_("Names not identified"), N_("each name of the chain not matched to a narrator of the Taqrib")),
+    ("routes", N_("Chains in the book"), N_("each further chain the hadith has in the same book (mutaba'at within the book)")),
+    ("takhrij", N_("Narrations elsewhere"), N_("each further narration of the hadith found in another book (takhrij)")),
+    ("mawquf", N_("Stops short of the Prophet"), N_("the chain ends with a Companion or a Successor (mawquf, maqtu')")),
+    ("doubtful", N_("A doubtful link"), N_("the chain has a pair too far apart in time, or out of the order of generations")),
 ]
 SUNNI = sc.Road("sunni")
 
@@ -54,11 +55,15 @@ def blocks_for(road: "sc.Road") -> list[tuple[str, str, str]]:
     if not road.shia:
         return BLOCKS
     words = {
-        "weakest": ("Weakest narrator", "the weakest identified narrator of the hadith's best chain in al-Najashi's "
-                                        "categories, against a chain whose weakest is trustworthy (thiqa)"),
-        "weak_count": ("More weak narrators", "each further narrator al-Najashi calls weak in that chain beyond the first"),
-        "unidentified": ("Names not identified", "each name of the chain not matched to a narrator of al-Najashi"),
-        "mawquf": ("Stops short of a Ma'sum", "the chain does not reach the Prophet or an Imam (it ends with a narrator)"),
+        "weakest": (N_("Weakest narrator"), N_("the weakest identified narrator of the hadith's best chain in "
+                                               "al-Najashi's categories, against a chain whose weakest is "
+                                               "trustworthy (thiqa)")),
+        "weak_count": (N_("More weak narrators"), N_("each further narrator al-Najashi calls weak in that chain beyond "
+                                                     "the first")),
+        "unidentified": (N_("Names not identified"), N_("each name of the chain not matched to a narrator of "
+                                                        "al-Najashi")),
+        "mawquf": (N_("Stops short of a Ma'sum"), N_("the chain does not reach the Prophet or an Imam (it ends with a "
+                                                     "narrator)")),
     }
     return [(k, *words[k]) if k in words else (k, lab, e) for k, lab, e in BLOCKS]
 
@@ -487,12 +492,12 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
         data = road.load(conn, key)
         if not data:
             continue
-        say(f"Reading the chains of {name}")
+        say(tr("Reading the chains of {name}", name=name))
         features = hadith_features(conn, key, road)
         numbers = dict(conn.execute("SELECT h.id, h.number FROM hadiths h JOIN collections c ON c.id = h.collection_id "
                                     "WHERE c.key = ?", (key,)).fetchall())
         for grader, by_hadith in sorted(data.items()):
-            say(f"Fitting the model of {grader} — {name}")
+            say(tr("Fitting the model of {grader} — {name}", grader=grader, name=name))
             m = model_grader(conn, key, grader, by_hadith, features, numbers, road)
             if m:
                 m["book_name"] = name

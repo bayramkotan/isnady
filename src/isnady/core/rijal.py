@@ -11,21 +11,22 @@ Nothing here decides who a narrator is; that is isnady.core.narrators.
 """
 
 import re
+from isnady.core.i18n import N_
 
 # ---------------------------------------------------------------- ranks
 RANK_LABELS = {
-    1: ("الصحابة", "Companion"),
-    2: ("من أكد مدحه", "praise confirmed (thiqa thiqa, thiqa hafiz, awthaq al-nas)"),
-    3: ("ثقة", "trustworthy (thiqa, mutqin, thabt, 'adl)"),
-    4: ("صدوق", "truthful (saduq, la ba's bih)"),
-    5: ("صدوق يهم", "truthful with lapses (saduq yahim, lahu awham, yukhti', taghayyara)"),
-    6: ("مقبول", "acceptable when followed, otherwise weak (maqbul)"),
-    7: ("مستور", "unestablished (mastur, majhul al-hal)"),
-    8: ("ضعيف", "weak (da'if)"),
-    9: ("مجهول", "unknown (majhul)"),
-    10: ("متروك", "abandoned (matruk, wahi, saqit)"),
-    11: ("متهم بالكذب", "accused of lying"),
-    12: ("كذاب", "liar, fabricator"),
+    1: ("الصحابة", N_("Companion")),
+    2: ("من أكد مدحه", N_("praise confirmed (thiqa thiqa, thiqa hafiz, awthaq al-nas)")),
+    3: ("ثقة", N_("trustworthy (thiqa, mutqin, thabt, 'adl)")),
+    4: ("صدوق", N_("truthful (saduq, la ba's bih)")),
+    5: ("صدوق يهم", N_("truthful with lapses (saduq yahim, lahu awham, yukhti', taghayyara)")),
+    6: ("مقبول", N_("acceptable when followed, otherwise weak (maqbul)")),
+    7: ("مستور", N_("unestablished (mastur, majhul al-hal)")),
+    8: ("ضعيف", N_("weak (da'if)")),
+    9: ("مجهول", N_("unknown (majhul)")),
+    10: ("متروك", N_("abandoned (matruk, wahi, saqit)")),
+    11: ("متهم بالكذب", N_("accused of lying")),
+    12: ("كذاب", N_("liar, fabricator")),
 }
 
 _LAPSE = (r"يهم|أوهام|اوهام|يخطئ|يخطىء|يغرب|سيء الحفظ|سيىء الحفظ|تغير|اختلط|رمي|بدعة|يتشيع|تشيع|القدر|نصب|"
@@ -88,18 +89,18 @@ TABAQA_WORDS = {
     "السابعة": 7, "الثامنة": 8, "التاسعة": 9, "العاشرة": 10, "الحادية عشرة": 11, "الثانية عشرة": 12,
 }
 TABAQA_LABELS = {
-    1: "Companions",
-    2: "senior Successors (e.g. Ibn al-Musayyab)",
-    3: "middle Successors (e.g. al-Hasan, Ibn Sirin)",
-    4: "Successors who narrate mostly from senior Successors (e.g. al-Zuhri, Qatada)",
-    5: "junior Successors (e.g. al-A'mash)",
-    6: "contemporaries of the junior Successors with no proven meeting with a Companion (e.g. Ibn Jurayj)",
-    7: "senior Followers of the Successors (e.g. Malik, al-Thawri)",
-    8: "middle Followers of the Successors (e.g. Ibn 'Uyayna, Ibn 'Ulayya)",
-    9: "junior Followers of the Successors (e.g. Yazid b. Harun, al-Shafi'i, 'Abd al-Razzaq)",
-    10: "senior narrators from the Followers' followers (e.g. Ahmad b. Hanbal)",
-    11: "middle narrators from them (e.g. al-Dhuhli, al-Bukhari)",
-    12: "junior narrators from them (e.g. al-Tirmidhi)",
+    1: N_("Companions"),
+    2: N_("senior Successors (e.g. Ibn al-Musayyab)"),
+    3: N_("middle Successors (e.g. al-Hasan, Ibn Sirin)"),
+    4: N_("Successors who narrate mostly from senior Successors (e.g. al-Zuhri, Qatada)"),
+    5: N_("junior Successors (e.g. al-A'mash)"),
+    6: N_("contemporaries of the junior Successors with no proven meeting with a Companion (e.g. Ibn Jurayj)"),
+    7: N_("senior Followers of the Successors (e.g. Malik, al-Thawri)"),
+    8: N_("middle Followers of the Successors (e.g. Ibn 'Uyayna, Ibn 'Ulayya)"),
+    9: N_("junior Followers of the Successors (e.g. Yazid b. Harun, al-Shafi'i, 'Abd al-Razzaq)"),
+    10: N_("senior narrators from the Followers' followers (e.g. Ahmad b. Hanbal)"),
+    11: N_("middle narrators from them (e.g. al-Dhuhli, al-Bukhari)"),
+    12: N_("junior narrators from them (e.g. al-Tirmidhi)"),
 }
 
 
@@ -168,14 +169,14 @@ def death_year(phrase: str, tabaqa: int | None) -> int | None:
 
 # ----------------------------------------------------------- book marks
 BOOK_MARKS = {
-    "خ": "al-Bukhari, Sahih", "خت": "al-Bukhari, Sahih (mu'allaq)", "بخ": "al-Bukhari, al-Adab al-Mufrad",
-    "عخ": "al-Bukhari, Khalq Af'al al-'Ibad", "ر": "al-Bukhari, Juz' al-Qira'a", "ي": "al-Bukhari, Raf' al-Yadayn",
-    "م": "Muslim, Sahih", "د": "Abu Dawud, Sunan", "مد": "Abu Dawud, al-Marasil", "صد": "Abu Dawud, Fada'il al-Ansar",
-    "خد": "Abu Dawud, al-Nasikh", "قد": "Abu Dawud, al-Qadar", "ف": "Abu Dawud, al-Tafarrud", "ل": "Abu Dawud, al-Masa'il",
-    "كد": "Abu Dawud, Musnad Malik", "ت": "al-Tirmidhi, Jami'", "تم": "al-Tirmidhi, al-Shama'il",
-    "س": "al-Nasa'i, Sunan", "عس": "al-Nasa'i, Musnad 'Ali", "كن": "al-Nasa'i, Musnad Malik",
-    "ق": "Ibn Maja, Sunan", "فق": "Ibn Maja, al-Tafsir", "ع": "all six books", "4": "the four Sunan",
-    "تمييز": "no narration in these books; named to tell him apart",
+    "خ": N_("al-Bukhari, Sahih"), "خت": N_("al-Bukhari, Sahih (mu'allaq)"), "بخ": N_("al-Bukhari, al-Adab al-Mufrad"),
+    "عخ": N_("al-Bukhari, Khalq Af'al al-'Ibad"), "ر": N_("al-Bukhari, Juz' al-Qira'a"), "ي": N_("al-Bukhari, Raf' al-Yadayn"),
+    "م": N_("Muslim, Sahih"), "د": N_("Abu Dawud, Sunan"), "مد": N_("Abu Dawud, al-Marasil"), "صد": N_("Abu Dawud, Fada'il al-Ansar"),
+    "خد": N_("Abu Dawud, al-Nasikh"), "قد": N_("Abu Dawud, al-Qadar"), "ف": N_("Abu Dawud, al-Tafarrud"), "ل": N_("Abu Dawud, al-Masa'il"),
+    "كد": N_("Abu Dawud, Musnad Malik"), "ت": N_("al-Tirmidhi, Jami'"), "تم": N_("al-Tirmidhi, al-Shama'il"),
+    "س": N_("al-Nasa'i, Sunan"), "عس": N_("al-Nasa'i, Musnad 'Ali"), "كن": N_("al-Nasa'i, Musnad Malik"),
+    "ق": N_("Ibn Maja, Sunan"), "فق": N_("Ibn Maja, al-Tafsir"), "ع": N_("all six books"), "4": N_("the four Sunan"),
+    "تمييز": N_("no narration in these books; named to tell him apart"),
 }
 # which marks mean "narrates in this collection" (collection keys as imported)
 COLLECTION_MARKS = {

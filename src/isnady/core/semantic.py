@@ -23,6 +23,7 @@ from typing import Callable
 from isnady.core.normalize import normalize
 from isnady.core.search import SearchQuery, SearchResult, _load_result
 from isnady.data.paths import data_dir
+from isnady.core.i18n import tr
 
 METHOD_ID = "isnady-lsa-2"
 DEFAULT_DIMS = 200
@@ -105,7 +106,7 @@ def build(conn: sqlite3.Connection, dims: int = DEFAULT_DIMS,
 
     say = progress or (lambda _m: None)
     started = time.perf_counter()
-    say("Reading texts")
+    say(tr("Reading texts"))
     docs: dict[int, list[str]] = {}
     for hadith_id, text in conn.execute("SELECT hadith_id, text FROM texts ORDER BY hadith_id"):
         docs.setdefault(hadith_id, []).extend(tokens(text))
@@ -114,7 +115,7 @@ def build(conn: sqlite3.Connection, dims: int = DEFAULT_DIMS,
     if n < 50:
         raise NotAvailable("Import some hadith first: meaning search learns from the imported texts.")
 
-    say(f"Learning the vocabulary of {n:,} hadith")
+    say(tr("Learning the vocabulary of {n:,} hadith", n=n))
     df = Counter()
     for toks in docs.values():
         df.update(set(toks))
@@ -136,7 +137,7 @@ def build(conn: sqlite3.Connection, dims: int = DEFAULT_DIMS,
     x = sp.diags(1.0 / norms) @ x
 
     k = max(10, min(dims, min(x.shape) - 1))
-    say(f"Finding {k} shared concepts across the languages")
+    say(tr("Finding {k} shared concepts across the languages", k=k))
     _u, _s, vt = svds(x.astype(np.float64), k=k, random_state=0)
     vt = vt.astype(np.float32)
     vecs = np.asarray(x @ vt.T, dtype=np.float32)
@@ -154,7 +155,7 @@ def build(conn: sqlite3.Connection, dims: int = DEFAULT_DIMS,
             "built_at": time.strftime("%Y-%m-%d %H:%M"), "seconds": round(time.perf_counter() - started, 1)}
     (folder / "lsa.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     _cache.clear()
-    say(f"Meaning index ready: {n:,} hadith, {len(vocab):,} words, {k} concepts")
+    say(tr("Meaning index ready: {n:,} hadith, {vocab:,} words, {k} concepts", n=n, vocab=len(vocab), k=k))
     return meta
 
 

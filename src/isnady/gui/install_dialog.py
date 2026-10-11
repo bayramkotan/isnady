@@ -5,6 +5,7 @@ from PySide6.QtGui import QFont, QGuiApplication
 from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QPlainTextEdit, QPushButton, QVBoxLayout
 
 from isnady import doctor
+from isnady.core.i18n import tr
 
 _LIVE: set = set()      # keep the thread until Qt says it finished (see sources_page._LIVE_WORKERS)
 
@@ -19,9 +20,9 @@ class _Check(QThread):
 class InstallDialog(QDialog):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Check Installation")
+        self.setWindowTitle(tr("Check Installation"))
         self.resize(820, 560)
-        self.summary = QLabel("Looking for every copy of isnady on this computer…")
+        self.summary = QLabel(tr("Looking for every copy of isnady on this computer…"))
         self.summary.setObjectName("Lead")
         self.summary.setWordWrap(True)
         self.text = QPlainTextEdit()
@@ -29,14 +30,14 @@ class InstallDialog(QDialog):
         mono = QFont("monospace")
         mono.setStyleHint(QFont.StyleHint.Monospace)
         self.text.setFont(mono)
-        note = QLabel("To update every copy where it is installed (nothing is removed), run in a terminal:  iy update"
-                      f"      If an old copy starts even for that:  {doctor.RESCUE}")
+        note = QLabel(tr("To update every copy where it is installed (nothing is removed), run in a terminal:  iy update    "
+                        "  If an old copy starts even for that:  {rescue}", rescue=doctor.RESCUE))
         note.setObjectName("Caption")
         note.setWordWrap(True)
-        copy = QPushButton("Copy report")
+        copy = QPushButton(tr("Copy report"))
         copy.setObjectName("Quiet")
         copy.clicked.connect(lambda: QGuiApplication.clipboard().setText(self.text.toPlainText()))
-        close = QPushButton("Close")
+        close = QPushButton(tr("Close"))
         close.setObjectName("Primary")
         close.clicked.connect(self.accept)
         row = QHBoxLayout()
@@ -58,10 +59,11 @@ class InstallDialog(QDialog):
     def _show(self, report) -> None:
         self.text.setPlainText(doctor.as_text(report))
         if report.problems:
-            self.summary.setText(f"{len(report.problems)} thing(s) to update; see below. 'iy update' updates every "
-                                 "copy where it is installed.")
+            self.summary.setText(tr("{problems} thing(s) to update; see below. 'iy update' updates every copy where "
+                                   "it is installed.", problems=len(report.problems)))
         else:
-            latest = f" The latest on PyPI is {report.latest}." if report.latest else ""
-            commands = ("every isnady command on PATH starts it." if report.commands else
-                        "no isnady command was found on PATH (started from a virtual environment or a shortcut?).")
-            self.summary.setText(f"One installation, isnady {report.running_version}; {commands}" + latest)
+            latest = " " + tr("The latest on PyPI is {latest}.", latest=report.latest) if report.latest else ""
+            commands = (tr("every isnady command on PATH starts it.") if report.commands else
+                        tr("no isnady command was found on PATH (started from a virtual environment or a shortcut?)."))
+            self.summary.setText(tr("One installation, isnady {version}; {commands}", version=report.running_version,
+                                   commands=commands) + latest)
