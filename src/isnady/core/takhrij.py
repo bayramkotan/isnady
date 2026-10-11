@@ -129,7 +129,9 @@ def related(conn: sqlite3.Connection, hadith_id: int) -> list[dict]:
            WHERE r.hadith_a = ? OR r.hadith_b = ?
            ORDER BY (r.kind = 'same') DESC, c.key, h.number_sort""",
         (hadith_id, hadith_id, hadith_id, hadith_id)).fetchall()
-    return [{"hadith_id": r[0], "kind": r[1], "score": r[2], "book": r[3], "book_name": r[4], "number": r[5]}
+    from isnady.core import titles
+
+    return [{"hadith_id": r[0], "kind": r[1], "score": r[2], "book": r[3], "book_name": titles.book(r[3], r[4]), "number": r[5]}
             for r in rows]
 
 

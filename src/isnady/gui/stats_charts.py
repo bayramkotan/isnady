@@ -13,6 +13,22 @@ def _mix(a: QColor, b: QColor, t: float) -> QColor:
                   int(a.blue() + (b.blue() - a.blue()) * t))
 
 
+def _luminance(c: QColor) -> float:
+    def ch(v: float) -> float:
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    return 0.2126 * ch(c.redF()) + 0.7152 * ch(c.greenF()) + 0.0722 * ch(c.blueF())
+
+
+def ink_on(fill: QColor) -> QColor:
+    """White or near-black, whichever reads better on the fill (the larger WCAG contrast ratio): a mid-tone cell
+    got white figures before and they could hardly be read."""
+    lum = _luminance(fill)
+    dark = QColor("#16181D")
+    on_white = (1.05) / (lum + 0.05)
+    on_dark = (lum + 0.05) / (_luminance(dark) + 0.05)
+    return QColor("#FFFFFF") if on_white > on_dark else dark
+
+
 class HeatMap(QWidget):
     """A square table of cells coloured by value. cells[r][c] = (value or None, [text lines]); diverging=True colours
     below zero gold and above zero lapis (for signed measures), otherwise light → lapis. A cell whose value is None
@@ -21,8 +37,9 @@ class HeatMap(QWidget):
 
     def __init__(self, rows: list[str], cols: list[str], cells: list[list[tuple]], low: float = 0.0, high: float = 1.0,
                  diverging: bool = False, cell: QSize = QSize(132, 58), label_w: int = 150, parent=None,
-                 tips: list[list[str]] | None = None, head_h: int = 44) -> None:
+                 tips: list[list[str]] | None = None, head_h: int = 44, corner: str = "") -> None:
         super().__init__(parent)
+        self.corner = corner          # what the rows and the columns are, written in the empty corner
         self.rows, self.cols, self.cells = rows, cols, cells
         self.low, self.high, self.diverging = low, high, diverging
         self.cell = cell
@@ -67,6 +84,9 @@ class HeatMap(QWidget):
         bold.setBold(True)
         p.setPen(QColor(t.muted))
         p.setFont(small)
+        if self.corner:
+            p.drawText(QRectF(0, 0, self.label_w - 8, self.head_h - 4),
+                       Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom | Qt.TextFlag.TextWordWrap, self.corner)
         for c, name in enumerate(self.cols):
             r = QRectF(self.label_w + c * self.cell.width(), 0, self.cell.width(), self.head_h - 4)
             p.drawText(r, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom | Qt.TextFlag.TextWordWrap, name)
@@ -92,13 +112,14 @@ class HeatMap(QWidget):
                 p.setPen(Qt.PenStyle.NoPen)
                 p.setBrush(fill)
                 p.drawRoundedRect(box, 6, 6)
-                dark = fill.lightnessF() < 0.55
-                p.setPen(QColor("#FFFFFF") if dark else QColor("#1B1B1F"))
+                p.setPen(ink_on(fill))
                 p.setFont(bold)
-                p.drawText(box.adjusted(0, 4, 0, -box.height() / 2), Qt.AlignmentFlag.AlignCenter, lines[0] if lines else "")
-                if len(lines) > 1:
+                if len(lines) > 1:             # two lines: the figure above, the note below
+                    p.drawText(box.adjusted(0, 4, 0, -box.height() / 2), Qt.AlignmentFlag.AlignCenter, lines[0])
                     p.setFont(small)
                     p.drawText(box.adjusted(0, box.height() / 2 - 2, 0, -2), Qt.AlignmentFlag.AlignCenter, lines[1])
+                else:                          # one line: in the middle of the cell, never cut by its lower half
+                    p.drawText(box, Qt.AlignmentFlag.AlignCenter, lines[0] if lines else "")
         p.end()
 
 

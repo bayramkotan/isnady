@@ -34,6 +34,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from isnady.core import scholars as core_scholars
+from isnady.core import titles
 from isnady.core import narrators as core_narrators
 from isnady.core import stats_corpus as corpus
 from isnady.core import stats_graders as core
@@ -102,11 +104,16 @@ def _label(text: str, name: str = "", rich: bool = False) -> QLabel:
 
 
 def _short(grader: str) -> str:
-    """A grader's short name for headers and charts (the full name is in the tooltips)."""
+    """A grader's short name for headers and charts, in the interface language (the full name is in the tooltips)."""
     for s in SCHOLARS:
         if grader in s.get("grader_names", []):
-            return s.get("short") or s["name"]
+            return core_scholars.short_name(s)
     return grader
+
+
+def _bk(name: str) -> str:
+    """A book named in the saved results (English) in the interface language."""
+    return titles.book_named(name)
 
 
 def _full(grader: str) -> str:
@@ -504,7 +511,7 @@ class StatisticsPage(QWidget):
                           (["series"] + [c[0] for c in cats], [[label] + list(v) for label, v in rows]))
         if r["grades"]:
             gcats = self._grade_categories(r)
-            grows = [(f"{_short(g['grader'])} — {g['book']}", g["distribution"]) for g in r["grades"]]
+            grows = [(f"{_short(g['grader'])} — {_bk(g['book'])}", g["distribution"]) for g in r["grades"]]
             self._finding("overview", tr("Grades"), tr("How each scholar graded each book."), [StackedBars(grows, gcats, label_w=260)],
                           ((tr("Each bar is one scholar's grades of one book, in the four Imami categories — sahih (every "
                               "narrator an Imami thiqa), hasan (a praised Imami), muwaththaq (a thiqa of another school), da'if "
@@ -653,7 +660,7 @@ class StatisticsPage(QWidget):
         if one:
             self._boxes["grades"].addWidget(_label(
                 "; ".join(tr("{grader} gives one grade only in {book} — {grade} for all {n:,} he names",
-                             grader=_short(g["grader"]), book=g["book"], n=g["graded"],
+                             grader=_short(g["grader"]), book=_bk(g["book"]), n=g["graded"],
                              grade=tr(r["grade_labels"][next(i for i, x in enumerate(g["distribution"]) if x)]))
                           for g in one)
                 + ". " + tr("A single grade cannot go with anything, so he is left out below; how he stands beside the "
@@ -662,7 +669,7 @@ class StatisticsPage(QWidget):
             self._boxes["grades"].addWidget(_label(tr("No grades to compare: import a collection whose hadith are graded."),
                                                    "Lead"))
             return
-        plot = [(f"{_short(g['grader'])} — {g['book']}", g["weakest"]["tau"],
+        plot = [(f"{_short(g['grader'])} — {_bk(g['book'])}", g["weakest"]["tau"],
                  tuple(g["weakest"]["tau_ci"] or (g["weakest"]["tau"], g["weakest"]["tau"]))) for g in rows]
         lo, hi = min(p[1] for p in plot), max(p[1] for p in plot)
         clear = [p for p in plot if p[2][0] > 0]          # the whole interval above zero
@@ -704,11 +711,12 @@ class StatisticsPage(QWidget):
                               for cnt in row])
             keep = [k for k, row in enumerate(table) if sum(row)]
             # one per row: two side by side were wider than the page and cut everything off on the right
-            grid.addWidget(_label(f"<b>{html.escape(_short(g['grader']))}</b> — {html.escape(g['book'])}", "Lead", rich=True),
+            grid.addWidget(_label(f"<b>{html.escape(_short(g['grader']))}</b> — {html.escape(_bk(g['book']))}", "Lead", rich=True),
                            i * 2, 0)
             grid.addWidget(HeatMap([group_names[k] for k in keep], [tr(g) for g in r["grade_labels"]],
                                    [cells[k] for k in keep],
-                                   cell=QSize(72, 28), label_w=140), i * 2 + 1, 0)
+                                   cell=QSize(80, 40), label_w=170, head_h=52,
+                                   corner=tr("weakest narrator ↓\ngrade →")), i * 2 + 1, 0)
         grid.setColumnStretch(1, 1)
         self._finding("grades", tr("Cross-tables"), tr("How each grade is spread over the weakest narrator."), [grid],
                       tr("Rows: the weakest narrator of the hadith's best chain; columns: the grade. Each row adds up to "
@@ -719,7 +727,7 @@ class StatisticsPage(QWidget):
                         for g in rows for k in range(len(group_names))]))
         lengths = [g for g in rows if g.get("length") and g["length"]["tau"] is not None]
         if lengths:
-            plot = [(f"{_short(g['grader'])} — {g['book']}", g["length"]["tau"],
+            plot = [(f"{_short(g['grader'])} — {_bk(g['book'])}", g["length"]["tau"],
                      tuple(g["length"]["tau_ci"] or (g["length"]["tau"], g["length"]["tau"]))) for g in lengths]
             weak_tau = {g["grader"] + g["book"]: g["weakest"]["tau"] for g in rows}
             lower = [p for p, g in zip(plot, lengths) if p[2][0] > 0]
@@ -764,7 +772,7 @@ class StatisticsPage(QWidget):
         pick = QComboBox()
         pick.setObjectName("FilterCombo")
         for i, m in enumerate(ms):
-            pick.addItem(f"{_short(m['grader'])} — {m['book_name']}", i)
+            pick.addItem(f"{_short(m['grader'])} — {_bk(m['book_name'])}", i)
         pick.setCurrentIndex(min(getattr(self, "_model_index", 0), len(ms) - 1))
         row.addWidget(pick)
         row.addStretch(1)
@@ -995,7 +1003,7 @@ class StatisticsPage(QWidget):
             first.setData(Qt.ItemDataRole.UserRole, s["hadith_id"])
             first.setToolTip(tr("▲ graded higher than the chain foretells · ▼ graded lower"))
             table.setItem(row, 0, first)
-            table.setItem(row, 1, QTableWidgetItem(s["book"]))
+            table.setItem(row, 1, QTableWidgetItem(_bk(s["book"])))
             who = QTableWidgetItem("; ".join(f"{_short(g)}: {_grade(grade)}" for g, grade, _l, _p in s["graders"]))
             who.setToolTip("\n".join(tr("{grader}: {grade} — the model expected {likely} ({share:.1f}% for this or "
                                          "further)", grader=_short(g), grade=_grade(grade), likely=_grade(likely),
@@ -1034,7 +1042,7 @@ class StatisticsPage(QWidget):
             pick = QComboBox()
             pick.setObjectName("FilterCombo")
             for i, m in enumerate(ms):
-                pick.addItem(m["book"], i)
+                pick.addItem(_bk(m["book"]), i)
             pick.setCurrentIndex(min(getattr(self, "_lab_index", 0), len(ms) - 1))
             row.addWidget(pick)
             row.addStretch(1)
@@ -1397,7 +1405,7 @@ class StatisticsPage(QWidget):
         table.verticalHeader().hide()
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         for i, row in enumerate(rows):
-            for j, v in enumerate([row["name"], f"{row['chains']:,}", str(row["median_length"] or "—"),
+            for j, v in enumerate([_bk(row["name"]), f"{row['chains']:,}", str(row["median_length"] or "—"),
                                    _pct(row["identified"]), _pct(row["reaching"]), f"{row['narrators']:,}"]):
                 table.setItem(i, j, QTableWidgetItem(v))
         header = table.horizontalHeader()
@@ -1406,7 +1414,7 @@ class StatisticsPage(QWidget):
         table.setFixedHeight(len(rows) * 30 + 34)
         cats = self._group_categories(r)
         self._finding("books", tr("The books side by side"), tr("Each book's chains and the narrators they rest on."),
-                      [table, StackedBars([(row["name"], row["groups"]) for row in rows], cats, label_w=230)],
+                      [table, StackedBars([(_bk(row["name"]), row["groups"]) for row in rows], cats, label_w=230)],
                       tr("The table compares the books' chains; the bars, the narrators each book's chains pass through, "
                         "each counted as often as he appears."),
                       (["book", "chains", "median length", "identified", self._words()["reach"].lower(), "narrators"]
@@ -1419,7 +1427,8 @@ class StatisticsPage(QWidget):
             self._finding("books", tr("Shared narrators"), tr("How many narrators each pair of books shares."),
                           # the cells shrink with the number of books, so the map fits the page (96 px each was 1,200 px
                           # wide for ten books and cut the whole section off on the right)
-                          [HeatMap(b["names"], b["names"], cells, cell=QSize(max(48, min(96, 640 // len(b["names"]))), 40),
+                          [HeatMap([_bk(n) for n in b["names"]], [_bk(n) for n in b["names"]], cells,
+                                   cell=QSize(max(56, min(96, 640 // len(b["names"]))), 46),
                                    label_w=200)],
                           tr("The Jaccard share: narrators found in both books' chains, out of those found in either. Books of "
                             "one school and one period share most."),
@@ -1722,7 +1731,12 @@ class StatisticsPage(QWidget):
             cells = [[(th[k][l], [f"{100 * th[k][l]:.0f}%"]) for l in order] for k in rows_k]
             grid.addWidget(_label(f"<b>{html.escape(name)}</b>", "Lead", rich=True), (n // 2) * 2, n % 2)
             grid.addWidget(HeatMap([labels[k] for k in rows_k], [labels[k] for k in order], cells,
-                                   cell=QSize(62, 28), label_w=86), (n // 2) * 2 + 1, n % 2)
+                                   cell=QSize(78, 40), label_w=118, head_h=52,
+                                   corner=tr("true grade ↓\nthe grader says →"),
+                                   tips=[[tr("A hadith whose true grade is {true}: {grader} calls it {said} in {share} of "
+                                             "cases.", true=labels[k], grader=name, said=labels[l],
+                                             share=f"{100 * th[k][l]:.0f}%") for l in order] for k in rows_k]),
+                           (n // 2) * 2 + 1, n % 2)
         grid.setColumnStretch(2, 1)
         card.layout().addLayout(grid)
         prior = r["model"]["prior"]

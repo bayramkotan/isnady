@@ -587,7 +587,9 @@ def describe(conn: sqlite3.Connection, hid: int) -> dict | None:
         """SELECT id FROM hadiths WHERE collection_id = ? AND (number_sort > ? OR (number_sort = ? AND id > ?))
            ORDER BY number_sort, id LIMIT 1""", (row[3], row[2], row[2], row[0])
     ).fetchone()
-    return {"id": row[0], "number": row[1], "book": row[4], "book_name": row[5],
+    from isnady.core import titles
+
+    return {"id": row[0], "number": row[1], "book": row[4], "book_name": titles.book(row[4], row[5]),
             "prev": prev[0] if prev else None, "next": nxt[0] if nxt else None}
 
 
@@ -613,7 +615,7 @@ def split_text(text: str, raw_isnad: str | None) -> tuple[str, str]:
 def book_stats(conn: sqlite3.Connection) -> list[dict]:
     """Per book: chains read, split into narrators, reaching the Prophet (on road B: a Ma'sum), and why the rest
     were not split."""
-    from isnady.core import books
+    from isnady.core import books, titles
 
     out = []
     for r in conn.execute(
@@ -630,7 +632,7 @@ def book_stats(conn: sqlite3.Connection) -> list[dict]:
             """SELECT COUNT(*) FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id JOIN hadiths h ON h.id = i.hadith_id
                WHERE h.collection_id = ?""", (r[0],)
         ).fetchone()[0]
-        out.append({"key": r[1], "name": r[2], "chains": r[3], "split": r[4] or 0, "marfu": r[5] or 0,
+        out.append({"key": r[1], "name": titles.book(r[1], r[2]), "chains": r[3], "split": r[4] or 0, "marfu": r[5] or 0,
                     "tradition": r[6],
                     "links": links, "problems": [(p, n) for p, n in problems]})
     return out

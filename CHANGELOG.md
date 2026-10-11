@@ -3,8 +3,31 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.2.1] — 2026-10-11
 
+**Book and chapter titles in Turkish and Arabic, statistics tables that can be read, the other languages one
+click away, and Check Installation that updates by itself.**
+
+- **Chapter titles in the interface language.** The sources give their chapter titles in English only (every
+  language file of isnady-data carries the same English titles), so the Turkish of Sahih al-Bukhari stood under
+  "Revelation", "Belief" … isnady now carries its own: all 642 chapter titles of the 33 books in Turkish and in
+  Arabic (`isnady/assets/i18n/titles/tr.json`, `ar.json`), and the Arabic titles a source gives itself where it has
+  them (al-Adab al-Mufrad, Bulugh al-Maram, Mishkat, Riyad al-Salihin, al-Shama'il) — in Books, the chapter list,
+  the path above the reader. `core.titles`; `python tools/i18n.py titles CODE` lists what a language still lacks.
+- **Book titles in the interface language** everywhere a book is named — the shelf, the search cards, "Also
+  narrated in", Isnad Chains, Narrators, the book pickers, the statistics: *Sahîh-i Buhârî*, *صحيح البخاري*; the
+  name an import gave a book ("Sahih al Bukhari") no longer shows. Saved statistics keep the English title, so
+  they are the same in every language; the screen translates them.
+- **Graders by their names in the interface language** in the statistics: Elbânî, Arnaût, Zübeyr Ali Zaî,
+  Muhyiddin, Meclisî, Behbûdî (الألباني … in Arabic). `scholars.short_name`.
+- **Statistics tables that can be read.** A cell with one figure drew it in the upper half only, so in the small
+  cells of the confusion matrices and the cross-tables the figures were cut ("12%", "8%", "77%"); the colour of
+  the figure is now chosen by contrast (white on dark cells, near-black on light ones), the cells are larger, the
+  empty corner says what the rows and the columns are ("true grade ↓ / the grader says →"), and pointing at a
+  cell says it in words.
+- **More languages one click away in Search**: the language list holds the languages imported; at its end it
+  names the languages the same books have in isnady-data and not here (Urdu, Indonesian, Bengali, French,
+  Russian, Tamil) — choosing it opens File → Data Sources.
 - **Check Installation updates by itself**: an **Update** button runs the update of every copy where it is
   installed (what `iy update` does) and shows the output as it comes; a copy installed for all users asks for
   the administrator password in the system's own window (pkexec on Linux, the Windows administrator prompt); after

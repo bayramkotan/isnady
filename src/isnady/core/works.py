@@ -7,12 +7,14 @@ are built here from their imported hadith and chapters, again whenever those cha
 The reader, the CLI and isnady's own exchange format all speak this one shape.
 """
 
+import re
 import sqlite3
 
-from isnady.core.i18n import N_
+from isnady.core.i18n import N_, t
 
 CONTAINERS = ("volume", "kitab", "bab", "section")
 LEAVES = ("hadith", "entry", "reference", "paragraph")
+_WRITTEN_HERE = (N_("Chapter {n}"), N_("Without a chapter in the source"))    # titles isnady writes, shown translated
 KIND_LABELS = {"hadith": N_("Hadith collection"), "rijal": N_("Narrators (rijal)"), "fiqh": N_("Fiqh"),
                "commentary": N_("Commentary"), "other": N_("Book")}
 
@@ -71,6 +73,8 @@ def ensure_collection_works(conn: sqlite3.Connection) -> int:
             conn.executemany("INSERT INTO work_nodes (work_id, parent_id, ordinal, kind, label, hadith_id) "
                              "VALUES (?, ?, ?, 'hadith', ?, ?)", rows)
         rebuilt += 1
+    if rebuilt:
+        _TITLES.clear()
     return rebuilt
 
 
@@ -88,7 +92,10 @@ def list_works(conn: sqlite3.Connection) -> list[dict]:
 
     order = {b["key"]: i for i, b in enumerate(core_books.all_books(conn, include_inactive=True))}
     off = core_books.disabled()
-    works = [{"id": r[0], "key": r[1], "kind": r[2], "title": r[3], "title_ar": r[4], "author": r[5],
+    from isnady.core import titles
+
+    works = [{"id": r[0], "key": r[1], "kind": r[2], "title": titles.book(r[1], r[3]) if r[2] == "hadith" else r[3],
+              "title_ar": r[4], "author": r[5],
               "leaves": r[6], "chapters": r[7], "tradition": r[8] if r[8] in ("sunni", "shia") else "other"}
              for r in rows if not (r[2] == "hadith" and r[1] in off)]
     rank = {"sunni": 0, "shia": 1, "other": 2}
@@ -100,6 +107,35 @@ def find_work(conn: sqlite3.Connection, key: str) -> dict | None:
     return next((w for w in list_works(conn) if w["key"] == key), None)
 
 
+_TITLES: dict = {}       # (work id, language) → {chapter number: title in that language}
+
+
+def _chapter_titles(conn: sqlite3.Connection, work_id: int) -> dict[str, str]:
+    """The chapter titles of a hadith collection in the interface language (core.titles), by chapter number."""
+    from isnady.core import i18n, titles
+
+    lang = i18n.language()
+    key = (work_id, lang)
+    if key not in _TITLES:
+        row = conn.execute("SELECT kind, collection_id FROM works WHERE id = ?", (work_id,)).fetchone()
+        _TITLES[key] = ({str(n): t for n, t in titles.edition_titles(conn, row[1], lang).items()}
+                        if row and row[0] == "hadith" and row[1] and lang != "en" else {})
+    return _TITLES[key]
+
+
+def _shown(conn: sqlite3.Connection, work_id: int, kind: str, label, title):
+    """A chapter's title as shown: in the interface language where isnady has it; the titles isnady writes itself
+    ("Chapter 3", "Without a chapter in the source") translated."""
+    if kind == "kitab" and label is not None:
+        own = _chapter_titles(conn, work_id).get(str(label))
+        if own:
+            return own
+    if title == "Without a chapter in the source":
+        return t(title)
+    m = re.fullmatch(r"Chapter (\d+)", title or "")
+    return t("Chapter {n}", n=m.group(1)) if m else title
+
+
 def containers(conn: sqlite3.Connection, work_id: int, parent_id: int | None = None) -> list[dict]:
     """The chapters (non-leaf nodes) under a parent, with how many leaves each holds directly."""
     rows = conn.execute(
@@ -109,13 +145,14 @@ def containers(conn: sqlite3.Connection, work_id: int, parent_id: int | None = N
             FROM work_nodes n WHERE n.work_id = ? AND n.parent_id {'IS NULL' if parent_id is None else '= ?'}
               AND n.kind IN ({','.join('?' * len(CONTAINERS))}) ORDER BY n.ordinal""",
         (*LEAVES, *CONTAINERS, work_id, *(() if parent_id is None else (parent_id,)), *CONTAINERS)).fetchall()
-    return [{"id": r[0], "kind": r[1], "label": r[2], "title": r[3], "leaves": r[4], "subchapters": r[5]} for r in rows]
+    return [{"id": r[0], "kind": r[1], "label": r[2], "title": _shown(conn, work_id, r[1], r[2], r[3]), "leaves": r[4],
+             "subchapters": r[5]} for r in rows]
 
 
 def node(conn: sqlite3.Connection, node_id: int) -> dict | None:
     r = conn.execute("SELECT id, work_id, parent_id, ordinal, kind, label, title FROM work_nodes WHERE id = ?", (node_id,)).fetchone()
     return None if r is None else {"id": r[0], "work_id": r[1], "parent_id": r[2], "ordinal": r[3], "kind": r[4],
-                                   "label": r[5], "title": r[6]}
+                                   "label": r[5], "title": _shown(conn, r[1], r[4], r[5], r[6])}
 
 
 def path(conn: sqlite3.Connection, node_id: int) -> list[dict]:

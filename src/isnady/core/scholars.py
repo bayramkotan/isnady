@@ -141,6 +141,27 @@ def tradition_of(scholar: dict) -> str:
     return scholar.get("tradition", "sunni")
 
 
+# the short name of a scholar in Turkish (the Arabic is "known_ar"): what headers and charts show
+SHORT_TR = {"albani": "Elbânî", "arnaut": "Arnaût", "zubairalizai": "Zübeyr Ali Zaî", "muhyialdin": "Muhyiddin",
+            "muhsini": "Muhsinî", "majlisi": "Meclisî", "behbudi": "Behbûdî", "bukhari": "Buhârî", "muslim": "Müslim",
+            "abudawud": "Ebû Dâvûd", "tirmidhi": "Tirmizî", "nasai": "Nesâî", "ibnmajah": "İbn Mâce", "malik": "Mâlik",
+            "nawawi": "Nevevî", "ibnhajar": "İbn Hacer", "kulayni": "Küleynî", "saduq": "Sadûk", "mufid": "Müfîd",
+            "tusi": "Tûsî", "najashi": "Necâşî", "numani": "Nu'mânî", "ahwazi": "Ahvâzî",
+            "ibnqulawayh": "İbn Kûleveyh", "dehlawi": "Dihlevî"}
+
+
+def short_name(s: dict, lang: str | None = None) -> str:
+    """A scholar's short name in the interface language: "al-Albani", "Elbânî", "الألباني"."""
+    from isnady.core import i18n
+
+    code = lang or i18n.language()
+    if code == "tr":
+        return SHORT_TR.get(s["id"]) or s.get("tr") or s.get("short") or s["name"]
+    if code in ("ar", "fa", "prs", "ps", "ur") and s.get("known_ar"):
+        return s["known_ar"]
+    return s.get("short") or s["name"]
+
+
 def grader_names(tradition: str) -> set[str]:
     """The grader names of one tradition's scholars (as the sources write them)."""
     return {n for s in SCHOLARS if tradition_of(s) == tradition for n in s.get("grader_names", [])}

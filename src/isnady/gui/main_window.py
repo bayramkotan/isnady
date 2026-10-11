@@ -192,6 +192,7 @@ class MainWindow(QMainWindow):
         self.search_page.open_book.connect(self._open_in_book)
         self.search_page.open_person.connect(self._open_person)
         self.search_page.open_scholar.connect(self._open_scholar)
+        self.search_page.wants_sources.connect(lambda: self._preferences("sources"))
         self.search_page.data_changed.connect(lambda: setattr(self, "_books_loaded", False))
         self.nav.currentRowChanged.connect(self._load_books_when_shown)
         self.narrators_page.open_in_book.connect(self._open_person_in_book)

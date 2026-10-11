@@ -36,7 +36,7 @@ def _key(row: dict) -> tuple:
     canon = CANON.get(tradition, [])
     base = row["key"].split("-")[0]
     rank = canon.index(base) if base in canon else len(canon)
-    return order, rank, sort_name(row["name"]), row["key"]
+    return order, rank, sort_name(row.get("source_name") or row["name"]), row["key"]
 
 
 def disabled() -> set[str]:
@@ -56,7 +56,11 @@ def is_active(key: str) -> bool:
 def all_books(conn: sqlite3.Connection, include_inactive: bool = False) -> list[dict]:
     """Every collection that has texts: key, name, tradition, hadith count, active — in reading order."""
     off = disabled()
-    rows = [{"key": k, "name": n, "tradition": t or "sunni", "count": c, "active": k not in off}
+    from isnady.core import titles
+
+    # "name": the title in the interface language (core.titles); "source_name": as the import named it
+    rows = [{"key": k, "name": titles.book(k, n), "source_name": n, "tradition": t or "sunni", "count": c,
+             "active": k not in off}
             for k, n, t, c in conn.execute(
                 """SELECT c.key, c.name, c.tradition, COUNT(DISTINCT h.id) FROM collections c
                    JOIN hadiths h ON h.collection_id = c.id
@@ -114,25 +118,11 @@ def _full_names() -> dict[str, str]:
     return _FULL
 
 
-_TITLES: dict[str, str] | None = None
-
-
 def title(key: str, fallback: str = "") -> str:
-    """The book's title as isnady writes it ("Sahih al-Bukhari"), whatever the source that was imported called it
-    ("Sahih al Bukhari"); the compiler after a dash is left out. The name in the database for a book isnady
-    does not know."""
-    global _TITLES
-    if _TITLES is None:
-        _TITLES = {}
-        try:
-            from isnady.core.repositories import bundled
+    """The book's title as isnady writes it, in the interface language (core.titles.book)."""
+    from isnady.core import titles
 
-            for e in bundled().get("isnady", {}).get("entries", []):
-                if e.get("book") and e.get("title"):
-                    _TITLES[e["book"]] = e["title"].split(" — ")[0]
-        except Exception:      # a broken install must not stop a page
-            pass
-    return _TITLES.get(key) or fallback or key
+    return titles.book(key, fallback)
 
 
 def full_name(key: str) -> str:

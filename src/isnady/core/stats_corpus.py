@@ -225,9 +225,14 @@ def _books(conn: sqlite3.Connection, collection: str | None) -> list[tuple[int, 
     ids = dict(conn.execute("SELECT key, id FROM collections").fetchall())
     if collection and collection != SHIA_SCOPE:
         row = conn.execute("SELECT id, key, name FROM collections WHERE key = ?", (collection,)).fetchone()
-        return [tuple(row)] if row else []
+        from isnady.core import titles
+
+        return [(row[0], row[1], titles.book(row[1], row[2], "en"))] if row else []
     want = "shia" if collection == SHIA_SCOPE else "sunni"
-    return [(ids[b["key"]], b["key"], b["name"]) for b in core_books.all_books(conn)
+    from isnady.core import titles
+
+    # the English title: saved results are the same whatever the interface language; the screen translates them
+    return [(ids[b["key"]], b["key"], titles.book(b["key"], b["source_name"], "en")) for b in core_books.all_books(conn)
             if (b["tradition"] == "shia") == (want == "shia")]
 
 

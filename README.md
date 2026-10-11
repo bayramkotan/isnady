@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.2.0-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.2.1-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.2.0-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.2.1-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.2.0).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.2.1).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -318,7 +318,7 @@ without authentication (credentials are never stored), are read as well.
 | **Match** | All words, any word, the exact phrase — or by meaning (AI, below) |
 | **Books** | All books, all Sunni, all Shia, or any few ticked one by one |
 | **Order** | Book by book in the order of the book lists — Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud … then the Shia books — and within a book by its numbering |
-| **Language** | One language to search in; the languages you do not read are folded behind an arrow on each hadith, a click opens them |
+| **Language** | One language to search in; the languages you do not read are folded behind an arrow on each hadith, a click opens them. The list holds the languages imported; the languages the same books have in isnady-data (Urdu, Indonesian, Bengali, French, Russian, Tamil) are named at its end — choosing them opens **File → Data Sources** to import them |
 | **Active books** | A book can be switched off in **Settings → Books and languages**: it stays imported but is left out of searches, book lists and statistics until switched on |
 | **Grades** | Shown under each hadith with the scholar's name, exactly as given, and explained when you point at them |
 | **Highlighting** | On the original, diacritised text, diacritics included |
@@ -471,6 +471,12 @@ narrators, other narrations, grades) and the languages you choose; Ibn Hajar's *
 al-Najashi's *Rijal* read entry by entry, each narrator a click away. Find within a chapter, go to
 the previous or next one, and isnady remembers where you were. From any search result, **In its
 book** opens the hadith where it stands, among the hadith of its chapter.
+
+Book and chapter titles follow the interface language: the sources give chapter titles in English only, so
+isnady carries its own — all 642 chapter titles of the 33 books in Turkish and in Arabic ("Vahyin Başlangıcı",
+"كتاب بدء الوحي" for "Revelation"), and the Arabic titles a source gives itself where it has them (al-Adab
+al-Mufrad, Bulugh al-Maram, Mishkat, Riyad al-Salihin, al-Shama'il). The book titles too: *Sahîh-i Buhârî*,
+*صحيح البخاري*.
 
 The shelf holds the Sunni and the Shia books together, each under its own heading — *All*, *Sunni*
 or *Shia* at the top shows one of them alone — and every Shia book carries a gold *Shia* tag. Books

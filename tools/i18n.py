@@ -5,6 +5,9 @@
     python tools/i18n.py missing CODE      the English texts CODE lacks, as JSON (to translate)
     python tools/i18n.py merge CODE FILE   add the translations of FILE ({"English": "translation"}) to CODE's catalog
     python tools/i18n.py prune             drop from every catalog the texts the code no longer has
+    python tools/i18n.py titles CODE [DB]  the chapter titles of the imported books that CODE's titles table
+                                           (assets/i18n/titles/CODE.json) lacks, as JSON (to translate)
+    python tools/i18n.py titles-merge CODE FILE   add {"English title": "title"} to that table
 
 The English text is the key (core/i18n.py). A catalog keeps its keys in the order of en.json.
 """
@@ -127,6 +130,30 @@ def main(argv: list[str]) -> int:
             if len(kept) != len(data):
                 save(path.stem, kept)
                 print(f"{path.stem}: {len(data) - len(kept)} dropped")
+        return 0
+    if cmd in ("titles", "titles-merge"):
+        path = OUT / "titles" / f"{argv[1]}.json"
+        table = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"chapters": {}, "books": {}}
+        if cmd == "titles-merge":
+            new = json.loads(Path(argv[2]).read_text(encoding="utf-8"))
+            table.setdefault("chapters", {}).update({" ".join(k.split()): v for k, v in new.items() if v})
+            path.write_text(json.dumps(table, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+            print(f"{argv[1]}: {len(new)} titles merged")
+            return 0
+        import sqlite3
+
+        sys.path.insert(0, str(ROOT / "src"))
+        from isnady.data.paths import db_path
+
+        conn = sqlite3.connect(argv[2] if len(argv) > 2 else str(db_path()))
+        have = table.get("chapters", {})
+        missing = {}
+        for (title,) in conn.execute("""SELECT DISTINCT t.title FROM section_titles t JOIN editions e
+                                        ON e.id = t.edition_id WHERE e.language = 'English'"""):
+            key = " ".join((title or "").split())
+            if key and key not in have:
+                missing[key] = ""
+        print(json.dumps(missing, ensure_ascii=False, indent=1))
         return 0
     print(__doc__)
     return 1
