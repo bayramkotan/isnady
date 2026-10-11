@@ -3,14 +3,16 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.2.3] — 2026-10-11
 
-- **Interface languages:** the language of Azerbaijan is named **Azərbaycan türkcəsi** in its own letters and
-  **Azerbaycan Türkçesi** in Turkish (no more "Azərbaycanca"); the Turkic languages **Қазақша** (Kazakh),
-  **Кыргызча** (Kyrgyz), **Türkmençe** (Turkmen), **ئۇيغۇرچە** (Uyghur, right to left), **Татарча** (Tatar),
-  **Башҡортса** (Bashkir) and **Qırımtatarca** (Crimean Tatar) join the list — 31 languages. Each language is shown
-  by its own name and by its name in the interface language (Kırgızca, Kazakça, Uygurca … in Turkish; العربية
-  names in Arabic), with how much of it is translated.
+- **Interface languages — 58 in the list:** the language of Azerbaijan is named **Azərbaycan türkcəsi** in its own
+  letters and **Azerbaycan Türkçesi** in Turkish (no more "Azərbaycanca"). New: the Turkic languages — Қазақша,
+  Кыргызча, Türkmençe, ئۇيغۇرچە (right to left), Татарча, Башҡортса, Qırımtatarca; the languages of Europe —
+  Italiano, Nederlands, Polski, Čeština, Slovenčina, Magyar, Română, Български, Ελληνικά, Українська, Српски,
+  Hrvatski, Slovenščina, Македонски, Shqip, Svenska, Dansk, Norsk, Suomi, Eesti, Latviešu, Lietuvių; and ไทย,
+  Tiếng Việt, தமிழ், Kurdî, Soomaali. Each language is shown by its own name and by its name in the interface
+  language (Lehçe, Yunanca, Kırgızca … in Turkish; Arabic names in Arabic) with how much of it is translated;
+  the translations follow.
 
 ## [0.2.2] — 2026-10-11
 

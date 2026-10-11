@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.2.2-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.2.3-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.2.2-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.2.3-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.2.2).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.2.3).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -673,11 +673,14 @@ has its own Default button.
 
 **Interface language** (sidebar, or **View → Interface Language**): menus, pages, buttons, messages and the
 statistics are in **English, Türkçe and العربية** — Arabic right to left, the whole window mirrored. The list
-already names 31 languages, each in its own name and in the interface language's (Azərbaycan türkcəsi ·
-Azerbaycan Türkçesi in Turkish), with how much of it is translated (Deutsch, Français,
-Español, Português, Русский, Bahasa Indonesia, Bahasa Melayu, हिन्दी, اردو, বাংলা, 中文, 日本語, 한국어,
-فارسی, دری, پښتو, Azərbaycan türkcəsi, Oʻzbekcha, Қазақша, Кыргызча, Türkmençe, ئۇيغۇرچە, Татарча, Башҡортса,
-Qırımtatarca, Bosanski, Kiswahili, Hausa); a text not translated yet is shown in
+already names 58 languages, each in its own name and in the interface language's (Azərbaycan türkcəsi ·
+Azerbaycan Türkçesi in Turkish), with how much of it is translated — the languages of the Muslim world (فارسی,
+اردو, Bahasa Indonesia, Bahasa Melayu, বাংলা, پښتو, دری, Kurdî, Soomaali, Hausa, Kiswahili, Shqip, Bosanski,
+தமிழ், हिन्दी), the Turkic languages (Azərbaycan türkcəsi, Oʻzbekcha, Қазақша, Кыргызча, Türkmençe, ئۇيغۇرچە,
+Татарча, Башҡортса, Qırımtatarca), the languages of Europe (Deutsch, Français, Español, Português, Italiano,
+Nederlands, Polski, Čeština, Slovenčina, Magyar, Română, Български, Ελληνικά, Русский, Українська, Српски,
+Hrvatski, Slovenščina, Македонски, Svenska, Dansk, Norsk, Suomi, Eesti, Latviešu, Lietuvių) and 中文, 日本語,
+한국어, ไทย, Tiếng Việt; a text not translated yet is shown in
 English, and the translations follow release by release. The window is rebuilt in the new language at once,
 nothing to restart. `iy config set view.ui_language tr`. The hadith texts keep their own languages
 (**Content languages**), the command line stays in English.
