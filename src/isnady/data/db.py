@@ -227,6 +227,9 @@ CREATE TABLE IF NOT EXISTS grades (
     UNIQUE (hadith_id, grader_name, grade, source_id)
 );
 CREATE INDEX IF NOT EXISTS ix_grades_hadith ON grades(hadith_id);
+-- every chain removed (a rebuild of the derived chains removes them all) looks here for grades of that chain:
+-- without this index each removal read the whole grades table — hours on a full database (2026-10-11)
+CREATE INDEX IF NOT EXISTS ix_grades_isnad ON grades(isnad_id);
 
 -- Tables that refer to hadiths, collections and persons come AFTER them: a fresh database is built
 -- in this order (2026-10-06: they once stood first and every first import on a new computer failed).

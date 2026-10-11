@@ -33,6 +33,9 @@ is taken from its section here.
   - The chain page draws the Imam the chain reaches, explains al-Kulayni's groups and the unnamed narrators, shows
     al-Najashi's verdicts in their own terms, and says when a second road joins; `iy chain kafi 5:1740` and
     `iy isnads` likewise. Database schema 8: `isnads.ends_with` (whom the chain reaches) and `isnads.raised`.
+- **Rebuilding the chains no longer takes hours**: an index on `grades(isnad_id)` — removing the old chains read
+  the whole grades table once per chain (the demo database: 235 s → 1 s; a full one: hours, and the window did not
+  open). Every database gets it when it is opened.
 
 ## [0.1.8] — 2026-10-10
 
