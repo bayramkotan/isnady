@@ -6,7 +6,9 @@ unchanged (DX1). Every measure here keeps to the rules of the project:
   * Ranks and grades are ORDERED CATEGORIES (SK). They are counted, cross-tabulated and rank-correlated — Kendall's
     tau-b and Goodman–Kruskal's gamma — never turned into numbers and averaged.
   * Ibn Hajar's twelve ranks are drawn in six groups so a chart stays readable; the twelve are kept in the data.
-  * Shia narrators are not mixed into the Sunni chains (they are not matched to them at all).
+  * Two roads (SH1): "all books" are the Sunni books, measured on Ibn Hajar's ranks; the Shia books ("@shia", or
+    one Shia book) are measured apart, on their narrators' Imami categories (al-Najashi), their chains ending at a
+    Ma'sum. The two are never measured together nor on each other's scale.
   * Intervals are percentile bootstraps over hadith (BOOT samples, a fixed seed: the same data gives the same numbers).
 
 The chain's first link (position 1) is the compiler's own teacher; each link narrates FROM the next one, and the
@@ -24,7 +26,8 @@ from collections import Counter, defaultdict
 from isnady.core import stats_graders
 from isnady.core.grades import GROUP_LABELS, group, isnad_only
 
-METHOD = "isnady-corpus-1"
+METHOD = "isnady-corpus-2"
+SHIA_SCOPE = "@shia"           # every active Shia book (road B)
 BOOT = 200
 SEED = 1405
 
@@ -38,6 +41,24 @@ RANK_GROUPS = [
     ("Rejected", "abandoned, accused of lying, liar (ranks 10–12)", (10, 11, 12)),
 ]
 GROUP_OF_RANK = {r: i for i, (_n, _d, ranks) in enumerate(RANK_GROUPS) for r in ranks}
+# road B: the Imami categories of the critic's own words (core.shia_rijal), strongest first
+RANK_GROUPS_SHIA = [
+    ("Trustworthy", "thiqa — an Imami the critic calls trustworthy", (1,)),
+    ("Praised", "mamduh — praised (jalil, wajh, 'ayn …) without the word thiqa", (2,)),
+    ("Muwaththaq", "a thiqa of another school (Waqifi, Fathi, 'ammi …)", (3,)),
+    ("Weak", "da'if — weak, confused, accused, extremist", (4,)),
+]
+GROUP_OF_RANK_SHIA = {r: i for i, (_n, _d, ranks) in enumerate(RANK_GROUPS_SHIA) for r in ranks}
+
+
+def tradition_of_scope(conn: sqlite3.Connection, collection: str | None) -> str:
+    """"sunni" for all books (the Sunni road) or a Sunni book; "shia" for "@shia" or a Shia book."""
+    if collection == SHIA_SCOPE:
+        return "shia"
+    if not collection:
+        return "sunni"
+    row = conn.execute("SELECT tradition FROM collections WHERE key = ?", (collection,)).fetchone()
+    return "shia" if row and row[0] == "shia" else "sunni"
 GRADE_ORDER = [4, 3, 2, 1, 0]          # sahih … fabricated, strongest first (as the ranks)
 GAP_BINS = list(range(-60, 161, 10))   # years between a student's death and his teacher's
 
@@ -157,14 +178,17 @@ def pagerank(edges: Counter, damping: float = 0.85, iterations: int = 60) -> dic
 
 # ------------------------------------------------------------------ loading
 def _books(conn: sqlite3.Connection, collection: str | None) -> list[tuple[int, str, str]]:
-    """(id, key, name) of the books measured: one, or every ACTIVE one (core.books), in reading order."""
+    """(id, key, name) of the books measured: one; every ACTIVE Sunni book (None, road A); or every active Shia
+    book ("@shia", road B) — in reading order (core.books)."""
     from isnady.core import books as core_books
 
     ids = dict(conn.execute("SELECT key, id FROM collections").fetchall())
-    if collection:
+    if collection and collection != SHIA_SCOPE:
         row = conn.execute("SELECT id, key, name FROM collections WHERE key = ?", (collection,)).fetchone()
         return [tuple(row)] if row else []
-    return [(ids[b["key"]], b["key"], b["name"]) for b in core_books.all_books(conn)]
+    want = "shia" if collection == SHIA_SCOPE else "sunni"
+    return [(ids[b["key"]], b["key"], b["name"]) for b in core_books.all_books(conn)
+            if (b["tradition"] == "shia") == (want == "shia")]
 
 
 def fingerprint(conn: sqlite3.Connection, collection: str | None) -> str:
@@ -185,17 +209,19 @@ def cache_name(prefix: str, collection: str | None) -> str:
     from isnady.core import books as core_books
 
     off = sorted(core_books.disabled())
-    tail = "" if collection or not off else "-" + hashlib.md5(",".join(off).encode()).hexdigest()[:8]
-    return f"{prefix}-{core_books.full_name(collection) if collection else 'all'}{tail}.json"
+    tail = "" if collection not in (None, SHIA_SCOPE) or not off else "-" + hashlib.md5(",".join(off).encode()).hexdigest()[:8]
+    scope = {None: "all_sunni_books", SHIA_SCOPE: "all_shia_books"}.get(collection) or core_books.full_name(collection)
+    return f"{prefix}-{scope}{tail}.json"
 
 
-def _persons(conn: sqlite3.Connection) -> dict[int, dict]:
-    """Every Sunni narrator: name, tabaqa, year of death and Ibn Hajar's rank (his first verdict, as the lists)."""
+def _persons(conn: sqlite3.Connection, tradition: str = "sunni") -> dict[int, dict]:
+    """Every narrator of one tradition: name, tabaqa, year of death and his critic's rank (the first verdict) —
+    Ibn Hajar's twelve for the Sunni, al-Najashi's four Imami categories for the Shia."""
     out = {}
     for pid, name, tabaqa, death, rank in conn.execute(
             """SELECT p.id, p.name_ar, p.tabaqa, p.death_year_ah,
                       (SELECT v.rank FROM verdicts v WHERE v.person_id = p.id ORDER BY v.id LIMIT 1)
-               FROM persons p WHERE COALESCE(p.tradition, 'sunni') = 'sunni'"""):
+               FROM persons p WHERE COALESCE(p.tradition, 'sunni') = ?""", (tradition,)):
         out[pid] = {"name": name, "tabaqa": tabaqa, "death": death, "rank": rank}
     return out
 
@@ -223,8 +249,13 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     if not books:
         return {"empty": True}
     book_name = {bid: name for bid, _key, name in books}
+    tradition = tradition_of_scope(conn, collection)
+    shia = tradition == "shia"
+    rank_groups = RANK_GROUPS_SHIA if shia else RANK_GROUPS
+    group_of = GROUP_OF_RANK_SHIA if shia else GROUP_OF_RANK
+    ngroups = len(rank_groups)
     say("Reading the narrators")
-    persons = _persons(conn)
+    persons = _persons(conn, tradition)
     say("Reading the chains")
     chains = _chains(conn, [b[0] for b in books])
     hadith_count = conn.execute(
@@ -233,7 +264,7 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
 
     # ---- overview, per book and in all
     per_book: dict[int, dict] = {bid: {"name": book_name[bid], "chains": 0, "links": 0, "identified": 0,
-                                       "reaching": 0, "full": 0, "lengths": Counter(), "groups": [0] * 6,
+                                       "reaching": 0, "full": 0, "lengths": Counter(), "groups": [0] * ngroups,
                                        "narrators": set()} for bid in book_name}
     link_count: Counter = Counter()
     hadith_of: dict[int, set] = defaultdict(set)
@@ -244,8 +275,8 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     gap_pairs: Counter = Counter()
     order_ok = order_bad = 0
     order_pairs: Counter = Counter()
-    weakest_dist = [0] * 6
-    weakest_full = [0] * 6
+    weakest_dist = [0] * ngroups
+    weakest_full = [0] * ngroups
 
     say("Measuring the chains")
     for c in chains:
@@ -264,12 +295,12 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
             hadith_of[p].add(c["hadith"])
             b["narrators"].add(p)
             rank = persons[p]["rank"]
-            if rank in GROUP_OF_RANK:
-                b["groups"][GROUP_OF_RANK[rank]] += 1
+            if rank in group_of:
+                b["groups"][group_of[rank]] += 1
         # the weakest identified narrator of the chain (the highest rank number: the weakest)
-        ranks = [persons[p]["rank"] for p in ids if persons[p]["rank"] in GROUP_OF_RANK]
+        ranks = [persons[p]["rank"] for p in ids if persons[p]["rank"] in group_of]
         if ranks:
-            weakest = GROUP_OF_RANK[max(ranks)]
+            weakest = group_of[max(ranks)]
             weakest_dist[weakest] += 1
             if len(ids) == len(links):
                 weakest_full[weakest] += 1
@@ -307,25 +338,25 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
 
     # ---- narrators
     say("Measuring the narrators")
-    rank_all = [0] * 6
+    rank_all = [0] * ngroups
     for p in persons.values():
-        if p["rank"] in GROUP_OF_RANK:
-            rank_all[GROUP_OF_RANK[p["rank"]]] += 1
-    rank_links = [0] * 6
-    rank_people = [0] * 6
+        if p["rank"] in group_of:
+            rank_all[group_of[p["rank"]]] += 1
+    rank_links = [0] * ngroups
+    rank_people = [0] * ngroups
     unranked_links = 0
     for p, n in link_count.items():
         rank = persons[p]["rank"]
-        if rank in GROUP_OF_RANK:
-            rank_links[GROUP_OF_RANK[rank]] += n
-            rank_people[GROUP_OF_RANK[rank]] += 1
+        if rank in group_of:
+            rank_links[group_of[rank]] += n
+            rank_people[group_of[rank]] += 1
         else:
             unranked_links += n
-    tabaqa_groups = [[0] * 6 for _ in range(12)]
+    tabaqa_groups = [[0] * ngroups for _ in range(12)]
     for p in link_count:
         t, rank = persons[p]["tabaqa"], persons[p]["rank"]
-        if t and 1 <= t <= 12 and rank in GROUP_OF_RANK:
-            tabaqa_groups[t - 1][GROUP_OF_RANK[rank]] += 1
+        if t and 1 <= t <= 12 and rank in group_of:
+            tabaqa_groups[t - 1][group_of[rank]] += 1
 
     def person_row(p: int) -> dict:
         info = persons[p]
@@ -333,8 +364,9 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
                 "death": info["death"], "links": link_count[p], "hadith": len(hadith_of[p])}
 
     pillars = [person_row(p) for p, _n in link_count.most_common(25)]
+    weak_from = 4 if shia else 7                       # al-Najashi's "weak"; Ibn Hajar's rank 7 and below
     weak_pillars = [person_row(p) for p, _n in sorted(
-        ((p, n) for p, n in link_count.items() if (persons[p]["rank"] or 0) >= 7), key=lambda x: -x[1])[:15]]
+        ((p, n) for p, n in link_count.items() if (persons[p]["rank"] or 0) >= weak_from), key=lambda x: -x[1])[:15]]
     concentration = lorenz(list(link_count.values()))
     say("Ranking the narrators in the network")
     pr = pagerank(edges)
@@ -358,7 +390,7 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     # ---- grades: does the weakest narrator foretell the grade? does the length?
     say("Comparing the grades with the chains")
     grades_out = []
-    for _bid, key, name in books:
+    for _bid, key, name in ([] if shia else books):       # road B's grades (al-Majlisi …): Hadith Scholars, SH1d
         data = stats_graders.load(conn, key)
         for grader, by_hadith in sorted(data.items()):
             # rows: weakest-link group 0..5 (strong → weak); cols: grade 0..4 as sahih … fabricated (strong → weak)
@@ -372,14 +404,14 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
             grades_out.append({
                 "book": name, "key": key, "grader": grader, "graded": len(by_hadith),
                 "distribution": [dist.get(g, 0) for g in GRADE_ORDER],
-                "weakest": association(pairs, 6, 5, rng) if pairs else None,
+                "weakest": association(pairs, ngroups, 5, rng) if pairs else None,
                 "length": association(length_pairs, 9, 5, rng) if length_pairs else None,
             })
 
     # ---- books compared
     book_rows = []
     for bid, b in per_book.items():
-        lens = sorted(b["lengths"].elements())
+        lens = sorted(n for n in b["lengths"].elements() if n)   # the chains split into names (0 = not split)
         book_rows.append({"name": b["name"], "chains": b["chains"], "links": b["links"],
                           "identified": b["identified"] / b["links"] if b["links"] else 0,
                           "reaching": b["reaching"] / b["chains"] if b["chains"] else 0,
@@ -390,8 +422,8 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     overlap = [[(len(a & b) / len(a | b) if a | b else 0) for b in sets] for a in sets]
 
     return {
-        "method": METHOD, "collection": collection, "boot": BOOT,
-        "groups": [[n, d] for n, d, _r in RANK_GROUPS], "grade_labels": [GROUP_LABELS[g] for g in GRADE_ORDER],
+        "method": METHOD, "collection": collection, "boot": BOOT, "tradition": tradition,
+        "groups": [[n, d] for n, d, _r in rank_groups], "grade_labels": [GROUP_LABELS[g] for g in GRADE_ORDER],
         "overview": overview,
         "narrators": {"rank_all": rank_all, "rank_links": rank_links, "rank_people": rank_people,
                       "unranked_links": unranked_links, "tabaqa_groups": tabaqa_groups, "pillars": pillars,
@@ -431,4 +463,4 @@ def cached(conn: sqlite3.Connection, collection: str | None = None, progress=Non
 
 
 __all__ = ["analyse", "cached", "kendall_from_table", "association", "lorenz", "pagerank", "RANK_GROUPS",
-           "isnad_only", "group"]
+           "RANK_GROUPS_SHIA", "SHIA_SCOPE", "tradition_of_scope", "isnad_only", "group"]

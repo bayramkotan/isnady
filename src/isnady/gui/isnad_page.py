@@ -139,7 +139,13 @@ class IsnadPage(QWidget):
         hid = core_isnad.hadith_id(self.conn, book, number)
         if hid is None:
             self._clear()
-            msg = _label(f"There is no hadith {html.escape(number)} in this book.", "Lead", wrap=True)
+            # say how this book numbers its hadith: al-Kafi and 'Uyun count volume:hadith ("5:1740"), not "1740"
+            sample = [r[0] for r in self.conn.execute(
+                "SELECT h.number FROM hadiths h JOIN collections c ON c.id = h.collection_id WHERE c.key = ? "
+                "ORDER BY h.number_sort LIMIT 3", (book,))]
+            hint = (f" Its numbers are written like {', '.join(html.escape(x) for x in sample)} …"
+                    + (" — volume:hadith." if any(":" in x for x in sample) else "")) if sample else ""
+            msg = _label(f"There is no hadith {html.escape(number)} in this book.{hint}", "Lead", wrap=True)
             self.body_layout.addWidget(msg)
             self.body_layout.addStretch(1)
             return
@@ -157,9 +163,11 @@ class IsnadPage(QWidget):
         title = _label("Chains of transmission", "Hero")
         title.setFont(theme.reading_font(28, bold=True))
         lead = _label(
-            "Every chain below was read from the Arabic text: who narrated to whom, with which words, and whether "
-            "the chain reaches the Prophet. Names are shown exactly as written. Where the wording could not be "
-            "read with confidence, the chain is kept whole and not split, so nothing is guessed. "
+            "Every chain below was read from the Arabic text: who narrated to whom, with which words, and whom it "
+            "reaches. Each book is read along the road of its own tradition: a Sunni book's chain ends at the Prophet ﷺ "
+            "and its narrators are identified in Ibn Hajar's Taqrib; a Shia book's chain is read the Shia way, ends at "
+            "a Ma'sum and its narrators are identified in al-Najashi. Names are shown exactly as written. Where the "
+            "wording could not be read with confidence, the chain is kept whole and not split, so nothing is guessed. "
             "Choose a book and a number, or open a chain from a search result.",
             "Lead", wrap=True)
         self.body_layout.addWidget(title)
@@ -178,23 +186,34 @@ class IsnadPage(QWidget):
         box = QVBoxLayout(card)
         box.setContentsMargins(24, 18, 24, 18)
         box.setSpacing(8)
+        shia = b.get("tradition") == "shia"
+        top = QHBoxLayout()
         name = _label(b["name"], "CardTitle")
         name.setFont(theme.reading_font(16, bold=True))
-        box.addWidget(name)
+        top.addWidget(name)
+        if shia:
+            tag = QLabel("Shia")
+            tag.setObjectName("TagGold")
+            top.addSpacing(8)
+            top.addWidget(tag, 0, Qt.AlignmentFlag.AlignVCenter)
+        top.addStretch(1)
+        box.addLayout(top)
         numbers = QHBoxLayout()
         numbers.setSpacing(28)
         split_pct = 100 * b["split"] / b["chains"] if b["chains"] else 0
         marfu_pct = 100 * b["marfu"] / b["split"] if b["split"] else 0
         avg = b["links"] / b["split"] if b["split"] else 0
         cells = [(f"{b['chains']:,}", "chains read"), (f"{split_pct:.1f}%", "split into narrators"),
-                 (f"{marfu_pct:.1f}%", "of those reach the Prophet"), (f"{avg:.1f}", "narrators per chain")]
+                 (f"{marfu_pct:.1f}%", "of those reach a Ma'sum" if shia else "of those reach the Prophet"),
+                 (f"{avg:.1f}", "narrators per chain")]
         known = self.conn.execute(
             """SELECT COUNT(*), SUM(l.person_id IS NOT NULL), SUM(l.candidates IS NOT NULL) FROM isnad_links l
                JOIN isnads i ON i.id = l.isnad_id JOIN hadiths h ON h.id = i.hadith_id
                JOIN collections c ON c.id = h.collection_id WHERE c.key = ? AND i.problem IS NULL""", (b["key"],)
         ).fetchone()
         if known and known[2]:
-            cells.append((f"{100 * (known[1] or 0) / known[0]:.1f}%", "narrators identified"))
+            cells.append((f"{100 * (known[1] or 0) / known[0]:.1f}%",
+                          "identified in al-Najashi" if shia else "identified in the Taqrib"))
         for value, caption in cells:
             cell = QVBoxLayout()
             cell.setSpacing(0)
@@ -240,10 +259,17 @@ class IsnadPage(QWidget):
         head.addWidget(title)
         head.addSpacing(10)
         head.addWidget(number, 0, Qt.AlignmentFlag.AlignBaseline)
+        self._tradition = traditions.of_collection(self.conn, info["book"])
+        if self._tradition == "shia":
+            tag = QLabel("Shia — read the Shia way")
+            tag.setObjectName("TagGold")
+            tag.setToolTip("Road B: the teacher named without a term, al-Kulayni's groups, the chain ending at a Ma'sum; "
+                           "the narrators identified only in the Shia rijal works and judged in the Imami terms.")
+            head.addSpacing(10)
+            head.addWidget(tag, 0, Qt.AlignmentFlag.AlignVCenter)
         head.addStretch(1)
         self.body_layout.addLayout(head)
 
-        self._tradition = traditions.of_collection(self.conn, info["book"])
         verdict = self._verdict(chain)
         self.body_layout.addWidget(verdict)
         self.body_layout.addSpacing(16)
@@ -264,6 +290,10 @@ class IsnadPage(QWidget):
                 key = chain.get("ends_with") or "prophet"
                 subtitle = "The Messenger of God" if key == "prophet" else core_isnad.end_label(chain)
                 self.body_layout.addWidget(ChainNode(end_chip(chain), subtitle, None, last=True, prophet=True))
+            elif chain.get("raised"):
+                # "رفعه": the narrator raises it to the Ma'sum without the links between — a gap, shown as one
+                self.body_layout.addWidget(ChainNode("رفعه", "Raised (marfu'): the rest of the chain is left out — "
+                                                     "whom it reaches is not named", None, last=True))
         self.body_layout.addSpacing(18)
 
         text = core_isnad.arabic_text(self.conn, hid)
@@ -283,9 +313,14 @@ class IsnadPage(QWidget):
             n = len(chain["links"])
             known = sum(1 for link in chain["links"] if link.get("person_id"))
             end = core_isnad.end_label(chain)
-            text = (f"Read as a Shia chain: {n} link{'s' if n != 1 else ''} between the compiler and {end}."
-                    if end else f"Read as a Shia chain: {n} link{'s' if n != 1 else ''}; it stops before a Ma'sum is "
-                    "named (maqtu', or the last link could not be read with confidence).")
+            if end:
+                text = f"Read as a Shia chain: {n} link{'s' if n != 1 else ''} between the compiler and {end}."
+            elif chain.get("raised"):
+                text = (f"Read as a Shia chain: {n} link{'s' if n != 1 else ''}, then raised (رفعه) without the rest of "
+                        "its links — a gap (marfu' in the Imami usage): whom it reaches is not named.")
+            else:
+                text = (f"Read as a Shia chain: {n} link{'s' if n != 1 else ''}; it stops before a Ma'sum is named "
+                        "(maqtu', or the last link could not be read with confidence).")
             if any(link.get("candidates") is not None for link in chain["links"]):
                 text += f" {known} of them identified in the Shia rijal works (al-Najashi …)."
             from isnady.core.normalize import normalize

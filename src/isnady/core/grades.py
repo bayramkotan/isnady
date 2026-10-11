@@ -39,3 +39,21 @@ def attribution(grade: str) -> str | None:
     if re.search(r"\bma?u?quf|\bmawquf|\bmuquf", g):
         return "mawquf"
     return None
+
+
+# ------------------------------------------------------------------ the Imami grades (road B, SH1)
+# The four categories of the later Imami scholars (from Ibn Tawus and al-'Allama al-Hilli), in their own order:
+# sahih (every narrator an Imami thiqa), hasan (a praised Imami), muwaththaq (a thiqa of another school), da'if.
+# majhul (an unknown narrator), mursal and marfu' (a gap in the chain) are counted among the da'if, as that usage
+# does. These are NEVER mapped onto the Sunni groups above: each tradition is compared only within itself.
+IMAMI_LABELS = {4: "sahih", 3: "hasan", 2: "muwaththaq", 1: "da'if"}
+_IMAMI_WORDS = (("صحيح", 4), ("حسن", 3), ("موثق", 2), ("ضعيف", 1), ("مجهول", 1), ("مهول", 1), ("مرسل", 1),
+                ("مرفوع", 1))
+_IMAMI_RE = re.compile(r"(?<![\w])(" + "|".join(w for w, _g in _IMAMI_WORDS) + r")(?![\w])")
+
+
+def imami_group(grade: str) -> int | None:
+    """The Imami category of a grade as al-Majlisi or al-Behbudi wrote it, by its first word of grade:
+    "حسن كالصحيح" is hasan, "ضعيف على المشهور" da'if, "موثق" muwaththaq; "كالسابق" or "مختلف فيه" none."""
+    m = _IMAMI_RE.search(re.sub(r"[\u064B-\u0652\u0670]", "", grade or ""))
+    return dict(_IMAMI_WORDS)[m.group(1)] if m else None

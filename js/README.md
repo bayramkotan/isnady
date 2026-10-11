@@ -508,7 +508,10 @@ The scholars whose work is in the imported data, and what the data measures of i
 (their collection, the teachers their chains begin with, the Companions they end with), **graders**
 (how they grade, and how far they agree with each other on the same hadith — agreement, Cohen's
 kappa, and a strictness index: the classical *mutashaddid* / *mutasahil*, measured), and **critics**
-of narrators. On Sunan Abi Dawud, for example, Zubair 'Ali Za'i grades most strictly (−0.21) and
+of narrators — Sunni and Shia on one page (*All / Sunni / Shia*), each by his own road: al-Kulayni,
+al-Saduq, al-Mufid and al-Tusi with their chains counted to a Ma'sum; al-Majlisi and al-Behbudi compared
+only with each other on the four Imami grades (sahih, hasan, muwaththaq, da'if); al-Najashi's verdicts in
+the Imami terms. On Sunan Abi Dawud, for example, Zubair 'Ali Za'i grades most strictly (−0.21) and
 agrees with al-Albani on 70% of the hadith; the page also flags a pair of graders whose 98%
 agreement suggests the source did not keep them independent.
 
@@ -520,7 +523,9 @@ agreement suggests the source did not keep them independent.
 
 ## 📊 Statistics
 
-Measured in depth, each figure with what it means in plain words and how sure it is. Grades are
+Measured in depth, each figure with what it means in plain words and how sure it is — on two roads:
+*All Sunni books* (Ibn Hajar's ranks, chains to the Prophet ﷺ) and *All Shia books* (al-Najashi's Imami
+categories, chains to a Ma'sum), never mixed. Grades are
 ordered categories, so they are never turned into numbers or averaged, and no figure is read
 against the science of hadith: the statistics measure what the scholars did, they do not overrule
 it. Every result is computed once and saved as JSON in your data folder (`derived/`).

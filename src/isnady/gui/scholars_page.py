@@ -6,6 +6,7 @@ import html
 from PySide6.QtCore import QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -76,6 +77,8 @@ class Bar(QWidget):
 
 
 GROUP_COLORS = {"sahih": 2, "hasan": 4, "da'if": 8, "very weak": 10, "fabricated": 12}   # rank colours reused
+IMAMI_COLORS = {"sahih": 2, "hasan": 4, "muwaththaq": 5, "da'if": 9}          # the Imami categories (road B)
+SHIA_RANK_COLORS = {1: 2, 2: 4, 3: 5, 4: 9}
 
 
 class ScholarsPage(QWidget):
@@ -96,13 +99,31 @@ class ScholarsPage(QWidget):
         lbox.setSpacing(8)
         title = _label("Hadith Scholars", "CardTitle")
         title.setFont(theme.reading_font(18, bold=True))
-        self.note = _label("The scholars whose work is in the imported data, and what the data measures of it.", "Caption")
+        self.note = _label("The scholars whose work is in the imported data, Sunni and Shia, and what the data measures "
+                           "of it — each by his own tradition's measure.", "Caption")
+        # All / Sunni / Shia (SH1): one page, each tradition apart
+        self._tradition: str | None = None
+        self._segments = QButtonGroup(self)
+        seg = QHBoxLayout()
+        seg.setSpacing(6)
+        for key, text in ((None, "All"), ("sunni", "Sunni"), ("shia", "Shia")):
+            b = QPushButton(text)
+            b.setObjectName("Segment")
+            b.setCheckable(True)
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            b.setProperty("tradition", key)
+            b.setChecked(key is None)
+            self._segments.addButton(b)
+            seg.addWidget(b)
+        seg.addStretch(1)
+        self._segments.buttonClicked.connect(lambda b: self.set_tradition(b.property("tradition")))
         self.list = QListWidget()
         self.list.setObjectName("NarratorList")
         self.list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.list.currentItemChanged.connect(lambda item, _p: item and item.data(Qt.ItemDataRole.UserRole)
                                              and self.show_scholar(item.data(Qt.ItemDataRole.UserRole)))
         lbox.addWidget(title)
+        lbox.addLayout(seg)
         lbox.addWidget(self.note)
         lbox.addWidget(self.list, 1)
 
@@ -126,11 +147,19 @@ class ScholarsPage(QWidget):
     def conn(self):
         return self._conn_of()
 
+    def set_tradition(self, tradition: str | None) -> None:
+        """Show every scholar, or only the Sunni or only the Shia ones."""
+        self._tradition = tradition
+        for b in self._segments.buttons():
+            b.setChecked(b.property("tradition") == tradition)
+        self.refresh()
+
     def refresh(self) -> None:
         conn = self.conn
         if conn is None:
             return
-        people = core_scholars.present(conn)
+        people = [s for s in core_scholars.present(conn)
+                  if self._tradition is None or core_scholars.tradition_of(s) == self._tradition]
         self.list.blockSignals(True)
         self.list.clear()
         for role in ("compiler", "grader", "critic"):
@@ -153,6 +182,7 @@ class ScholarsPage(QWidget):
                 rbox = QVBoxLayout(row)
                 rbox.setContentsMargins(10, 8, 10, 8)
                 rbox.setSpacing(1)
+                row.setMaximumWidth(340)            # the list is 364 wide: a long name must not push the rest out of view
                 name = _label(s["name"], "RowTitle", wrap=False)
                 name.setFont(theme.reading_font(15, bold=True))
                 rbox.addWidget(name)
@@ -162,8 +192,11 @@ class ScholarsPage(QWidget):
                 arabic.setStyleSheet(f"color: {theme.script_color('arabic')}; "
                                      f"{theme.font_css(theme.script_font('arabic', factor=0.6))}")
                 rbox.addWidget(arabic)
-                if s["dates"]:
-                    rbox.addWidget(_label(s["dates"], "Caption", wrap=False))
+                shia = core_scholars.tradition_of(s) == "shia"
+                facts = ([f"<span style='color:{theme.current().gold}'><b>Shia</b></span>"] if shia else []) + \
+                    ([html.escape(s["dates"])] if s["dates"] else [])
+                if facts:
+                    rbox.addWidget(_label(" · ".join(facts), "Caption", wrap=False, rich=True))
                 item.setSizeHint(row.sizeHint())
                 self.list.addItem(item)
                 self.list.setItemWidget(item, row)
@@ -174,7 +207,8 @@ class ScholarsPage(QWidget):
             box.addWidget(_label("No scholars yet: import a collection (File → Data Sources).", "Lead"))
             self.box.addStretch(1)
             return
-        target = self._current if self._current and core_scholars.find(self._current) else people[0]["id"]
+        ids = [p["id"] for p in people]
+        target = self._current if self._current in ids else people[0]["id"]
         self.select(target)
 
     def select(self, scholar_id: str) -> None:
@@ -228,17 +262,29 @@ class ScholarsPage(QWidget):
         scholar = core_scholars.find(scholar_id)
         if conn is None or scholar is None:
             return
+        if self._tradition and core_scholars.tradition_of(scholar) != self._tradition:
+            self.set_tradition(None)                  # a scholar of the other tradition was asked for
         self._current = scholar_id
         roles = next((s["roles"] for s in core_scholars.present(conn) if s["id"] == scholar_id), [])
         self._clear()
         t = theme.current()
+        shia = core_scholars.tradition_of(scholar) == "shia"
 
         # the name (NM1), as for every narrator: known-as, full name, the parts
         self.box.addWidget(NameCard(core_scholars.name_view(scholar)))
         card, box = self._card()
         facts = [scholar["dates"]] if scholar["dates"] else []
         facts.append(", ".join(ROLE_TEXT[r] for r in roles))
-        box.addWidget(_label(" · ".join(f for f in facts if f), "Lead"))
+        trow = QHBoxLayout()
+        tag = QLabel("Shia scholar" if shia else "Sunni scholar")
+        tag.setObjectName("TagGold" if shia else "TagMuted")
+        tag.setToolTip("Measured along the road of his own tradition: his chains end at a Ma'sum, his grades are "
+                       "compared only with the Shia graders on the Imami categories, his verdicts are read in the "
+                       "Imami terms." if shia else "Measured along the Sunni road: chains to the Prophet, the Sunni "
+                       "grade groups, Ibn Hajar's twelve ranks.")
+        trow.addWidget(tag)
+        trow.addWidget(_label(" · ".join(f for f in facts if f), "Lead"), 1)
+        box.addLayout(trow)
         if scholar["works"]:
             box.addWidget(_label("Works: " + "; ".join(scholar["works"]), "Caption"))
         pid = core_scholars.as_narrator(conn, scholar)
@@ -266,23 +312,42 @@ class ScholarsPage(QWidget):
         for st in core_scholars.compiler_stats(conn, scholar):
             card, box = self._card(f"His collection: {st['book']}")
             pct = lambda a, b: f"{100 * a / b:.1f}%" if b else "—"  # noqa: E731
+            reach = "reaching a Ma'sum (the Prophet or an Imam)" if st.get("tradition") == "shia" else "reaching the Prophet"
+            rijal = "al-Najashi" if st.get("tradition") == "shia" else "the Taqrib"
             box.addWidget(_label(
                 f"<b>{st['hadith']:,}</b> hadith · <b>{st['chains']:,}</b> chains read, {pct(st['split'], st['chains'])} split "
-                f"into narrators, {pct(st['reach'], st['chains'])} reaching the Prophet · {pct(st['identified'], st['links'])} "
-                f"of the narrators identified", "Lead", rich=True))
+                f"into narrators, {pct(st['reach'], st['chains'])} {reach} · {pct(st['identified'], st['links'])} "
+                f"of the narrators identified in {rijal}", "Lead", rich=True))
             self._people_list(box, "His teachers — the first link of his chains", st["teachers"])
             self._people_list(box, "The Companions his chains end with most", st["companions"])
+            if st.get("ends"):
+                box.addWidget(_label("Whom his chains reach", "FilterLabel"))
+                top = max(e["count"] for e in st["ends"])
+                for e in st["ends"][:10]:
+                    box.addWidget(Bar(e["label"], e["count"], top, t.gold))
 
         g = core_scholars.grader_stats(conn, scholar)
         if g:
             card, box = self._card(f"His grades: {g['graded']:,} hadith in {', '.join(g['books'])}")
+            imami = g.get("tradition") == "shia"
+            colors = IMAMI_COLORS if imami else GROUP_COLORS
             top = max(g["distribution"].values() or [1])
             for label, n in g["distribution"].items():
-                box.addWidget(Bar(label, n, top, theme.rank_color(GROUP_COLORS[label]),
+                box.addWidget(Bar(label, n, top, theme.rank_color(colors.get(label, 8)),
                                   f"  ({100 * n / max(1, g['graded']):.0f}%)"))
-            box.addWidget(_label("Grouped for comparison; the wording is kept. His most frequent wordings: "
-                                 + ", ".join(f"{html.escape(w)} ({n:,})" for w, n in g["wordings"]), "Caption", rich=True))
-            card, box = self._card("Agreement with the other graders on the same hadith")
+            if imami:
+                box.addWidget(_label(core_scholars.MEASURE_HELP["imami"], "Caption"))
+            arabic = theme.script_font("arabic", factor=0.7)
+            words = ", ".join((f"<span style='font-family:\"{arabic.family()}\"'>{html.escape(w)}</span> ({n:,})"
+                               if any("\u0600" <= ch <= "\u06ff" for ch in w) else f"{html.escape(w)} ({n:,})")
+                              for w, n in g["wordings"])
+            box.addWidget(_label(("Grouped in the Imami categories for comparison" if imami else "Grouped for comparison")
+                                 + "; the wording is kept. His most frequent wordings: " + words, "Caption", rich=True))
+            card, box = self._card("Agreement with the other " + ("Shia graders" if imami else "graders")
+                                   + " on the same hadith")
+            if not g["agreement"]:
+                box.addWidget(_label("No other grader of his tradition graded the same hadith in the data imported here.",
+                                     "Caption"))
             how = QFrame()
             how.setObjectName("Help")
             hw = QVBoxLayout(how)
@@ -309,18 +374,33 @@ class ScholarsPage(QWidget):
                 box.addWidget(_label(
                     f"<b>Strictness {s:+.2f}</b> — {word} than the other graders on the same hadith: his grade lower in "
                     f"{100 * g['lower']:.1f}%, higher in {100 * g['higher']:.1f}% of {g['compared']:,} comparisons. "
-                    "The classical mutashaddid / mutasahil, by order only. Statistics → Graders measures it against a "
-                    "model of the true grade, with intervals.", "Lead", rich=True))
+                    + ("By the order of the Imami categories only, among the Shia graders." if imami else
+                       "The classical mutashaddid / mutasahil, by order only. Statistics → Graders measures it against "
+                       "a model of the true grade, with intervals."), "Lead", rich=True))
 
         cr = core_scholars.critic_stats(conn, scholar)
         if cr:
             card, box = self._card(f"His verdicts on narrators: {cr['verdicts']:,} in {', '.join(cr['works'])}")
-            top = max(n for _r, _l, n in cr["ranks"])
-            for rank, label, n in cr["ranks"]:
-                box.addWidget(Bar(f"{rank}. {label}", n, top, theme.rank_color(rank)))
-            if cr["unranked"]:
-                box.addWidget(_label(f"{cr['unranked']:,} verdicts do not fit one of his twelve ranks; their words are kept.",
-                                     "Caption"))
+            top = max([n for _r, _l, n in cr["ranks"]] or [1])
+            if cr.get("tradition") == "shia":
+                box.addWidget(_label("Reliability, in the Imami terms of his own words (never Ibn Hajar's twelve ranks)",
+                                     "FilterLabel"))
+                for rank, label, n in cr["ranks"]:
+                    box.addWidget(Bar(label, n, top, theme.rank_color(SHIA_RANK_COLORS.get(rank, 8))))
+                if cr.get("creeds"):
+                    box.addWidget(_label("Creed, where he states it", "FilterLabel"))
+                    ctop = max(n for _l, n in cr["creeds"])
+                    for label, n in cr["creeds"]:
+                        box.addWidget(Bar(label, n, ctop, t.gold))
+                if cr["unranked"]:
+                    box.addWidget(_label(f"{cr['unranked']:,} entries give no judgment in these words (often an author "
+                                         "listed for his books); their words are kept.", "Caption"))
+            else:
+                for rank, label, n in cr["ranks"]:
+                    box.addWidget(Bar(f"{rank}. {label}", n, top, theme.rank_color(rank)))
+                if cr["unranked"]:
+                    box.addWidget(_label(f"{cr['unranked']:,} verdicts do not fit one of his twelve ranks; their words are "
+                                         "kept.", "Caption"))
         self.box.addStretch(1)
 
     def retheme(self) -> None:

@@ -3,6 +3,30 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Shia scholars on the Hadith Scholars page**, each by his own road: the compilers al-Kulayni, al-Shaykh al-Saduq,
+  al-Shaykh al-Mufid, Ibn Qulawayh, al-Nu'mani, al-Shaykh al-Tusi, al-Husayn b. Sa'id al-Ahwazi and Asif al-Muhsini;
+  the graders al-'Allama al-Majlisi, Muhammad Baqir al-Behbudi and al-Muhsini; the critic al-Najashi. *All / Sunni /
+  Shia* at the top, a gold *Shia* tag. A Shia compiler's chains are counted to a Ma'sum (whom they reach, Imam by
+  Imam) and his narrators identified in al-Najashi; a Shia grader is compared only with the Shia graders, on the
+  four Imami categories (sahih, hasan, muwaththaq, da'if — majhul, mursal and marfu' among the da'if;
+  `grades.imami_group`), never with the Sunni groups; al-Najashi's verdicts are counted in the Imami terms with the
+  creeds he states. The same in `iy scholar`.
+- **Isnad Chains**: the overview says which road each book is read on, a Shia book's card in gold with "reach a
+  Ma'sum" and "identified in al-Najashi"; a Shia hadith says so beside its title; a chain raised with "رفعه" shows
+  the gap instead of "stops before a Ma'sum"; a number that is not in the book says how the book numbers its
+  hadith (al-Kafi: volume:hadith, "5:1740"); "إجازة" and other words of how a text was received are no longer read
+  as part of a narrator's name (parser isnady-isnad-6).
+- **Statistics on two roads**: *All Sunni books* (Ibn Hajar's ranks, chains to the Prophet ﷺ) and *All Shia books*
+  (al-Najashi's Imami categories, chains to a Ma'sum) are measured apart — the Shia books were counted with the
+  Sunni ones before, with 0% of their names identified; one Shia book is measured on its own road too. The hadith
+  model and the correlations rest on the Sunni grades and ranks and say so for the Shia books. Fixed: sections that
+  ran off the right edge (the cross-tables now one under the other, the map of shared narrators sized to the page,
+  the books table fitted), and the median chain length counted over the chains split into names (Sahih Muslim
+  showed "—"). `iy stats … --book @shia`. Saved results are named `corpus-all_sunni_books.json`,
+  `corpus-all_shia_books.json`.
+
 ## [0.1.9] — 2026-10-11
 
 **Sunni and Shia each by its own road — the Shia chains read the Shia way and identified in the Shia rijal works;

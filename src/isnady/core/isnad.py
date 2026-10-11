@@ -31,7 +31,7 @@ from typing import Callable
 from isnady.core.normalize import normalize as normalize_name
 from isnady.core.normalize import normalize_with_map
 
-PARSER_ID = "isnady-isnad-5"   # bump when rules change
+PARSER_ID = "isnady-isnad-6"   # bump when rules change
 
 # normalised form -> term id; longer forms first so "حدثني" is not read as "حدث"
 TERMS = [
@@ -224,7 +224,8 @@ _MASUM_HONOR_RE = re.compile(
     r"عليهم[\s\u200c]*السلام|صلوات الله عليه(?:ما|م)?|صلي الله عليه و?(?:اله|ال)(?: وسلم)?|صلي الله عليه وسلم|"
     r"(?<!\w)ع(?!\w))[\s\u200c]*[)\]]?")
 _SHIA_STOP_RE = re.compile(r"(?<!\w)(?:قال|قالا|قالوا|قالت|يقول|رفعه|يرفعه|جميعا|باسناده|وباسناده|بهذا الاسناد|"
-                           r"باسناده|مثله|نحوه|انه|انها|في حديث|قلت|سالت|سمعت|رضي الله|رحمه الله|رحمهم الله)(?!\w)")
+                           r"باسناده|مثله|نحوه|انه|انها|في حديث|قلت|سالت|سمعت|رضي الله|رحمه الله|رحمهم الله|"
+                           r"اجازه|مناوله|فيما كتب|فيما اجاز)(?!\w)")
 _JOIN_RE = re.compile(r"[\s،,؛]*و(?=[^\s])")
 _ALL_RE = re.compile(r"[\s،,؛]*جميعا(?!\w)")
 # a place or a date after a name: "بالكوفة سنة أربع وخمسين وثلاثمائة", "بمدينة السلام", "بسمرقند"

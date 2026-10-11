@@ -54,9 +54,13 @@ from isnady.gui.stats_charts import (
 
 
 def _corpus_and_models(conn, key, progress, recompute) -> dict:
-    """The analyses of the corpus sections, in one background run: the descriptive one, the model, the laboratory."""
+    """The analyses of the corpus sections, in one background run: the descriptive one, the model, the laboratory.
+    Road B (the Shia books) has the descriptive one only: the model and the laboratory rest on Ibn Hajar's ranks and
+    the Sunni grade groups, which are never laid on the Shia books (SH1)."""
+    if corpus.tradition_of_scope(conn, key) == "shia":
+        return {"corpus": corpus.cached(conn, key, progress, recompute), "models": {}, "lab": {}, "road": "shia"}
     return {"corpus": corpus.cached(conn, key, progress, recompute), "models": models.cached(conn, key, progress, recompute),
-            "lab": lab.cached(conn, key, progress, recompute)}
+            "lab": lab.cached(conn, key, progress, recompute), "road": "sunni"}
 
 
 SECTIONS = [
@@ -75,6 +79,9 @@ SECTIONS = [
 # alone). Light and dark steps are chosen each for its own surface.
 GROUP_COLORS = {False: ["#1E4A8A", "#3A72B8", "#8DB4DE", "#C9C6C0", "#E4997A", "#B23A33"],
                 True: ["#6E9FE0", "#4A7FC4", "#2E5A92", "#55534F", "#B4543F", "#E0705F"]}
+SHIA_NOTE = ("The Shia books are measured on their own road: their narrators in al-Najashi's Imami categories, their chains "
+             "ending at a Ma'sum. This section rests on Ibn Hajar's ranks and the Sunni grade groups, which are never laid on "
+             "them; the Imami grades (al-Majlisi, al-Behbudi) are compared on the Hadith Scholars page.")
 GRADE_COLORS = {False: ["#1E4A8A", "#8DB4DE", "#E4997A", "#C8564A", "#8E2A25"],
                 True: ["#6E9FE0", "#2E5A92", "#B4543F", "#D86A55", "#F08A75"]}
 
@@ -279,22 +286,45 @@ class StatisticsPage(QWidget):
 
     def _people(self, rows: list[dict], value=lambda r: r["links"], unit: str = "") -> PeopleBars:
         items = []
+        shia = self._shia()
+        group_of = corpus.GROUP_OF_RANK_SHIA if shia else corpus.GROUP_OF_RANK
+        colors = self._colors()
         for r in rows:
             rank = r.get("rank")
-            facts = [f"rank {rank}: {RANK_LABELS[rank][1]}" if rank in RANK_LABELS else "no rank in the Taqrib"]
+            if shia:
+                from isnady.core import shia_rijal
+
+                facts = [f"al-Najashi: {shia_rijal.RANKS[rank][1]}" if rank in shia_rijal.RANKS else "no judgment in al-Najashi"]
+            else:
+                facts = [f"rank {rank}: {RANK_LABELS[rank][1]}" if rank in RANK_LABELS else "no rank in the Taqrib"]
             if r.get("tabaqa"):
                 facts.append(f"tabaqa {r['tabaqa']}")
             if r.get("death"):
                 facts.append(f"d. {r['death']} AH")
             facts.append(f"{r['links']:,} times in the chains, in {r['hadith']:,} hadith")
             items.append({"id": r["id"], "label": self._name(r["id"], r["name"]), "value": value(r),
-                          "dot": GROUP_COLORS[theme.current().dark][corpus.GROUP_OF_RANK[rank]] if rank in corpus.GROUP_OF_RANK
-                                 else None,
+                          "dot": colors[group_of[rank]] if rank in group_of else None,
                           "tip": f"{self._name(r['id'], r['name'])}\n{r['name']}\n" + "\n".join(facts)
                                  + "\n\nClick to open him on the Narrators page"})
         bars = PeopleBars(items, unit)
         bars.clicked.connect(self.open_narrator.emit)
         return bars
+
+    def _shia(self) -> bool:
+        return (getattr(self, "_result", None) or {}).get("corpus", {}).get("tradition") == "shia"
+
+    def _colors(self) -> list[str]:
+        """The colours of the rank groups: Ibn Hajar's six, or the four Imami categories (road B)."""
+        full = GROUP_COLORS[theme.current().dark]
+        return full[1:5] if self._shia() else full
+
+    def _words(self) -> dict:
+        """The words of the road being measured: whom the chains reach, whose book identifies the narrators."""
+        if self._shia():
+            return {"end": "a Ma'sum", "End": "a Ma'sum (the Prophet ﷺ or an Imam)", "rijal": "al-Najashi's Rijal",
+                    "critic": "al-Najashi", "reach": "Reach a Ma'sum"}
+        return {"end": "the Prophet ﷺ", "End": "the Prophet ﷺ", "rijal": "Ibn Hajar's Taqrib", "critic": "Ibn Hajar",
+                "reach": "Reach the Prophet"}
 
     def _clear_sections(self) -> None:
         for box in self._boxes.values():
@@ -314,7 +344,21 @@ class StatisticsPage(QWidget):
 
         from isnady.gui.widgets import fill_book_combo
 
-        fill_book_combo(self.scope, conn, f"All books ({len(core_search.list_collections(conn))})")
+        from isnady.core import books as core_books
+
+        active = core_books.all_books(conn)
+        sunni = sum(1 for b in active if b["tradition"] != "shia")
+        shia = len(active) - sunni
+        current = self.scope.currentData()
+        self.scope.blockSignals(True)
+        # road A first ("all books" are the Sunni ones), road B beside it: never the two measured together (SH1)
+        fill_book_combo(self.scope, conn, f"All Sunni books ({sunni})")
+        if shia:
+            self.scope.insertItem(1, f"All Shia books ({shia})", corpus.SHIA_SCOPE)
+        index = self.scope.findData(current)
+        self.scope.setCurrentIndex(index if index >= 0 else 0)
+        self.scope.blockSignals(False)
+        _ = core_search
         self._names.clear()
         self.compute_corpus(False)
         self._refresh_graders()
@@ -374,7 +418,7 @@ class StatisticsPage(QWidget):
             box.addStretch(1)
 
     def _group_categories(self, r: dict) -> list[tuple[str, str]]:
-        return list(zip([name for name, _d in r["groups"]], GROUP_COLORS[theme.current().dark]))
+        return list(zip([name for name, _d in r["groups"]], self._colors()))
 
     def _grade_categories(self, r: dict) -> list[tuple[str, str]]:
         return list(zip(r["grade_labels"], GRADE_COLORS[theme.current().dark]))
@@ -385,14 +429,14 @@ class StatisticsPage(QWidget):
         reach = o["reaching"] / o["chains"] if o["chains"] else 0
         tiles = StatTiles([
             ("Hadith", f"{o['hadith']:,}", f"in {o['books']} book{'s' if o['books'] != 1 else ''}"),
-            ("Chains read", f"{o['chains']:,}", f"{_pct(reach)} reach the Prophet ﷺ"),
+            ("Chains read", f"{o['chains']:,}", f"{_pct(reach)} reach {self._words()['end']}"),
             ("Names identified", _pct(share_id), f"{o['identified']:,} of {o['links']:,} names in the chains"),
             ("Narrators", f"{o['narrators']:,}", "different people identified in the chains"),
         ])
         self._finding("overview", "The corpus", f"{o['hadith']:,} hadith, {o['chains']:,} chains, "
                       f"{o['narrators']:,} narrators identified.", [tiles],
                       "A chain is <b>read</b> when isnady split its text into names; a name is <b>identified</b> when it "
-                      "is matched to one person of Ibn Hajar's Taqrib. Everything below rests on the identified names, "
+                      f"is matched to one person of {self._words()['rijal']}. Everything below rests on the identified names, "
                       "so their share is the first thing to know: the measures describe the identified part.",
                       (["measure", "value"], [["hadith", o["hadith"]], ["books", o["books"]], ["chains", o["chains"]],
                                               ["chains reaching the Prophet", o["reaching"]], ["names in chains", o["links"]],
@@ -400,16 +444,28 @@ class StatisticsPage(QWidget):
                                               ["chains fully identified", o["full"]]]))
         cats = self._group_categories(r)
         strong = (n["rank_links"][0] + n["rank_links"][1]) / (sum(n["rank_links"]) or 1)
-        rows = [("All narrators of the Taqrib", n["rank_all"]), ("The narrators in these chains", n["rank_people"]),
-                ("Every name in these chains", n["rank_links"])]
-        self._finding("overview", "Reliability", f"{_pct(strong)} of all transmission passes through Companions and "
-                      "trustworthy narrators — far more than their share of the Taqrib.",
-                      [StackedBars(rows, cats)],
-                      "Ibn Hajar's twelve ranks in six groups, from Companions to the rejected. The first bar is everyone "
-                      "Ibn Hajar judged; the second, the narrators who appear in these chains; the third counts each "
-                      "narrator as often as he appears — what the hadith actually rest on. The ranks are ordered "
-                      "categories: counted, never averaged.",
-                      (["series"] + [c[0] for c in cats], [[label] + list(v) for label, v in rows]))
+        if self._shia():
+            rows = [("All narrators of al-Najashi", n["rank_all"]), ("The narrators in these chains", n["rank_people"]),
+                    ("Every name in these chains", n["rank_links"])]
+            self._finding("overview", "Reliability", f"{_pct(strong)} of the judged transmission passes through narrators "
+                          "al-Najashi calls trustworthy or praises.", [StackedBars(rows, cats)],
+                          "al-Najashi's words read in the four Imami categories — trustworthy (thiqa), praised (mamduh), a "
+                          "thiqa of another school (muwaththaq), weak — never on Ibn Hajar's scale. The first bar is "
+                          "everyone he judged; the second, the narrators who appear in these chains; the third counts "
+                          "each narrator as often as he appears. Many of his entries give no judgment (an author listed "
+                          "for his books): those are left out of the bars. Counted, never averaged.",
+                          (["series"] + [c[0] for c in cats], [[label] + list(v) for label, v in rows]))
+        else:
+            rows = [("All narrators of the Taqrib", n["rank_all"]), ("The narrators in these chains", n["rank_people"]),
+                    ("Every name in these chains", n["rank_links"])]
+            self._finding("overview", "Reliability", f"{_pct(strong)} of all transmission passes through Companions and "
+                          "trustworthy narrators — far more than their share of the Taqrib.",
+                          [StackedBars(rows, cats)],
+                          "Ibn Hajar's twelve ranks in six groups, from Companions to the rejected. The first bar is "
+                          "everyone Ibn Hajar judged; the second, the narrators who appear in these chains; the third "
+                          "counts each narrator as often as he appears — what the hadith actually rest on. The ranks are "
+                          "ordered categories: counted, never averaged.",
+                          (["series"] + [c[0] for c in cats], [[label] + list(v) for label, v in rows]))
         if r["grades"]:
             gcats = self._grade_categories(r)
             grows = [(f"{_short(g['grader'])} — {g['book']}", g["distribution"]) for g in r["grades"]]
@@ -437,21 +493,23 @@ class StatisticsPage(QWidget):
         self._finding("narrators", "The pillars", "The narrators the most hadith pass through.",
                       [self._people(n["pillars"][:20])],
                       "Counted from the identified names of these chains: how often a narrator appears, and (on hover) in "
-                      "how many hadith. The dot is his rank in Ibn Hajar's colours. Click a name to open him.",
+                      f"how many hadith. The dot is {self._words()['critic']}'s judgment of him. Click a name to open him.",
                       (["narrator", "arabic", "rank", "tabaqa", "times", "hadith"],
                        [[self._name(p["id"], p["name"]), p["name"], p["rank"], p["tabaqa"], p["links"], p["hadith"]]
                         for p in n["pillars"]]))
         if n["weak_pillars"]:
             self._finding("narrators", "Weak narrators", "The weak or unknown narrators the most hadith pass through — "
                           "where a grade would hang on one man.", [self._people(n["weak_pillars"])],
-                          "Narrators of rank 7 or weaker (mastur, da'if, majhul and below), by how often they appear. "
-                          "A hadith that passes through one of them is graded on its other routes — or stays weak.",
+                          ("Narrators al-Najashi calls weak (da'if, confused, accused, extremist), by how often they "
+                           "appear." if self._shia() else
+                           "Narrators of rank 7 or weaker (mastur, da'if, majhul and below), by how often they appear.")
+                          + " A hadith that passes through one of them is graded on its other routes — or stays weak.",
                           (["narrator", "arabic", "rank", "times", "hadith"],
                            [[self._name(p["id"], p["name"]), p["name"], p["rank"], p["links"], p["hadith"]]
                             for p in n["weak_pillars"]]))
         if n["central"]:
-            self._finding("narrators", "The network", "The narrators the transmission flows through, towards the "
-                          "Prophet ﷺ.", [self._people(n["central"], value=lambda p: 100 * p["score"], unit=" ‰")],
+            self._finding("narrators", "The network", "The narrators the transmission flows through, towards "
+                          f"{self._words()['end']}.", [self._people(n["central"], value=lambda p: 100 * p["score"], unit=" ‰")],
                           "PageRank on the graph of who narrates from whom (each pair of neighbours in a chain, weighted "
                           "by how often): a narrator ranks high when many chains lead to him and through him, not only "
                           "when he appears often. The figure is his share of the flow in thousandths.",
@@ -476,22 +534,25 @@ class StatisticsPage(QWidget):
         bins = [(str(k), lengths.get(k, 0)) for k in range(1, max(lengths or {1: 0}) + 1)]
         counts = sorted(k for k, v in lengths.items() for _ in range(v))
         median = counts[len(counts) // 2] if counts else 0
-        self._finding("chains", "Length", f"Most chains have {median} narrators between the compiler and the Prophet ﷺ.",
+        self._finding("chains", "Length", f"Most chains have {median} narrators between the compiler and "
+                      f"{self._words()['end']}.",
                       [Columns(bins, " chains")],
                       f"The number of names in each chain. A short chain (isnad 'ali) has fewer links between the compiler "
-                      f"and the Prophet; a long one (nazil) more. {unsplit:,} chains could not be split into names yet "
+                      f"and {self._words()['End']}; a long one (nazil) more. {unsplit:,} chains could not be split into names yet "
                       "and are not counted.",
                       (["names in the chain", "chains"], [[k, v] for k, v in bins] + [["not split", unsplit]]))
         cats = self._group_categories(r)
-        good = sum(ch["weakest"][:3]) / (sum(ch["weakest"]) or 1)
-        rows = [("Chains with a ranked narrator", ch["weakest"]), ("Chains fully identified", ch["weakest_full"])]
-        self._finding("chains", "The weakest link", f"In {_pct(good)} of the chains the weakest narrator is truthful or "
-                      "better.", [StackedBars(rows, cats)],
+        good = sum(ch["weakest"][:2 if self._shia() else 3]) / (sum(ch["weakest"]) or 1)
+        rows = [("Chains with a judged narrator", ch["weakest"]), ("Chains fully identified", ch["weakest_full"])]
+        self._finding("chains", "The weakest link", f"In {_pct(good)} of the chains the weakest narrator is "
+                      + ("trustworthy or praised." if self._shia() else "truthful or better."), [StackedBars(rows, cats)],
                       "A chain is as strong as its weakest narrator: for each chain, the weakest rank among its "
                       "identified narrators. The first bar counts every chain with at least one ranked narrator — its "
                       "weakest may be among the names not yet identified; the second only the chains whose every name "
                       "is identified.",
                       (["series"] + [c[0] for c in cats], [[label] + list(v) for label, v in rows]))
+        if not any(v for _k, v in ch["gaps"]) and not (ch["order_ok"] + ch["order_bad"]):
+            return                      # no years of death nor generations to compare (al-Najashi gives few)
         gaps = [(f"{k}", v) for k, v in ch["gaps"]]
         marked = {i for i, (k, _v) in enumerate(ch["gaps"]) if k > 100 or k <= -60}
         outside = sum(v for i, (_k, v) in enumerate(ch["gaps"]) if i in marked)
@@ -543,6 +604,9 @@ class StatisticsPage(QWidget):
         return table
 
     def _grades(self, r: dict) -> None:
+        if self._shia():
+            self._boxes["grades"].addWidget(_label(SHIA_NOTE, "Lead"))
+            return
         rows = [g for g in r["grades"] if g.get("weakest") and g["weakest"]["tau"] is not None]
         if not rows:
             self._boxes["grades"].addWidget(_label("No grades to compare: import a collection whose hadith are graded.",
@@ -577,11 +641,12 @@ class StatisticsPage(QWidget):
                 cells.append([(cnt / total if total else None, [f"{100 * cnt / total:.0f}%" if total else "—"])
                               for cnt in row])
             keep = [k for k, row in enumerate(table) if sum(row)]
+            # one per row: two side by side were wider than the page and cut everything off on the right
             grid.addWidget(_label(f"<b>{html.escape(_short(g['grader']))}</b> — {html.escape(g['book'])}", "Lead", rich=True),
-                           (i // 2) * 2, i % 2)
+                           i * 2, 0)
             grid.addWidget(HeatMap([group_names[k] for k in keep], r["grade_labels"], [cells[k] for k in keep],
-                                   cell=QSize(64, 28), label_w=120), (i // 2) * 2 + 1, i % 2)
-        grid.setColumnStretch(2, 1)
+                                   cell=QSize(72, 28), label_w=140), i * 2 + 1, 0)
+        grid.setColumnStretch(1, 1)
         self._finding("grades", "Cross-tables", "How each grade is spread over the weakest narrator.", [grid],
                       "Rows: the weakest narrator of the hadith's best chain; columns: the grade. Each row adds up to "
                       "100%. A sahih grade where the weakest narrator is weak is a hadith strengthened by other routes, "
@@ -604,6 +669,9 @@ class StatisticsPage(QWidget):
     # ------------------------------------------------------------------ the hadith model (ST7-H)
     def _model_section(self) -> None:
         box = self._boxes["model"]
+        if self._shia():
+            box.addWidget(_label(SHIA_NOTE, "Lead"))
+            return
         ms = (self._models or {}).get("models") or []
         if not ms:
             box.addWidget(_label("No model yet: it needs a book whose hadith are graded and whose chains are split into "
@@ -827,6 +895,9 @@ class StatisticsPage(QWidget):
     # ------------------------------------------------------------------ the laboratory (ST7-C)
     def _lab_section(self, r: dict) -> None:
         box = self._boxes["lab"]
+        if self._shia():
+            box.addWidget(_label(SHIA_NOTE, "Lead"))
+            return
         ms = r.get("hadith") or []
         if not ms and not r.get("narrators"):
             box.addWidget(_label("Nothing to correlate yet: it needs a book whose chains are split into names.", "Lead"))
@@ -1171,7 +1242,7 @@ class StatisticsPage(QWidget):
         b = r["books"]
         rows = b["rows"]
         table = QTableWidget(len(rows), 6)
-        table.setHorizontalHeaderLabels(["Book", "Chains", "Median length", "Names identified", "Reach the Prophet",
+        table.setHorizontalHeaderLabels(["Book", "Chains", "Median length", "Names identified", self._words()["reach"],
                                          "Narrators"])
         table.verticalHeader().hide()
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -1179,14 +1250,16 @@ class StatisticsPage(QWidget):
             for j, v in enumerate([row["name"], f"{row['chains']:,}", str(row["median_length"] or "—"),
                                    _pct(row["identified"]), _pct(row["reaching"]), f"{row['narrators']:,}"]):
                 table.setItem(i, j, QTableWidgetItem(v))
-        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)       # the title takes the room that is left
         table.setFixedHeight(len(rows) * 30 + 34)
         cats = self._group_categories(r)
         self._finding("books", "The books side by side", "Each book's chains and the narrators they rest on.",
                       [table, StackedBars([(row["name"], row["groups"]) for row in rows], cats, label_w=230)],
                       "The table compares the books' chains; the bars, the narrators each book's chains pass through, "
                       "each counted as often as he appears.",
-                      (["book", "chains", "median length", "identified", "reach the Prophet", "narrators"]
+                      (["book", "chains", "median length", "identified", self._words()["reach"].lower(), "narrators"]
                        + [c[0] for c in cats],
                        [[row["name"], row["chains"], row["median_length"], round(row["identified"], 4),
                          round(row["reaching"], 4), row["narrators"]] + list(row["groups"]) for row in rows]))
@@ -1194,7 +1267,10 @@ class StatisticsPage(QWidget):
             cells = [[(None, []) if i == j else (v, [f"{100 * v:.0f}%"]) for j, v in enumerate(row)]
                      for i, row in enumerate(b["overlap"])]
             self._finding("books", "Shared narrators", "How many narrators each pair of books shares.",
-                          [HeatMap(b["names"], b["names"], cells, cell=QSize(96, 40), label_w=200)],
+                          # the cells shrink with the number of books, so the map fits the page (96 px each was 1,200 px
+                          # wide for ten books and cut the whole section off on the right)
+                          [HeatMap(b["names"], b["names"], cells, cell=QSize(max(48, min(96, 640 // len(b["names"]))), 40),
+                                   label_w=200)],
                           "The Jaccard share: narrators found in both books' chains, out of those found in either. Books "
                           "of one school and one period share most.",
                           ([""] + b["names"], [[name] + [round(v, 4) for v in row] for name, row in zip(b["names"], b["overlap"])]))

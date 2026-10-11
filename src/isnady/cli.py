@@ -477,14 +477,17 @@ def cmd_stats_corpus(args) -> int:
     groups = [g for g, _d in r["groups"]]
     pct = lambda x, n: f"{100 * x / n:.1f}%" if n else "—"  # noqa: E731
     o = r["overview"]
-    print(f"{args.book or 'All books'}: {o['hadith']:,} hadith, {o['chains']:,} chains, {o['identified']:,} of "
+    shia = r.get("tradition") == "shia"               # road B: al-Najashi's Imami categories, chains to a Ma'sum
+    scope = {None: "All Sunni books", sc.SHIA_SCOPE: "All Shia books"}.get(args.book, args.book)
+    print(f"{scope}: {o['hadith']:,} hadith, {o['chains']:,} chains, {o['identified']:,} of "
           f"{o['links']:,} names identified ({pct(o['identified'], o['links'])}), {o['narrators']:,} narrators"
           + (f"  (from {r['from_file']})" if r.get("from_file") else "  (computed and saved)"))
     topic = args.topic
     if topic in ("narrators", None):
         n = r["narrators"]
-        print("\nReliability (Ibn Hajar's ranks in six groups)")
-        for label, row in (("all narrators of the Taqrib", n["rank_all"]), ("narrators in these chains", n["rank_people"]),
+        print("\nReliability (" + ("al-Najashi's words in the four Imami categories" if shia
+                                   else "Ibn Hajar's ranks in six groups") + ")")
+        for label, row in (("all narrators of al-Najashi" if shia else "all narrators of the Taqrib", n["rank_all"]), ("narrators in these chains", n["rank_people"]),
                            ("every name in these chains", n["rank_links"])):
             total = sum(row)
             print(f"  {label:30} " + " · ".join(f"{g} {pct(v, total)}" for g, v in zip(groups, row)))
@@ -500,7 +503,8 @@ def cmd_stats_corpus(args) -> int:
         print("\nChain length (names: chains): " + ", ".join(f"{k}: {v:,}" for k, v in ch["lengths"]))
         total = sum(ch["weakest"])
         print("Weakest link: " + " · ".join(f"{g} {pct(v, total)}" for g, v in zip(groups, ch["weakest"])))
-        print(f"Generations in order: {ch['order_ok']:,} pairs right, {ch['order_bad']:,} the student earlier than his teacher")
+        if ch["order_ok"] + ch["order_bad"]:
+            print(f"Generations in order: {ch['order_ok']:,} pairs right, {ch['order_bad']:,} the student earlier than his teacher")
         print("Pairs too far apart in time (student's death − teacher's), most frequent:")
         for s in ch["gap_suspects"][:args.limit]:
             print(f"  {s['gap']:+5d} years ×{s['times']:<4} {s['student']['name']}  ←  {s['teacher']['name']}")
@@ -515,7 +519,8 @@ def cmd_stats_corpus(args) -> int:
             print(f"  {g['grader'][:34]:34} {g['book'][:22]:22} n {w['n']:5,}  tau-b {w['tau']:.3f} {ci}  "
                   f"gamma {w['gamma']:.3f}  · length tau-b {lt}")
     if topic in ("books", None):
-        print("\nBooks: chains · median length · identified · reach the Prophet · narrators")
+        print("\nBooks: chains · median length · identified · " + ("reach a Ma'sum" if shia else "reach the Prophet")
+              + " · narrators")
         for b in r["books"]["rows"]:
             print(f"  {b['name'][:32]:32} {b['chains']:7,}  {b['median_length'] or '—':>3}  {100 * b['identified']:5.1f}%  "
                   f"{100 * b['reaching']:5.1f}%  {b['narrators']:6,}")
@@ -936,7 +941,7 @@ def cmd_scholar(args) -> int:
     people = S.present(conn)
     if not args.name:
         for s in people:
-            print(f"  {s['id']:13} {s['name']:38} {', '.join(s['roles'])}")
+            print(f"  {s['id']:13} {s['name']:38} {S.tradition_of(s):6} {', '.join(s['roles'])}")
         conn.close()
         return 0
     want = " ".join(args.name).lower()
@@ -945,10 +950,13 @@ def cmd_scholar(args) -> int:
         print("No such scholar in the imported data. See: iy scholar", file=sys.stderr)
         conn.close()
         return 1
-    print(f"{s['full']}  ({s['arabic']})  {s['dates']}\n  roles: {', '.join(s['roles'])}; works: {'; '.join(s['works'])}")
+    print(f"{s['full']}  ({s['arabic']})  {s['dates']}  [{S.tradition_of(s)}]\n  roles: {', '.join(s['roles'])}; "
+          f"works: {'; '.join(s['works'])}")
     for st in S.compiler_stats(conn, s):
         print(f"\n  {st['book']}: {st['hadith']:,} hadith, {st['chains']:,} chains, {st['identified']:,} of {st['links']:,} narrators identified")
         print("  teachers: " + "; ".join(f"{t['name']} ({t['count']})" for t in st["teachers"][:6]))
+        if st.get("ends"):
+            print("  his chains reach: " + "; ".join(f"{e['label']} ({e['count']:,})" for e in st["ends"][:6]))
     g = S.grader_stats(conn, s)
     if g:
         print(f"\n  grades: {g['graded']:,} hadith — " + ", ".join(f"{k} {v:,}" for k, v in g["distribution"].items()))
@@ -961,7 +969,13 @@ def cmd_scholar(args) -> int:
                   f"of {g['compared']:,} comparisons (negative = stricter)")
     cr = S.critic_stats(conn, s)
     if cr:
-        print(f"\n  verdicts on narrators: {cr['verdicts']:,} — " + ", ".join(f"{r}:{n}" for r, _l, n in cr["ranks"]))
+        if cr.get("tradition") == "shia":
+            print(f"\n  verdicts on narrators: {cr['verdicts']:,} — in the Imami terms: "
+                  + ", ".join(f"{label} {n:,}" for _r, label, n in cr["ranks"]) + f", no judgment {cr['unranked']:,}")
+            if cr.get("creeds"):
+                print("  creed, where stated: " + ", ".join(f"{label} {n:,}" for label, n in cr["creeds"]))
+        else:
+            print(f"\n  verdicts on narrators: {cr['verdicts']:,} — " + ", ".join(f"{r}:{n}" for r, _l, n in cr["ranks"]))
     conn.close()
     return 0
 
@@ -1278,7 +1292,8 @@ def build_parser() -> argparse.ArgumentParser:
                          "graded higher or lower than their chain; lab: correlations (Spearman, partial, BH) and tests (Stuart–Maxwell, Kruskal–Wallis, Mann–Whitney); graders: agreement, model, strictness, disputed hadith")
     st.add_argument("--grader", help="with 'model': only the scholars whose name contains this")
     st.add_argument("--csv", metavar="DIR", help="also write every table behind the statistics as CSV files into DIR")
-    st.add_argument("--book", help="collection key, e.g. abudawud (default: the book with most graders)")
+    st.add_argument("--book", help="collection key, e.g. abudawud; @shia for all Shia books (default: all Sunni books; "
+                                   "for graders, the book with most graders)")
     st.add_argument("--recompute", action="store_true", help="compute again instead of reading the saved results")
     st.add_argument("--limit", type=int, default=10, help="rows to list (disputed hadith, strongest relations)")
     st.set_defaults(func=cmd_stats)
