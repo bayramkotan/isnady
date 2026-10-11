@@ -180,8 +180,11 @@ when its chain reader has changed (a minute or two, once).
 
 `iy doctor` lists every copy and which one each command really starts — an older copy in the user
 folder can start before a newer one elsewhere, so every copy is kept at the same version. The same
-report is under **Help → Check Installation**. If an old copy starts even for `iy update`, run
-`python3 -s -m isnady update` (Windows: `py -s -m isnady update`).
+report is under **Help → Check Installation** (and the ⚠ button in the sidebar when something is behind), with an
+**Update** button that does what `iy update` does: every copy updated where it is, the output shown as it comes; a
+copy installed for all users asks for the administrator password in the system's own window (pkexec on Linux, the
+administrator prompt on Windows). If an old copy starts even for `iy update`, run `python3 -s -m isnady update`
+(Windows: `py -s -m isnady update`).
 
 ---
 

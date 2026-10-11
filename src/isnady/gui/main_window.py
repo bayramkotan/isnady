@@ -410,13 +410,18 @@ class MainWindow(QMainWindow):
     def _install_checked(self, report) -> None:
         if report.problems:
             self.install_notice.setToolTip("\n".join(report.problems) + "\n\n" + tr(
-                "Click for the report; 'iy update' updates every copy where it is installed."))
+                "Click for the report and the Update button: every copy is updated where it is installed."))
             self.install_notice.show()
+        else:
+            self.install_notice.hide()
 
     def _check_installation(self) -> None:
         from isnady.gui.install_dialog import InstallDialog
 
-        InstallDialog(self).exec()
+        dialog = InstallDialog(self)
+        dialog.exec()
+        if dialog.report is not None:              # the warning in the sidebar follows the last report
+            self._install_checked(dialog.report)
 
     def _preferences(self, tab: str = "") -> None:
         from isnady.gui.preferences import PreferencesDialog

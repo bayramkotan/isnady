@@ -25,8 +25,11 @@ from dataclasses import dataclass, field
 from importlib import metadata
 from pathlib import Path
 
+from isnady.core.i18n import N_, t
+
 PACKAGE = "isnady"
 COMMANDS = ("isnady", "iy", "isnady-gui", "isnady-cli")
+KINDS = (N_("user"), N_("system"), N_("venv"), N_("pipx"), N_("editable"))   # shown in the report, translated
 
 
 @dataclass
@@ -89,6 +92,16 @@ def path_from_file_url(url: str) -> Path:
     return Path(path)
 
 
+def _source_version(clone: Path) -> str | None:
+    """The version written in a clone's source (src/isnady/__init__.py), which is what an editable copy runs."""
+    try:
+        text = (Path(clone) / "src" / PACKAGE / "__init__.py").read_text(encoding="utf-8")
+    except OSError:
+        return None
+    m = re.search(r"""__version__\s*=\s*["']([^"']+)["']""", text)
+    return m.group(1) if m else None
+
+
 def find_installs() -> list[Install]:
     user_site = Path(site.getusersitepackages())
     found, seen = [], set()
@@ -112,6 +125,8 @@ def find_installs() -> list[Install]:
                     pass
             if editable:
                 kind = "editable"
+                # pip's record keeps the version of the day it was installed; a clone moves on with git pull
+                version = _source_version(editable) or dist.version
             elif "pipx" in str(d) or installer == "pipx":
                 kind = "pipx"
             elif d == user_site or str(d).startswith(str(user_site)):
@@ -120,7 +135,7 @@ def find_installs() -> list[Install]:
                 kind = "venv"
             else:
                 kind = "system"
-            found.append(Install(dist.version, d, kind, installer, editable))
+            found.append(Install(version if editable else dist.version, d, kind, installer, editable))
     try:
         import isnady
 
@@ -253,17 +268,19 @@ def diagnose(check_pypi: bool = True) -> Report:
     newest = max([i.version for i in installs] + ([rep.latest] if rep.latest else []), key=_vkey, default=None)
     versions = sorted({i.version for i in installs}, key=_vkey)
     if len(versions) > 1:
-        rep.problems.append("isnady is installed in more than one place with different versions ("
-                            + ", ".join(f"{i.version} {i.kind}" for i in installs) + "); updating brings every copy "
-                            "to the same version, where it is.")
+        rep.problems.append(t("isnady is installed in more than one place with different versions ({copies}); updating "
+                              "brings every copy to the same version, where it is.",
+                              copies=", ".join(f"{i.version} {t(i.kind)}" for i in installs)))
     for c in rep.commands:
         if c.first and c.version and newest and _vkey(c.version) < _vkey(newest):
-            rep.problems.append(f"The command '{c.path.name}' starts isnady {c.version} ({c.path}).")
+            rep.problems.append(t("The command '{name}' starts isnady {version} ({path}).", name=c.path.name,
+                                  version=c.version, path=c.path))
     for inst in installs:
         if inst.kind == "editable" and inst.editable_path and not Path(inst.editable_path).exists():
-            rep.problems.append(f"The editable installation points to {inst.editable_path}, which no longer exists.")
+            rep.problems.append(t("The editable installation points to {path}, which no longer exists.",
+                                  path=inst.editable_path))
     if rep.latest and any(_vkey(i.version) < _vkey(rep.latest) for i in released):
-        rep.problems.append(f"isnady {rep.latest} is on PyPI.")
+        rep.problems.append(t("isnady {latest} is on PyPI.", latest=rep.latest))
     # the plan: every copy that is behind is updated in place (editable clones: git pull)
     for inst in installs:
         behind = newest and _vkey(inst.version) < _vkey(newest)
@@ -280,7 +297,7 @@ def diagnose(check_pypi: bool = True) -> Report:
     user_bin = user_scripts_dir()
     if any(i.kind in ("user", "editable") for i in installs) and str(user_bin) not in os.environ.get("PATH", "") \
             and not rep.commands:
-        rep.problems.append(f"{user_bin} is not in PATH, so the isnady commands may not be found.")
+        rep.problems.append(t("{folder} is not in PATH, so the isnady commands may not be found.", folder=user_bin))
     return rep
 
 
@@ -295,28 +312,67 @@ RESCUE = "python3 -s -m isnady update" if os.name != "nt" else "py -s -m isnady 
 
 
 def as_text(rep: Report) -> str:
-    lines = [f"isnady {rep.running_version or '(not importable)'} running from {rep.running_file}",
-             f"Python: {rep.python}"]
+    lines = [t("isnady {version} running from {file}", version=rep.running_version or t("(not importable)"),
+               file=rep.running_file),
+             t("Python: {python}", python=rep.python)]
     if rep.latest:
-        lines.append(f"Latest on PyPI: {rep.latest}")
-    lines.append("\nInstallations:")
+        lines.append(t("Latest on PyPI: {latest}", latest=rep.latest))
+    lines.append("\n" + t("Installations:"))
     for i in rep.installs or []:
-        mark = "  <- imported" if i.active else ""
-        where = f"{i.editable_path} (editable)" if i.editable_path else str(i.location)
-        lines.append(f"  {i.version:10} {i.kind:9} {where}{mark}")
+        mark = "  <- " + t("imported") if i.active else ""
+        where = f"{i.editable_path} ({t('editable')})" if i.editable_path else str(i.location)
+        lines.append(f"  {i.version:10} {t(i.kind):9} {where}{mark}")
     if not rep.installs:
-        lines.append("  none found")
-    lines.append("\nCommands on PATH (the first of each name is the one that starts):")
+        lines.append("  " + t("none found"))
+    lines.append("\n" + t("Commands on PATH (the first of each name is the one that starts):"))
     for c in rep.commands:
         lines.append(f"  {'*' if c.first else ' '} {c.path}  -> {c.version or '?'}")
     lines.append("")
     if rep.problems:
-        lines.append("Problems:")
+        lines.append(t("Problems:"))
         lines += [f"  - {p}" for p in rep.problems]
         if rep.fixes:
-            lines.append("\nTo update every copy where it is (iy update runs these):")
+            lines.append("\n" + t("To update every copy where it is (iy update runs these):"))
             lines += ["  " + " ".join(f'"{a}"' if " " in a else a for a in f) for f in rep.fixes]
-        lines.append(f"\nIf 'iy update' itself does not start because an old copy runs instead: {RESCUE}")
+        lines.append("\n" + t("If 'iy update' itself does not start because an old copy runs instead: {rescue}",
+                              rescue=RESCUE))
     else:
-        lines.append("No problems found.")
+        lines.append(t("No problems found."))
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------- running the plan from the window
+def for_window(argv: list[str]) -> list[str] | None:
+    """The same command for a window with no terminal: sudo cannot ask for the password there, so the system's
+    graphical prompt (pkexec) asks instead; None when there is none (then the command is run in a terminal).
+    Windows' administrator prompt already is a window."""
+    if argv[0] != "sudo":
+        return argv
+    if shutil.which("pkexec"):
+        return ["pkexec"] + argv[1:]
+    return None
+
+
+def run_plan(plan: list[list[str]], say, window: bool = False) -> list[tuple[list[str], int]]:
+    """Run every update command, one after the other, passing each line of their output to say(line).
+    Returns (command, exit code) for each; a command that could not be run has code -1."""
+    results = []
+    for argv in plan:
+        run = for_window(argv) if window else argv
+        if run is None:
+            say(t("Needs administrator rights and no graphical prompt was found; run in a terminal:") + "\n  "
+                + " ".join(argv))
+            results.append((argv, -1))
+            continue
+        say("$ " + " ".join(run))
+        try:
+            proc = subprocess.Popen(run, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                    encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL)
+            for line in proc.stdout:
+                say(line.rstrip())
+            code = proc.wait()
+        except OSError as exc:
+            say(str(exc))
+            code = -1
+        results.append((argv, code))
+    return results

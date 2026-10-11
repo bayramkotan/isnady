@@ -3,6 +3,16 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Check Installation updates by itself**: an **Update** button runs the update of every copy where it is
+  installed (what `iy update` does) and shows the output as it comes; a copy installed for all users asks for
+  the administrator password in the system's own window (pkexec on Linux, the Windows administrator prompt); after
+  it, the report is made again and the ⚠ in the sidebar goes away when nothing is left. The report is in the
+  interface language.
+- Fixed: an editable copy (a clone installed with `pip install -e`) was reported with the version of the day it
+  was installed ("0.1.9 editable" while it ran 0.2.0); its version is now read from its source.
+
 ## [0.2.0] — 2026-10-11
 
 **The interface in Turkish and Arabic, with 24 languages to choose from; every narrator's name in Latin letters;
