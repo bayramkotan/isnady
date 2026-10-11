@@ -26,6 +26,12 @@ is taken from its section here.
   the books table fitted), and the median chain length counted over the chains split into names (Sahih Muslim
   showed "—"). `iy stats … --book @shia`. Saved results are named `corpus-all_sunni_books.json`,
   `corpus-all_shia_books.json`.
+- **Statistics: one book for the whole page.** The Graders section had its own book list beside **Books** above,
+  so the page could show two different books at once (Books: Fada'il al-Shi'a, Graders: Sunan al-Nasa'i). Now the
+  two move together: a book chosen above is the book of Graders; a book chosen in Graders becomes the book above;
+  a book with fewer than two graders, or a Shia book, says so (the Shia graders are compared on the Imami categories
+  on the Hadith Scholars page) instead of showing another book's graders. The Graders list holds only the Sunni books
+  with two or more graders.
 
 ## [0.1.9] — 2026-10-11
 

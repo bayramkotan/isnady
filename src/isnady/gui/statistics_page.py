@@ -164,7 +164,7 @@ class StatisticsPage(QWidget):
         self.scope = QComboBox()
         self.scope.setObjectName("FilterCombo")
         self.scope.setMinimumWidth(220)
-        self.scope.currentIndexChanged.connect(lambda _i: self.compute_corpus(False))
+        self.scope.currentIndexChanged.connect(self._scope_changed)
         head.addWidget(self.scope, 0, Qt.AlignmentFlag.AlignBottom)
         self.c_recompute = QPushButton("Recompute")
         self.c_recompute.setObjectName("Quiet")
@@ -1281,14 +1281,17 @@ class StatisticsPage(QWidget):
         gl = QVBoxLayout(graders)
         gl.setContentsMargins(0, 0, 0, 0)
         bar = QHBoxLayout()
-        bar.addWidget(_label("Book", "FilterTitle"))
+        # ONE choice of book for the whole page: this list follows "Books" above and moves it in turn (a book chosen
+        # here and another one above showed two different books at once — Bayram, 2026-10-11)
+        self.book_title = _label("Book (two or more graders)", "FilterTitle")
+        bar.addWidget(self.book_title)
         self.book = QComboBox()
         self.book.setObjectName("FilterCombo")
-        self.book.currentIndexChanged.connect(lambda _i: self.compute(False))
+        self.book.currentIndexChanged.connect(self._grader_book_changed)
         bar.addWidget(self.book)
-        self.recompute = QPushButton("Recompute")
+        self.recompute = QPushButton("Recompute graders")
         self.recompute.setObjectName("Quiet")
-        self.recompute.setToolTip("The results are kept in a file and reused while the grades are unchanged")
+        self.recompute.setToolTip("The graders' results are kept in a file and reused while the grades are unchanged")
         self.recompute.clicked.connect(lambda: self.compute(True))
         bar.addWidget(self.recompute)
         self.status = _label("", "Caption")
@@ -1322,21 +1325,71 @@ class StatisticsPage(QWidget):
     def _how(self, text: str) -> QLabel:
         return _label("<b>How to read it</b> — " + text, "Caption", rich=True)
 
-    def _refresh_graders(self) -> None:
+    def _grader_books(self) -> list[tuple[str, str, int]]:
+        """The Sunni books with two or more graders, in reading order: the Graders section compares Sunni grade
+        groups (the Shia graders are compared on the Hadith Scholars page, on the Imami categories)."""
+        from isnady.core import books as core_books
+
         conn = self.conn
-        books = core.books_with_grades(conn)
+        counts = {k: n for k, _name, n in core.books_with_grades(conn)}
+        return [(b["key"], b["name"], counts[b["key"]]) for b in core_books.all_books(conn)
+                if b["tradition"] != "shia" and counts.get(b["key"], 0) >= 2]
+
+    def _refresh_graders(self) -> None:
+        books = self._grader_books()
         current = self.book.currentData()
         self.book.blockSignals(True)
         self.book.clear()
         for key, name, n in books:
-            self.book.addItem(f"{name} — {n} grader{'s' if n != 1 else ''}", key)
+            self.book.addItem(f"{name} — {n} graders", key)
         self.book.setCurrentIndex(max(0, self.book.findData(current)))
         self.book.blockSignals(False)
-        if books:
-            self.compute(False)
-        else:
+        self._follow_scope()
+
+    def _scope_changed(self, _index: int = 0) -> None:
+        self.compute_corpus(False)
+        self._follow_scope()
+
+    def _follow_scope(self) -> None:
+        """Show in Graders the book chosen above; or say why it has none to show."""
+        scope = self.scope.currentData()
+        books = self._grader_books()
+        keys = [k for k, _n, _c in books]
+        name = self.scope.currentText().split(" (")[0]
+        message = None
+        if scope == corpus.SHIA_SCOPE or (scope and corpus.tradition_of_scope(self.conn, scope) == "shia"):
+            message = ("The Shia graders (al-Majlisi, al-Behbudi, al-Muhsini) are compared on their own road, on the four "
+                       "Imami categories: Hadith Scholars → al-'Allama al-Majlisi. This section compares the Sunni grade "
+                       "groups, never laid on the Shia books.")
+        elif scope and scope not in keys:
+            message = (f"{name} has no two graders to compare. The books that have: "
+                       + (", ".join(n for _k, n, _c in books) or "none imported yet") + ".")
+        elif not books:
+            message = "No grades yet: import a collection with graded hadith (Data Sources)."
+        self.book.setVisible(message is None)
+        self.book_title.setVisible(message is None)
+        self.recompute.setVisible(message is None)
+        if message:
             self._clear()
-            self.box.addWidget(_label("No grades yet: import a collection with graded hadith (Data Sources).", "Lead"))
+            self.status.setText("")
+            self.box.addWidget(_label(message, "Lead"))
+            self.box.addStretch(1)
+            return
+        if scope and self.book.currentData() != scope:
+            self.book.blockSignals(True)
+            self.book.setCurrentIndex(self.book.findData(scope))
+            self.book.blockSignals(False)
+        self.compute(False)
+
+    def _grader_book_changed(self, _index: int) -> None:
+        """A book chosen here is the book of the whole page: "Books" above follows it."""
+        key = self.book.currentData()
+        if key and self.scope.currentData() != key:
+            i = self.scope.findData(key)
+            if i >= 0:
+                self.scope.setCurrentIndex(i)        # → _scope_changed → corpus of that book, Graders shows it
+                return
+        self.compute(False)
 
     def compute(self, recompute: bool) -> None:
         key = self.book.currentData()
