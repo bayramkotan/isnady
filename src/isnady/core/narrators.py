@@ -863,9 +863,12 @@ def hadiths_of(conn: sqlite3.Connection, person_id: int, limit: int = 60) -> tup
     """The hadith whose chains include this narrator: (rows, total)."""
     total = conn.execute("SELECT COUNT(DISTINCT i.hadith_id) FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id "
                          "WHERE l.person_id = ?", (person_id,)).fetchone()[0]
+    from isnady.core import books
+
     rows = conn.execute(
-        """SELECT DISTINCT i.hadith_id, c.name, h.number, h.number_sort, c.key FROM isnad_links l
+        f"""SELECT DISTINCT i.hadith_id, c.name, h.number, h.number_sort, c.key FROM isnad_links l
            JOIN isnads i ON i.id = l.isnad_id JOIN hadiths h ON h.id = i.hadith_id
            JOIN collections c ON c.id = h.collection_id
-           WHERE l.person_id = ? ORDER BY c.key, h.number_sort LIMIT ?""", (person_id, limit)).fetchall()
+           WHERE l.person_id = ? ORDER BY {books.order_sql(conn)}, h.number_sort LIMIT ?""",
+        (person_id, limit)).fetchall()
     return [{"hadith_id": r[0], "book": r[1], "number": r[2]} for r in rows], total

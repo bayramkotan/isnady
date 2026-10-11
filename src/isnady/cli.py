@@ -668,14 +668,16 @@ def cmd_stats(args) -> int:
             args.topic = None
         return cmd_stats_corpus(args)
     conn = _connect()
+    from isnady.core import books as core_books
+
     books = conn.execute(
-        """SELECT c.id, c.name,
+        f"""SELECT c.id, c.name,
                   (SELECT COUNT(*) FROM hadiths h WHERE h.collection_id = c.id) AS hadiths,
                   (SELECT COUNT(DISTINCT g.hadith_id) FROM grades g JOIN hadiths h ON h.id = g.hadith_id
                    WHERE h.collection_id = c.id) AS graded,
                   (SELECT COUNT(*) FROM grades g JOIN hadiths h ON h.id = g.hadith_id
                    WHERE h.collection_id = c.id) AS grades
-           FROM collections c ORDER BY c.name"""
+           FROM collections c ORDER BY {core_books.order_sql(conn)}"""
     ).fetchall()
     print(f"Database: {db_path()}")
     for b in books:
@@ -1000,10 +1002,13 @@ def cmd_isnads(args) -> int:
             print(f"    {count:6}  not split: {problem}")
     if core_narrators_loaded(conn):
         core_narrators.link_narrators(conn, progress=print)
+        from isnady.core import books as core_books
+
         for book, total, found in conn.execute(
-            """SELECT c.name, COUNT(*), SUM(l.person_id IS NOT NULL) FROM isnad_links l
+            f"""SELECT c.name, COUNT(*), SUM(l.person_id IS NOT NULL) FROM isnad_links l
                JOIN isnads i ON i.id = l.isnad_id JOIN hadiths h ON h.id = i.hadith_id
-               JOIN collections c ON c.id = h.collection_id WHERE i.problem IS NULL GROUP BY c.id ORDER BY c.name"""):
+               JOIN collections c ON c.id = h.collection_id WHERE i.problem IS NULL GROUP BY c.id
+               ORDER BY {core_books.order_sql(conn)}"""):
             print(f"  {book}: {found} of {total} narrators in chains identified ({100 * found / total:.1f}%)")
     conn.close()
     return 0

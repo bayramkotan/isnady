@@ -262,7 +262,7 @@ def search(conn: sqlite3.Connection, query: SearchQuery) -> SearchPage:
             JOIN hadiths h ON h.id = t.hadith_id
             JOIN collections c ON c.id = h.collection_id
             WHERE {' AND '.join(where)}
-            ORDER BY c.name, h.number_sort, h.number""",
+            ORDER BY {core_books.order_sql(conn)}, h.number_sort, h.number""",
         params,
     ).fetchall()
 

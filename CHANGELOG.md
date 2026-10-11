@@ -36,6 +36,9 @@ is taken from its section here.
 - **Rebuilding the chains no longer takes hours**: an index on `grades(isnad_id)` — removing the old chains read
   the whole grades table once per chain (the demo database: 235 s → 1 s; a full one: hours, and the window did not
   open). Every database gets it when it is opened.
+- **Search results in the order of the books**: Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud … then the Shia
+  books, as the book lists show them — they came by title, so al-Kafi and 'Uyun Akhbar al-Rida stood before
+  Sahih al-Bukhari. The same order for a narrator's hadith, `iy isnads` and `iy stats` (`books.order_sql`).
 
 ## [0.1.8] — 2026-10-10
 

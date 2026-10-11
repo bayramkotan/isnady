@@ -65,6 +65,17 @@ def all_books(conn: sqlite3.Connection, include_inactive: bool = False) -> list[
     return rows if include_inactive else [r for r in rows if r["active"]]
 
 
+def order_sql(conn: sqlite3.Connection, column: str = "c.key") -> str:
+    """An SQL expression that sorts by the reading order of the books (Sunni first, in their classical order; Shia
+    after them) — for ORDER BY, so results come book by book as the book lists show them, never by title (a title
+    sorted alphabetically put al-Kafi and 'Uyun before Sahih al-Bukhari)."""
+    keys = [r["key"] for r in all_books(conn, include_inactive=True)]
+    if not keys:
+        return "0"
+    whens = " ".join(f"WHEN '{k.replace(chr(39), chr(39) * 2)}' THEN {i}" for i, k in enumerate(keys))
+    return f"CASE {column} {whens} ELSE {len(keys)} END"
+
+
 def active_keys(conn: sqlite3.Connection) -> list[str] | None:
     """The keys to search when "all books" is asked for: None when every book is active (no filter needed)."""
     off = disabled()

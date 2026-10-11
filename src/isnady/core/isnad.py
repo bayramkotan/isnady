@@ -610,12 +610,14 @@ def split_text(text: str, raw_isnad: str | None) -> tuple[str, str]:
 def book_stats(conn: sqlite3.Connection) -> list[dict]:
     """Per book: chains read, split into narrators, reaching the Prophet (on road B: a Ma'sum), and why the rest
     were not split."""
+    from isnady.core import books
+
     out = []
     for r in conn.execute(
-        """SELECT c.id, c.key, c.name, COUNT(*) AS chains, SUM(i.problem IS NULL) AS split,
+        f"""SELECT c.id, c.key, c.name, COUNT(*) AS chains, SUM(i.problem IS NULL) AS split,
                   SUM(i.problem IS NULL AND i.reaches_prophet = 1) AS marfu, COALESCE(c.tradition, 'sunni')
            FROM isnads i JOIN hadiths h ON h.id = i.hadith_id JOIN collections c ON c.id = h.collection_id
-           WHERE i.derived_by IS NOT NULL GROUP BY c.id ORDER BY c.name"""
+           WHERE i.derived_by IS NOT NULL GROUP BY c.id ORDER BY {books.order_sql(conn)}"""
     ):
         problems = conn.execute(
             """SELECT i.problem, COUNT(*) FROM isnads i JOIN hadiths h ON h.id = i.hadith_id
