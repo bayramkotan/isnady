@@ -187,7 +187,32 @@ class ChainNode(QWidget):
         name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         if full_name and full_name != title:
             name.setToolTip(full_name)
-        box.addWidget(name)
+        reading = None
+        if not latin and not prophet and not i18n.rtl():
+            # the name in Latin letters beside the Arabic, as it is written in the chain (Bayram, 2026-10-11:
+            # the space on the left stood empty)
+            text, spelled = core_isnad.name_reading(full_name or title, i18n.language())
+            if text:
+                reading = QLabel(html.escape(text) + (" <span style='color:%s'>≈</span>" % theme.current().muted
+                                                      if spelled else ""))
+                reading.setObjectName("NodeReading")
+                reading.setTextFormat(Qt.TextFormat.RichText)
+                reading.setFont(theme.reading_font(16, bold=True, scaled=True))
+                reading.setWordWrap(True)
+                reading.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignAbsolute
+                                     | Qt.AlignmentFlag.AlignVCenter)
+                reading.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+                reading.setToolTip(tr("The name as it is written in the chain, in Latin letters.")
+                                   + ("\n" + tr("≈ a word not in isnady's list of names was spelled letter by "
+                                                 "letter: its short vowels are a guess.") if spelled else ""))
+        if reading is not None:
+            line = QHBoxLayout()
+            line.setSpacing(16)
+            line.addWidget(reading, 1)
+            line.addWidget(name, 1)
+            box.addLayout(line)
+        else:
+            box.addWidget(name)
         if subtitle:
             sub = QLabel(subtitle)
             sub.setObjectName("Caption")

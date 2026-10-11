@@ -563,6 +563,62 @@ def short_name(raw_name: str) -> str:
     return name.strip(" ،,-")
 
 
+# a link that names no one by name, only by kinship or as "a man": said in words, not spelled
+_KIN = {
+    "ابيه": ("babası", "his father"), "امه": ("annesi", "his mother"), "جده": ("dedesi", "his grandfather"),
+    "جدته": ("ninesi", "his grandmother"), "عمه": ("amcası", "his paternal uncle"),
+    "خاله": ("dayısı", "his maternal uncle"), "اخيه": ("kardeşi", "his brother"), "اخته": ("kız kardeşi", "his sister"),
+    "ابنه": ("oğlu", "his son"), "مولاه": ("mevlâsı (azatlısı)", "his mawla"), "رجل": ("bir adam", "a man"),
+    "شيخ": ("bir şeyh", "a shaykh"), "امراه": ("bir kadın", "a woman"),
+    "غير واحد": ("birden çok râvi", "more than one narrator"),
+    "بعض اصحابه": ("arkadaşlarından biri", "one of his companions"),
+    "بعض اصحابنا": ("arkadaşlarımızdan biri", "one of our companions"),
+    "عده من اصحابنا": ("arkadaşlarımızdan bir topluluk", "a group of our companions"),
+    "جماعه من اصحابنا": ("arkadaşlarımızdan bir cemaat", "a number of our companions"),
+}
+
+
+def name_reading(raw_name: str, language: str = "tr") -> tuple[str, bool]:
+    """A chain link's name in Latin letters as it is written in the chain — "حماد يعني ابن سلمة" → "Hammâd (yani
+    İbn Seleme)", "أبيه" → "babası", "ابن أبي عتيق" → "İbn Ebî Atîk". (text, spelled): spelled when a word was not
+    in the word list and was spelled letter by letter (its short vowels a guess). Turkish or English."""
+    from isnady.core import names
+    from isnady.core.normalize import normalize
+
+    lang = "tr" if language == "tr" else "en"
+    parts = re.split(r"\s*[،,]?\s*-?\s*(?:يَعْنِي|يعني)\s+", raw_name.strip(" ،,-"), maxsplit=1)
+    outs, spelled = [], False
+    for part in parts:
+        part = re.split(r"\s*[،,]?\s*-\s*(?:هُوَ|هو)\s|\s{2,}(?:هُوَ|هو)\s", part)[0].strip(" ،,-")
+        key = normalize(part)
+        if key in _KIN:
+            outs.append(_KIN[key][0 if lang == "tr" else 1])
+            continue
+        words = part.split()
+        if words and normalize(words[0]) == "ابن":
+            rest = words[1:]
+            head = "İbn" if lang == "tr" else "Ibn"
+            if rest and normalize(rest[0]) in ("ابي", "ابو", "ابا"):
+                head += " Ebî" if lang == "tr" else " Abi"
+                rest = rest[1:]
+            text, guessed = names.reading(" ".join(rest), lang) if rest else ("", False)
+            outs.append(f"{head} {text}".strip())
+            spelled = spelled or guessed
+            continue
+        text, guessed = names.reading(part, lang)
+        if text:
+            outs.append(text)
+            spelled = spelled or guessed
+    if not outs:
+        return "", False
+    # after عن the name stands in the genitive (أبي هريرة); read as a name it is Abu Hurayra
+    outs = [("Abu " + o[4:]) if o.startswith("Abi ") else o for o in outs]
+    outs[0] = outs[0][:1].upper() + outs[0][1:]
+    if len(outs) == 2:
+        return f"{outs[0]} ({'yani' if lang == 'tr' else 'that is,'} {outs[1]})", spelled
+    return outs[0], spelled
+
+
 def hadith_id(conn: sqlite3.Connection, book: str, number: str) -> int | None:
     row = conn.execute(
         "SELECT h.id FROM hadiths h JOIN collections c ON c.id = h.collection_id WHERE c.key = ? AND h.number = ?",

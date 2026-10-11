@@ -394,6 +394,8 @@
  "not identified: {n} narrators could have this name": "not identified: {n} narrators could have this name",
  "not identified: no narrator of this name in the rijal work": "not identified: no narrator of this name in the rijal work",
  "The chain reaches {whom}": "The chain reaches {whom}",
+ "The name as it is written in the chain, in Latin letters.": "The name as it is written in the chain, in Latin letters.",
+ "≈ a word not in isnady's list of names was spelled letter by letter: its short vowels are a guess.": "≈ a word not in isnady's list of names was spelled letter by letter: its short vowels are a guess.",
  "\n\nClick to open this narrator.": "\n\nClick to open this narrator.",
  "known by {how}": "known by {how}",
  "no judgment in these words": "no judgment in these words",

@@ -83,7 +83,7 @@ WORDS = {
     "ثعلبة": ("Sa'lebe", "Tha'laba"), "المبارك": ("el-Mübârek", "al-Mubarak"), "زريع": ("Zürey'", "Zuray'"), "عبيدة": ("Ubeyde", "Ubayda"),
     "شريح": ("Şüreyh", "Shurayh"), "رباح": ("Rebâh", "Rabah"), "وكيع": ("Vekî'", "Waki'"), "جبر": ("Cebr", "Jabr"),
     "سيرين": ("Sîrîn", "Sirin"), "واقد": ("Vâkıd", "Waqid"), "مليح": ("Melîh", "Malih"), "هاشم": ("Hâşim", "Hashim"),
-    "وقاص": ("Vakkâs", "Waqqas"), "عتبة": ("Utbe", "Utba"), "الحميد": ("el-Hamîd", "al-Hamid"), "طالب": ("Tâlib", "Talib"),
+    "وقاص": ("Vakkâs", "Waqqas"), "عتبة": ("Utbe", "Utba"), "عتيق": ("Atîk", "Atiq"), "الحميدي": ("el-Humeydî", "al-Humaydi"), "الحميد": ("el-Hamîd", "al-Hamid"), "طالب": ("Tâlib", "Talib"),
     "مجاهد": ("Mücâhid", "Mujahid"), "عياض": ("İyâz", "Iyad"), "المجيد": ("el-Mecîd", "al-Majid"), "هشيم": ("Hüşeym", "Hushaym"),
     "عيينة": ("Uyeyne", "Uyayna"), "عبادة": ("Ubâde", "Ubada"), "النضر": ("en-Nadr", "al-Nadr"), "زهير": ("Züheyr", "Zuhayr"),
     "شعيب": ("Şuayb", "Shu'ayb"), "المنكدر": ("el-Münkedir", "al-Munkadir"), "شيبان": ("Şeybân", "Shayban"), "يعلى": ("Ya'lâ", "Ya'la"),

@@ -3,6 +3,15 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Isnad Chains: every name in Latin letters beside its Arabic.** Each link of the chain shows the name as it is
+  written in the chain, read in Latin letters on the left of the Arabic (it stood empty): Ebû Kâmil, Hammâd (yani
+  İbn Seleme), İbn Ebî Atîk; a link that names no one by name is said in words — أبيه "his father", رجل "a man",
+  عدة من أصحابنا "a group of our companions". A word not in isnady's list of names is spelled letter by letter and
+  marked ≈ (its short vowels a guess). Shown in every left-to-right interface; Turkish readings in Turkish, English
+  in the others. `core.isnad.name_reading`.
+
 ## [0.2.3] — 2026-10-11
 
 - **Interface languages — 58 in the list:** the language of Azerbaijan is named **Azərbaycan türkcəsi** in its own

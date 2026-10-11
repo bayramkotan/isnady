@@ -394,6 +394,8 @@
  "not identified: {n} narrators could have this name": "لم يُعيَّن: قد يكون بهذا الاسم {n} من الرواة",
  "not identified: no narrator of this name in the rijal work": "لم يُعيَّن: لا راوي بهذا الاسم في كتاب الرجال",
  "The chain reaches {whom}": "يصل السند إلى {whom}",
+ "The name as it is written in the chain, in Latin letters.": "الاسم كما كُتب في السند، بالحروف اللاتينية.",
+ "≈ a word not in isnady's list of names was spelled letter by letter: its short vowels are a guess.": "≈ كلمة ليست في قائمة الأسماء في isnady قُرئت حرفًا حرفًا: حركاتها القصيرة تخمين.",
  "\n\nClick to open this narrator.": "\n\nانقر لفتح هذا الراوي.",
  "known by {how}": "يُعرف {how}",
  "no judgment in these words": "لا حكم في هذه الألفاظ",
