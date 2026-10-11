@@ -26,10 +26,8 @@ import sqlite3
 from collections import Counter, defaultdict
 
 from isnady.core import stats_corpus as sc
-from isnady.core import stats_graders
-from isnady.core.grades import GROUP_LABELS
 
-METHOD = "isnady-models-1"
+METHOD = "isnady-models-2"
 MIN_CATEGORY = 15             # a grade given fewer times than this joins its weaker neighbour (thresholds need data)
 SURPRISE = 0.05               # below this probability a surprise is called strong (shown, counted)
 
@@ -48,6 +46,21 @@ BLOCKS = [
     ("mawquf", "Stops short of the Prophet", "the chain ends with a Companion or a Successor (mawquf, maqtu')"),
     ("doubtful", "A doubtful link", "the chain has a pair too far apart in time, or out of the order of generations"),
 ]
+SUNNI = sc.Road("sunni")
+
+
+def blocks_for(road: "sc.Road") -> list[tuple[str, str, str]]:
+    """BLOCKS in the words of the road (SH1): road B's critic is al-Najashi, its chains end at a Ma'sum."""
+    if not road.shia:
+        return BLOCKS
+    words = {
+        "weakest": ("Weakest narrator", "the weakest identified narrator of the hadith's best chain in al-Najashi's "
+                                        "categories, against a chain whose weakest is trustworthy (thiqa)"),
+        "weak_count": ("More weak narrators", "each further narrator al-Najashi calls weak in that chain beyond the first"),
+        "unidentified": ("Names not identified", "each name of the chain not matched to a narrator of al-Najashi"),
+        "mawquf": ("Stops short of a Ma'sum", "the chain does not reach the Prophet or an Imam (it ends with a narrator)"),
+    }
+    return [(k, *words[k]) if k in words else (k, lab, e) for k, lab, e in BLOCKS]
 
 
 # ------------------------------------------------------------------ small numerics
@@ -244,9 +257,11 @@ def predict(params: list[float], k: int, x: tuple) -> list[float]:
 
 
 # ------------------------------------------------------------------ the data
-def hadith_features(conn: sqlite3.Connection, collection: str) -> dict[int, dict]:
-    """For every hadith of a book with at least one chain split into names: its factors (see BLOCKS)."""
-    persons = sc._persons(conn)
+def hadith_features(conn: sqlite3.Connection, collection: str, road: "sc.Road | None" = None) -> dict[int, dict]:
+    """For every hadith of a book with at least one chain split into names: its factors (see BLOCKS), on the
+    book's own road (SH1)."""
+    road = road or sc.road_of(conn, collection)
+    persons = sc._persons(conn, road.tradition)
     book = conn.execute("SELECT id FROM collections WHERE key = ?", (collection,)).fetchone()
     if not book:
         return {}
@@ -264,11 +279,10 @@ def hadith_features(conn: sqlite3.Connection, collection: str) -> dict[int, dict
         described = []
         for c in cs:
             links = c["links"]
-            ranks = [persons[p]["rank"] for p in links if p in persons and persons[p]["rank"] in sc.GROUP_OF_RANK]
+            ranks = [persons[p]["rank"] for p in links if p in persons and persons[p]["rank"] in road.group_of]
             ids = [p for p in links if p in persons]
             if ranks:
-                g = sc.GROUP_OF_RANK[max(ranks)]
-                weakest = WEAKEST_LEVELS[g] if g else "Companion only"
+                weakest = road.levels[road.group_of[max(ranks)]]
             else:
                 weakest = "None ranked"
             doubtful = False
@@ -282,9 +296,9 @@ def hadith_features(conn: sqlite3.Connection, collection: str) -> dict[int, dict
                         doubtful = True
             described.append({
                 # the weak narrators BEYOND the first: the first is already the weakest link
-                "weakest": weakest, "weak_count": max(0, sum(1 for r in ranks if r >= 7) - 1), "length": len(links),
+                "weakest": weakest, "weak_count": max(0, sum(1 for r in ranks if r >= road.weak_from) - 1), "length": len(links),
                 "unidentified": len(links) - len(ids), "mawquf": 0 if c["reaches"] else 1, "doubtful": int(doubtful),
-                "order": (WEAKEST_LEVELS.index(weakest) if weakest != "None ranked" else 9, len(links) - len(ids)),
+                "order": (road.levels.index(weakest) if weakest != "None ranked" else 9, len(links) - len(ids)),
             })
         best = min(described, key=lambda d: d["order"])       # the strongest weakest link, then the most identified
         best = dict(best)
@@ -295,20 +309,20 @@ def hadith_features(conn: sqlite3.Connection, collection: str) -> dict[int, dict
     return out
 
 
-def _design(feats: list[dict], blocks: list[str]) -> tuple[list[str], list[str], callable]:
+def _design(feats: list[dict], blocks: list[str], road: "sc.Road" = SUNNI) -> tuple[list[str], list[str], callable]:
     """The columns of x for the chosen blocks: indicators for the weakest narrator (against Trustworthy, levels
     with fewer than 10 hadith folded into their neighbour), numbers capped where long tails would dominate."""
     columns, column_block = [], []
     levels = []
     if "weakest" in blocks:
         seen = Counter(f["weakest"] for f in feats)
-        levels = [lv for lv in WEAKEST_LEVELS if lv != REFERENCE and seen[lv] >= 10]
+        levels = [lv for lv in road.levels if lv != road.reference and seen[lv] >= 10]
         columns += [f"Weakest: {lv}" for lv in levels]
         column_block += ["weakest"] * len(levels)
     caps = {"weak_count": 3, "length": 9, "unidentified": 6, "routes": 5, "takhrij": 5, "mawquf": 1, "doubtful": 1}
     numeric = [b for b in blocks if b != "weakest"]
     for b in numeric:
-        columns.append(dict((k, lab) for k, lab, _e in BLOCKS)[b])
+        columns.append(dict((k, lab) for k, lab, _e in blocks_for(road))[b])
         column_block.append(b)
 
     def row(f: dict) -> tuple:
@@ -328,9 +342,9 @@ def _varying(feats: list[dict]) -> list[str]:
     return keep
 
 
-def _merge_categories(ys: list[int]) -> tuple[dict[int, int], list[str]]:
+def _merge_categories(ys: list[int], road: "sc.Road" = SUNNI) -> tuple[dict[int, int], list[str]]:
     """Grades given fewer than MIN_CATEGORY times join their weaker neighbour (or stronger, at the end)."""
-    order = list(range(len(sc.GRADE_ORDER)))                      # 0 sahih … 4 fabricated
+    order = list(range(len(road.grade_order)))       # 0 sahih … 4 fabricated (road B: 0 sahih … 3 da'if)
     counts = Counter(ys)
     groups = [[c] for c in order if counts[c]]
     changed = True
@@ -344,12 +358,12 @@ def _merge_categories(ys: list[int]) -> tuple[dict[int, int], list[str]]:
                 changed = True
                 break
     mapping = {c: gi for gi, g in enumerate(groups) for c in g}
-    labels = [" or ".join(GROUP_LABELS[sc.GRADE_ORDER[c]] for c in g) for g in groups]
+    labels = [" or ".join(road.grade_names[road.grade_order[c]] for c in g) for g in groups]
     return mapping, labels
 
 
-def _fit_blocks(rows: list[tuple[dict, int]], blocks: list[str], categories: int):
-    columns, column_block, make = _design([f for f, _y in rows], blocks)
+def _fit_blocks(rows: list[tuple[dict, int]], blocks: list[str], categories: int, road: "sc.Road" = SUNNI):
+    columns, column_block, make = _design([f for f, _y in rows], blocks, road)
     grouped = Counter((make(f), y) for f, y in rows)
     groups = [(x, y, w) for (x, y), w in grouped.items()]
     fit = fit_ordinal(groups, categories)
@@ -357,18 +371,18 @@ def _fit_blocks(rows: list[tuple[dict, int]], blocks: list[str], categories: int
 
 
 def model_grader(conn: sqlite3.Connection, collection: str, grader: str, by_hadith: dict[int, int],
-                 features: dict[int, dict], numbers: dict[int, str]) -> dict | None:
-    """The model of one scholar's grades of one book."""
-    rows_raw = [(features[h], sc.GRADE_ORDER.index(g), h) for h, g in by_hadith.items()
-                if h in features and g in sc.GRADE_ORDER]
+                 features: dict[int, dict], numbers: dict[int, str], road: "sc.Road" = SUNNI) -> dict | None:
+    """The model of one scholar's grades of one book, on the book's road."""
+    rows_raw = [(features[h], road.grade_order.index(g), h) for h, g in by_hadith.items()
+                if h in features and g in road.grade_order]
     if len(rows_raw) < 100:
         return None
-    mapping, labels = _merge_categories([y for _f, y, _h in rows_raw])
+    mapping, labels = _merge_categories([y for _f, y, _h in rows_raw], road)
     if len(labels) < 2:
         return None
     rows = [(f, mapping[y]) for f, y, _h in rows_raw]
     blocks = _varying([f for f, _y in rows])
-    fit, columns, column_block, make = _fit_blocks(rows, blocks, len(labels))
+    fit, columns, column_block, make = _fit_blocks(rows, blocks, len(labels), road)
     if fit is None:
         return None
     k = fit["k"]
@@ -385,7 +399,7 @@ def model_grader(conn: sqlite3.Connection, collection: str, grader: str, by_hadi
     for block in blocks:
         reduced = [b for b in blocks if b != block]
         if reduced:
-            fit_r, cols_r, _cb, _m = _fit_blocks(rows, reduced, len(labels))
+            fit_r, cols_r, _cb, _m = _fit_blocks(rows, reduced, len(labels), road)
             ll_r = fit_r["loglik"] if fit_r else None
         else:
             ll_r = ll0
@@ -393,12 +407,13 @@ def model_grader(conn: sqlite3.Connection, collection: str, grader: str, by_hadi
             continue
         stat = max(0.0, 2 * (fit["loglik"] - ll_r))
         df = sum(1 for cb in column_block if cb == block)
-        tests.append({"block": block, "label": dict((k2, lab) for k2, lab, _e in BLOCKS)[block], "chi2": stat,
+        tests.append({"block": block, "label": dict((k2, lab) for k2, lab, _e in blocks_for(road))[block], "chi2": stat,
                       "df": df, "p": chi2_sf(stat, df)})
     for t, adj in zip(tests, holm([t["p"] for t in tests])):
         t["p_holm"] = adj
     # predictions: accuracy, Somers' D, calibration, the surprises
-    hits, base = 0, Counter(y for _f, y in rows).most_common(1)[0][1] / len(rows)
+    commonest, count = Counter(y for _f, y in rows).most_common(1)[0]
+    hits, base = 0, count / len(rows)
     table = [[0] * len(labels) for _ in range(20)]
     calibration = defaultdict(lambda: [0.0, 0, 0])
     above, below = [], []
@@ -430,6 +445,7 @@ def model_grader(conn: sqlite3.Connection, collection: str, grader: str, by_hadi
         "coefficients": coefs, "thresholds": fit["params"][:k], "converged": fit["converged"],
         "loglik": fit["loglik"], "loglik0": ll0, "mcfadden": (1 - fit["loglik"] / ll0) if ll0 else None,
         "aic": 2 * (k + fit["p"]) - 2 * fit["loglik"], "accuracy": hits / len(rows), "base_rate": base,
+        "base_label": labels[commonest],
         "somers_d": somers_d(table), "tau_b": tau, "gamma": gamma,
         "lr_all": {"chi2": 2 * (fit["loglik"] - ll0) if ll0 else None, "df": fit["p"],
                    "p": chi2_sf(2 * (fit["loglik"] - ll0), fit["p"]) if ll0 else None},
@@ -465,18 +481,19 @@ def somers_d(table: list[list[int]]) -> float | None:
 def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=None) -> dict:
     say = progress or (lambda _m: None)
     books = [(key, name) for _id, key, name in sc._books(conn, collection)]
+    road = sc.road_of(conn, collection)
     models = []
     for key, name in books:
-        data = stats_graders.load(conn, key)
+        data = road.load(conn, key)
         if not data:
             continue
         say(f"Reading the chains of {name}")
-        features = hadith_features(conn, key)
+        features = hadith_features(conn, key, road)
         numbers = dict(conn.execute("SELECT h.id, h.number FROM hadiths h JOIN collections c ON c.id = h.collection_id "
                                     "WHERE c.key = ?", (key,)).fetchall())
         for grader, by_hadith in sorted(data.items()):
             say(f"Fitting the model of {grader} — {name}")
-            m = model_grader(conn, key, grader, by_hadith, features, numbers)
+            m = model_grader(conn, key, grader, by_hadith, features, numbers, road)
             if m:
                 m["book_name"] = name
                 models.append(m)
@@ -497,8 +514,9 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
                                    "graders": [[g, grade, likely, p] for g, grade, likely, p, _n, _f in items],
                                    "factors": items[0][5]})
     shared.sort(key=lambda s: (-len(s["graders"]), sum(g[3] for g in s["graders"]) / len(s["graders"])))
-    return {"method": METHOD, "collection": collection, "surprise": SURPRISE,
-            "blocks": [[k, lab, e] for k, lab, e in BLOCKS], "models": models, "shared": shared[:80]}
+    return {"method": METHOD, "collection": collection, "surprise": SURPRISE, "tradition": road.tradition,
+            "levels": road.levels, "reference": road.reference, "critic": road.critic,
+            "blocks": [[k, lab, e] for k, lab, e in blocks_for(road)], "models": models, "shared": shared[:80]}
 
 
 def cached(conn: sqlite3.Connection, collection: str | None = None, progress=None, recompute: bool = False) -> dict:

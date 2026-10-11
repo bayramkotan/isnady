@@ -14,6 +14,10 @@ difference is real.
   * Books: Kruskal–Wallis across the books for the chains' weakest narrator, length and identified share, with
     epsilon² (its effect size); pairwise Mann–Whitney with Cliff's delta, Holm-adjusted.
 
+Two roads (SH1): a Shia book (or "@shia") is measured on its own scale — al-Najashi's four categories for the
+narrators, the four Imami grades (sahih, hasan, muwaththaq, da'if) of al-Majlisi and al-Behbudi, chains ending at a
+Ma'sum; never on Ibn Hajar's ranks or the Sunni grade groups (core.stats_corpus.Road).
+
 Ranks and grades are ordered categories (SK): every test here is a rank test; nothing is averaged. Qt-free and
 numpy-free; computed once and kept (DX1).
 """
@@ -26,10 +30,9 @@ import sqlite3
 from collections import Counter, defaultdict
 
 from isnady.core import stats_corpus as sc
-from isnady.core import stats_graders
 from isnady.core import stats_models as sm
 
-METHOD = "isnady-lab-1"
+METHOD = "isnady-lab-3"
 ALPHA = 0.05                 # a q or Holm-adjusted p below this is called beyond chance
 
 
@@ -352,15 +355,19 @@ def brant(rows: list[tuple[tuple, int]], categories: int, names: list[str]) -> d
     return {"overall": overall, "factors": factors, "thresholds": used, "of": categories - 1}
 
 
-def brant_for(conn: sqlite3.Connection, key: str, grader: str, by_hadith: dict[int, int], feats: dict) -> dict | None:
+def brant_for(conn: sqlite3.Connection, key: str, grader: str, by_hadith: dict[int, int], feats: dict,
+              road: "sc.Road" = sm.SUNNI) -> dict | None:
     """Brant's test on the very model of core.stats_models: the same rows, grades merged the same way, same factors."""
-    rows_raw = [(feats[h], sc.GRADE_ORDER.index(g)) for h, g in by_hadith.items() if h in feats and g in sc.GRADE_ORDER]
+    order = road.grade_order
+    rows_raw = [(feats[h], order.index(g)) for h, g in by_hadith.items() if h in feats and g in order]
     if len(rows_raw) < 100:
         return None
-    mapping, labels = sm._merge_categories([y for _f, y in rows_raw])
+    mapping, labels = sm._merge_categories([y for _f, y in rows_raw], road)
+    if len(labels) < 3:                      # two grades: one threshold, nothing to compare across thresholds
+        return None
     rows = [(f, mapping[y]) for f, y in rows_raw]
     blocks = sm._varying([f for f, _y in rows])
-    columns, _cb, make = sm._design([f for f, _y in rows], blocks)
+    columns, _cb, make = sm._design([f for f, _y in rows], blocks, road)
     out = brant([(make(f), y) for f, y in rows], len(labels), columns)
     if out:
         out.update(grader=grader, labels=labels, n=len(rows))
@@ -390,22 +397,43 @@ NARRATOR_VARS = [
 ]
 
 
-def _hadith_table(conn: sqlite3.Connection, key: str) -> dict | None:
+def hadith_vars(road: "sc.Road") -> list[tuple[str, str, str]]:
+    """HADITH_VARS in the words of the road (SH1)."""
+    if not road.shia:
+        return HADITH_VARS
+    words = {"weakest": ("Weakest narrator", "the weakest identified narrator of the best chain, in al-Najashi's categories"),
+             "weak_count": ("More weak narrators", "narrators al-Najashi calls weak beyond the first"),
+             "mawquf": ("Stops short", "the chain does not reach a Ma'sum (1) or reaches the Prophet or an Imam (0)")}
+    return [(k, *words[k]) if k in words else (k, lab, e) for k, lab, e in HADITH_VARS]
+
+
+def narrator_vars(road: "sc.Road") -> list[tuple[str, str, str]]:
+    """NARRATOR_VARS in the words of the road: road B has al-Najashi's four categories and no generations (tabaqat)."""
+    if not road.shia:
+        return NARRATOR_VARS
+    return [("rank", "al-Najashi's category", "1 trustworthy, 2 praised, 3 muwaththaq, 4 weak — a higher number is a "
+                                              "WEAKER narrator")] + [v for v in NARRATOR_VARS if v[0] not in ("rank", "tabaqa")]
+
+
+def _hadith_table(conn: sqlite3.Connection, key: str, road: "sc.Road" = sm.SUNNI) -> dict | None:
     """The hadith of one book as columns: the factors, then every scholar's grade and how far they disagree."""
-    feats = sm.hadith_features(conn, key)
+    feats = sm.hadith_features(conn, key, road)
     if len(feats) < 30:
         return None
-    data = stats_graders.load(conn, key)
+    data = road.load(conn, key)
+    order_g = road.grade_order
+    worst = road.grade_labels[-1]
     order = {h: i for i, (h,) in enumerate(conn.execute(
         "SELECT h.id FROM hadiths h JOIN collections c ON c.id = h.collection_id WHERE c.key = ? "
         "ORDER BY h.number_sort, h.id", (key,)))}
-    graders = sorted(g for g, d in data.items() if len(d) >= 100)
+    # a grader who gives one grade only (a selection: al-Behbudi) cannot go with anything, nor disagree in degree
+    graders = sorted(g for g, d in data.items() if len(d) >= 100 and len(set(d.values())) > 1)
     hadith = sorted(feats)
     total = max(1, len(order) - 1)
     factors = []
-    for k, label, explain in HADITH_VARS:
+    for k, label, explain in hadith_vars(road):
         if k == "weakest":
-            col = [sm.WEAKEST_LEVELS.index(feats[h]["weakest"]) if feats[h]["weakest"] != "None ranked" else None
+            col = [road.levels.index(feats[h]["weakest"]) if feats[h]["weakest"] != "None ranked" else None
                    for h in hadith]
         elif k == "position":
             col = [order.get(h, 0) / total for h in hadith]
@@ -413,12 +441,12 @@ def _hadith_table(conn: sqlite3.Connection, key: str) -> dict | None:
             col = [feats[h][k] for h in hadith]
         if len({v for v in col if v is not None}) > 1:        # a factor that never varies says nothing
             factors.append((label, explain, col))
-    outcomes = [(f"Grade: {g}", f"{g}'s grade, 0 sahih … 4 fabricated (higher = weaker)",
-                 [sc.GRADE_ORDER.index(data[g][h]) if h in data[g] else None for h in hadith]) for g in graders]
+    outcomes = [(f"Grade: {g}", f"{g}'s grade, 0 sahih … {len(order_g) - 1} {worst} (higher = weaker)",
+                 [order_g.index(data[g][h]) if h in data[g] else None for h in hadith]) for g in graders]
     if len(graders) >= 2:
         spread = []
         for h in hadith:
-            gs = [sc.GRADE_ORDER.index(data[g][h]) for g in graders if h in data[g]]
+            gs = [order_g.index(data[g][h]) for g in graders if h in data[g]]
             spread.append(max(gs) - min(gs) if len(gs) >= 2 else None)
         outcomes.append(("Disagreement", "how many grade steps apart the scholars are on this hadith", spread))
     outcomes = [o for o in outcomes if len({v for v in o[2] if v is not None}) > 1]
@@ -437,8 +465,11 @@ def adjusted(factors: list[tuple], outcome: list) -> list[dict | None]:
     return cells
 
 
-def _narrator_table(conn: sqlite3.Connection, collection: str | None) -> tuple[list[str], list[list]]:
-    persons = sc._persons(conn)
+def _narrator_table(conn: sqlite3.Connection, collection: str | None,
+                    road: "sc.Road" = sm.SUNNI) -> tuple[list[str], list[list], list[str]]:
+    """The narrators of the chains as columns (names, columns, explanations); a column that never varies (road B has
+    no generations) is left out."""
+    persons = sc._persons(conn, road.tradition)
     chains = sc._chains(conn, [b[0] for b in sc._books(conn, collection)])
     links = Counter()
     teachers, students = defaultdict(set), defaultdict(set)
@@ -455,19 +486,30 @@ def _narrator_table(conn: sqlite3.Connection, collection: str | None) -> tuple[l
                 edges[(s, t)] += 1
     pr = sc.pagerank(edges)
     people = sorted(links)
-    cols = [[persons[p]["rank"] for p in people], [persons[p]["tabaqa"] for p in people],
-            [persons[p]["death"] for p in people], [links[p] for p in people],
-            [len(teachers[p]) for p in people], [len(students[p]) for p in people], [pr.get(p, 0.0) for p in people]]
-    return [lab for _k, lab, _e in NARRATOR_VARS], cols
+    values = {"rank": lambda p: persons[p]["rank"], "tabaqa": lambda p: persons[p]["tabaqa"],
+              "death": lambda p: persons[p]["death"], "links": lambda p: links[p],
+              "teachers": lambda p: len(teachers[p]), "students": lambda p: len(students[p]),
+              "pagerank": lambda p: pr.get(p, 0.0)}
+    names, cols, explain = [], [], []
+    for k, lab, e in narrator_vars(road):
+        col = [values[k](p) for p in people]
+        if len({v for v in col if v is not None}) > 1 and sum(v is not None for v in col) >= 30:
+            names.append(lab)
+            cols.append(col)
+            explain.append(e)
+    return names, cols, explain
 
 
 def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=None) -> dict:
     say = progress or (lambda _m: None)
     books = sc._books(conn, collection)
-    out: dict = {"method": METHOD, "collection": collection, "hadith": [], "graders": [], "brant": [], "books": None}
+    road = sc.road_of(conn, collection)
+    order_g = road.grade_order
+    out: dict = {"method": METHOD, "collection": collection, "tradition": road.tradition, "critic": road.critic,
+                 "grade_labels": road.grade_labels, "hadith": [], "graders": [], "brant": [], "books": None}
     for _id, key, name in books:
         say(f"Correlating the hadith of {name}")
-        table = _hadith_table(conn, key)
+        table = _hadith_table(conn, key, road)
         if table and len(table["factors"]) + len(table["outcomes"]) >= 3:
             fs, os_ = table["factors"], table["outcomes"]
             m = correlation_matrix([x[0] for x in fs + os_], [x[2] for x in fs + os_])
@@ -478,12 +520,12 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
             m["partial"] = correlation_matrix([x[0] for x in fs], [x[2] for x in fs])["partial"]
             out["hadith"].append(m)
         # the scholars of the book, pair by pair: Stuart–Maxwell
-        data = stats_graders.load(conn, key)
-        graders = sorted(g for g, d in data.items() if len(d) >= 100)
-        feats = sm.hadith_features(conn, key)
+        data = road.load(conn, key)
+        graders = sorted(g for g, d in data.items() if len(d) >= 100 and len(set(d.values())) > 1)
+        feats = sm.hadith_features(conn, key, road)
         for g in graders:
             say(f"Testing the shape of the model of {g}")
-            b = brant_for(conn, key, g, data[g], feats)
+            b = brant_for(conn, key, g, data[g], feats, road)
             if b:
                 out["brant"].append(dict(b, book=name, key=key))
         for i, a in enumerate(graders):
@@ -491,10 +533,10 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
                 common = [h for h in data[a] if h in data[b]]
                 if len(common) < 30:
                     continue
-                table = [[0] * 5 for _ in range(5)]
+                table = [[0] * len(order_g) for _ in order_g]
                 higher = lower = 0
                 for h in common:
-                    x, y = sc.GRADE_ORDER.index(data[a][h]), sc.GRADE_ORDER.index(data[b][h])
+                    x, y = order_g.index(data[a][h]), order_g.index(data[b][h])
                     table[x][y] += 1
                     higher += x < y          # a gives the stronger grade (index 0 is sahih)
                     lower += x > y
@@ -507,16 +549,16 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     for t, adj in zip(out["brant"], sm.holm([b["overall"]["p"] for b in out["brant"]])):
         t["overall"]["p_holm"] = adj
     say("Correlating the narrators")
-    names, cols = _narrator_table(conn, collection)
-    if cols and len(cols[0]) >= 30:
+    names, cols, explain = _narrator_table(conn, collection, road)
+    if len(cols) >= 2 and len(cols[0]) >= 30:
         m = correlation_matrix(names, cols)
-        m.update(explain=[e for _k, _l, e in NARRATOR_VARS], people=len(cols[0]))
+        m.update(explain=explain, people=len(cols[0]))
         out["narrators"] = m
     # the books compared
     if len(books) >= 2:
         say("Comparing the books")
         measures = {"Weakest narrator": [], "Length": [], "Names identified": []}
-        persons = sc._persons(conn)
+        persons = sc._persons(conn, road.tradition)
         for bid, _key, name in books:
             weakest, length, ident = [], [], []
             for c in sc._chains(conn, [bid]):
@@ -526,9 +568,9 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
                 length.append(len(ls))
                 ids = [p for p in ls if p in persons]
                 ident.append(len(ids) / len(ls))
-                ranks = [persons[p]["rank"] for p in ids if persons[p]["rank"] in sc.GROUP_OF_RANK]
+                ranks = [persons[p]["rank"] for p in ids if persons[p]["rank"] in road.group_of]
                 if ranks:
-                    weakest.append(sc.GROUP_OF_RANK[max(ranks)])
+                    weakest.append(road.group_of[max(ranks)])
             measures["Weakest narrator"].append((name, weakest))
             measures["Length"].append((name, length))
             measures["Names identified"].append((name, ident))

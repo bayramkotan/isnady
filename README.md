@@ -511,7 +511,8 @@ agreement suggests the source did not keep them independent.
 
 Measured in depth, each figure with what it means in plain words and how sure it is — on two roads:
 *All Sunni books* (Ibn Hajar's ranks, chains to the Prophet ﷺ) and *All Shia books* (al-Najashi's Imami
-categories, chains to a Ma'sum), never mixed. Grades are
+categories, chains to a Ma'sum; al-Majlisi's and al-Behbudi's grades in the four Imami categories —
+sahih, hasan, muwaththaq, da'if), never mixed. Every section is measured on both roads. Grades are
 ordered categories, so they are never turned into numbers or averaged, and no figure is read
 against the science of hadith: the statistics measure what the scholars did, they do not overrule
 it. Every result is computed once and saved as JSON in your data folder (`derived/`).
@@ -704,8 +705,7 @@ Sunan Abu Dawud #472
 ## 🗺️ Roadmap
 
 - **Shia narrators, further** — al-Tusi's *Rijal* and *Fihrist* and al-Kashshi's reports; names
-  resolved by teacher and student; the Shia books' statistics by the Imami scholars' grades, and a
-  Sunni–Shia comparison.
+  resolved by teacher and student; a Sunni–Shia comparison.
 - **More in isnady-data** — al-Tusi's *Tahdhib al-Ahkam* and *al-Istibsar*, al-Saduq's *Man la
   yahduruhu al-faqih*; al-Hakim's *Mustadrak*, al-Bayhaqi's *Sunan*, the *Mu'jam*s.
 - **Narrators** — the other half of the names identified through teachers and students (al-Mizzi's

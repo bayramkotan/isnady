@@ -11,6 +11,7 @@ ordered categories throughout: counted, cross-tabulated and rank-correlated, nev
 import csv
 import html
 import math
+from collections import Counter
 
 from PySide6.QtCore import QObject, QSize, Qt, QThread, Signal
 from PySide6.QtGui import QColor
@@ -55,12 +56,10 @@ from isnady.gui.stats_charts import (
 
 def _corpus_and_models(conn, key, progress, recompute) -> dict:
     """The analyses of the corpus sections, in one background run: the descriptive one, the model, the laboratory.
-    Road B (the Shia books) has the descriptive one only: the model and the laboratory rest on Ibn Hajar's ranks and
-    the Sunni grade groups, which are never laid on the Shia books (SH1)."""
-    if corpus.tradition_of_scope(conn, key) == "shia":
-        return {"corpus": corpus.cached(conn, key, progress, recompute), "models": {}, "lab": {}, "road": "shia"}
+    Each road on its own scale (SH1): road B (the Shia books) on al-Najashi's categories and the four Imami grades of
+    al-Majlisi and al-Behbudi — never on Ibn Hajar's ranks or the Sunni grade groups (core.stats_corpus.Road)."""
     return {"corpus": corpus.cached(conn, key, progress, recompute), "models": models.cached(conn, key, progress, recompute),
-            "lab": lab.cached(conn, key, progress, recompute), "road": "sunni"}
+            "lab": lab.cached(conn, key, progress, recompute), "road": corpus.tradition_of_scope(conn, key)}
 
 
 SECTIONS = [
@@ -79,11 +78,17 @@ SECTIONS = [
 # alone). Light and dark steps are chosen each for its own surface.
 GROUP_COLORS = {False: ["#1E4A8A", "#3A72B8", "#8DB4DE", "#C9C6C0", "#E4997A", "#B23A33"],
                 True: ["#6E9FE0", "#4A7FC4", "#2E5A92", "#55534F", "#B4543F", "#E0705F"]}
-SHIA_NOTE = ("The Shia books are measured on their own road: their narrators in al-Najashi's Imami categories, their chains "
-             "ending at a Ma'sum. This section rests on Ibn Hajar's ranks and the Sunni grade groups, which are never laid on "
-             "them; the Imami grades (al-Majlisi, al-Behbudi) are compared on the Hadith Scholars page.")
+# why, on road B, a chain whose weakest is "praised" is so often graded sahih — hadith science, not a quirk of the data
+PRAISED_NOTE = ("In al-Najashi's own words \u201cpraised\u201d takes in some of the greatest narrators — Zurara, Ibn Abi "
+                "'Umayr, Ahmad b. Muhammad b. 'Isa — whom he calls jalil or wajh without the word thiqa, and whom al-Tusi "
+                "and the later scholars count as thiqa (some among the ashab al-ijma'): a chain whose weakest is "
+                "\u201cpraised\u201d is therefore often graded sahih.")
 GRADE_COLORS = {False: ["#1E4A8A", "#8DB4DE", "#E4997A", "#C8564A", "#8E2A25"],
                 True: ["#6E9FE0", "#2E5A92", "#B4543F", "#D86A55", "#F08A75"]}
+# road B's four Imami grades: sahih and hasan on the accepted side, muwaththaq (a thiqa of another school) the neutral
+# middle, da'if the rejected side — the same diverging scale, never the Sunni groups' colours by meaning
+IMAMI_GRADE_COLORS = {False: ["#1E4A8A", "#8DB4DE", "#C9C6C0", "#C8564A"],
+                      True: ["#6E9FE0", "#2E5A92", "#55534F", "#D86A55"]}
 
 
 def _label(text: str, name: str = "", rich: bool = False) -> QLabel:
@@ -96,9 +101,17 @@ def _label(text: str, name: str = "", rich: bool = False) -> QLabel:
 
 
 def _short(grader: str) -> str:
+    """A grader's short name for headers and charts (the full name is in the tooltips)."""
     for s in SCHOLARS:
         if grader in s.get("grader_names", []):
-            return s["name"]
+            return s.get("short") or s["name"]
+    return grader
+
+
+def _full(grader: str) -> str:
+    for s in SCHOLARS:
+        if grader in s.get("grader_names", []):
+            return s.get("full") or s["name"]
     return grader
 
 
@@ -322,9 +335,14 @@ class StatisticsPage(QWidget):
         """The words of the road being measured: whom the chains reach, whose book identifies the narrators."""
         if self._shia():
             return {"end": "a Ma'sum", "End": "a Ma'sum (the Prophet ﷺ or an Imam)", "rijal": "al-Najashi's Rijal",
-                    "critic": "al-Najashi", "reach": "Reach a Ma'sum"}
+                    "critic": "al-Najashi", "reach": "Reach a Ma'sum", "rank": "al-Najashi's category",
+                    "grades": "the four Imami categories (sahih, hasan, muwaththaq, da'if)",
+                    "scale": "sahih → da'if", "otherwise": "a narrator the grader judged otherwise than al-Najashi "
+                    "(al-Majlisi also draws on al-Tusi, al-Kashshi and the later critics), or a name matched to the wrong "
+                    "person"}
         return {"end": "the Prophet ﷺ", "End": "the Prophet ﷺ", "rijal": "Ibn Hajar's Taqrib", "critic": "Ibn Hajar",
-                "reach": "Reach the Prophet"}
+                "reach": "Reach the Prophet", "rank": "Ibn Hajar's rank", "grades": "five ordered groups",
+                "scale": "sahih → fabricated", "otherwise": "a narrator the grader judged otherwise than Ibn Hajar"}
 
     def _clear_sections(self) -> None:
         for box in self._boxes.values():
@@ -421,7 +439,8 @@ class StatisticsPage(QWidget):
         return list(zip([name for name, _d in r["groups"]], self._colors()))
 
     def _grade_categories(self, r: dict) -> list[tuple[str, str]]:
-        return list(zip(r["grade_labels"], GRADE_COLORS[theme.current().dark]))
+        colors = (IMAMI_GRADE_COLORS if r.get("tradition") == "shia" else GRADE_COLORS)[theme.current().dark]
+        return list(zip(r["grade_labels"], colors))
 
     def _overview(self, r: dict) -> None:
         o, n = r["overview"], r["narrators"]
@@ -470,8 +489,13 @@ class StatisticsPage(QWidget):
             gcats = self._grade_categories(r)
             grows = [(f"{_short(g['grader'])} — {g['book']}", g["distribution"]) for g in r["grades"]]
             self._finding("overview", "Grades", "How each scholar graded each book.", [StackedBars(grows, gcats, label_w=260)],
-                          "Each bar is one scholar's grades of one book, in five ordered groups. Grades of the chain alone "
-                          "(\"Isnaad Sahih\") are left out: they judge another thing than a grade of the hadith.",
+                          (("Each bar is one scholar's grades of one book, in the four Imami categories — sahih (every "
+                            "narrator an Imami thiqa), hasan (a praised Imami), muwaththaq (a thiqa of another school), "
+                            "da'if — as al-Majlisi and al-Behbudi wrote them; majhul, mursal and marfu' count among the "
+                            "da'if. al-Behbudi's Sahih al-Kafi is his selection: he names only the hadith he holds sahih.")
+                           if self._shia() else
+                           "Each bar is one scholar's grades of one book, in five ordered groups. Grades of the chain alone "
+                           "(\"Isnaad Sahih\") are left out: they judge another thing than a grade of the hadith."),
                           (["grader", "book"] + r["grade_labels"],
                            [[_short(g["grader"]), g["book"]] + g["distribution"] for g in r["grades"]]))
 
@@ -604,10 +628,18 @@ class StatisticsPage(QWidget):
         return table
 
     def _grades(self, r: dict) -> None:
-        if self._shia():
-            self._boxes["grades"].addWidget(_label(SHIA_NOTE, "Lead"))
-            return
+        words = self._words()
         rows = [g for g in r["grades"] if g.get("weakest") and g["weakest"]["tau"] is not None]
+        # a scholar who gives one grade only (al-Behbudi: his book is a selection of what he holds sahih) has nothing
+        # to correlate: named, with the reason, instead of silently missing
+        one = [g for g in r["grades"] if g not in rows and sum(1 for x in g["distribution"] if x) == 1]
+        if one:
+            self._boxes["grades"].addWidget(_label(
+                "; ".join(f"{_short(g['grader'])} gives one grade only in {g['book']} — "
+                          f"{r['grade_labels'][next(i for i, x in enumerate(g['distribution']) if x)]} for all "
+                          f"{g['graded']:,} he names" for g in one)
+                + ". A single grade cannot go with anything, so he is left out below; how he stands beside the other "
+                  "graders is in Graders.", "Caption"))
         if not rows:
             self._boxes["grades"].addWidget(_label("No grades to compare: import a collection whose hadith are graded.",
                                                    "Lead"))
@@ -615,9 +647,19 @@ class StatisticsPage(QWidget):
         plot = [(f"{_short(g['grader'])} — {g['book']}", g["weakest"]["tau"],
                  tuple(g["weakest"]["tau_ci"] or (g["weakest"]["tau"], g["weakest"]["tau"]))) for g in rows]
         lo, hi = min(p[1] for p in plot), max(p[1] for p in plot)
-        self._finding("grades", "The weakest link and the grade",
-                      f"The weaker a chain's weakest narrator, the lower the grade — for every grader (Kendall's τ<sub>b</sub> "
-                      f"{lo:.2f} to {hi:.2f}).",
+        clear = [p for p in plot if p[2][0] > 0]          # the whole interval above zero
+        span = f"{lo:.2f}" if len(plot) == 1 else f"{lo:.2f} to {hi:.2f}"
+        if len(plot) == 1:
+            who = html.escape(_short(rows[0]["grader"]))
+            headline = (f"The weaker a chain's weakest narrator, the lower {who}'s grade (Kendall's τ<sub>b</sub> {span})."
+                        if clear else f"{who}'s grade does not follow the weakest narrator beyond chance (τ<sub>b</sub> {span}).")
+        elif len(clear) == len(plot):
+            headline = (f"The weaker a chain's weakest narrator, the lower the grade — for every grader (Kendall's "
+                        f"τ<sub>b</sub> {span}).")
+        else:
+            headline = (f"The weaker a chain's weakest narrator, the lower the grade — for {len(clear)} of {len(plot)} "
+                        f"graders beyond chance (τ<sub>b</sub> {span}).")
+        self._finding("grades", "The weakest link and the grade", headline,
                       [IntervalPlot(plot, "weaker narrator, higher grade", "weaker narrator, lower grade")],
                       "For each graded hadith: the weakest identified narrator of its best chain against the scholar's "
                       "grade, both as ordered categories. Kendall's τ<sub>b</sub> is a rank correlation that allows "
@@ -650,7 +692,7 @@ class StatisticsPage(QWidget):
         self._finding("grades", "Cross-tables", "How each grade is spread over the weakest narrator.", [grid],
                       "Rows: the weakest narrator of the hadith's best chain; columns: the grade. Each row adds up to "
                       "100%. A sahih grade where the weakest narrator is weak is a hadith strengthened by other routes, "
-                      "or a narrator the grader judged otherwise than Ibn Hajar.",
+                      f"or {words['otherwise']}." + (" " + PRAISED_NOTE if self._shia() else ""),
                       (["grader", "book", "weakest narrator"] + r["grade_labels"],
                        [[_short(g["grader"]), g["book"], group_names[k]] + list(g["weakest"]["table"][k])
                         for g in rows for k in range(len(group_names))]))
@@ -658,8 +700,23 @@ class StatisticsPage(QWidget):
         if lengths:
             plot = [(f"{_short(g['grader'])} — {g['book']}", g["length"]["tau"],
                      tuple(g["length"]["tau_ci"] or (g["length"]["tau"], g["length"]["tau"]))) for g in lengths]
-            self._finding("grades", "Length and grade", "Longer chains are graded a little lower — much less than "
-                          "weaker narrators are.", [IntervalPlot(plot, "longer, higher grade", "longer, lower grade")],
+            weak_tau = {g["grader"] + g["book"]: g["weakest"]["tau"] for g in rows}
+            lower = [p for p, g in zip(plot, lengths) if p[2][0] > 0]
+            higher = [p for p, g in zip(plot, lengths) if p[2][1] < 0]
+            smaller = all(abs(g["length"]["tau"]) < abs(weak_tau.get(g["grader"] + g["book"], 0)) for g in lengths)
+            if not lower and not higher:
+                headline = "The length of a chain does not go with the grade beyond chance."
+            elif len(lower) == len(plot):
+                headline = "Longer chains are graded a little lower" + (" — much less than weaker narrators are."
+                                                                        if smaller else ".")
+            elif len(higher) == len(plot):
+                headline = "Longer chains are graded a little higher" + (" — a smaller relation than the weakest "
+                                                                         "narrator's." if smaller else ".")
+            else:
+                headline = (f"Length goes with the grade for {len(lower) + len(higher)} of {len(plot)} graders, in "
+                            "different directions" + (" — always less than the weakest narrator." if smaller else "."))
+            self._finding("grades", "Length and grade", headline,
+                          [IntervalPlot(plot, "longer, higher grade", "longer, lower grade")],
                           "The same rank correlation between the number of names in the hadith's chain and its grade. Its "
                           "size beside the weakest-link relation shows which of the two the grades follow.",
                           (["grader", "book", "tau-b", "low", "high"],
@@ -669,14 +726,16 @@ class StatisticsPage(QWidget):
     # ------------------------------------------------------------------ the hadith model (ST7-H)
     def _model_section(self) -> None:
         box = self._boxes["model"]
-        if self._shia():
-            box.addWidget(_label(SHIA_NOTE, "Lead"))
-            return
         ms = (self._models or {}).get("models") or []
         if not ms:
             box.addWidget(_label("No model yet: it needs a book whose hadith are graded and whose chains are split into "
-                                 "names (at least a hundred graded hadith).", "Lead"))
+                                 "names (at least a hundred graded hadith, in two grades or more).", "Lead"))
             return
+        if self._shia():
+            box.addWidget(_label(
+                "Road B: the grade is one of the four Imami categories (sahih, hasan, muwaththaq, da'if), the narrators "
+                "are in al-Najashi's categories, a chain ends at a Ma'sum. al-Behbudi gives one grade only (his book is a "
+                "selection of what he holds sahih), so there is no model of his grades.", "Caption"))
         row = QHBoxLayout()
         row.addWidget(_label("Model of", "FilterTitle"))
         pick = QComboBox()
@@ -731,7 +790,8 @@ class StatisticsPage(QWidget):
             "one factor; the dot is its effect on the log-odds of a WEAKER grade, the line its 95% interval, and the "
             "figure at the right the odds ratio: 2 doubles the odds of a weaker grade, 0.5 halves them, 1 is no effect. "
             "The weakest narrator is compared with a chain whose weakest is trustworthy (thiqa); the other factors are "
-            "per unit. All are measured together, so each is its effect with the others held equal.",
+            "per unit. All are measured together, so each is its effect with the others held equal."
+            + (" " + PRAISED_NOTE if self._shia() else ""),
             (["factor", "beta", "se", "odds ratio", "low", "high", "p"],
              [[c["name"], round(c["beta"], 5), round(c["se"], 5), round(c["or"], 4), round(c["or_ci"][0], 4),
                round(c["or_ci"][1], 4), c["p"]] for c in coefs]))
@@ -740,7 +800,8 @@ class StatisticsPage(QWidget):
         matter = [t for t in tests if t["p_holm"] < 0.05]
         total = m["lr_all"]["chi2"] or 1
         table = QTableWidget(len(tests), 5)
-        table.setHorizontalHeaderLabels(["Factor", "χ²", "df", "p (Holm)", "Share of what the chain explains"])
+        table.setHorizontalHeaderLabels(["Factor", "χ²", "df", "p (Holm)", "Share explained"])
+        table.horizontalHeaderItem(4).setToolTip("The factor's χ² beside the whole chain's: its share of what the chain explains")
         table.verticalHeader().hide()
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         for i, t in enumerate(tests):
@@ -768,7 +829,8 @@ class StatisticsPage(QWidget):
         # how much the chain explains
         tiles = StatTiles([
             ("Hadith", f"{m['n']:,}", f"graded by {name}, with a chain"),
-            ("Right", _pct(m["accuracy"]), f"against {_pct(m['base_rate'])} by always saying “{m['labels'][0]}”"),
+            ("Right", _pct(m["accuracy"]), f"against {_pct(m['base_rate'])} by always saying "
+                                           f"“{m.get('base_label') or m['labels'][0]}”"),
             ("McFadden R²", f"{m['mcfadden']:.3f}" if m["mcfadden"] is not None else "—", "0.2–0.4 is a very good fit"),
             ("Somers' D", f"{m['somers_d']:.2f}" if m["somers_d"] is not None else "—", "ordering: 0 none, 1 perfect"),
         ])
@@ -781,29 +843,56 @@ class StatisticsPage(QWidget):
             "McFadden's R² compares the model's likelihood with a model that knows only how often each grade is given; "
             "for a model of human judgement values of 0.1–0.2 are usual and 0.2–0.4 very good. 'Right' counts the "
             "hadith whose most likely grade is the scholar's. Somers' D measures how well the model's expected grade "
-            "orders the hadith. That the chain explains only part of the grade is itself the finding: a scholar grades "
-            "a hadith on all its routes and on its text, not on one chain.",
+            "orders the hadith. "
+            + ("'Right' near the always-the-same figure does not mean the chain tells nothing — Somers' D and R² show "
+               "how far it orders the grades. On this road the grade is of the chain itself, so what the model misses is "
+               "mostly narrators the scholar judges otherwise than al-Najashi, and names isnady did not identify."
+               if self._shia() else
+               "That the chain explains only part of the grade is itself the finding: a scholar grades a hadith on all "
+               "its routes and on its text, not on one chain."),
             (["predicted (mean)", "observed", "hadith"], m["calibration"]))
         # the surprises
-        for side, title, sentence, how in (
-            ("graded_higher", "Graded higher than the chain foretells",
-             "hadith {name} grades stronger than their chain alone would — candidates for strengthening by other "
-             "routes (mutaba'at, shawahid).",
-             "Hadith whose grade is STRONGER than the model's most likely grade, the least expected first: the "
-             "probability is the model's for this grade or a stronger one. A weak chain graded sahih or hasan is "
-             "usually a hadith strengthened by its other routes (hasan li-ghayrihi, sahih li-ghayrihi) — or a "
-             "narrator the scholar judges otherwise than Ibn Hajar. Double-click to read it in its book."),
-            ("graded_lower", "Graded lower than the chain foretells",
-             "hadith {name} grades weaker than their chain alone would — candidates for a hidden defect ('illa) or "
-             "an irregular text (shudhudh).",
-             "Hadith whose grade is WEAKER than the model's most likely grade, the least expected first. A chain of "
-             "trustworthy narrators graded weak points to what the chain does not show: a hidden defect ('illa), a "
-             "contradiction of stronger narrators (shudhudh), a break the names do not reveal (irsal khafi, tadlis). "
-             "Double-click to read it in its book.")):
+        if self._shia():
+            # road B: the Imami categories are grades of the CHAIN (al-Majlisi grades each chain by its narrators), so a
+            # surprise points to a narrator judged otherwise, or to a name read or matched otherwise — not to other routes
+            surprises = (
+                ("graded_higher", "Graded higher than the chain foretells",
+                 "hadith {name} grades stronger than their chain, as isnady reads it, would foretell.",
+                 "Hadith whose grade is STRONGER than the model's most likely grade, the least expected first: the "
+                 "probability is the model's for this grade or a stronger one. The Imami categories judge the chain by "
+                 "its narrators, so the usual reasons are a narrator al-Majlisi holds stronger than al-Najashi's words "
+                 "(he also draws on al-Tusi, al-Kashshi and the later critics, and on the shaykhs of ijaza), or a name "
+                 "isnady matched to the wrong man of the same name. Double-click to read it in its book."),
+                ("graded_lower", "Graded lower than the chain foretells",
+                 "hadith {name} grades weaker than their chain, as isnady reads it, would foretell.",
+                 "Hadith whose grade is WEAKER than the model's most likely grade, the least expected first. The usual "
+                 "reasons are a narrator al-Majlisi holds weaker or unknown (majhul) where al-Najashi is silent or "
+                 "praises, a break in the chain (mursal, marfu') that the split into names does not show, or a wrong "
+                 "match. Double-click to read it in its book."))
+        else:
+            surprises = (
+                ("graded_higher", "Graded higher than the chain foretells",
+                 "hadith {name} grades stronger than their chain alone would — candidates for strengthening by other "
+                 "routes (mutaba'at, shawahid).",
+                 "Hadith whose grade is STRONGER than the model's most likely grade, the least expected first: the "
+                 "probability is the model's for this grade or a stronger one. A weak chain graded sahih or hasan is "
+                 "usually a hadith strengthened by its other routes (hasan li-ghayrihi, sahih li-ghayrihi) — or a "
+                 "narrator the scholar judges otherwise than Ibn Hajar. Double-click to read it in its book."),
+                ("graded_lower", "Graded lower than the chain foretells",
+                 "hadith {name} grades weaker than their chain alone would — candidates for a hidden defect ('illa) or "
+                 "an irregular text (shudhudh).",
+                 "Hadith whose grade is WEAKER than the model's most likely grade, the least expected first. A chain of "
+                 "trustworthy narrators graded weak points to what the chain does not show: a hidden defect ('illa), a "
+                 "contradiction of stronger narrators (shudhudh), a break the names do not reveal (irsal khafi, tadlis). "
+                 "Double-click to read it in its book."))
+        for side, title, sentence, how in surprises:
             items = m[side]
             if not items:
                 continue
             total_side = m[f"{side}_total"]
+            strong = m.get(f"{side}_strong", 0)
+            sentence = sentence.rstrip(".") + (f" — {strong:,} of them clearly (the model gave that grade 5% or less)."
+                                               if strong else " — none clearly: the model gave each grade more than 5%.")
             self._model_finding(title, f"{total_side:,} " + sentence.format(name=name),
                                 [self._surprise_table(items, m["labels"])], how,
                                 (["hadith", "grade", "model's most likely", "probability", "weakest narrator",
@@ -824,7 +913,7 @@ class StatisticsPage(QWidget):
                 "The scholars compared", "How strongly each scholar's grade follows the weakest narrator.",
                 [IntervalPlot(rows, "a stronger grade", "a weaker grade", fmt=fmt, label_w=300)],
                 "The same model fitted to each scholar's grades of this book. Where one scholar's odds ratio for a weak "
-                "narrator is larger than another's, he leans more on Ibn Hajar's verdicts on the narrators; a smaller "
+                f"narrator is larger than another's, he leans more on {self._words()['critic']}'s verdicts on the narrators; a smaller "
                 "one shows a scholar who more often finds the hadith strengthened elsewhere — or who judges the "
                 "narrator otherwise.",
                 (["level", "grader", "beta", "low", "high"],
@@ -895,9 +984,6 @@ class StatisticsPage(QWidget):
     # ------------------------------------------------------------------ the laboratory (ST7-C)
     def _lab_section(self, r: dict) -> None:
         box = self._boxes["lab"]
-        if self._shia():
-            box.addWidget(_label(SHIA_NOTE, "Lead"))
-            return
         ms = r.get("hadith") or []
         if not ms and not r.get("narrators"):
             box.addWidget(_label("Nothing to correlate yet: it needs a book whose chains are split into names.", "Lead"))
@@ -1049,7 +1135,7 @@ class StatisticsPage(QWidget):
                 "What goes with a weaker grade", headline,
                 [HeatMap(rows, factors, cells, -0.5, 0.5, diverging=True, cell=QSize(84, 50), label_w=190, tips=tips,
                          head_h=60)],
-                "Each row is a scholar's grade of the hadith (sahih → fabricated: a higher rank is a weaker grade), the last "
+                f"Each row is a scholar's grade of the hadith ({self._words()['scale']}: a higher rank is a weaker grade), the last "
                 "row how far the scholars are apart on it; each column a factor of the hadith's best chain. The figure is "
                 "the PARTIAL Spearman ρ: the relation left when every other factor is held equal, so a long chain is not "
                 "credited with what its weak narrator does. Below it, the plain ρ, nothing held equal. Blue: a weaker "
@@ -1158,10 +1244,10 @@ class StatisticsPage(QWidget):
                         else n.lower())
             names = sorted({f for _g, f in broken})
             who = sorted({_short(g) for g, _f in broken})
+            what = (" and ".join(f"<i>{html.escape(say(n))}</i>" for n in names) if len(names) <= 3 else
+                    f"{len(names)} factors (the table)")
             headline = ("The hadith model gives each factor one weight for every step of the grades; for "
-                        + " and ".join(html.escape(w) for w in who) + ", "
-                        + " and ".join(f"<i>{html.escape(say(n))}</i>" for n in names)
-                        + " weigh differently from step to step.")
+                        + " and ".join(html.escape(w) for w in who) + ", " + what + " weigh differently from step to step.")
         else:
             headline = "The hadith model's shape holds: each factor weighs the same at every step of the grades."
         self._lab_finding(
@@ -1176,11 +1262,12 @@ class StatisticsPage(QWidget):
 
     def _lab_narrators(self, m: dict) -> None:
         names = m["names"]
-        cell = (m["cells"][names.index("Ibn Hajar's rank")][names.index("Times in the chains")]
-                if "Ibn Hajar's rank" in names and "Times in the chains" in names else None)
+        rank = self._words()["rank"]
+        cell = (m["cells"][names.index(rank)][names.index("Times in the chains")]
+                if rank in names and "Times in the chains" in names else None)
         if cell and cell.get("rho") is not None and cell.get("q", 1) < lab.ALPHA:
             headline = (f"The narrators the chains use most are the {'stronger' if cell['rho'] < 0 else 'weaker'} ones "
-                        f"(ρ {cell['rho']:+.2f} between Ibn Hajar's rank and how often they appear).")
+                        f"(ρ {cell['rho']:+.2f} between {rank} and how often they appear).")
         else:
             a, b, rho, *_rest = lab.pairs_table(m)[0]
             headline = f"Among the narrators, {html.escape(a.lower())} and {html.escape(b.lower())} go together most (ρ {rho:+.2f})."
@@ -1190,9 +1277,12 @@ class StatisticsPage(QWidget):
                     "(the partial view uses only these).", "Caption"),
              self._switchable(m, names, QSize(84, 46), 180)],
             "<br>".join(f"<b>{html.escape(n)}</b>{' — ' + html.escape(e) if e else ''}" for n, e in zip(names, m["explain"]))
-            + "<br><br>Rank runs from the Companions (1) to the liars (12), so a NEGATIVE ρ with it means the more of the "
-              "other, the stronger the narrator. Generation and year of death move together by their nature; held equal, "
-              "each shows what the other does not.",
+            + ("<br><br>al-Najashi's category runs from trustworthy (1) to weak (4), so a NEGATIVE ρ with it means the "
+               "more of the other, the stronger the narrator. His Rijal gives no generations (tabaqat), so there is no "
+               "generation here." if self._shia() else
+               "<br><br>Rank runs from the Companions (1) to the liars (12), so a NEGATIVE ρ with it means the more of the "
+               "other, the stronger the narrator. Generation and year of death move together by their nature; held equal, "
+               "each shows what the other does not."),
             (["a", "b", "rho alone", "n", "p", "q"], lab.pairs_table(m)))
 
     def _lab_books(self, comparisons: list[dict]) -> None:
@@ -1234,8 +1324,8 @@ class StatisticsPage(QWidget):
             "lab", "Are the books different?", headline, [table],
             "Kruskal–Wallis asks whether the books' chains could come from one distribution (ε² is its size: 0.01 small, "
             "0.06 medium, 0.14 large). Mann–Whitney compares each pair, Holm-adjusted; Cliff's δ is how often a chain of "
-            "the first book is above one of the second minus how often it is below (−1 … +1). Weakest narrator: Ibn "
-            "Hajar's rank group, higher is weaker.",
+            "the first book is above one of the second minus how often it is below (−1 … +1). Weakest narrator: "
+            + ("al-Najashi's category" if self._shia() else "Ibn Hajar's rank group") + ", higher is weaker.",
             (["measure", "a", "b", "U", "z", "p", "p holm", "cliffs delta"], rows))
 
     def _books(self, r: dict) -> None:
@@ -1326,14 +1416,14 @@ class StatisticsPage(QWidget):
         return _label("<b>How to read it</b> — " + text, "Caption", rich=True)
 
     def _grader_books(self) -> list[tuple[str, str, int]]:
-        """The Sunni books with two or more graders, in reading order: the Graders section compares Sunni grade
-        groups (the Shia graders are compared on the Hadith Scholars page, on the Imami categories)."""
+        """The books with two or more graders, in reading order — each on its own road: a Sunni book on the Sunni
+        grade groups, a Shia book on the four Imami categories (SH1)."""
         from isnady.core import books as core_books
 
         conn = self.conn
         counts = {k: n for k, _name, n in core.books_with_grades(conn)}
         return [(b["key"], b["name"], counts[b["key"]]) for b in core_books.all_books(conn)
-                if b["tradition"] != "shia" and counts.get(b["key"], 0) >= 2]
+                if counts.get(b["key"], 0) >= 2]
 
     def _refresh_graders(self) -> None:
         books = self._grader_books()
@@ -1357,10 +1447,17 @@ class StatisticsPage(QWidget):
         keys = [k for k, _n, _c in books]
         name = self.scope.currentText().split(" (")[0]
         message = None
-        if scope == corpus.SHIA_SCOPE or (scope and corpus.tradition_of_scope(self.conn, scope) == "shia"):
-            message = ("The Shia graders (al-Majlisi, al-Behbudi, al-Muhsini) are compared on their own road, on the four "
-                       "Imami categories: Hadith Scholars → al-'Allama al-Majlisi. This section compares the Sunni grade "
-                       "groups, never laid on the Shia books.")
+        if scope in (None, corpus.SHIA_SCOPE) and books:
+            # "all books": the graders are compared book by book — the first such book of this road, or a word
+            road = "shia" if scope == corpus.SHIA_SCOPE else "sunni"
+            mine = [(k, n) for k, n, _c in books if corpus.tradition_of_scope(self.conn, k) == road]
+            if not mine:
+                message = ("No book of this road has two graders to compare. The books that have: "
+                           + ", ".join(n for _k, n, _c in books) + ".")
+            elif self.book.currentData() not in [k for k, _n in mine]:
+                self.book.blockSignals(True)
+                self.book.setCurrentIndex(self.book.findData(mine[0][0]))
+                self.book.blockSignals(False)
         elif scope and scope not in keys:
             message = (f"{name} has no two graders to compare. The books that have: "
                        + (", ".join(n for _k, n, _c in books) or "none imported yet") + ".")
@@ -1375,7 +1472,7 @@ class StatisticsPage(QWidget):
             self.box.addWidget(_label(message, "Lead"))
             self.box.addStretch(1)
             return
-        if scope and self.book.currentData() != scope:
+        if scope and scope != corpus.SHIA_SCOPE and self.book.currentData() != scope:
             self.book.blockSignals(True)
             self.book.setCurrentIndex(self.book.findData(scope))
             self.book.blockSignals(False)
@@ -1425,15 +1522,38 @@ class StatisticsPage(QWidget):
         self._clear()
         graders = r["graders"]
         names = [_short(g) for g in graders]
+        labels = r.get("labels") or core.LABELS
+        order = list(reversed(r.get("categories") or range(core.K)))     # strongest first: sahih …
+        shia = r.get("tradition") == "shia"
         self.status.setText((f"From the saved results ({r['from_file']}). " if r.get("from_file") else "Computed and saved. ")
                             + f"Intervals: {r['boot']} bootstrap samples of hadith.")
+        if shia:
+            self.box.addWidget(_label(
+                "Road B: the graders of a Shia book compared on the four Imami categories — sahih, hasan, muwaththaq, "
+                "da'if — in their own order, never on the Sunni grade groups.", "Caption"))
+        few = r.get("too_few") or {}
+        if few:
+            self.box.addWidget(_label("Named, not measured — too few grades of this book to compare: " + ", ".join(
+                f"{_short(g)} ({n})" for g, n in few.items()) + ".", "Caption"))
+        for sel in r.get("selections", []):
+            self._selection_card(sel, labels, order)
         if len(graders) < 2:
-            card = self._card("One grader only")
-            card.layout().addWidget(_label(f"{names[0] if names else 'No one'} graded this book; agreement and the model "
-                                           "need two or more. His grades:", "Lead"))
-            dist = r["distribution"].get(graders[0], []) if graders else []
-            card.layout().addWidget(_label(" · ".join(f"{core.LABELS[k]} {n:,}" for k, n in reversed(list(enumerate(dist)))), "Lead"))
-            self.box.addWidget(card)
+            if not r.get("selections"):
+                card = self._card("One grader only")
+                card.layout().addWidget(_label(f"{names[0] if names else 'No one'} graded this book; agreement and the "
+                                               "model need two or more. His grades:", "Lead"))
+                dist = r["distribution"].get(graders[0], []) if graders else []
+                card.layout().addWidget(_label(" · ".join(f"{labels[k]} {dist[k]:,}" for k in order if k < len(dist)),
+                                               "Lead"))
+                self.box.addWidget(card)
+            elif graders:
+                card = self._card("No second grader to measure against")
+                card.layout().addWidget(_label(
+                    f"Besides the selection above, only {names[0]} grades this book in more than one grade, so agreement "
+                    "beyond chance, strictness and the model of the true grade (which need two graders who could each "
+                    "have said otherwise) cannot be measured here. His grades: " + " · ".join(
+                        f"{labels[k]} {r['distribution'][graders[0]][k]:,}" for k in order) + ".", "Lead"))
+                self.box.addWidget(card)
             self.box.addStretch(1)
             return
         t = theme.current()
@@ -1527,57 +1647,131 @@ class StatisticsPage(QWidget):
         self.box.addWidget(card)
         # 4 — confusion matrices
         card = self._card("How each grader grades a hadith of each true grade (the model's confusion matrices)")
-        order = list(reversed(range(core.K)))
+        few_all = {k for k in order if r["model"]["prior"][k] * r["certainty"]["total"] < 15}
         grid = QGridLayout()
         grid.setHorizontalSpacing(18)
         for n, (g, name) in enumerate(zip(graders, names)):
             th = r["model"]["theta"][g]
-            # a true grade the model finds (almost) no hadith of has no row to measure: its cells would show only
-            # the light prior (20% everywhere) — shown as "too few" instead
-            few = {k for k in range(core.K) if r["model"]["prior"][k] * r["certainty"]["total"] < 15}
-            cells = [[(None, ["too few"]) if k in few else (th[k][l], [f"{100 * th[k][l]:.0f}%"]) for l in order]
-                     for k in order]
+            # a true grade the model finds (almost) no hadith of has no row to measure: left out, and named below
+            rows_k = [k for k in order if k not in few_all]
+            cells = [[(th[k][l], [f"{100 * th[k][l]:.0f}%"]) for l in order] for k in rows_k]
             grid.addWidget(_label(f"<b>{html.escape(name)}</b>", "Lead", rich=True), (n // 2) * 2, n % 2)
-            grid.addWidget(HeatMap([core.LABELS[k] for k in order], [core.LABELS[k] for k in order], cells,
+            grid.addWidget(HeatMap([labels[k] for k in rows_k], [labels[k] for k in order], cells,
                                    cell=QSize(62, 28), label_w=86), (n // 2) * 2 + 1, n % 2)
         grid.setColumnStretch(2, 1)
         card.layout().addLayout(grid)
         prior = r["model"]["prior"]
         card.layout().addWidget(_label("How common each true grade is, by the model: " + " · ".join(
-            f"{core.LABELS[k]} {100 * prior[k]:.1f}%" for k in order), "Lead"))
+            f"{labels[k]} {100 * prior[k]:.1f}%" for k in order)
+            + ("" if not few_all else ". No row for " + ", ".join(labels[k] for k in order if k in few_all)
+               + ": too few hadith of that true grade to measure how a grader treats it."), "Lead"))
         card.layout().addWidget(self._how(
             "rows are the true grade, columns what the grader says. A strong diagonal is a grader who sees the grade the "
             "others see; weight to the right of it (towards weaker grades) is strictness, to the left leniency. This is "
             "the Dawid–Skene model: it learns each grader's matrix and the true grades together."))
         self.box.addWidget(card)
         # 5 — disputed hadith
+        self._disputed(r, graders, labels)
+        self.box.addStretch(1)
+
+    def _selection_card(self, sel: dict, labels: list[str], order: list[int]) -> None:
+        """A grader who gives one grade only (a selection, as al-Behbudi's Sahih al-Kafi) beside each other grader."""
+        who, grade = _short(sel["grader"]), labels[sel["grade"]]
+        card = self._card(f"{who}'s selection — {sel['count']:,} hadith, all {grade}")
+        if not sel["others"]:
+            card.layout().addWidget(_label(f"No other grader graded the hadith {who} selected.", "Lead"))
+        for o, x in sel["others"].items():
+            dist = x["distribution"]
+            same = dist[sel["grade"]] / x["common"] if x["common"] else 0
+            card.layout().addWidget(_label(
+                f"Of the <b>{x['common']:,}</b> hadith {html.escape(who)} holds {html.escape(grade)} that "
+                f"{html.escape(_short(o))} grades too, {html.escape(_short(o))} calls <b>{_pct(same)}</b> "
+                f"{html.escape(grade)}.", "Lead", rich=True))
+            rows = [(f"{_short(o)} on {who}'s {grade}", [dist[k] for k in order])]
+            colors = (IMAMI_GRADE_COLORS if len(order) == 4 else GRADE_COLORS)[theme.current().dark]
+            card.layout().addWidget(StackedBars(rows, list(zip([labels[k] for k in order], colors)), label_w=260))
+        card.layout().addWidget(self._how(
+            f"{who} names only the hadith he holds {grade}: a selection, not a grading of every hadith, so he never says "
+            "anything else and agreement beyond chance (kappa, alpha) or a strictness cannot be measured for him. What "
+            "can be measured is how the other graders grade the hadith he selected. The two need not differ in method "
+            "only: they may read a narrator differently, or grade different versions of the chain."))
+        self.box.addWidget(card)
+
+    def _disputed(self, r: dict, graders: list[str], labels: list[str]) -> None:
+        """The hadith the graders are furthest apart on. Every cell says what it is: a grade, or "not graded"."""
+        t = theme.current()
+        voices = {o["left_out"]: o["kept"] for o in r.get("one_voice", [])}
         card = self._card(f"The disputed hadith — {r['disputed_total']:,} where the graders are two steps apart or the "
                           "model is unsure")
-        table = QTableWidget(0, 3 + len(graders))
-        table.setHorizontalHeaderLabels(["Hadith", "Model's grade", "Certainty"] + names)
+        table = QTableWidget(0, 4 + len(graders))
+        heads = ["Hadith", "Model's grade", "Certainty", "Voices weighed"] + [
+            _short(g) + (" ≈" if g in voices else "") for g in graders]
+        table.setHorizontalHeaderLabels(heads)
+        for j, g in enumerate(graders):
+            tip = _full(g) + (f"\n≈ one voice with {_short(voices[g])} in the model (they agree too often to count "
+                              "twice): his grade is shown, but does not move the model's grade" if g in voices else "")
+            table.horizontalHeaderItem(4 + j).setToolTip(tip)
+        table.horizontalHeaderItem(2).setToolTip("The model's probability for its grade")
         table.verticalHeader().hide()
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        csv_rows = []
         for d in r["disputed"][:150]:
             row = table.rowCount()
             table.insertRow(row)
             item = QTableWidgetItem(str(d.get("number") or d["hadith_id"]))
             item.setData(Qt.ItemDataRole.UserRole, d["hadith_id"])
             table.setItem(row, 0, item)
-            table.setItem(row, 1, QTableWidgetItem(core.LABELS[d["consensus"]]))
-            table.setItem(row, 2, QTableWidgetItem(f"{100 * d['certainty']:.0f}%"))
+            given = {g: d["grades"].get(g) for g in graders}
+            voted = [g for g in graders if given[g] is not None and g not in voices]
+            # why the model is unsure, in words: the voices it weighs and what they say
+            why = ", ".join(f"{_short(g)} {labels[given[g]]}" for g in voted)
+            model = QTableWidgetItem(labels[d["consensus"]])
+            model.setToolTip(f"The voices the model weighs on this hadith: {why}.\n"
+                             + ("One voice against one: the model sides with the grader it finds closer to the others "
+                                "over the whole book, so its certainty is modest." if len(voted) == 2 and
+                                len({given[g] for g in voted}) == 2 else
+                                "The model's grade is the grade these voices most probably mean, given how each grades "
+                                "the whole book."))
+            table.setItem(row, 1, model)
+            cert = QTableWidgetItem(f"{100 * d['certainty']:.0f}%")
+            cert.setToolTip(model.toolTip())
+            table.setItem(row, 2, cert)
+            tally = Counter(given[g] for g in voted)
+            voices_item = QTableWidgetItem(" · ".join(f"{labels[k]} {n}" for k, n in
+                                                      sorted(tally.items(), key=lambda kv: -kv[0])))
+            voices_item.setToolTip(model.toolTip())
+            table.setItem(row, 3, voices_item)
             for j, g in enumerate(graders):
-                v = d["grades"].get(g)
-                table.setItem(row, 3 + j, QTableWidgetItem(core.LABELS[v] if v is not None else "—"))
-        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+                v = given[g]
+                cell = QTableWidgetItem(labels[v] if v is not None else "not graded")
+                if v is None:
+                    cell.setForeground(QColor(t.muted))
+                    cell.setToolTip(f"{_short(g)} gives no grade of this hadith (or a grade of its chain only)")
+                elif g in voices:
+                    cell.setForeground(QColor(t.muted))
+                    cell.setToolTip(f"One voice with {_short(voices[g])}: shown, not weighed")
+                table.setItem(row, 4 + j, cell)
+            csv_rows.append([d.get("number") or d["hadith_id"], labels[d["consensus"]], round(d["certainty"], 4)]
+                            + [labels[given[g]] if given[g] is not None else "" for g in graders])
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        header.setStretchLastSection(True)
         table.setMinimumHeight(360)
         table.cellDoubleClicked.connect(lambda rr, _c: self.open_hadith.emit(table.item(rr, 0).data(Qt.ItemDataRole.UserRole)))
         card.layout().addWidget(table)
+        same = [f"{_short(k)} ≈ {_short(v)}" for k, v in voices.items()]
         card.layout().addWidget(self._how(
-            "the hadith where the scholars are furthest apart come first. Certainty is the model's probability for its "
-            "grade. Double-click a row to read the hadith in its book."))
+            "the hadith where the scholars are furthest apart come first. <i>Certainty</i> is the model's probability "
+            "for its grade: where only two voices weigh and they disagree, it sits a little above one half — the model "
+            "sides with the grader it finds closer to the others over the whole book, which is why many such rows show "
+            "the same figure. Near 100% against a dissent means the dissenting grade is one that grader gives, over the "
+            "whole book, to hadith the others place elsewhere — the model holds it to be his own reading, not the "
+            "grade. <i>Voices weighed</i>: the grades the model counts. <i>not graded</i>: that scholar gave no grade of the hadith (or graded its chain only). "
+            + (f"≈ marks a grader who is one voice with another in the model ({', '.join(same)}): his grade is shown, "
+               "muted, but not weighed. " if same else "")
+            + "Hover a cell for the details; double-click a row to read the hadith in its book."))
         self.box.addWidget(card)
-        self.box.addStretch(1)
 
     @staticmethod
     def _alpha_words(a: float) -> str:

@@ -20,9 +20,10 @@ import random
 import sqlite3
 from collections import Counter, defaultdict
 
-from isnady.core.grades import GROUP_LABELS, group, isnad_only
+from isnady.core.grades import GROUP_LABELS, IMAMI_LABELS, group, imami_group, isnad_only
 
-METHOD = "isnady-graders-3"
+METHOD = "isnady-graders-4"
+MIN_GRADES = 20                         # a grader with fewer grades of a book is named, not measured (al-Muhsini: 1 of al-Kafi)
 HIGH_AGREEMENT = 0.95                   # as core.scholars: above this, two graders are not two independent views
 K = 5                                   # grade groups 0..4 (fabricated … sahih), used only as ORDER
 LABELS = [GROUP_LABELS[k] for k in range(K)]
@@ -56,11 +57,35 @@ def load(conn: sqlite3.Connection, collection: str, chain_only_out: dict | None 
     return dict(out)
 
 
+def load_imami(conn: sqlite3.Connection, collection: str) -> dict[str, dict[int, int]]:
+    """grader -> {hadith id: Imami category} for one Shia book (road B, SH1): 4 sahih, 3 hasan, 2 muwaththaq,
+    1 da'if (core.grades.imami_group) — al-Majlisi's and al-Behbudi's own categories, never the Sunni groups. A
+    wording with no category ("كالسابق", "مختلف فيه") is left out rather than guessed."""
+    out: dict[str, dict[int, int]] = defaultdict(dict)
+    for name, hid, grade in conn.execute(
+            """SELECT g.grader_name, g.hadith_id, g.grade FROM grades g JOIN hadiths h ON h.id = g.hadith_id
+               JOIN collections c ON c.id = h.collection_id WHERE c.key = ? ORDER BY g.id""", (collection,)):
+        if hid in out[name]:
+            continue
+        k = imami_group(grade)
+        if k is not None:
+            out[name][hid] = k
+    return {g: d for g, d in out.items() if d}
+
+
+def is_shia_book(conn: sqlite3.Connection, collection: str) -> bool:
+    row = conn.execute("SELECT tradition FROM collections WHERE key = ?", (collection,)).fetchone()
+    return bool(row and row[0] == "shia")
+
+
 def books_with_grades(conn: sqlite3.Connection) -> list[tuple[str, str, int]]:
-    """(key, name, graders) for every book with grades, most graders first."""
+    """(key, name, graders) for every book with grades, most graders first — a grader counted when he grades the
+    book MIN_GRADES times or more (al-Muhsini's one grade of al-Kafi is named, not counted)."""
     rows = conn.execute(
-        """SELECT c.key, c.name, COUNT(DISTINCT g.grader_name) FROM grades g JOIN hadiths h ON h.id = g.hadith_id
-           JOIN collections c ON c.id = h.collection_id GROUP BY c.key ORDER BY 3 DESC, c.name""").fetchall()
+        """SELECT key, name, COUNT(*) FROM (
+               SELECT c.key AS key, c.name AS name, g.grader_name FROM grades g JOIN hadiths h ON h.id = g.hadith_id
+               JOIN collections c ON c.id = h.collection_id GROUP BY c.key, g.grader_name HAVING COUNT(*) >= ?)
+           GROUP BY key ORDER BY 3 DESC, name""", (MIN_GRADES,)).fetchall()
     return [(r[0], r[1], r[2]) for r in rows]
 
 
@@ -172,12 +197,39 @@ def dawid_skene(data: dict[str, dict[int, int]], iterations: int = 200, tol: flo
 def analyse(conn: sqlite3.Connection, collection: str, progress=None) -> dict:
     say = progress or (lambda _m: None)
     chain_only: dict = {}
-    data = load(conn, collection, chain_only)
+    shia = is_shia_book(conn, collection)
+    # road B keeps its own four categories in the places 1..4 of the same order (0 stays empty): every measure
+    # below uses the ORDER only, so an empty place changes nothing; the labels are the Imami ones (SH1)
+    data = load_imami(conn, collection) if shia else load(conn, collection, chain_only)
+    few = {g: len(d) for g, d in data.items() if len(d) < MIN_GRADES}
+    data = {g: d for g, d in data.items() if g not in few}
     graders = sorted(data, key=lambda g: -len(data[g]))
     rng = random.Random(SEED)
-    out = {"collection": collection, "graders": graders, "counts": {g: len(data[g]) for g in graders},
+    out = {"collection": collection, "tradition": "shia" if shia else "sunni", "graders": graders,
+           "counts": {g: len(data[g]) for g in graders},
            "distribution": {g: [sum(1 for k in data[g].values() if k == c) for c in range(K)] for g in graders},
-           "labels": LABELS, "boot": BOOT, "chain_only": {g: chain_only.get(g, 0) for g in graders}}
+           "labels": [IMAMI_LABELS.get(k, "") for k in range(K)] if shia else LABELS,
+           "categories": [1, 2, 3, 4] if shia else list(range(K)),
+           "boot": BOOT, "chain_only": {g: chain_only.get(g, 0) for g in graders}, "too_few": few}
+    # a grader who gives ONE grade only is a selection, not a grading (al-Behbudi's Sahih al-Kafi names only what he
+    # holds sahih): agreement beyond chance and the model need a grader who could have said otherwise. He is set
+    # beside the others instead — how they grade the hadith he selected.
+    single = [g for g in graders if len(set(data[g].values())) == 1]
+    out["selections"] = []
+    for g in single:
+        grade = next(iter(data[g].values()))
+        others = {}
+        for o in graders:
+            if o == g:
+                continue
+            common = [h for h in data[g] if h in data[o]]
+            if common:
+                others[o] = {"common": len(common),
+                             "distribution": [sum(1 for h in common if data[o][h] == c) for c in range(K)]}
+        out["selections"].append({"grader": g, "grade": grade, "count": len(data[g]), "others": others})
+    graders = [g for g in graders if g not in single]
+    data = {g: data[g] for g in graders}
+    out["graders"] = graders
     if len(graders) < 2:
         return out
     say("Agreement between every pair of graders")

@@ -20,8 +20,7 @@ is taken from its section here.
   as part of a narrator's name (parser isnady-isnad-6).
 - **Statistics on two roads**: *All Sunni books* (Ibn Hajar's ranks, chains to the Prophet ﷺ) and *All Shia books*
   (al-Najashi's Imami categories, chains to a Ma'sum) are measured apart — the Shia books were counted with the
-  Sunni ones before, with 0% of their names identified; one Shia book is measured on its own road too. The hadith
-  model and the correlations rest on the Sunni grades and ranks and say so for the Shia books. Fixed: sections that
+  Sunni ones before, with 0% of their names identified; one Shia book is measured on its own road too. Fixed: sections that
   ran off the right edge (the cross-tables now one under the other, the map of shared narrators sized to the page,
   the books table fitted), and the median chain length counted over the chains split into names (Sahih Muslim
   showed "—"). `iy stats … --book @shia`. Saved results are named `corpus-all_sunni_books.json`,
@@ -29,9 +28,29 @@ is taken from its section here.
 - **Statistics: one book for the whole page.** The Graders section had its own book list beside **Books** above,
   so the page could show two different books at once (Books: Fada'il al-Shi'a, Graders: Sunan al-Nasa'i). Now the
   two move together: a book chosen above is the book of Graders; a book chosen in Graders becomes the book above;
-  a book with fewer than two graders, or a Shia book, says so (the Shia graders are compared on the Imami categories
-  on the Hadith Scholars page) instead of showing another book's graders. The Graders list holds only the Sunni books
-  with two or more graders.
+  a book with fewer than two graders says so instead of showing another book's graders.
+- **Statistics: no empty pages on the Shia road.** *Grades and chains*, *The hadith model* and *Correlations and
+  tests* showed only a note for a Shia book. Every measure is now written once and run on each road with its own
+  scale (`stats_corpus.Road`): for al-Kafi, al-Majlisi's grades in the four Imami categories against the weakest
+  narrator in al-Najashi's categories, the ordinal model of his grades (13,276 hadith; the weakest narrator carries
+  77.7% of what the chain explains), the correlations, Brant's test and the narrators' matrix (no generations: al-
+  Najashi gives none). al-Behbudi's *Sahih al-Kafi* is a selection — he names only what he holds sahih — so he is
+  shown as one: of his 225 hadith that al-Majlisi grades, al-Majlisi calls 35.6% sahih; no kappa, alpha or model is
+  made of a grader who never says anything else. Graders now takes Shia books too, on the Imami categories; a grader
+  with fewer than 20 grades of a book is named, not measured (al-Muhsini: 1 of al-Kafi). Why a chain whose weakest is
+  "praised" is so often sahih is said in the page: al-Najashi praises Zurara, Ibn Abi 'Umayr and Ahmad b. Muhammad
+  b. 'Isa without the word thiqa; al-Tusi and the later scholars count them thiqa.
+- **Statistics: the disputed-hadith table reads plainly.** Short names in the headers (the full name on hover; the
+  header was cut to "nmad Muhyi al-Din 'Abd al-"); *not graded*, muted, instead of "—"; a *Voices weighed* column
+  ("sahih 1 · da'if 1") so the many 64% rows explain themselves — one voice against one, the model siding with the
+  grader closer to the others; the grader who is one voice with another (Muhyi al-Din ≈ al-Albani) marked and muted.
+  The confusion matrices no longer show rows of "too few"; the true grades without data are named under them.
+- **Statistics: headlines follow the data.** "for every grader (τ 0.13 to 0.13)" with one grader, "Longer chains are
+  graded a little lower" when they are not, and "against 58% by always saying sahih" when the commonest grade was
+  da'if are now said from the numbers. The surprises say how many are clear (the model gave that grade 5% or less).
+- **al-Najashi: "من أوثق الناس" is thiqa** (Muhammad b. Muslim was read as only "praised"); takes effect when al-
+  Najashi's Rijal is imported again. Saved statistics are recomputed once (isnady-corpus-3, isnady-models-2,
+  isnady-lab-3, isnady-graders-4).
 
 ## [0.1.9] — 2026-10-11
 

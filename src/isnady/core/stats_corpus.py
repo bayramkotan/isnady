@@ -24,9 +24,9 @@ import sqlite3
 from collections import Counter, defaultdict
 
 from isnady.core import stats_graders
-from isnady.core.grades import GROUP_LABELS, group, isnad_only
+from isnady.core.grades import GROUP_LABELS, IMAMI_LABELS, group, isnad_only
 
-METHOD = "isnady-corpus-2"
+METHOD = "isnady-corpus-3"
 SHIA_SCOPE = "@shia"           # every active Shia book (road B)
 BOOT = 200
 SEED = 1405
@@ -60,6 +60,45 @@ def tradition_of_scope(conn: sqlite3.Connection, collection: str | None) -> str:
     row = conn.execute("SELECT tradition FROM collections WHERE key = ?", (collection,)).fetchone()
     return "shia" if row and row[0] == "shia" else "sunni"
 GRADE_ORDER = [4, 3, 2, 1, 0]          # sahih … fabricated, strongest first (as the ranks)
+IMAMI_ORDER = [4, 3, 2, 1]             # sahih, hasan, muwaththaq, da'if — the Imami categories, strongest first
+
+
+class Road:
+    """Everything that differs between the two roads (SH1), in one place, so every measure is written once and run
+    on each road with its own scale: the critic and his categories, the grades and their order, where a chain ends.
+    Road A (Sunni): Ibn Hajar's twelve ranks in six groups; the five Sunni grade groups; the chain ends at the Prophet.
+    Road B (Shia): al-Najashi's four Imami categories; the four Imami grades of al-Majlisi and al-Behbudi; the chain
+    ends at a Ma'sum. A level of one road is never laid on the other."""
+
+    def __init__(self, tradition: str) -> None:
+        self.tradition = tradition
+        self.shia = tradition == "shia"
+        self.rank_groups = RANK_GROUPS_SHIA if self.shia else RANK_GROUPS
+        self.group_of = GROUP_OF_RANK_SHIA if self.shia else GROUP_OF_RANK
+        self.weak_from = 4 if self.shia else 7            # al-Najashi's "weak"; Ibn Hajar's rank 7 (mastur) and below
+        self.grade_order = IMAMI_ORDER if self.shia else GRADE_ORDER
+        self.grade_names = IMAMI_LABELS if self.shia else GROUP_LABELS
+        self.grade_labels = [self.grade_names[g] for g in self.grade_order]
+        # the weakest narrator of a chain, as a level: the rank groups by name ("Companion only": every ranked
+        # narrator a Companion, whose uprightness is not examined), and "None ranked"
+        self.levels = [("Companion only" if not self.shia and i == 0 else n) for i, (n, _d, _r) in
+                       enumerate(self.rank_groups)] + ["None ranked"]
+        self.reference = "Trustworthy"
+        self.critic = "al-Najashi" if self.shia else "Ibn Hajar"
+        self.rank_name = "al-Najashi's category" if self.shia else "Ibn Hajar's rank"
+        self.rijal = "al-Najashi's Rijal" if self.shia else "the Taqrib"
+        self.end = "a Ma'sum" if self.shia else "the Prophet"
+        self.weak_words = "weak (da'if)" if self.shia else "of rank 7 or weaker (mastur, da'if, majhul …)"
+
+    def load(self, conn: sqlite3.Connection, key: str, chain_only_out: dict | None = None) -> dict[str, dict[int, int]]:
+        """grader -> {hadith id: grade} on this road's own scale (core.stats_graders)."""
+        if self.shia:
+            return stats_graders.load_imami(conn, key)
+        return stats_graders.load(conn, key, chain_only_out)
+
+
+def road_of(conn: sqlite3.Connection, collection: str | None) -> Road:
+    return Road(tradition_of_scope(conn, collection))
 GAP_BINS = list(range(-60, 161, 10))   # years between a student's death and his teacher's
 
 
@@ -249,10 +288,10 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     if not books:
         return {"empty": True}
     book_name = {bid: name for bid, _key, name in books}
-    tradition = tradition_of_scope(conn, collection)
-    shia = tradition == "shia"
-    rank_groups = RANK_GROUPS_SHIA if shia else RANK_GROUPS
-    group_of = GROUP_OF_RANK_SHIA if shia else GROUP_OF_RANK
+    road = road_of(conn, collection)
+    tradition = road.tradition
+    rank_groups = road.rank_groups
+    group_of = road.group_of
     ngroups = len(rank_groups)
     say("Reading the narrators")
     persons = _persons(conn, tradition)
@@ -364,7 +403,7 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
                 "death": info["death"], "links": link_count[p], "hadith": len(hadith_of[p])}
 
     pillars = [person_row(p) for p, _n in link_count.most_common(25)]
-    weak_from = 4 if shia else 7                       # al-Najashi's "weak"; Ibn Hajar's rank 7 and below
+    weak_from = road.weak_from
     weak_pillars = [person_row(p) for p, _n in sorted(
         ((p, n) for p, n in link_count.items() if (persons[p]["rank"] or 0) >= weak_from), key=lambda x: -x[1])[:15]]
     concentration = lorenz(list(link_count.values()))
@@ -390,22 +429,24 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     # ---- grades: does the weakest narrator foretell the grade? does the length?
     say("Comparing the grades with the chains")
     grades_out = []
-    for _bid, key, name in ([] if shia else books):       # road B's grades (al-Majlisi …): Hadith Scholars, SH1d
-        data = stats_graders.load(conn, key)
+    order = road.grade_order
+    for _bid, key, name in books:
+        data = road.load(conn, key)
         for grader, by_hadith in sorted(data.items()):
-            # rows: weakest-link group 0..5 (strong → weak); cols: grade 0..4 as sahih … fabricated (strong → weak)
-            pairs = [(weakest_of_hadith[h], GRADE_ORDER.index(g)) for h, g in by_hadith.items()
-                     if h in weakest_of_hadith and g in GRADE_ORDER]
+            # rows: weakest-link group (strong → weak); cols: the grades, strongest first (road A: sahih … fabricated;
+            # road B: sahih, hasan, muwaththaq, da'if)
+            pairs = [(weakest_of_hadith[h], order.index(g)) for h, g in by_hadith.items()
+                     if h in weakest_of_hadith and g in order]
             length_pairs = []
             for h, g in by_hadith.items():
-                if h in length_of_hadith and g in GRADE_ORDER:
-                    length_pairs.append((min(length_of_hadith[h], 9) - 1, GRADE_ORDER.index(g)))
+                if h in length_of_hadith and g in order:
+                    length_pairs.append((min(length_of_hadith[h], 9) - 1, order.index(g)))
             dist = Counter(by_hadith.values())
             grades_out.append({
                 "book": name, "key": key, "grader": grader, "graded": len(by_hadith),
-                "distribution": [dist.get(g, 0) for g in GRADE_ORDER],
-                "weakest": association(pairs, ngroups, 5, rng) if pairs else None,
-                "length": association(length_pairs, 9, 5, rng) if length_pairs else None,
+                "distribution": [dist.get(g, 0) for g in order],
+                "weakest": association(pairs, ngroups, len(order), rng) if len(pairs) >= 10 else None,
+                "length": association(length_pairs, 9, len(order), rng) if len(length_pairs) >= 10 else None,
             })
 
     # ---- books compared
@@ -423,7 +464,7 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
 
     return {
         "method": METHOD, "collection": collection, "boot": BOOT, "tradition": tradition,
-        "groups": [[n, d] for n, d, _r in rank_groups], "grade_labels": [GROUP_LABELS[g] for g in GRADE_ORDER],
+        "groups": [[n, d] for n, d, _r in rank_groups], "grade_labels": road.grade_labels,
         "overview": overview,
         "narrators": {"rank_all": rank_all, "rank_links": rank_links, "rank_people": rank_people,
                       "unranked_links": unranked_links, "tabaqa_groups": tabaqa_groups, "pillars": pillars,
@@ -462,5 +503,5 @@ def cached(conn: sqlite3.Connection, collection: str | None = None, progress=Non
     return result
 
 
-__all__ = ["analyse", "cached", "kendall_from_table", "association", "lorenz", "pagerank", "RANK_GROUPS",
+__all__ = ["Road", "road_of", "IMAMI_ORDER", "analyse", "cached", "kendall_from_table", "association", "lorenz", "pagerank", "RANK_GROUPS",
            "RANK_GROUPS_SHIA", "SHIA_SCOPE", "tradition_of_scope", "isnad_only", "group"]

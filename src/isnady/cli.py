@@ -437,10 +437,26 @@ def cmd_stats_graders(args) -> int:
         return 0
     key = args.book or books[0][0]
     r = sg.cached(conn, key, lambda m: print(f"  … {m}", file=sys.stderr), args.recompute)
-    short = {g: next((s["name"] for s in SCHOLARS if g in s.get("grader_names", [])), g) for g in r["graders"]}
-    print(f"{key}: {len(r['graders'])} graders" + (f"  (from {r['from_file']})" if r.get("from_file") else "  (computed and saved)"))
+    everyone = set(r["graders"]) | {x["grader"] for x in r.get("selections", [])} | set(r.get("too_few") or {})
+    for x in r.get("selections", []):
+        everyone |= set(x["others"])
+    short = {g: next((s.get("short") or s["name"] for s in SCHOLARS if g in s.get("grader_names", [])), g) for g in everyone}
+    labels = r.get("labels") or sg.LABELS
+    order = list(reversed(r.get("categories") or range(sg.K)))
+    print(f"{key}: {len(r['graders'])} graders measured" + (f"  (from {r['from_file']})" if r.get("from_file") else "  (computed and saved)"))
+    if r.get("tradition") == "shia":
+        print("  road B: the four Imami categories (sahih, hasan, muwaththaq, da'if), never the Sunni grade groups")
+    for g, n in (r.get("too_few") or {}).items():
+        print(f"  {short[g]}: {n} grade(s) of this book — named, not measured")
+    for x in r.get("selections", []):
+        grade = labels[x["grade"]]
+        print(f"  {short[x['grader']]}: a selection — all {x['count']:,} hadith he names are {grade}")
+        for o, y in x["others"].items():
+            dist = " · ".join(f"{labels[k]} {y['distribution'][k]:,}" for k in order)
+            same = y["distribution"][x["grade"]] / y["common"] if y["common"] else 0
+            print(f"    {short[o]} on those {y['common']:,}: {dist}  ({100 * same:.1f}% {grade})")
     if len(r["graders"]) < 2:
-        print("  one grader: no agreement or model")
+        print("  fewer than two graders who give more than one grade: no agreement or model")
         return 0
     a = r["alpha"]
     print(f"Krippendorff's alpha (ordinal) {a['value']:.3f}  95% {a['ci'][0]:.3f}–{a['ci'][1]:.3f}  over {a['units']:,} hadith")
@@ -459,8 +475,9 @@ def cmd_stats_graders(args) -> int:
     print(f"The model is sure (≥95%) of {c['high']:,} of {c['total']:,} hadith, unsure (<60%) of {c['low']:,}; "
           f"{r['disputed_total']:,} disputed")
     for d in r["disputed"][: args.limit]:
-        grades = ", ".join(f"{short[g]}: {sg.LABELS[v]}" for g, v in d["grades"].items())
-        print(f"  #{d.get('number')}: model {sg.LABELS[d['consensus']]} ({100 * d['certainty']:.0f}%) — {grades}")
+        grades = ", ".join(f"{short[g]}: {labels[d['grades'][g]] if d['grades'].get(g) is not None else 'not graded'}"
+                           for g in r["graders"])
+        print(f"  #{d.get('number')}: model {labels[d['consensus']]} ({100 * d['certainty']:.0f}%) — {grades}")
     return 0
 
 
@@ -543,7 +560,8 @@ def cmd_stats_model(args) -> int:
         if args.grader and args.grader.lower() not in m["grader"].lower():
             continue
         print(f"\n{m['grader']} — {m['book_name']}: {m['n']:,} hadith, grades {' < '.join(reversed(m['labels']))}")
-        print(f"  fit: McFadden R² {m['mcfadden']:.3f} · right {100 * m['accuracy']:.1f}% (base {100 * m['base_rate']:.1f}%) "
+        print(f"  fit: McFadden R² {m['mcfadden']:.3f} · right {100 * m['accuracy']:.1f}% (always "
+              f"“{m.get('base_label', m['labels'][0])}”: {100 * m['base_rate']:.1f}%) "
               f"· Somers' D {m['somers_d']:.3f} · LR χ² {m['lr_all']['chi2']:.1f} on {m['lr_all']['df']} df")
         print("  odds ratio of a WEAKER grade (95% interval), p")
         for c in m["coefficients"]:
