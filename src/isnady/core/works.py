@@ -73,19 +73,24 @@ def ensure_collection_works(conn: sqlite3.Connection) -> int:
 
 
 def list_works(conn: sqlite3.Connection) -> list[dict]:
+    """Every book on the shelf, each with its tradition: the Sunni ones first (hadith collections in reading order,
+    then the rijal works), the Shia ones after them in the same way (SH1: one shelf, each tradition apart)."""
     rows = conn.execute(
         """SELECT w.id, w.key, w.kind, w.title, w.title_ar, w.author,
                   (SELECT COUNT(*) FROM work_nodes n WHERE n.work_id = w.id AND n.kind IN ('hadith', 'entry', 'paragraph')),
-                  (SELECT COUNT(*) FROM work_nodes n WHERE n.work_id = w.id AND n.parent_id IS NULL)
-           FROM works w ORDER BY (w.kind != 'hadith'), w.title""").fetchall()
+                  (SELECT COUNT(*) FROM work_nodes n WHERE n.work_id = w.id AND n.parent_id IS NULL),
+                  COALESCE((SELECT c.tradition FROM collections c WHERE c.id = w.collection_id),
+                           (SELECT p.tradition FROM persons p WHERE p.source_id = w.source_id LIMIT 1), 'sunni')
+           FROM works w""").fetchall()
     from isnady.core import books as core_books
 
     order = {b["key"]: i for i, b in enumerate(core_books.all_books(conn, include_inactive=True))}
     off = core_books.disabled()
     works = [{"id": r[0], "key": r[1], "kind": r[2], "title": r[3], "title_ar": r[4], "author": r[5],
-              "leaves": r[6], "chapters": r[7]} for r in rows if not (r[2] == "hadith" and r[1] in off)]
-    # hadith collections in reading order (Sunni, then Shia), the other works after them by title
-    return sorted(works, key=lambda w: (w["kind"] != "hadith", order.get(w["key"], len(order)),
+              "leaves": r[6], "chapters": r[7], "tradition": r[8] if r[8] in ("sunni", "shia") else "other"}
+             for r in rows if not (r[2] == "hadith" and r[1] in off)]
+    rank = {"sunni": 0, "shia": 1, "other": 2}
+    return sorted(works, key=lambda w: (rank[w["tradition"]], w["kind"] != "hadith", order.get(w["key"], len(order)),
                                         core_books.sort_name(w["title"] or "")))
 
 

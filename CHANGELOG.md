@@ -39,6 +39,10 @@ is taken from its section here.
 - **Search results in the order of the books**: Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud … then the Shia
   books, as the book lists show them — they came by title, so al-Kafi and 'Uyun Akhbar al-Rida stood before
   Sahih al-Bukhari. The same order for a narrator's hadith, `iy isnads` and `iy stats` (`books.order_sql`).
+- **Books: the Shia books on the shelf in plain sight.** The shelf showed every book in one short list, Shia ones
+  last, so they sat below the fold. Now the Sunni and the Shia books (hadith collections, then rijal works) stand
+  under their own headings, *All / Sunni / Shia* at the top shows one of them alone (remembered), every Shia book
+  carries a gold *Shia* tag, and the list is taller. `works.list_works` gives each book its tradition.
 
 ## [0.1.8] — 2026-10-10
 

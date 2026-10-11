@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
+    QButtonGroup,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -77,9 +78,27 @@ class BooksPage(QWidget):
         title.setFont(theme.reading_font(18, bold=True))
         lbox.addWidget(title)
         lbox.addWidget(_label("Open a book and read it in its own order, chapter by chapter.", "Caption"))
+        # Sunni and Shia on one shelf, each under its own heading; the switch shows one of them alone (SH1)
+        self._shelf_tradition: str | None = config.state_get("reader.shelf") or None
+        self._shelf_buttons = QButtonGroup(self)
+        seg = QHBoxLayout()
+        seg.setSpacing(6)
+        for key, text in ((None, "All"), ("sunni", "Sunni"), ("shia", "Shia")):
+            b = QPushButton(text)
+            b.setObjectName("Segment")
+            b.setCheckable(True)
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            b.setProperty("tradition", key)
+            b.setChecked(key == self._shelf_tradition)
+            self._shelf_buttons.addButton(b)
+            seg.addWidget(b)
+        seg.addStretch(1)
+        self._shelf_buttons.buttonClicked.connect(lambda b: self.set_shelf(b.property("tradition")))
+        lbox.addLayout(seg)
         self.works = QListWidget()
         self.works.setObjectName("NarratorList")
-        self.works.setMaximumHeight(250)
+        self.works.setMinimumHeight(250)
+        self.works.setMaximumHeight(340)
         self.works.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.works.currentItemChanged.connect(lambda item, _p: item and self.open_work(item.data(Qt.ItemDataRole.UserRole)))
         lbox.addWidget(self.works)
@@ -154,10 +173,25 @@ class BooksPage(QWidget):
         if conn is None:
             return
         core_works.ensure_collection_works(conn)
-        shelf = core_works.list_works(conn)
+        shelf = [w for w in core_works.list_works(conn)
+                 if self._shelf_tradition is None or w["tradition"] == self._shelf_tradition]
         self.works.blockSignals(True)
         self.works.clear()
+        heading = None
         for w in shelf:
+            if w["tradition"] != heading:
+                heading = w["tradition"]
+                head = QListWidgetItem()
+                head.setFlags(Qt.ItemFlag.NoItemFlags)          # a heading, not a book
+                text = {"sunni": "Sunni", "shia": "Shia"}.get(heading, "Other")
+                count = sum(1 for x in shelf if x["tradition"] == heading)
+                label = _label(f"{text} books · {count}", "FilterTitle", wrap=False)
+                label.setContentsMargins(10, 10, 10, 2)
+                if heading == "shia":
+                    label.setStyleSheet(f"color: {theme.current().gold};")
+                head.setSizeHint(label.sizeHint())
+                self.works.addItem(head)
+                self.works.setItemWidget(head, label)
             item = QListWidgetItem()
             item.setData(Qt.ItemDataRole.UserRole, w["key"])
             row = QWidget()
@@ -171,8 +205,10 @@ class BooksPage(QWidget):
             unit = "hadith" if w["kind"] == "hadith" else "entries"
             facts = [core_works.KIND_LABELS.get(w["kind"], "Book"), f"{w['leaves']:,} {unit}", f"{w['chapters']} chapters"]
             if author:
-                facts.insert(0, author.get("tr") or author["name"])
-            box.addWidget(_label(" · ".join(facts), "Caption", wrap=False))
+                facts.insert(0, html.escape(author.get("tr") or author["name"]))
+            if w["tradition"] == "shia":
+                facts.insert(0, f"<span style='color:{theme.current().gold}'><b>Shia</b></span>")
+            box.addWidget(_label(" · ".join(facts), "Caption", wrap=False, rich=True))
             item.setSizeHint(row.sizeHint())
             self.works.addItem(item)
             self.works.setItemWidget(item, row)
@@ -186,7 +222,22 @@ class BooksPage(QWidget):
         keys = [w["key"] for w in shelf]
         self.select_work(wanted if wanted in keys else keys[0])
 
+    def set_shelf(self, tradition: str | None) -> None:
+        """Show every book, or only the Sunni or only the Shia ones."""
+        self._shelf_tradition = tradition
+        for b in self._shelf_buttons.buttons():
+            b.setChecked(b.property("tradition") == tradition)
+        config.state_set("reader.shelf", tradition or "")
+        self.refresh()
+
     def select_work(self, key: str) -> None:
+        w = next((x for x in core_works.list_works(self.conn) if x["key"] == key), None) if self.conn else None
+        if w and self._shelf_tradition and w["tradition"] != self._shelf_tradition:
+            self._shelf_tradition = None                     # a book of the other tradition was asked for
+            for b in self._shelf_buttons.buttons():
+                b.setChecked(b.property("tradition") is None)
+            config.state_set("reader.shelf", "")
+            self.refresh()
         for i in range(self.works.count()):
             if self.works.item(i).data(Qt.ItemDataRole.UserRole) == key:
                 self.works.blockSignals(True)

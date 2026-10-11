@@ -257,7 +257,9 @@ its own order. A hadith collection reads chapter by chapter, each hadith with it
 narrators, other narrations, grades) and the languages you choose; Ibn Hajar's *Taqrib* reads
 letter by letter and name by name, each entry with its narrator a click away. Find within a
 chapter, go to the previous or next one, and isnady remembers where you were. From any search
-result, **In its book** opens the hadith where it stands, among the hadith of its chapter.
+result, **In its book** opens the hadith where it stands, among the hadith of its chapter. The shelf
+holds the Sunni and the Shia books together, each under its own heading — *All*, *Sunni* or *Shia*
+at the top shows one of them alone — and every Shia book carries a gold *Shia* tag.
 
 Books are not tied to hadith collections: a work is a tree of any depth (volume, book, chapter,
 section) whose leaves are hadith, narrators' entries or paragraphs — so the commentaries, manuals
