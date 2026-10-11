@@ -685,6 +685,11 @@ Bengali and Tamil today. The light and the dark theme each keep their own colour
 font can be changed too. **Edit → Preferences** (Ctrl + ,) applies every change at once; each row
 has its own Default button.
 
+**The sidebar in your own order:** Search, Books, Narrators, Isnad Chains, Hadith Scholars, Genealogies,
+Statistics, Bookmarks and Learn by default; **Preferences → Sidebar** moves any section up or down (drag it, or
+the arrows), Ctrl+1 … Ctrl+9 and the View menu follow, Default puts isnady's order back.
+`iy config set view.sidebar books,search,narrators`.
+
 **Interface language** (sidebar, or **View → Interface Language**): menus, pages, buttons, messages and the
 statistics are in **English, Türkçe and العربية** — Arabic right to left, the whole window mirrored. The list
 already names 58 languages, each in its own name and in the interface language's (Azərbaycan türkcəsi ·

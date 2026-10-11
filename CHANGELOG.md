@@ -5,6 +5,11 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **The sidebar in a new order, and in your own:** Books comes second, after Search, and Learn last (Search, Books,
+  Narrators, Isnad Chains, Hadith Scholars, Genealogies, Statistics, Bookmarks, Learn). **Preferences → Sidebar**
+  reorders the sections — drag one to its place, or move it with the arrows; the page in view stays, Ctrl+1 …
+  Ctrl+9 and the View menu follow the order, Default puts isnady's back. Setting `view.sidebar`
+  (`iy config set view.sidebar books,search,narrators` — the sections not named follow in isnady's order).
 - **Isnad Chains: every name in Latin letters beside its Arabic.** Each link of the chain shows the name as it is
   written in the chain, read in Latin letters on the left of the Arabic (it stood empty): Ebû Kâmil, Hammâd (yani
   İbn Seleme), İbn Ebî Atîk; a link that names no one by name is said in words — أبيه "his father", رجل "a man",

@@ -5,7 +5,7 @@ window redraws; nothing needs an Apply button. Each row has its own Default
 button and the dialog can reset everything.
 """
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
     QColorDialog,
@@ -16,7 +16,10 @@ from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
     QHBoxLayout,
+    QAbstractItemView,
     QLabel,
+    QListWidget,
+    QListWidgetItem,
     QPushButton,
     QScrollArea,
     QSpinBox,
@@ -172,6 +175,7 @@ class PreferencesDialog(QDialog):
 
     data_imported = Signal()   # a source was imported or removed; the main window refreshes its pages
     languages_changed = Signal()   # the languages of the texts chosen here; the pages draw their texts again
+    sidebar_changed = Signal()     # the order of the sidebar's sections changed; the main window reorders them
 
     def __init__(self, parent=None, start_tab: str = "") -> None:
         super().__init__(parent)
@@ -188,12 +192,15 @@ class PreferencesDialog(QDialog):
         tabs.addTab(self._scroll(self._reading_tab()), tr("Reading text"))
         tabs.addTab(self._scroll(self._colors_tab()), tr("Colours"))
         tabs.addTab(self._scroll(self._interface_tab()), tr("Interface"))
+        tabs.addTab(self._scroll(self._sidebar_tab()), tr("Sidebar"))
         tabs.addTab(self._scroll(self._books_tab()), tr("Books and languages"))
         tabs.addTab(self._scroll(self.sources), tr("Data sources"))
         if start_tab == "sources":
             tabs.setCurrentIndex(tabs.count() - 1)
         elif start_tab == "themes":
             tabs.setCurrentIndex(0)
+        elif start_tab == "sidebar":
+            tabs.setCurrentIndex(4)
 
         reset_all = QPushButton(tr("Reset appearance"))
         reset_all.setObjectName("Quiet")
@@ -250,6 +257,7 @@ class PreferencesDialog(QDialog):
     def _reset_all(self) -> None:
         config.reset()
         self.changed.emit()
+        self.sidebar_changed.emit()
         self._refresh()
 
     # ------------------------------------------------------------ themes (UI5)
@@ -530,6 +538,89 @@ class PreferencesDialog(QDialog):
             language.set_content_languages([] if not picked or len(picked) == len(lang_checks) else picked)
             self.languages_changed.emit()
 
+        return page
+
+    def _sidebar_tab(self) -> QWidget:
+        """The order of the sidebar's sections: dragged, or moved with the arrows; Default puts isnady's back."""
+        from isnady.gui.main_window import SECTIONS
+
+        labels = {k: tr(l) for k, l, _t in SECTIONS}
+        texts = {k: tr(t) for k, _l, t in SECTIONS}
+        page = QWidget()
+        page.setObjectName("Page")
+        box = QVBoxLayout(page)
+        box.setContentsMargins(6, 12, 12, 12)
+        box.setSpacing(12)
+        intro = QLabel(tr("The order of the sections in the sidebar. Drag a section to its place, or choose it and "
+                          "move it with the arrows; Ctrl+1 … Ctrl+9 follow the order. The change shows at once."))
+        intro.setObjectName("Lead")
+        intro.setWordWrap(True)
+        box.addWidget(intro)
+
+        card = QFrame()
+        card.setObjectName("Card")
+        row = QHBoxLayout(card)
+        row.setContentsMargins(18, 14, 18, 14)
+        row.setSpacing(14)
+        listing = QListWidget()
+        listing.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        listing.setDefaultDropAction(Qt.DropAction.MoveAction)
+        listing.setFixedHeight(9 * 32 + 8)
+        listing.setMaximumWidth(420)
+        row.addWidget(listing, 1)
+        buttons = QVBoxLayout()
+        buttons.setSpacing(8)
+        up = QPushButton("▲  " + tr("Move up"))
+        down = QPushButton("▼  " + tr("Move down"))
+        reset = _default_button()
+        for b in (up, down, reset):
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            buttons.addWidget(b)
+        buttons.addStretch(1)
+        row.addLayout(buttons)
+        row.addStretch(1)
+        box.addWidget(card)
+        box.addStretch(1)
+
+        def fill():
+            current = listing.currentItem().data(Qt.ItemDataRole.UserRole) if listing.currentItem() else None
+            listing.blockSignals(True)
+            listing.clear()
+            for i, key in enumerate(config.sidebar_order()):
+                item = QListWidgetItem(f"{i + 1}.  {labels[key]}")
+                item.setData(Qt.ItemDataRole.UserRole, key)
+                item.setToolTip(texts[key])
+                item.setSizeHint(QSize(0, 32))
+                listing.addItem(item)
+                if key == current:
+                    listing.setCurrentItem(item)
+            listing.blockSignals(False)
+
+        def save():
+            keys = [listing.item(i).data(Qt.ItemDataRole.UserRole) for i in range(listing.count())]
+            try:
+                config.set("view.sidebar", ",".join(keys))
+            except config.ConfigError:
+                return
+            fill()
+            self.sidebar_changed.emit()
+
+        def move(step: int):
+            i = listing.currentRow()
+            j = i + step
+            if i < 0 or not 0 <= j < listing.count():
+                return
+            item = listing.takeItem(i)
+            listing.insertItem(j, item)
+            listing.setCurrentRow(j)
+            save()
+
+        # after the drop has finished: the list is filled again (numbers) in save()
+        listing.model().rowsMoved.connect(lambda *_a: QTimer.singleShot(0, save))
+        up.clicked.connect(lambda: move(-1))
+        down.clicked.connect(lambda: move(+1))
+        reset.clicked.connect(lambda: (config.set("view.sidebar", ""), fill(), self.sidebar_changed.emit()))
+        self._rows.append(fill)
         return page
 
     def _interface_tab(self) -> QWidget:

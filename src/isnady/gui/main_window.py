@@ -27,8 +27,10 @@ from isnady.gui.isnad_page import IsnadPage
 from isnady.gui.search_page import SearchPage
 
 # (key, sidebar label, description shown until the page is built)
+# every section of the sidebar; the order shown is config.sidebar_order() (Preferences → Sidebar)
 SECTIONS = [
     ("search", N_("Search"), N_("Search hadith text, books and grades.")),
+    ("books", N_("Books"), N_("The hadith collections in the database and what each source adds.")),
     ("narrators", N_("Narrators"), N_("Every narrator, Sunni and Shia on one page: biography, teachers and students, "
                                       "generation, narrations and every recorded verdict, each by its own tradition's "
                                       "measure.")),
@@ -38,11 +40,10 @@ SECTIONS = [
                                            "and what their collections contain.")),
     ("genealogy", N_("Genealogies"), N_("The prophets' lineage, Quraysh and the Prophet's family, a narrator's family "
                                        "and his line of learning, drawn as trees.")),
-    ("books", N_("Books"), N_("The hadith collections in the database and what each source adds.")),
     ("statistics", N_("Statistics"), N_("Narrators, books and grades counted and compared.")),
+    ("bookmarks", N_("Bookmarks"), N_("What you marked with ☆, in folders of your own.")),
     ("learn", N_("Learn"), N_("The sciences of hadith: terms, grades, jarh wa ta'dil and the classical works, "
                               "shown on real hadith and real chains.")),
-    ("bookmarks", N_("Bookmarks"), N_("What you marked with ☆, in folders of your own.")),
 ]
 
 
@@ -160,36 +161,14 @@ class MainWindow(QMainWindow):
 
         self.genealogy_page = GenealogyPage(self.search_page.connection)
         self.bookmarks_page = BookmarksPage(self.search_page.connection)
-        for key, label, text in SECTIONS:
-            self.nav.addItem(tr(label))
-            self.nav.item(self.nav.count() - 1).setSizeHint(QSize(0, 38))
-            if key == "search":
-                page = self.search_page
-            elif key == "chains":
-                page = self.isnad_page
-            elif key == "narrators":
-                page = self.narrators_page
-            elif key == "scholars":
-                page = self.scholars_page
-            elif key == "books":
-                page = self.books_page
-            elif key == "statistics":
-                page = self.statistics_page
-            elif key == "learn":
-                page = self.learn_page
-            elif key == "genealogy":
-                page = self.genealogy_page
-            elif key == "bookmarks":
-                page = self.bookmarks_page
-            else:
-                page = _placeholder(label, text)
-            self.pages.addWidget(page)
-        self._chains_row = [k for k, _l, _t in SECTIONS].index("chains")
+        self._page_of = {"search": self.search_page, "chains": self.isnad_page, "narrators": self.narrators_page,
+                         "scholars": self.scholars_page, "books": self.books_page, "statistics": self.statistics_page,
+                         "learn": self.learn_page, "genealogy": self.genealogy_page, "bookmarks": self.bookmarks_page}
+        self._fill_sidebar()
         self.search_page.open_chain.connect(self._open_chain)
         self.search_page.data_changed.connect(self.isnad_page.refresh)
         self.search_page.data_changed.connect(self.narrators_page.refresh)
         self.isnad_page.refresh()
-        self._narrators_row = [k for k, _l, _t in SECTIONS].index("narrators")
         self.narrators_page.open_chain.connect(self._open_chain)
         self.narrators_page.open_sources.connect(lambda: self._preferences("sources"))
         self.isnad_page.open_narrator.connect(self._open_narrator)
@@ -198,7 +177,6 @@ class MainWindow(QMainWindow):
         self.scholars_page.open_chain.connect(self._open_chain)
         self.search_page.data_changed.connect(self.scholars_page.refresh)
         self.scholars_page.refresh()
-        self._books_row = [k for k, _l, _t in SECTIONS].index("books")
         self.books_page.open_chain.connect(self._open_chain)
         self.books_page.open_narrator.connect(self._open_narrator)
         self.search_page.open_book.connect(self._open_in_book)
@@ -208,16 +186,13 @@ class MainWindow(QMainWindow):
         self.search_page.data_changed.connect(lambda: setattr(self, "_books_loaded", False))
         self.nav.currentRowChanged.connect(self._load_books_when_shown)
         self.narrators_page.open_in_book.connect(self._open_person_in_book)
-        self._statistics_row = [k for k, _l, _t in SECTIONS].index("statistics")
         self._statistics_loaded = False
         self.statistics_page.open_hadith.connect(self._open_in_book)
         self.statistics_page.open_narrator.connect(self._open_narrator)
         self.search_page.data_changed.connect(lambda: setattr(self, "_statistics_loaded", False))
         self.nav.currentRowChanged.connect(self._load_statistics_when_shown)
         # GEN1 and BM1
-        self._genealogy_row = [k for k, _l, _t in SECTIONS].index("genealogy")
-        self._learn_row = [k for k, _l, _t in SECTIONS].index("learn")
-        self.nav.currentRowChanged.connect(lambda row: row == self._genealogy_row and self.genealogy_page.ensure())
+        self.nav.currentRowChanged.connect(lambda row: row == self._row("genealogy") and self.genealogy_page.ensure())
         self.genealogy_page.open_narrator.connect(self._open_narrator)
         self.narrators_page.open_genealogy.connect(self._open_genealogy)
         self.bookmarks_page.open_hadith.connect(self._open_in_book)
@@ -240,6 +215,45 @@ class MainWindow(QMainWindow):
         self._build_menus()
         self._update_language_buttons()
 
+    # --------------------------------------------------------------- the sidebar's order
+    def _row(self, key: str) -> int:
+        return self._order.index(key)
+
+    def _fill_sidebar(self) -> None:
+        """The sections in the order chosen (config.sidebar_order), each with its page in the same place."""
+        from isnady import config
+
+        labels = {k: l for k, l, _t in SECTIONS}
+        self._order = config.sidebar_order()
+        self.nav.blockSignals(True)
+        self.nav.clear()
+        while self.pages.count():
+            self.pages.removeWidget(self.pages.widget(0))
+        for key in self._order:
+            self.nav.addItem(tr(labels[key]))
+            self.nav.item(self.nav.count() - 1).setSizeHint(QSize(0, 38))
+            self.pages.addWidget(self._page_of[key])
+        self.nav.blockSignals(False)
+
+    def apply_sidebar_order(self) -> None:
+        """Preferences → Sidebar changed the order: the same page stays in view, the shortcuts follow the order."""
+        current = self._order[self.nav.currentRow()] if self.nav.currentRow() >= 0 else "search"
+        self._fill_sidebar()
+        self.nav.blockSignals(True)
+        self.nav.setCurrentRow(self._row(current))
+        self.nav.blockSignals(False)
+        self.pages.setCurrentIndex(self._row(current))
+        actions = getattr(self, "_section_actions", {})
+        menu = getattr(self, "_view_menu", None)
+        if menu is None or not actions:
+            return
+        anchor = next((a for a in menu.actions() if a not in actions.values()), None)
+        for action in actions.values():         # the View menu in the same order, Ctrl+1 … Ctrl+9 with it
+            menu.removeAction(action)
+        for i, key in enumerate(self._order):
+            menu.insertAction(anchor, actions[key])
+            actions[key].setShortcut(QKeySequence(f"Ctrl+{i + 1}"))
+
     # --------------------------------------------------------------- menus
     def _action(self, menu, text: str, slot, shortcut=None, tip: str = "") -> QAction:
         action = QAction(text, self)
@@ -254,7 +268,7 @@ class MainWindow(QMainWindow):
 
     def _build_menus(self) -> None:
         bar = self.menuBar()
-        search = self.pages.widget(0)
+        search = self.search_page
 
         file_menu = bar.addMenu(tr("&File"))
         self._action(file_menu, tr("Data Sources…"), lambda: self._preferences("sources"), "Ctrl+Shift+I",
@@ -272,8 +286,13 @@ class MainWindow(QMainWindow):
                      tip=tr("Fonts, sizes and colours for each script, theme colours, interface font"))
 
         view_menu = bar.addMenu(tr("&View"))
-        for i, (_key, label, _text) in enumerate(SECTIONS):
-            self._action(view_menu, tr(label), lambda _c=False, row=i: self.nav.setCurrentRow(row), f"Ctrl+{i + 1}")
+        self._section_actions = {}
+        self._view_menu = view_menu
+        for i, key in enumerate(self._order):
+            label = dict((k, l) for k, l, _t in SECTIONS)[key]
+            self._section_actions[key] = self._action(view_menu, tr(label),
+                                                      lambda _c=False, k=key: self.nav.setCurrentRow(self._row(k)),
+                                                      f"Ctrl+{i + 1}")
         view_menu.addSeparator()
         ui_menu = view_menu.addMenu(tr("Interface Language"))
         ui_menu.aboutToShow.connect(lambda: self._fill_ui_language_menu(ui_menu))
@@ -356,28 +375,28 @@ class MainWindow(QMainWindow):
 
     def _load_statistics_when_shown(self, row: int) -> None:
         """Statistics reads (or computes) only when it is opened."""
-        if row == self._statistics_row and not self._statistics_loaded:
+        if row == self._row("statistics") and not self._statistics_loaded:
             self._statistics_loaded = True
             self.statistics_page.refresh()
 
     def _load_books_when_shown(self, row: int) -> None:
         """The Books section reads its first chapter only when it is opened, not at start."""
-        if row == self._books_row and not self._books_loaded:
+        if row == self._row("books") and not self._books_loaded:
             self._books_loaded = True
             self.books_page.refresh()
 
     def _open_person_in_book(self, person_id: int) -> None:
         self._books_loaded = True
-        self.nav.setCurrentRow(self._books_row)
+        self.nav.setCurrentRow(self._row("books"))
         self.books_page.show_person(person_id)
 
     def _open_in_book(self, hadith_id: int) -> None:
         self._books_loaded = True
-        self.nav.setCurrentRow(self._books_row)
+        self.nav.setCurrentRow(self._row("books"))
         self.books_page.show_hadith(hadith_id)
 
     def _open_narrator(self, person_id: int) -> None:
-        self.nav.setCurrentRow(self._narrators_row)
+        self.nav.setCurrentRow(self._row("narrators"))
         self.narrators_page.select(person_id)
 
     def _open_person(self, person_id: int, tradition: str) -> None:
@@ -385,32 +404,32 @@ class MainWindow(QMainWindow):
         self._open_narrator(person_id)
 
     def _open_scholar(self, scholar_id: str) -> None:
-        self.nav.setCurrentRow([k for k, _l, _t in SECTIONS].index("scholars"))
+        self.nav.setCurrentRow(self._row("scholars"))
         self.scholars_page.select(scholar_id)
 
     def _open_genealogy(self, person_id: int, which: str) -> None:
-        self.nav.setCurrentRow(self._genealogy_row)
+        self.nav.setCurrentRow(self._row("genealogy"))
         self.genealogy_page.show_person(person_id, which)
 
     def _open_term(self, term_id: str) -> None:
-        self.nav.setCurrentRow(self._learn_row)
+        self.nav.setCurrentRow(self._row("learn"))
         self.learn_page.show_term(term_id)
 
     def _open_chapter(self, chapter_id: int) -> None:
         self._books_loaded = True
-        self.nav.setCurrentRow(self._books_row)
+        self.nav.setCurrentRow(self._row("books"))
         self.books_page.show_chapter(chapter_id)
 
     def _open_chain(self, hadith_id: int) -> None:
-        self.nav.setCurrentRow(self._chains_row)
+        self.nav.setCurrentRow(self._row("chains"))
         self.isnad_page.show_hadith(hadith_id)
 
     def _open_data_folder(self) -> None:
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(data_dir())))
 
     def _find(self) -> None:
-        self.nav.setCurrentRow(0)
-        self.pages.widget(0).focus_search()
+        self.nav.setCurrentRow(self._row("search"))
+        self.search_page.focus_search()
 
     def _copy(self) -> None:
         widget = QApplication.focusWidget()
@@ -467,6 +486,7 @@ class MainWindow(QMainWindow):
         dialog.changed.connect(self._apply_settings)
         dialog.data_imported.connect(self._data_imported)
         dialog.languages_changed.connect(self._languages_changed)
+        dialog.sidebar_changed.connect(self.apply_sidebar_order)
         dialog.exec()
 
     def _data_imported(self) -> None:

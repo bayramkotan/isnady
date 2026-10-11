@@ -19,11 +19,10 @@ from isnady.gui import theme  # noqa: E402
 theme.load_fonts()
 theme.apply(app, "light")
 from isnady.core import language, repositories  # noqa: E402
-from isnady.gui.main_window import SECTIONS, MainWindow  # noqa: E402
+from isnady.gui.main_window import MainWindow  # noqa: E402
 from isnady.gui.preferences import PreferencesDialog  # noqa: E402
 
 D = str(Path(__file__).resolve().parent.parent / "assets" / "screenshots") + "/"
-ROW = {k: i for i, (k, *_r) in enumerate(SECTIONS)}
 language.set_content_languages([])
 repositories.select(repositories.DEFAULT_ID)
 
@@ -54,6 +53,7 @@ def prefs(tab: str, name: str, size=(1000, 760), scroll_to: int = 0):
 
 
 w = MainWindow()
+ROW = {k: i for i, k in enumerate(w._order)}       # the sidebar in the order chosen (Preferences → Sidebar)
 w.resize(1400, 900)
 w.show()
 settle()
@@ -117,7 +117,7 @@ settle()
 w.grab().save(D + "search-dark.png")
 w._set_theme("light")
 
-w.nav.setCurrentRow(w._narrators_row)
+w.nav.setCurrentRow(w._row("narrators"))
 w.narrators_page.set_tradition(None)
 w.narrators_page.query.setText("Ibn Umar")
 settle(1200)
@@ -128,7 +128,7 @@ w.nav.setCurrentRow(ROW["scholars"])
 w.scholars_page.select("albani")
 settle()
 w.grab().save(D + "scholars.png")
-w.nav.setCurrentRow(w._books_row)
+w.nav.setCurrentRow(w._row("books"))
 settle(1500)
 w.books_page.select_work("bukhari")
 settle()
@@ -138,7 +138,7 @@ w.grab().save(D + "books.png")
 w.books_page.select_work("taqrib")
 settle(1500)
 w.grab().save(D + "books-taqrib.png")
-w.nav.setCurrentRow(w._narrators_row)
+w.nav.setCurrentRow(w._row("narrators"))
 w.narrators_page.set_tradition("shia")
 w.narrators_page.query.setText("زرارة")
 settle(1500)
@@ -155,7 +155,7 @@ settle()
 w.grab().save(D + "chain-shia.png")
 
 st = w.statistics_page
-w.nav.setCurrentRow(w._statistics_row)
+w.nav.setCurrentRow(w._row("statistics"))
 settle(1500)
 wait_statistics(st)
 keys = [st.rail.item(i).data(Qt.ItemDataRole.UserRole) for i in range(st.rail.count())]

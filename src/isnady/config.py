@@ -6,6 +6,7 @@ default; a stored value of "" or a missing key means "use the default".
 Keys
   view.theme                       system | light | dark
   view.text_scale                  0.8 - 1.6, reading text size multiplier (Ctrl+ / Ctrl-)
+  view.sidebar                     the order of the sidebar sections, comma-separated ("" = isnady's order)
   ui.family, ui.size               interface font ("" = system font)
   text.<script>.family             reading font for one script
   text.<script>.size               point size
@@ -55,6 +56,20 @@ COLOR_TOKENS = {
 
 _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
+# the sidebar's sections in isnady's own order (Bayram, 2026-10-11: Books second, Learn last); the user may reorder
+# them (Preferences → Sidebar, or iy config set view.sidebar books,search,…)
+SIDEBAR = ("search", "books", "narrators", "chains", "scholars", "genealogy", "statistics", "bookmarks", "learn")
+
+
+def sidebar_order() -> list[str]:
+    """The sections in the order chosen: the saved ones first, any section not named after them in isnady's order."""
+    saved = [k for k in str(get("view.sidebar") or "").split(",") if k in SIDEBAR]
+    seen = []
+    for k in saved:
+        if k not in seen:
+            seen.append(k)
+    return seen + [k for k in SIDEBAR if k not in seen]
+
 
 def defaults() -> dict:
     d = {"view.theme": "system", "view.text_scale": 1.0, "ui.family": "", "ui.size": 0.0,
@@ -62,7 +77,8 @@ def defaults() -> dict:
          "view.content_languages": "",        # the hadith texts shown, by language, comma-separated; empty: all
          "sources.repository": "",            # the data repository chosen (core.repositories); empty: isnady's own
          "books.disabled": "",                # collections switched off (core.books), comma-separated keys
-         "view.other_languages": "fold"}      # texts in languages not chosen: "fold" behind an arrow, or "omit"
+         "view.other_languages": "fold",      # texts in languages not chosen: "fold" behind an arrow, or "omit"
+         "view.sidebar": ""}                  # the order of the sidebar (SIDEBAR); empty: isnady's
     for script, (_label, _sample, family, size, line) in SCRIPTS.items():
         d[f"text.{script}.family"] = family
         d[f"text.{script}.size"] = size
@@ -139,6 +155,13 @@ def validate(key: str, value):
         return value
     if key == "sources.repository":
         return re.sub(r"[^a-z0-9._-]", "", str(value).strip().lower())
+    if key == "view.sidebar":
+        keys = [k.strip() for k in str(value).split(",") if k.strip()]
+        wrong = [k for k in keys if k not in SIDEBAR]
+        if wrong:
+            raise ConfigError("view.sidebar takes these sections: " + ", ".join(SIDEBAR))
+        order = list(dict.fromkeys(keys)) + [k for k in SIDEBAR if k not in keys]
+        return "" if order == list(SIDEBAR) else ",".join(order)
     if key == "view.content_languages":
         return ",".join(part.strip() for part in str(value).split(",") if part.strip())
     if key.endswith(".color") or key.startswith("colors."):
