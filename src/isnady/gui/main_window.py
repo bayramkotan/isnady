@@ -510,10 +510,11 @@ class MainWindow(QMainWindow):
 
         menu.clear()
         group = QActionGroup(menu)
-        for code, (own, english, _rtl) in i18n.LANGUAGES.items():
+        for code, (own, _english, _rtl) in i18n.LANGUAGES.items():
             share = i18n.coverage(code)
-            # its own name, the English one beside it, and how much of the interface is translated
-            label = own if code == "en" else f"{own}  ·  {english}" + ("" if share >= 0.995 else f"  ({share:.0%})")
+            # its own name, its name in the interface language beside it, and how much of the interface is translated
+            other = i18n.name_of(code)
+            label = (own if other == own else f"{own}  ·  {other}") + ("" if share >= 0.995 else f"  ({share:.0%})")
             action = menu.addAction(label)
             action.setCheckable(True)
             action.setChecked(code == language.ui_language())

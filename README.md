@@ -673,9 +673,11 @@ has its own Default button.
 
 **Interface language** (sidebar, or **View → Interface Language**): menus, pages, buttons, messages and the
 statistics are in **English, Türkçe and العربية** — Arabic right to left, the whole window mirrored. The list
-already names 24 languages, each in its own name with how much of it is translated (Deutsch, Français,
+already names 31 languages, each in its own name and in the interface language's (Azərbaycan türkcəsi ·
+Azerbaycan Türkçesi in Turkish), with how much of it is translated (Deutsch, Français,
 Español, Português, Русский, Bahasa Indonesia, Bahasa Melayu, हिन्दी, اردو, বাংলা, 中文, 日本語, 한국어,
-فارسی, دری, پښتو, Azərbaycanca, Oʻzbekcha, Bosanski, Kiswahili, Hausa); a text not translated yet is shown in
+فارسی, دری, پښتو, Azərbaycan türkcəsi, Oʻzbekcha, Қазақша, Кыргызча, Türkmençe, ئۇيغۇرچە, Татарча, Башҡортса,
+Qırımtatarca, Bosanski, Kiswahili, Hausa); a text not translated yet is shown in
 English, and the translations follow release by release. The window is rebuilt in the new language at once,
 nothing to restart. `iy config set view.ui_language tr`. The hadith texts keep their own languages
 (**Content languages**), the command line stays in English.

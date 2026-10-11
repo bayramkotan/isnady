@@ -45,7 +45,7 @@ class Node:
         code = lang or i18n.language()
         if code == "tr":
             return self.names.get("tr") or self.names.get("en") or ""
-        if code in ("ar", "fa", "prs", "ps", "ur"):
+        if code in ("ar", "fa", "prs", "ps", "ur", "ug"):
             return self.names.get("ar") or self.names.get("en") or ""
         return self.names.get("en") or self.names.get("tr") or ""
 

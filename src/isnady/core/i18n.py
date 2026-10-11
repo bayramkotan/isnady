@@ -48,12 +48,44 @@ LANGUAGES: dict[str, tuple[str, str, bool]] = {
     "fa": ("فارسی", "Persian", True),
     "prs": ("دری", "Dari", True),
     "ps": ("پښتو", "Pashto", True),
-    "az": ("Azərbaycanca", "Azerbaijani", False),
+    "az": ("Azərbaycan türkcəsi", "Azerbaijani Turkish", False),
     "uz": ("Oʻzbekcha", "Uzbek", False),
+    "kk": ("Қазақша", "Kazakh", False),
+    "ky": ("Кыргызча", "Kyrgyz", False),
+    "tk": ("Türkmençe", "Turkmen", False),
+    "ug": ("ئۇيغۇرچە", "Uyghur", True),
+    "tt": ("Татарча", "Tatar", False),
+    "ba": ("Башҡортса", "Bashkir", False),
+    "crh": ("Qırımtatarca", "Crimean Tatar", False),
     "bs": ("Bosanski", "Bosnian", False),
     "sw": ("Kiswahili", "Swahili", False),
     "ha": ("Hausa", "Hausa", False),
 }
+
+# The languages' names in the interface languages that have them (the menu shows a language by its own name and
+# by this one; English otherwise). Bayram: the language of Azerbaijan is "Azerbaycan Türkçesi", never "Azerbaycanca".
+NAMES: dict[str, dict[str, str]] = {
+    "tr": {"en": "İngilizce", "tr": "Türkçe", "ar": "Arapça", "de": "Almanca", "fr": "Fransızca",
+           "es": "İspanyolca", "pt": "Portekizce", "ru": "Rusça", "id": "Endonezce", "ms": "Malayca",
+           "hi": "Hintçe", "ur": "Urduca", "bn": "Bengalce", "zh": "Çince", "ja": "Japonca", "ko": "Korece",
+           "fa": "Farsça", "prs": "Darice", "ps": "Peştuca", "az": "Azerbaycan Türkçesi", "uz": "Özbekçe",
+           "kk": "Kazakça", "ky": "Kırgızca", "tk": "Türkmence", "ug": "Uygurca", "tt": "Tatarca",
+           "ba": "Başkurtça", "crh": "Kırım Tatarcası", "bs": "Boşnakça", "sw": "Svahili", "ha": "Hausaca"},
+    "ar": {"en": "الإنجليزية", "tr": "التركية", "ar": "العربية", "de": "الألمانية", "fr": "الفرنسية",
+           "es": "الإسبانية", "pt": "البرتغالية", "ru": "الروسية", "id": "الإندونيسية", "ms": "الملايوية",
+           "hi": "الهندية", "ur": "الأردية", "bn": "البنغالية", "zh": "الصينية", "ja": "اليابانية",
+           "ko": "الكورية", "fa": "الفارسية", "prs": "الدرية", "ps": "البشتوية", "az": "التركية الأذربيجانية",
+           "uz": "الأوزبكية", "kk": "الكازاخية", "ky": "القيرغيزية", "tk": "التركمانية", "ug": "الأويغورية",
+           "tt": "التتارية", "ba": "الباشكيرية", "crh": "تتارية القرم", "bs": "البوسنية", "sw": "السواحيلية",
+           "ha": "الهوسا"},
+}
+
+
+def name_of(code: str, lang: str | None = None) -> str:
+    """A language's name in the interface language (or in English where that has no names yet)."""
+    names = NAMES.get(lang or _current, {})
+    return names.get(code) or LANGUAGES.get(code, (code, code, False))[1]
+
 
 _current = "en"
 

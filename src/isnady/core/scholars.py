@@ -157,7 +157,7 @@ def short_name(s: dict, lang: str | None = None) -> str:
     code = lang or i18n.language()
     if code == "tr":
         return SHORT_TR.get(s["id"]) or s.get("tr") or s.get("short") or s["name"]
-    if code in ("ar", "fa", "prs", "ps", "ur") and s.get("known_ar"):
+    if code in ("ar", "fa", "prs", "ps", "ur", "ug") and s.get("known_ar"):
         return s["known_ar"]
     return s.get("short") or s["name"]
 
