@@ -642,46 +642,199 @@ def mirror(target: Path, languages: set[str] | None) -> None:
     print(f"isnady-data written to {target}: {len(cat['entries'])} sources (and the shipped copy of its catalog)")
 
 
+LANG_NAMES = {"ara": "Arabic", "eng": "English", "tur": "Turkish", "urd": "Urdu", "ind": "Indonesian",
+              "ben": "Bengali", "fra": "French", "rus": "Russian", "tam": "Tamil"}
+
+
 def readme(cat: dict) -> str:
-    lines = ["# isnady-data", "",
-             "The data of [isnady](https://github.com/bayramkotan/isnady): every hadith collection and rijal work it "
-             "reads, Sunni and Shia, in one format. isnady imports from here (Settings → Data sources, or "
-             "`iy catalog import ID`).", "",
-             "- `sunni/<book>/`, `shia/<book>/` (the book's full title and its compiler's name, e.g. "
-             "`sunni/musnad_ahmad_ibn_hanbal/`) — `book.json` (numbers, chapters, references, grades) and one file "
-             "per language (`ara.json`, `eng.json` …)",
-             "- `rijal/sunni/`, `rijal/shia/` — the works on the narrators",
-             "- `catalog.json` — the list isnady reads", "",
-             "## Use", "",
-             "In isnady: **Settings → Data sources** — this repository is the default; tick a book and Import. "
-             "Without the network, clone it and read it from this computer:", "",
-             "```bash",
-             "git clone https://github.com/bayramkotan/isnady-data ~/isnady-data",
-             "iy repo add ~/isnady-data            # every book is read from this folder",
-             "iy catalog import sahih_al_bukhari --language ara --language tur",
-             "iy database use isnady-db-<date>.zip   # or a whole ready database (Releases)",
-             "```", "",
-             '<p align="center"><img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/'
-             'screenshots/data-sources.png" alt="isnady — Settings → Data sources" width="760"></p>', ""]
-    for tradition, heading in (("sunni", "Sunni collections"), ("shia", "Shia collections")):
-        lines += [f"## {heading}", "", "| Book | | Compiler | Languages | Hadith |", "|---|---|---|---|---|"]
-        for e in cat["entries"]:
-            if e["kind"] == "hadith" and e["tradition"] == tradition:
-                import re
-                m = (re.match(r"Compiled by (.+?\))\.", e["description"])
-                     or re.match(r"Compiled by (.+?)\. Arabic", e["description"]))
-                comp = m.group(1) if m else ""
-                lines.append(f"| {e['title']} | {e['title_ar']} | {comp} | {', '.join(e['languages'])} | "
-                             f"{(e.get('hadith') or 0):,} |")
-        lines.append("")
-    lines += ["## Narrators (rijal)", "", "| Work | | Tradition |", "|---|---|---|"]
-    for e in cat["entries"]:
-        if e["kind"] == "rijal":
-            lines.append(f"| {e['title']} | {e['title_ar']} | {e['tradition']} |")
-    lines += ["", "## Credits", "", "These texts were first made available by others; thank you.", ""]
-    lines += [f"- {c}" for c in CREDIT.values()]
-    lines.append("")
-    return "\n".join(lines)
+    """The README of isnady-data: what it is, what it holds, its layout and formats, and how isnady uses it."""
+    import re
+
+    def compiler(e: dict) -> str:
+        m = re.match(r"Compiled by (.+?\))\.", e.get("description") or "") or \
+            re.match(r"Compiled by (.+?)\. Arabic", e.get("description") or "")
+        return m.group(1) if m else "—"
+
+    hadith = [e for e in cat["entries"] if e["kind"] == "hadith"]
+    rijal = [e for e in cat["entries"] if e["kind"] == "rijal"]
+    by = {t: [e for e in hadith if e["tradition"] == t] for t in ("sunni", "shia")}
+    total = {t: sum(e.get("hadith") or 0 for e in by[t]) for t in by}
+    langs = sorted({c for e in hadith for c in e.get("languages", [])}, key=lambda c: (c != "ara", c))
+    n_rijal = {e["id"]: (re.match(r"([\d,]+)", e.get("description") or "") or [None, "—"])[1] for e in rijal}
+    L = []
+    add = L.extend
+    add(['<h1 align="center">📚 isnady-data</h1>', "",
+         '<p align="center"><strong>The data of <a href="https://github.com/bayramkotan/isnady">isnady</a>: '
+         'every hadith collection and rijal work it reads, Sunni and Shia, in one place and one format</strong></p>', "",
+         '<p align="center">',
+         f'  <img src="https://img.shields.io/badge/hadith%20collections-{len(hadith)}-1D4777?style=for-the-badge" alt="collections">',
+         '  <img src="https://img.shields.io/badge/hadith-' + f"{sum(total.values()):,}".replace(",", "%2C")
+         + '-A47E24?style=for-the-badge" alt="hadith">',
+         f'  <img src="https://img.shields.io/badge/rijal%20works-{len(rijal)}-5B6878?style=for-the-badge" alt="rijal">',
+         f'  <img src="https://img.shields.io/badge/languages-{len(langs)}-14304F?style=for-the-badge" alt="languages">',
+         '</p>', "",
+         "isnady ships without hadith data. It reads it from a **data repository**, and this one is its "
+         "default: everything isnady can read — "
+         f"**{len(by['sunni'])} Sunni and {len(by['shia'])} Shia hadith collections "
+         f"({sum(total.values()):,} hadith)** and **{len(rijal)} works on the narrators** — converted once into "
+         "isnady's own format, each book in a folder named by its full title and its compiler. Nothing here has "
+         "to be prepared by hand: isnady lists these books in **Settings → Data sources** and imports any of them "
+         "with one click, or all of them at once.", "",
+         '<p align="center"><img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/'
+         'screenshots/data-sources.png" alt="isnady — Settings → Data sources: this repository and its books, '
+         'Sunni and Shia apart" width="760"></p>', "",
+         "---", "",
+         "## 🚀 Use it", "",
+         "**In isnady (the default).** Open **File → Data Sources** (or **Settings → Data sources**): this "
+         "repository is already chosen. Tick the books and the languages you want and press **Import**, or "
+         "**Import all**. Every hadith keeps its number, chapter, references and grades; the search index, the "
+         "chains of transmission and the narrators are built as part of the import.", "",
+         "**From the command line** — the same engine:", "",
+         "```bash",
+         "iy catalog list                                           # every book of this repository",
+         "iy catalog import sahih_al_bukhari --language ara --language tur",
+         "iy catalog import al_kafi_al_kulayni                      # with al-Majlisi's and al-Behbudi's grades",
+         "iy catalog import taqrib_al_tahdhib_ibn_hajar_al_asqalani # identifies the narrators of the Sunni chains",
+         "iy catalog import rijal_al_najashi_ahmad_ibn_ali_al_najashi  # … and of the Shia chains",
+         "iy catalog import --all                                   # everything",
+         "```", "",
+         "**Without the network.** Clone this repository once (a USB stick or a shared folder works too) and read "
+         "every book from it:", "",
+         "```bash",
+         "git clone https://github.com/bayramkotan/isnady-data ~/isnady-data",
+         "iy repo add ~/isnady-data      # in the window: Data sources → A folder on this computer…",
+         "iy catalog import --all",
+         "```", "",
+         "**A whole ready database.** The [Releases](https://github.com/bayramkotan/isnady-data/releases) "
+         "carry `isnady-db-<date>.zip`: a complete isnady database built from this repository, its chains read and "
+         "its narrators identified (`database.json` beside it gives its date, size, sha256 and contents). Take it "
+         "with **Data folder → Use a ready database…** or:", "",
+         "```bash",
+         "iy database use ~/Downloads/isnady-db-<date>.zip",
+         "```", "",
+         "isnady checks the file (the zip must hold `isnady.db`, the schema must be one it reads, the sha256 must "
+         "match `database.json`), puts it in place at the next start and keeps your previous database beside it "
+         "(`isnady.<date-time>.bak.db`). Nothing is deleted.", "",
+         "---", "",
+         "## 🗂️ What is inside", "",
+         "```",
+         "isnady-data/",
+         "├── catalog.json                     the list isnady reads (schema isnady-catalog/1)",
+         "├── sunni/",
+         "│   ├── sahih_al_bukhari/",
+         "│   │   ├── book.json                numbers, chapters, references, grades (schema isnady-book/1)",
+         "│   │   ├── ara.json                 the Arabic text, chapter titles",
+         "│   │   ├── eng.json  tur.json …     one file per translation",
+         "│   ├── musnad_ahmad_ibn_hanbal/",
+         "│   └── …",
+         "├── shia/",
+         "│   ├── al_kafi_al_kulayni/",
+         "│   └── …",
+         "├── rijal/",
+         "│   ├── sunni/taqrib_al_tahdhib_ibn_hajar_al_asqalani.md",
+         "│   └── shia/rijal_al_najashi_ahmad_ibn_ali_al_najashi.md",
+         "├── derived/                         computations already made (statistics, models …), as JSON",
+         "└── database.json                    the ready database of the latest Release",
+         "```", "",
+         "**Names.** Every folder and every id is the book's full title with its compiler's name — "
+         "`musnad_ahmad_ibn_hanbal`, `al_kafi_al_kulayni`, `taqrib_al_tahdhib_ibn_hajar_al_asqalani` — never a "
+         "bare name. The same ids are what isnady imports by, and what its exports and saved computations are "
+         "named after.", "",
+         "**Sunni and Shia apart.** Every book says its tradition. isnady keeps the two side by side and never mixes "
+         "their measures: the chains of a Sunni book are read the Sunni way and their narrators identified in Ibn "
+         "Hajar's *Taqrib*; the chains of a Shia book are read the Shia way (al-Kulayni's teacher named without a "
+         "term, his groups, the chain ending at one of the Fourteen Ma'sumun) and their narrators identified only "
+         "in the Shia rijal works, judged in the Imami critics' own terms.", "",
+         "---", ""])
+    for t, heading, note in (
+            ("sunni", "📗 Sunni hadith collections",
+             "The six books, the Muwatta and the Forties in Arabic and up to eight translations, with the grades of "
+             "al-Albani, Shu'ayb al-Arna'ut, Zubair 'Ali Za'i and others where they graded them; Musnad Ahmad and "
+             "Sunan al-Darimi in fully voweled Arabic; five more books in Arabic and English, by chapter."),
+            ("shia", "📘 Shia hadith collections",
+             "al-Kafi in its eight volumes with al-Majlisi's grade on nearly every hadith (*Mir'at al-'Uqul*, "
+             "13,931) and al-Behbudi's selection (*Sahih al-Kafi*), and fifteen more works of al-Saduq, al-Mufid, Ibn Qulawayh, al-Nu'mani, al-Tusi, al-Ahwazi "
+             "and al-Muhsini, in Arabic and English.")):
+        add([f"## {heading}", "", note, "",
+             "| Book | | Compiler | Hadith | Languages | Import id |", "|---|---|---|--:|---|---|"])
+        for e in by[t]:
+            add([f"| **{e['title']}** | {e['title_ar']} | {compiler(e)} | {(e.get('hadith') or 0):,} | "
+                 f"{', '.join(LANG_NAMES.get(c, c) for c in e['languages'])} | `{e['id']}` |"])
+        add([f"| | | **{len(by[t])} books** | **{total[t]:,}** | | |", ""])
+    add(["## 👥 Narrators (rijal)", "",
+         "| Work | | Tradition | Entries | What isnady does with it | Import id |", "|---|---|---|--:|---|---|"])
+    uses = {"sunni": "every name in the Sunni chains is matched to its narrator; his rank on Ibn Hajar's twelve-step "
+                     "scale, tabaqa, death year and book marks",
+            "shia": "every name in the Shia chains is matched to its narrator; his reliability and creed in the "
+                    "critic's own (Imami) terms — never on the Sunni scale"}
+    for e in rijal:
+        add([f"| **{e['title']}** | {e['title_ar']} | {e['tradition'].capitalize()} | {n_rijal[e['id']]} | "
+             f"{uses.get(e['tradition'], '')} | `{e['id']}` |"])
+    add(["", "---", "",
+         "## 🧩 The formats", "",
+         "<details>", "<summary><b>catalog.json — <code>isnady-catalog/1</code></b></summary>", "",
+         "```json",
+         "{",
+         '  "schema": "isnady-catalog/1",',
+         '  "id": "isnady", "name": "isnady — all sources (default)",',
+         '  "homepage": "https://github.com/bayramkotan/isnady-data",',
+         '  "entries": [',
+         '    { "id": "sahih_al_bukhari", "title": "Sahih al-Bukhari", "title_ar": "صحيح البخاري",',
+         '      "kind": "hadith", "tradition": "sunni", "format": "isnady",',
+         '      "location": "sunni/sahih_al_bukhari/book.json", "book": "bukhari",',
+         '      "languages": ["ara", "eng", "tur"], "license": "Unlicense", "hadith": 7590 }',
+         "  ]",
+         "}",
+         "```", "",
+         "`location` is relative to the catalog, so the same catalog works on GitHub, in a clone and on a USB "
+         "stick. `kind` is `hadith` or `rijal`; `tradition` is `sunni` or `shia`; `format` names the reader isnady "
+         "uses (`isnady`, `taqrib`, `najashi` …).", "", "</details>", "",
+         "<details>", "<summary><b>book.json and the language files — <code>isnady-book/1</code></b></summary>", "",
+         "```json",
+         "{",
+         '  "schema": "isnady-book/1", "key": "kafi", "title": "al-Kafi — al-Kulayni", "title_ar": "الكافي",',
+         '  "tradition": "shia", "compiler": "al-Kulayni (d. 329)",',
+         '  "languages": { "ara": { "file": "ara.json", "name": "Arabic", "direction": "rtl" },',
+         '                 "eng": { "file": "eng.json", "name": "English", "direction": "ltr" } },',
+         '  "hadiths": [',
+         '    { "n": "1:6", "sort": 100006.0, "s": 1002,',
+         '      "grades": [["al-Majlisi (Mir\'at al-\'Uqul)", "موثق ول يقصر عن الصحيح"]] }',
+         "  ]",
+         "}",
+         "```", "",
+         "Each hadith: `n` its number as the book gives it, `sort` its place, `s` its chapter, `refs` other "
+         "numberings, `grades` every grade as `[scholar, grade]`, exactly as written. Each language file "
+         "(`ara.json`, `eng.json` …) holds `{\"language\", \"sections\": {chapter: title}, \"texts\": {number: text}}`.",
+         "", "</details>", "",
+         "---", "",
+         "## 🔄 How it is made", "",
+         "Both are tools in the isnady repository:", "",
+         "```bash",
+         "python tools/build_data_repo.py --mirror ~/Github/isnady-data   # convert every source into this repository",
+         "python tools/publish_database.py ~/Github/isnady-data           # a ready database for a Release, and derived/",
+         "```", "",
+         "`publish_database.py` copies the database compactly, leaves out everything imported from a user's own "
+         "files (they never leave that computer), zips it for a Release (`db-<date>`) and copies the saved "
+         "computations into `derived/`, so they are not computed again for the same data.", "",
+         "---", "",
+         "## 📜 Licences and credits", "",
+         "Every book records its licence, and isnady shows them all under **Help → Licences**. The texts here were "
+         "first made available by others; thank you:", "",
+         "| Texts | First published by | Licence |", "|---|---|---|",
+         "| The six books, the Muwatta, the Forties — text and translations | fawazahmed0/hadith-api | The Unlicense |",
+         "| Musnad Ahmad, Sunan al-Darimi — voweled text | Open Hadith Data | ODbL 1.0 (a database made from it stays under the ODbL) |",
+         "| Riyad al-Salihin, al-Shama'il, Bulugh al-Maram, al-Adab al-Mufrad, Mishkat — text and English | sunnah.com, via AhmedBaset/hadith-json | not stated |",
+         "| The Shia collections — text, English, grades | thaqalayn.net, via MohammedArab1/ThaqalaynAPI | not stated |",
+         "| The Taqrib, al-Najashi's Rijal | the OpenITI corpus | not stated |", "",
+         "isnady itself is MIT-licensed: [bayramkotan/isnady](https://github.com/bayramkotan/isnady).", ""])
+    return "\n".join(L)
+
+
+def write_readme(target: Path) -> None:
+    """The README of an isnady-data folder, from its catalog.json (no conversion, no download)."""
+    cat = json.loads((target / "catalog.json").read_text(encoding="utf-8"))
+    (target / "README.md").write_text(readme(cat), encoding="utf-8", newline="\n")
+    print(f"README written to {target / 'README.md'}")
 
 
 def write_catalogs() -> None:
@@ -699,7 +852,11 @@ def main() -> int:
     ap.add_argument("--mirror", metavar="DIR", help="build the isnady-data repository in DIR (its catalog is also "
                                                     "written as the copy shipped with isnady)")
     ap.add_argument("--languages", help="with --mirror: only these languages of the translated books, e.g. ara,eng,tur")
+    ap.add_argument("--readme", metavar="DIR", help="write only the README of the isnady-data folder DIR, from its catalog")
     a = ap.parse_args()
+    if a.readme:
+        write_readme(Path(a.readme).expanduser())
+        return 0
     if not (a.catalogs or a.mirror):
         ap.print_help()
         return 2

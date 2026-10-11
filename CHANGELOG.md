@@ -3,7 +3,11 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.1.9] — 2026-10-11
+
+**Sunni and Shia each by its own road — the Shia chains read the Shia way and identified in the Shia rijal works;
+isnady-data read from this computer or taken as a whole ready database; results and shelves in the order of the
+books; the READMEs of isnady and isnady-data written anew.**
 
 - **Data from this computer**: a copy of isnady-data (a git clone, a USB stick, a shared folder) is a repository
   too — **A folder on this computer…** in Settings → Data sources, or `iy repo add ~/Github/isnady-data` — and
@@ -12,6 +16,13 @@ is taken from its section here.
   folder) or `iy database use FILE`: it is checked (a zip must hold isnady.db, the schema must be one this version
   reads, the sha256 must match a `database.json` beside it), takes the place of the database at the next start,
   and the database it replaces is kept beside it (`isnady.<date-time>.bak.db`).
+- **README written anew** around the two repositories of the project — **isnady** (the application) and
+  **isnady-data** (the data: 17 Sunni and 16 Shia collections, 99,746 hadith, the Taqrib and al-Najashi) — with
+  what isnady-data holds, its layout and formats, how to use it online, offline or as a ready database; every
+  section brought up to date (two roads, narrators of both traditions, books, statistics, the data folder, the
+  full CLI); the other datasets isnady can read in one short table. The **isnady-data README** too
+  (`tools/build_data_repo.py --readme DIR` writes it from the catalog: what it holds, book by book with import ids,
+  the layout, the formats, how it is made, licences and credits).
 - **README** on GitHub, PyPI and npm with new screenshots: search narrowed to a few books with the other
   languages folded, the book list, the Narrators, hadith model and correlation sections of Statistics, Data
   sources, Books and languages; the isnady-data README shows how to use it from this computer.
