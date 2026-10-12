@@ -183,6 +183,7 @@ class MainWindow(QMainWindow):
         self.search_page.open_person.connect(self._open_person)
         self.search_page.open_scholar.connect(self._open_scholar)
         self.search_page.wants_sources.connect(lambda: self._preferences("sources"))
+        self.search_page.retry_requested.connect(self.language_switched)   # main.py builds the window again
         self.search_page.data_changed.connect(lambda: setattr(self, "_books_loaded", False))
         self.nav.currentRowChanged.connect(self._load_books_when_shown)
         self.narrators_page.open_in_book.connect(self._open_person_in_book)
@@ -214,6 +215,25 @@ class MainWindow(QMainWindow):
         self.statusBar().hide()
         self._build_menus()
         self._update_language_buttons()
+
+    def closeEvent(self, event) -> None:  # noqa: N802 (Qt's name)
+        """Closing while an import runs: say what happens, and on yes really end — an import left running in the
+        background kept the database locked for the next start ("database is locked", 2026-10-11)."""
+        from PySide6.QtWidgets import QMessageBox
+
+        from isnady.gui import sources_page
+
+        running = [w for w in sources_page._LIVE_WORKERS if w.isRunning()]
+        if running:
+            answer = QMessageBox.question(
+                self, tr("An import is running"),
+                tr("Books are being imported. If isnady closes now, the book being imported is not kept (the books "
+                   "already imported stay); it can be imported again from File → Data Sources.\n\nClose isnady?"),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+            if answer != QMessageBox.StandardButton.Yes:
+                event.ignore()
+                return
+        super().closeEvent(event)
 
     # --------------------------------------------------------------- the sidebar's order
     def _row(self, key: str) -> int:

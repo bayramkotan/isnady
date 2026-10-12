@@ -249,6 +249,7 @@ class SearchPage(QWidget):
     open_scholar = Signal(str)        # scholar id; Hadith Scholars shows him
     data_changed = Signal()
     wants_sources = Signal()          # "more languages": the main window opens File → Data Sources
+    retry_requested = Signal()        # "Try again" after a locked database: the window is built again
 
     def __init__(self, status_message=None, parent=None) -> None:
         super().__init__(parent)
@@ -406,7 +407,14 @@ class SearchPage(QWidget):
         title.setFont(theme.reading_font(24, bold=True))
         message = str(exc)
         advice = ""
-        if "newer than this isnady supports" in message:
+        locked = "locked" in message.lower()
+        if locked:
+            advice = tr("Another isnady is still using the database — most often the window closed during the first "
+                        "import, while the import goes on in the background. Wait until it finishes, or end it "
+                        "(Windows: Task Manager → isnady or python → End task; Linux and macOS: "
+                        "<code>pkill -f isnady</code>), then press Try again. Nothing is lost: a book cut short is "
+                        "not kept and can be imported again from Data Sources.")
+        elif "newer than this isnady supports" in message:
             advice = tr("The data was last opened by a newer isnady than the one running now ({version}). Nothing is "
                         "lost: update isnady, or if you work from the source folder, reinstall it there with "
                         "<code>pip install -e .</code>", version=__version__)
@@ -416,6 +424,12 @@ class SearchPage(QWidget):
         detail.setTextFormat(Qt.TextFormat.RichText)
         box.addWidget(title)
         box.addWidget(detail)
+        if locked:
+            again = QPushButton(tr("Try again"))
+            again.setObjectName("Primary")
+            again.setCursor(Qt.CursorShape.PointingHandCursor)
+            again.clicked.connect(self.retry_requested)
+            box.addWidget(again, 0, Qt.AlignmentFlag.AlignLeft)
         self.body_layout.addWidget(box_widget)
         self.body_layout.addStretch(1)
         self._status(tr("Database not opened"))

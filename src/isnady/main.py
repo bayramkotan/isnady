@@ -100,7 +100,15 @@ def gui_main() -> int:
         hints.colorSchemeChanged.connect(_follow_scheme)
 
     windows[-1].check_installation_later()
-    return app.exec()
+    code = app.exec()
+    # an import still running after the window closed would keep the process (and the database's write lock) alive
+    # in the background: the next start found "database is locked". End at once; SQLite rolls the unfinished book
+    # back on the next open (WAL), the books already imported stay.
+    from isnady.gui import sources_page
+
+    if any(w.isRunning() for w in sources_page._LIVE_WORKERS):
+        os._exit(code)
+    return code
 
 
 def main() -> int:

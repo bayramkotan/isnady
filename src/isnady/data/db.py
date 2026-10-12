@@ -396,7 +396,7 @@ def connect(path: Path | None = None, *, reset_old: bool = False) -> sqlite3.Con
     _STARTED = True
     path = Path(path or db_path())
     if path.exists():
-        probe = sqlite3.connect(path)
+        probe = sqlite3.connect(path, timeout=LOCK_WAIT)
         version = probe.execute("PRAGMA user_version").fetchone()[0]
         probe.close()
         if version > SCHEMA_VERSION:
@@ -408,7 +408,7 @@ def connect(path: Path | None = None, *, reset_old: bool = False) -> sqlite3.Con
                 raise RuntimeError(f"Database schema {version} is outdated; open it with reset_old=True.")
             raise SchemaReset(_set_aside(path, version), version)
         if OLDEST_UPGRADABLE <= version < SCHEMA_VERSION:
-            upgrade = sqlite3.connect(path)
+            upgrade = sqlite3.connect(path, timeout=LOCK_WAIT)
             with upgrade:
                 for v in range(version, SCHEMA_VERSION):
                     for statement in MIGRATIONS[v]:
@@ -416,7 +416,7 @@ def connect(path: Path | None = None, *, reset_old: bool = False) -> sqlite3.Con
                 upgrade.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
             upgrade.close()
 
-    conn = sqlite3.connect(path)
+    conn = sqlite3.connect(path, timeout=LOCK_WAIT)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     conn.execute("PRAGMA journal_mode = WAL")
@@ -424,6 +424,11 @@ def connect(path: Path | None = None, *, reset_old: bool = False) -> sqlite3.Con
     conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
     conn.commit()
     return conn
+
+
+# seconds a connection waits for another one's write to finish before "database is locked" (Python's default 5 s
+# was too short while an import writes a large book)
+LOCK_WAIT = 15
 
 
 def cleanup(conn: sqlite3.Connection) -> None:

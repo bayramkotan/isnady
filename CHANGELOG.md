@@ -3,6 +3,15 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Fixed: "database is locked" after the window was closed during the first import.** The import went on in the
+  background and kept the database's write lock, so the next isnady could not open it. Now closing isnady while
+  books are being imported asks first (the book being imported is not kept, those already imported stay) and,
+  when the window is gone, the process really ends — SQLite rolls the unfinished book back at the next start. A
+  connection waits up to 15 seconds for another one's write instead of 5, and if the database is still locked the
+  page says why and how to end the other isnady, with a **Try again** button.
+
 ## [0.2.4] — 2026-10-11
 
 - **Fixed: isnady stopped at start on a new computer** ("1st ORDER BY term out of range"). When the database held
