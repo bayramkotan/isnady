@@ -5,6 +5,10 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **Fixed: the window froze when Books was opened** on a full database. Counting a chapter's sub-chapters and
+  hadith read the whole table of chapters for every chapter (no index on the parent alone), so the first book's
+  table of contents took seconds to minutes. A new index (`ix_work_nodes_child`, made once at the first start)
+  brings it under a second (demo database: 4.5 s → 0.3 s).
 - **Fixed: "database is locked" after the window was closed during the first import.** The import went on in the
   background and kept the database's write lock, so the next isnady could not open it. Now closing isnady while
   books are being imported asks first (the book being imported is not kept, those already imported stay) and,

@@ -262,6 +262,9 @@ CREATE TABLE IF NOT EXISTS work_nodes (
     text      TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_work_nodes_parent ON work_nodes(work_id, parent_id, ordinal);
+-- a chapter's children by parent alone (the counts of works.containers, works.leaves): without it every count
+-- read the whole table, and opening Books on a full database took minutes (2026-10-12)
+CREATE INDEX IF NOT EXISTS ix_work_nodes_child ON work_nodes(parent_id, kind);
 CREATE INDEX IF NOT EXISTS ix_work_nodes_hadith ON work_nodes(hadith_id);
 CREATE INDEX IF NOT EXISTS ix_work_nodes_person ON work_nodes(person_id);
 
