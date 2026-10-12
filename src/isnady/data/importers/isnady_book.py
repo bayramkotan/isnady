@@ -114,8 +114,12 @@ class IsnadyBookImporter(Importer):
                     (source_id, cid, ekey, meta.get("name", code), meta.get("direction", "ltr"), meta.get("author"),
                      book.get("credit"), resolve(source.location, meta["file"]), now_iso())).lastrowid
                 for number, title in (data.get("sections") or {}).items():
+                    try:
+                        number = int(number)
+                    except (TypeError, ValueError):
+                        continue             # a section without a number in the source ("None" in al-Shama'il)
                     row = conn.execute("SELECT id FROM sections WHERE collection_id = ? AND number = ?",
-                                       (cid, int(number))).fetchone()
+                                       (cid, number)).fetchone()
                     if row and title:
                         conn.execute("INSERT OR REPLACE INTO section_titles VALUES (?, ?, ?)", (row[0], eid, title))
                 count = 0

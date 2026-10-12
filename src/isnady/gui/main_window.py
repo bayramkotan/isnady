@@ -256,6 +256,31 @@ class MainWindow(QMainWindow):
             self._pending.discard(key)
             self._lazy[key]()
 
+    def showEvent(self, event) -> None:  # noqa: N802 (Qt's name)
+        super().showEvent(event)
+        if not getattr(self, "_warming", False):
+            self._warming = True
+            # the pages left for later are drawn while nobody waits, one at a time, right after the window shows:
+            # a fast start AND instant switching (2026-10-12: drawn only on the first click, switching felt slower)
+            from PySide6.QtCore import QTimer
+
+            QTimer.singleShot(300, self._warm_next)
+
+    def _warm_next(self) -> None:
+        from PySide6.QtCore import QTimer
+
+        current = self._order[self.nav.currentRow()] if self.nav.currentRow() >= 0 else None
+        waiting = [k for k in ("chains", "narrators", "scholars") if k in self._pending and k != current]
+        if not waiting:
+            if not self._books_loaded and current != "books":
+                self._books_loaded = True                 # Books, its first chapter ready too
+                self.books_page.refresh()
+            return
+        key = waiting[0]
+        self._pending.discard(key)
+        self._lazy[key]()
+        QTimer.singleShot(60, self._warm_next)
+
     def _refresh_or_later(self, key: str) -> None:
         if self._order[self.nav.currentRow()] == key if self.nav.currentRow() >= 0 else False:
             self._pending.discard(key)

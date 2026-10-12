@@ -12,9 +12,14 @@ is taken from its section here.
   worth keeping across starts, in `cache/*.json` in the data folder (`core.cache`). Whether anything changed is told
   by a stamp of the database (a few counts and highest ids, read only when SQLite reports a write). JSON keeps the
   values' types (number keys, tuples, sets, counters), so a kept value is exactly what was counted.
-- **The window opens in a fraction of the time:** Isnad Chains, Narrators and Hadith Scholars are drawn when first
-  opened, not at start, and the narrators' list shows its first rows at once and the rest right after. Demo
-  database: window 4.0 s → 0.3 s; the whole tour of the pages and actions 8.7 s → 3.7 s (what is left is drawing).
+- **The window opens in a fraction of the time and switching stays instant:** Isnad Chains, Narrators, Hadith
+  Scholars and Books are no longer drawn before the window appears but right after it, one at a time while nobody
+  waits; the narrators' list shows its first rows at once and the rest right after. Measured on the full
+  isnady-data database (33 books, 99,444 hadith): window 2.5 s → 0.4 s, switching to a page 0.05–0.3 s, a search
+  0.1–0.2 s, a chain, a narrator or a scholar 0.1–0.2 s.
+- **Fixed: al-Shama'il al-Muhammadiyya could not be imported** ("invalid literal for int() with base 10: 'None'") —
+  a chapter without a number in the source stopped the book; it is now passed over, and the shelf has its 17 Sunni
+  books (16 before).
 - The settings and the reader's remembered places are read from disk at most once a second; a chapter of Books shows
   its first four hadith at once. **Tools → Clear the Cache**, `iy cache info|clear`.
 - **Fixed: the window froze when Books was opened** on a full database. Counting a chapter's sub-chapters and
