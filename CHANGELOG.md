@@ -3,7 +3,7 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.2.5] — 2026-10-12
 
 - **A cache for everything that costs time to read.** The books and their counts, the shelf of Books, the
   narrators' lists (Sunni and Shia, by tabaqa, rank and book) and their names read in Latin letters, each scholar's
@@ -17,6 +17,10 @@ is taken from its section here.
   waits; the narrators' list shows its first rows at once and the rest right after. Measured on the full
   isnady-data database (33 books, 99,444 hadith): window 2.5 s → 0.4 s, switching to a page 0.05–0.3 s, a search
   0.1–0.2 s, a chain, a narrator or a scholar 0.1–0.2 s.
+- **`tools/measure_speed.py`:** measures, on the computer it runs on and with its own database, the start, every
+  page, search, a chain, a narrator, a scholar, the books and their chapters, with a profile of where the time goes,
+  and which isnady the `iy` command starts (a copy installed from PyPI does not have what was pushed to the source
+  folder) — written to `isnady_olcum.txt` in the home folder.
 - **Fixed: al-Shama'il al-Muhammadiyya could not be imported** ("invalid literal for int() with base 10: 'None'") —
   a chapter without a number in the source stopped the book; it is now passed over, and the shelf has its 17 Sunni
   books (16 before).
