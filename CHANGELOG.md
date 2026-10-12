@@ -5,13 +5,18 @@ is taken from its section here.
 
 ## [Unreleased]
 
-- **Books opens and turns pages faster: the shelf's counts are kept.** How many hadith each book holds and how many
-  chapters it has were counted again over the whole database at every click (two or three times for one book).
-  Now they are counted once per change of the database and kept — in memory and in `cache/books.json` and
-  `cache/works.json` in the data folder, so even a new start does not count again (`core.shelf_cache`: a few cheap
-  numbers tell whether anything was imported or removed since). The settings and the reader's remembered places are
-  read from disk at most once a second instead of hundreds of times while a page draws (slow on Windows), and a
-  chapter shows its first four hadith at once, the rest right after.
+- **A cache for everything that costs time to read.** The books and their counts, the shelf of Books, the
+  narrators' lists (Sunni and Shia, by tabaqa, rank and book) and their names read in Latin letters, each scholar's
+  numbers as compiler, grader and critic, the chains' figures per book, the families read from the narrators' names,
+  searches and the hadith they show: counted once and kept until the database changes — in memory and, for what is
+  worth keeping across starts, in `cache/*.json` in the data folder (`core.cache`). Whether anything changed is told
+  by a stamp of the database (a few counts and highest ids, read only when SQLite reports a write). JSON keeps the
+  values' types (number keys, tuples, sets, counters), so a kept value is exactly what was counted.
+- **The window opens in a fraction of the time:** Isnad Chains, Narrators and Hadith Scholars are drawn when first
+  opened, not at start, and the narrators' list shows its first rows at once and the rest right after. Demo
+  database: window 4.0 s → 0.3 s; the whole tour of the pages and actions 8.7 s → 3.7 s (what is left is drawing).
+- The settings and the reader's remembered places are read from disk at most once a second; a chapter of Books shows
+  its first four hadith at once. **Tools → Clear the Cache**, `iy cache info|clear`.
 - **Fixed: the window froze when Books was opened** on a full database. Counting a chapter's sub-chapters and
   hadith read the whole table of chapters for every chapter (no index on the parent alone), so the first book's
   table of contents took seconds to minutes. A new index (`ix_work_nodes_child`, made once at the first start)

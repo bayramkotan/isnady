@@ -670,8 +670,16 @@ def split_text(text: str, raw_isnad: str | None) -> tuple[str, str]:
 
 def book_stats(conn: sqlite3.Connection) -> list[dict]:
     """Per book: chains read, split into narrators, reaching the Prophet (on road B: a Ma'sum), and why the rest
-    were not split."""
-    from isnady.core import books, titles
+    were not split. Counted once per change of the database and kept (core.cache); the books' names follow the
+    interface language."""
+    from isnady.core import cache, titles
+
+    rows = cache.kept(conn, "book-stats", _book_stats_counted)
+    return [{**r, "name": titles.book(r["key"], r["name"])} for r in rows]
+
+
+def _book_stats_counted(conn: sqlite3.Connection) -> list[dict]:
+    from isnady.core import books
 
     out = []
     for r in conn.execute(
@@ -688,7 +696,7 @@ def book_stats(conn: sqlite3.Connection) -> list[dict]:
             """SELECT COUNT(*) FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id JOIN hadiths h ON h.id = i.hadith_id
                WHERE h.collection_id = ?""", (r[0],)
         ).fetchone()[0]
-        out.append({"key": r[1], "name": titles.book(r[1], r[2]), "chains": r[3], "split": r[4] or 0, "marfu": r[5] or 0,
+        out.append({"key": r[1], "name": r[2], "chains": r[3], "split": r[4] or 0, "marfu": r[5] or 0,
                     "tradition": r[6],
                     "links": links, "problems": [(p, n) for p, n in problems]})
     return out

@@ -690,6 +690,13 @@ Statistics, Bookmarks and Learn by default; **Preferences → Sidebar** moves an
 the arrows), Ctrl+1 … Ctrl+9 and the View menu follow, Default puts isnady's order back.
 `iy config set view.sidebar books,search,narrators`.
 
+**Fast, with a cache:** whatever costs time to read from the database — the books and their counts, the narrators'
+lists and readings, each scholar's numbers, the chains' figures per book, the families read from the names, searches
+— is counted once and kept, in memory and in `cache/*.json` in the data folder, until something is imported or
+removed. A new start reads the kept files instead of the database, and the pages are drawn when first opened.
+**Tools → Clear the Cache** (or `iy cache clear`; `iy cache` shows what is kept) is needed only if something looks
+out of date.
+
 **Interface language** (sidebar, or **View → Interface Language**): menus, pages, buttons, messages and the
 statistics are in **English, Türkçe and العربية** — Arabic right to left, the whole window mirrored. The list
 already names 58 languages, each in its own name and in the interface language's (Azərbaycan türkcəsi ·

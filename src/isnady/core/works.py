@@ -81,11 +81,11 @@ def ensure_collection_works(conn: sqlite3.Connection) -> int:
 def list_works(conn: sqlite3.Connection) -> list[dict]:
     """Every book on the shelf, each with its tradition: the Sunni ones first (hadith collections in reading order,
     then the rijal works), the Shia ones after them in the same way (SH1: one shelf, each tradition apart)."""
-    from isnady.core import shelf_cache
+    from isnady.core import cache
 
-    # counted once per change of the database and kept (core.shelf_cache): counting every hadith of every book
+    # counted once per change of the database and kept (core.cache): counting every hadith of every book
     # again on each click of the Books page made it slow on a full database (2026-10-12)
-    rows = shelf_cache.kept(conn, "works", lambda c: [list(r) for r in c.execute(
+    rows = cache.kept(conn, "works", lambda c: [list(r) for r in c.execute(
         """SELECT w.id, w.key, w.kind, w.title, w.title_ar, w.author,
                   (SELECT COUNT(*) FROM work_nodes n WHERE n.work_id = w.id AND n.kind IN ('hadith', 'entry', 'paragraph')),
                   (SELECT COUNT(*) FROM work_nodes n WHERE n.work_id = w.id AND n.parent_id IS NULL),

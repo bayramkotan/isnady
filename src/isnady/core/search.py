@@ -225,6 +225,16 @@ def _text_matches(norm: str, terms: list[str], mode: str, whole_words: bool) -> 
 
 
 def search(conn: sqlite3.Connection, query: SearchQuery) -> SearchPage:
+    """The hits of a query; the same query asked again (another page of results, back to it, the same words) is
+    not searched again while the database is unchanged (core.cache)."""
+    from isnady.core import cache, i18n
+
+    key = (query.text, query.mode, query.whole_words, tuple(query.collections), tuple(query.languages),
+           query.limit, query.offset, i18n.language())
+    return cache.memo(conn, "search", key, lambda: _search_counted(conn, query))
+
+
+def _search_counted(conn: sqlite3.Connection, query: SearchQuery) -> SearchPage:
     started = time.perf_counter()
     if query.mode not in MODES:
         raise ValueError(f"mode must be one of {MODES}")
@@ -285,6 +295,16 @@ def search(conn: sqlite3.Connection, query: SearchQuery) -> SearchPage:
 
 
 def _load_result(conn: sqlite3.Connection, hadith_id: int, terms: list[str], query: SearchQuery) -> SearchResult:
+    """A hadith with its texts (the matched words marked): kept per hadith, words and languages (core.cache) —
+    a book read again, a search repeated, draw from memory."""
+    from isnady.core import cache
+
+    key = (hadith_id, tuple(terms), tuple(query.languages), query.mode, query.whole_words)
+    return cache.memo(conn, "result", key, lambda: _load_result_counted(conn, hadith_id, terms, query))
+
+
+def _load_result_counted(conn: sqlite3.Connection, hadith_id: int, terms: list[str],
+                         query: SearchQuery) -> SearchResult:
     head = conn.execute(
         """SELECT h.number, c.key, c.name FROM hadiths h JOIN collections c ON c.id = h.collection_id
            WHERE h.id = ?""", (hadith_id,)

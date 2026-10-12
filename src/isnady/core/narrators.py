@@ -286,6 +286,13 @@ def known_aliases(conn: sqlite3.Connection, person_id: int) -> list[str]:
 def reading(conn: sqlite3.Connection, person_id: int, name_ar: str) -> tuple[str, str]:
     """(reading, Arabic) of the name a narrator is known by, in the interface language (L1): ("Musaddad b.
     Musarhad", "مسدد بن مسرهد"). The reading is "" when isnady cannot read the name yet — then show the Arabic."""
+    from isnady.core import cache, i18n
+
+    return cache.memo(conn, "reading", (person_id, name_ar, i18n.language()),
+                      lambda: _reading_counted(conn, person_id, name_ar))
+
+
+def _reading_counted(conn: sqlite3.Connection, person_id: int, name_ar: str) -> tuple[str, str]:
     from isnady.core import name_parts
     from isnady.core.rijal import display_name
 
@@ -599,7 +606,14 @@ def search_persons(conn: sqlite3.Connection, text: str, limit: int = 20,
 
 # ------------------------------------------------------------------ the Narrators page
 def overview(conn: sqlite3.Connection, tradition: str = "sunni") -> dict:
-    """Narrators of one tradition, and how many names in the chains of THAT tradition's books are identified."""
+    """Narrators of one tradition, and how many names in the chains of THAT tradition's books are identified.
+    Kept per change of the database (core.cache)."""
+    from isnady.core import cache
+
+    return cache.kept(conn, f"narrators-overview-{tradition}", lambda c: _overview_counted(c, tradition))
+
+
+def _overview_counted(conn: sqlite3.Connection, tradition: str = "sunni") -> dict:
     persons = conn.execute("SELECT COUNT(*) FROM persons WHERE COALESCE(tradition, 'sunni') = ?", (tradition,)).fetchone()[0]
     links = conn.execute(
         """SELECT COUNT(*), SUM(l.person_id IS NOT NULL) FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id
@@ -615,7 +629,27 @@ def browse(conn: sqlite3.Connection, text: str = "", tabaqa: int | None = None, 
            book: str | None = None, limit: int = 300, tradition: str | None = "sunni",
            only: list[int] | None = None, close: set | None = None) -> tuple[list[dict], int]:
     """Narrators for the list: (rows, total before the limit), most often in the chains first.
-    tradition None: both traditions (the Search page), each row saying which it belongs to."""
+    tradition None: both traditions (the Search page), each row saying which it belongs to.
+    The same list asked again is not read again while the database is unchanged (core.cache)."""
+    from isnady.core import cache, i18n
+
+    if close is not None:                       # the caller wants the close spellings filled in: always read
+        return _browse_counted(conn, text, tabaqa, rank, book, limit, tradition, only, close)
+    key = (text, tabaqa, rank, book, limit, tradition, tuple(only) if only is not None else None, i18n.language())
+    if not text.strip() and only is None:
+        # the lists the page opens with (a tradition, a tabaqa, a rank, a book): kept on disk too, so a new start
+        # shows them without reading every narrator's name again
+        name = f"narrators-{tradition}-{tabaqa}-{rank}-{book}-{limit}-{i18n.language()}"
+        rows, total = cache.kept(conn, name, lambda c: _browse_counted(c, "", tabaqa, rank, book, limit, tradition))
+    else:
+        rows, total = cache.memo(conn, "browse", key,
+                                 lambda: _browse_counted(conn, text, tabaqa, rank, book, limit, tradition, only, None))
+    return [dict(r) for r in rows], total
+
+
+def _browse_counted(conn: sqlite3.Connection, text: str = "", tabaqa: int | None = None, rank: int | None = None,
+                    book: str | None = None, limit: int = 300, tradition: str | None = "sunni",
+                    only: list[int] | None = None, close: set | None = None) -> tuple[list[dict], int]:
     from isnady.core.rijal import COLLECTION_MARKS, display_name
 
     where, args = [], []

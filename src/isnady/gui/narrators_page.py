@@ -38,6 +38,8 @@ from isnady.gui.name_card import SPELLED, NameCard
 from isnady.gui.widgets import FlowLayout
 
 LIST_LIMIT = 200
+ROWS_FIRST = 30        # rows built at once; the rest in batches right after (2026-10-12)
+ROWS_BATCH = 40
 SHIA_COLOR = {1: 2, 2: 4, 3: 5, 4: 9}   # the Shia categories drawn in the rank colours of like standing
 ROW_TEXT_WIDTH = 340        # the list is 420 wide; rows keep inside it
 
@@ -310,64 +312,87 @@ class NarratorsPage(QWidget):
                                             tradition=self.tradition)
         self.list.blockSignals(True)
         self.list.clear()
-        for r in rows:
-            item = QListWidgetItem()
-            item.setData(Qt.ItemDataRole.UserRole, r["id"])
-            item.setToolTip(r["name"])
-            widget = QWidget()
-            box = QVBoxLayout(widget)
-            box.setContentsMargins(8, 6, 8, 6)
-            box.setSpacing(1)
-            view = r["view"]
-            top = QHBoxLayout()
-            top.setSpacing(10)
-            fm_ui = QFontMetrics(self.list.font())
-            known = view["reading"] or view["full_reading"]
-            if known:
-                title = _label(fm_ui.elidedText(known, Qt.TextElideMode.ElideRight, 190), "RowTitle", wrap=False)
-                tip = (tr("{full_reading}\nknown by {how}", full_reading=view['full_reading'], how=tr(view['how']))
-                       if view["how"] else view["full_reading"])
-                title.setToolTip(tip + ("\n" + tr(SPELLED) if view.get("spelled") else ""))
-                top.addWidget(title, 1)
-            arabic_known = _arabic("", 0.7, bold=not known)
-            arabic_known.setWordWrap(False)
-            fm_ar = QFontMetrics(theme.script_font("arabic", factor=0.7))
-            arabic_known.setText(fm_ar.elidedText(view["arabic"] or r["name"], Qt.TextElideMode.ElideRight,
-                                                  ROW_TEXT_WIDTH - (200 if known else 0)))
-            top.addWidget(arabic_known, 0 if known else 1)
-            box.addLayout(top)
-            if known and view["full_reading"] and view["full_reading"] != known:
-                box.addWidget(_label(fm_ui.elidedText(view["full_reading"], Qt.TextElideMode.ElideRight, ROW_TEXT_WIDTH),
-                                     "Caption", wrap=False))
-            shia = r.get("tradition") == "shia"
-            dot = theme.rank_color(SHIA_COLOR.get(r["rank"]) if shia else r["rank"])
-            facts = []
-            if shia:
-                facts.append(f"<span style='color:{theme.current().gold}'><b>{tr('Shia')}</b></span>")
-                if r["rank"]:
-                    facts.append(f"<span style='color:{dot}'>●</span> "
-                                 + tr(shia_rijal.RANKS[r["rank"]][1]).split(" (")[0])
-                else:
-                    facts.append(tr("no judgment"))
-                if r.get("madhhab"):
-                    facts.append(tr(shia_rijal.MADHHAB_LABELS.get(r["madhhab"], r["madhhab"])))
-            elif r["rank"]:
-                facts.append(f"<span style='color:{dot}'>●</span> " + tr("rank {rank}", rank=r["rank"]))
-            if r["tabaqa"]:
-                facts.append(tr("tabaqa {tabaqa}", tabaqa=r["tabaqa"]))
-            if r["death"]:
-                facts.append(tr("d. {year}", year=r["death"]))
-            facts.append(tr("{n:,} in chains", n=r["in_chains"]))
-            caption = _label(" · ".join(facts), "Caption", wrap=False, rich=True)
-            box.addWidget(caption)
-            item.setSizeHint(widget.sizeHint())
-            self.list.addItem(item)
-            self.list.setItemWidget(item, widget)
         self.list.blockSignals(False)
+        # the first rows at once, the rest a batch at a time after the window has drawn them (2026-10-12: the page
+        # opened only when all 200 rows were built)
+        self._row_token = getattr(self, "_row_token", 0) + 1
+        self._rows_left = list(rows)
+        self._add_rows(self._row_token, ROWS_FIRST)
         more = " — " + tr("the first {limit}; narrow the search to see others", limit=LIST_LIMIT) if total > LIST_LIMIT else ""
         self.count.setText(n_("{n:,} narrator", "{n:,} narrators", total) + more)
         if self._current is None and rows:
             self.show_person(rows[0]["id"])
+
+    def _add_rows(self, token: int, count: int = 0) -> None:
+        """Build the next rows of the list (all that are left when count is 0)."""
+        if token != getattr(self, "_row_token", 0):
+            return                                   # another list replaced this one
+        left = self._rows_left
+        take, self._rows_left = (left[:count], left[count:]) if count else (left, [])
+        self.list.blockSignals(True)
+        for r in take:
+            self._add_row(r)
+        self.list.blockSignals(False)
+        if self._rows_left:
+            QTimer.singleShot(0, lambda: self._add_rows(token, ROWS_BATCH))
+
+    def _flush_rows(self) -> None:
+        if getattr(self, "_rows_left", None):
+            self._add_rows(self._row_token, 0)
+
+    def _add_row(self, r: dict) -> None:
+        item = QListWidgetItem()
+        item.setData(Qt.ItemDataRole.UserRole, r["id"])
+        item.setToolTip(r["name"])
+        widget = QWidget()
+        box = QVBoxLayout(widget)
+        box.setContentsMargins(8, 6, 8, 6)
+        box.setSpacing(1)
+        view = r["view"]
+        top = QHBoxLayout()
+        top.setSpacing(10)
+        fm_ui = QFontMetrics(self.list.font())
+        known = view["reading"] or view["full_reading"]
+        if known:
+            title = _label(fm_ui.elidedText(known, Qt.TextElideMode.ElideRight, 190), "RowTitle", wrap=False)
+            tip = (tr("{full_reading}\nknown by {how}", full_reading=view['full_reading'], how=tr(view['how']))
+                   if view["how"] else view["full_reading"])
+            title.setToolTip(tip + ("\n" + tr(SPELLED) if view.get("spelled") else ""))
+            top.addWidget(title, 1)
+        arabic_known = _arabic("", 0.7, bold=not known)
+        arabic_known.setWordWrap(False)
+        fm_ar = QFontMetrics(theme.script_font("arabic", factor=0.7))
+        arabic_known.setText(fm_ar.elidedText(view["arabic"] or r["name"], Qt.TextElideMode.ElideRight,
+                                              ROW_TEXT_WIDTH - (200 if known else 0)))
+        top.addWidget(arabic_known, 0 if known else 1)
+        box.addLayout(top)
+        if known and view["full_reading"] and view["full_reading"] != known:
+            box.addWidget(_label(fm_ui.elidedText(view["full_reading"], Qt.TextElideMode.ElideRight, ROW_TEXT_WIDTH),
+                                 "Caption", wrap=False))
+        shia = r.get("tradition") == "shia"
+        dot = theme.rank_color(SHIA_COLOR.get(r["rank"]) if shia else r["rank"])
+        facts = []
+        if shia:
+            facts.append(f"<span style='color:{theme.current().gold}'><b>{tr('Shia')}</b></span>")
+            if r["rank"]:
+                facts.append(f"<span style='color:{dot}'>●</span> "
+                             + tr(shia_rijal.RANKS[r["rank"]][1]).split(" (")[0])
+            else:
+                facts.append(tr("no judgment"))
+            if r.get("madhhab"):
+                facts.append(tr(shia_rijal.MADHHAB_LABELS.get(r["madhhab"], r["madhhab"])))
+        elif r["rank"]:
+            facts.append(f"<span style='color:{dot}'>●</span> " + tr("rank {rank}", rank=r["rank"]))
+        if r["tabaqa"]:
+            facts.append(tr("tabaqa {tabaqa}", tabaqa=r["tabaqa"]))
+        if r["death"]:
+            facts.append(tr("d. {year}", year=r["death"]))
+        facts.append(tr("{n:,} in chains", n=r["in_chains"]))
+        caption = _label(" · ".join(facts), "Caption", wrap=False, rich=True)
+        box.addWidget(caption)
+        item.setSizeHint(widget.sizeHint())
+        self.list.addItem(item)
+        self.list.setItemWidget(item, widget)
 
     # ------------------------------------------------------------------ the right side
     def _clear(self) -> None:
@@ -622,6 +647,8 @@ class NarratorsPage(QWidget):
             if conn is not None else None
         if row and self.tradition and row[0] != self.tradition:
             self.set_tradition(row[0])              # a Shia narrator opened while Sunni ones are shown, or the reverse
+        if any(r["id"] == person_id for r in getattr(self, "_rows_left", [])[:ROWS_BATCH * 2]):
+            self._flush_rows()                       # he is just about to be listed: list him now to mark him
         for i in range(self.list.count()):
             if self.list.item(i).data(Qt.ItemDataRole.UserRole) == person_id:
                 self.list.blockSignals(True)

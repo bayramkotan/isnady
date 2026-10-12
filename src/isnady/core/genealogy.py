@@ -137,14 +137,16 @@ def _segments(name: str) -> list[str]:
     return out
 
 
-@lru_cache(maxsize=4)
-def _family_edges(db_key: str) -> tuple[dict, dict]:
-    """(father of, sons of) for one database; computed once per database and run."""
-    conn = sqlite3.connect(db_key)
-    try:
-        people = conn.execute("SELECT id, name_ar, COALESCE(tradition, 'sunni'), tabaqa FROM persons").fetchall()
-    finally:
-        conn.close()
+def _family_edges(conn: sqlite3.Connection) -> tuple[dict, dict]:
+    """(father of, sons of): read from every narrator's name once per change of the database and kept
+    (core.cache: in memory and cache/family-edges.json)."""
+    from isnady.core import cache
+
+    return cache.kept(conn, "family-edges", _family_edges_counted)
+
+
+def _family_edges_counted(conn: sqlite3.Connection) -> tuple[dict, dict]:
+    people = conn.execute("SELECT id, name_ar, COALESCE(tradition, 'sunni'), tabaqa FROM persons").fetchall()
     segs = {pid: _segments(name or "") for pid, name, _t, _tb in people}
     info = {pid: (trad, tab) for pid, _n, trad, tab in people}
     index: dict = {}
@@ -174,15 +176,10 @@ def _family_edges(db_key: str) -> tuple[dict, dict]:
     return father, sons
 
 
-def _db_key(conn: sqlite3.Connection) -> str:
-    row = conn.execute("PRAGMA database_list").fetchone()
-    return row[2] if row else ":memory:"
-
-
 def family(conn: sqlite3.Connection, person_id: int) -> Tree | None:
     """A narrator's family as his and his kin's names give it: his forefathers (as far as they are narrators)
     and every descendant of the eldest of them. None when the names show no kin."""
-    father, sons = _family_edges(_db_key(conn))
+    father, sons = _family_edges(conn)
     top = person_id
     seen = {top}
     while top in father and father[top] not in seen:
@@ -205,7 +202,7 @@ def family(conn: sqlite3.Connection, person_id: int) -> Tree | None:
 
 
 def family_count(conn: sqlite3.Connection) -> int:
-    father, _sons = _family_edges(_db_key(conn))
+    father, _sons = _family_edges(conn)
     return len(father)
 
 

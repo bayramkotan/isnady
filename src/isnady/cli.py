@@ -911,6 +911,20 @@ def cmd_tree(args) -> int:
     return 0
 
 
+def cmd_cache(args) -> int:
+    """The cache (core.cache): what is kept so pages open without reading the whole database again."""
+    from isnady.core import cache
+
+    if args.action == "clear":
+        n = cache.clear()
+        print(f"Deleted {n} kept file(s); everything is counted again when next asked for.")
+        return 0
+    files, size = cache.info()
+    print(f"Cache folder: {cache.folder()}")
+    print(f"{files} file(s), {size / 1024:,.0f} KB — counted once per change of the database, read from here after.")
+    return 0
+
+
 def cmd_bookmark(args) -> int:
     """Bookmarks (BM1): list, add, remove, folders, export, import — the same file as the Bookmarks page."""
     from isnady.core import bookmarks
@@ -1393,6 +1407,9 @@ def build_parser() -> argparse.ArgumentParser:
     tr_.add_argument("--depth", type=int, default=2, help="learning: steps of teachers and of students (default 2)")
     tr_.add_argument("--width", type=int, default=4, help="learning: how many at each step (default 4)")
     tr_.set_defaults(func=cmd_tree)
+    ca = sub.add_parser("cache", help="the cache that keeps the counts of books, narrators, scholars …: info, clear")
+    ca.add_argument("action", nargs="?", choices=["info", "clear"], default="info")
+    ca.set_defaults(func=cmd_cache)
     bm = sub.add_parser("bookmark", help="bookmarks in folders: list, folders, add, remove, export, import")
     bm.add_argument("action", choices=["list", "folders", "add", "remove", "export", "import"])
     bm.add_argument("kind", nargs="?", help="add: hadith | narrator | scholar | term | chapter; remove: the id; "

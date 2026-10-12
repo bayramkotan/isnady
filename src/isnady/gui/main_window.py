@@ -166,17 +166,20 @@ class MainWindow(QMainWindow):
                          "learn": self.learn_page, "genealogy": self.genealogy_page, "bookmarks": self.bookmarks_page}
         self._fill_sidebar()
         self.search_page.open_chain.connect(self._open_chain)
-        self.search_page.data_changed.connect(self.isnad_page.refresh)
-        self.search_page.data_changed.connect(self.narrators_page.refresh)
-        self.isnad_page.refresh()
+        # pages drawn when first opened, not at start (Bayram 2026-10-12: "çok hızlı"); a change of the data marks
+        # them to be drawn again when next opened (the one in view at once)
+        self._lazy = {"chains": self.isnad_page.refresh, "narrators": self.narrators_page.refresh,
+                      "scholars": self.scholars_page.refresh}
+        self._pending = set(self._lazy)
+        self.nav.currentRowChanged.connect(self._refresh_pending)
+        self.search_page.data_changed.connect(lambda: self._refresh_or_later("chains"))
+        self.search_page.data_changed.connect(lambda: self._refresh_or_later("narrators"))
         self.narrators_page.open_chain.connect(self._open_chain)
         self.narrators_page.open_sources.connect(lambda: self._preferences("sources"))
         self.isnad_page.open_narrator.connect(self._open_narrator)
-        self.narrators_page.refresh()
         self.scholars_page.open_narrator.connect(self._open_narrator)
         self.scholars_page.open_chain.connect(self._open_chain)
-        self.search_page.data_changed.connect(self.scholars_page.refresh)
-        self.scholars_page.refresh()
+        self.search_page.data_changed.connect(lambda: self._refresh_or_later("scholars"))
         self.books_page.open_chain.connect(self._open_chain)
         self.books_page.open_narrator.connect(self._open_narrator)
         self.search_page.open_book.connect(self._open_in_book)
@@ -236,6 +239,30 @@ class MainWindow(QMainWindow):
         super().closeEvent(event)
 
     # --------------------------------------------------------------- the sidebar's order
+    def _clear_cache(self) -> None:
+        from PySide6.QtWidgets import QMessageBox
+
+        from isnady.core import cache
+
+        files, size = cache.info()
+        n = cache.clear()
+        QMessageBox.information(self, tr("Clear the Cache"), tr(
+            "{n} kept file(s) deleted ({size:,.0f} KB). isnady counts them again when a page next needs them; "
+            "this is needed only if something looks out of date.", n=n, size=size / 1024))
+
+    def _refresh_pending(self, row: int) -> None:
+        key = self._order[row] if 0 <= row < len(self._order) else None
+        if key in self._pending:
+            self._pending.discard(key)
+            self._lazy[key]()
+
+    def _refresh_or_later(self, key: str) -> None:
+        if self._order[self.nav.currentRow()] == key if self.nav.currentRow() >= 0 else False:
+            self._pending.discard(key)
+            self._lazy[key]()
+        else:
+            self._pending.add(key)
+
     def _row(self, key: str) -> int:
         return self._order.index(key)
 
@@ -263,6 +290,7 @@ class MainWindow(QMainWindow):
         self.nav.setCurrentRow(self._row(current))
         self.nav.blockSignals(False)
         self.pages.setCurrentIndex(self._row(current))
+        self._refresh_pending(self._row(current))
         actions = getattr(self, "_section_actions", {})
         menu = getattr(self, "_view_menu", None)
         if menu is None or not actions:
@@ -341,6 +369,8 @@ class MainWindow(QMainWindow):
         self._action(view_menu, tr("Full Screen"), self._toggle_full_screen, "F11")
 
         tools_menu = bar.addMenu(tr("&Tools"))
+        self._action(tools_menu, tr("Clear the Cache"), self._clear_cache,
+                     tip=tr("Delete what isnady keeps so pages open fast; it is counted again when next needed"))
         self._action(tools_menu, tr("Rebuild Search Index"), lambda: search.rebuild_index(),
                      tip=tr("Rebuild the search index from every imported text"))
         self._action(tools_menu, tr("Read Chains Again"), lambda: search.rebuild_chains(),
@@ -512,9 +542,8 @@ class MainWindow(QMainWindow):
     def _data_imported(self) -> None:
         """A source was imported or removed from Data sources: bring every page up to date."""
         self.search_page._sync_with_database(force=True)
-        self.isnad_page.refresh()
-        self.narrators_page.refresh()
-        self.scholars_page.refresh()
+        for key in self._lazy:
+            self._refresh_or_later(key)
         self.books_page.refresh()
         self.statistics_page.refresh()
 

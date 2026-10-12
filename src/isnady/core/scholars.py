@@ -315,7 +315,7 @@ def as_narrator(conn: sqlite3.Connection, scholar: dict) -> int | None:
 
 
 # ------------------------------------------------------------------ compiler
-def compiler_stats(conn: sqlite3.Connection, scholar: dict) -> list[dict]:
+def _compiler_stats_counted(conn: sqlite3.Connection, scholar: dict) -> list[dict]:
     from isnady.core.rijal import display_name
 
     out = []
@@ -360,6 +360,12 @@ def compiler_stats(conn: sqlite3.Connection, scholar: dict) -> list[dict]:
 
 # ------------------------------------------------------------------ grader
 def _grade_groups(conn: sqlite3.Connection, tradition: str = "sunni") -> dict[str, dict[int, int]]:
+    from isnady.core import cache
+
+    return cache.kept(conn, f"grade-groups-{tradition}", lambda c: _grade_groups_counted(c, tradition), disk=False)
+
+
+def _grade_groups_counted(conn: sqlite3.Connection, tradition: str = "sunni") -> dict[str, dict[int, int]]:
     """grader name -> {hadith id: group} (the first grade a grader gives a hadith), for the graders of ONE
     tradition: the Sunni groups for the Sunni graders, the Imami categories for the Shia ones."""
     out: dict[str, dict[int, int]] = defaultdict(dict)
@@ -387,7 +393,7 @@ def _kappa(pairs: list[tuple[int, int]]) -> float | None:
     return None if expected == 1 else (observed - expected) / (1 - expected)
 
 
-def grader_stats(conn: sqlite3.Connection, scholar: dict) -> dict | None:
+def _grader_stats_counted(conn: sqlite3.Connection, scholar: dict) -> dict | None:
     tradition = tradition_of(scholar)
     labels = IMAMI_LABELS if tradition == "shia" else GROUP_LABELS
     groups = _grade_groups(conn, tradition)
@@ -433,7 +439,7 @@ def grader_stats(conn: sqlite3.Connection, scholar: dict) -> dict | None:
 
 
 # ------------------------------------------------------------------ critic
-def critic_stats(conn: sqlite3.Connection, scholar: dict) -> dict | None:
+def _critic_stats_counted(conn: sqlite3.Connection, scholar: dict) -> dict | None:
     from isnady.core.rijal import RANK_LABELS
 
     names = scholar.get("critic_names", [])
@@ -456,3 +462,25 @@ def critic_stats(conn: sqlite3.Connection, scholar: dict) -> dict | None:
     return {"verdicts": len(rows), "works": sorted({r[1] for r in rows}), "tradition": "sunni",
             "ranks": [(k, t(RANK_LABELS[k][1]).split(" (")[0], ranks[k]) for k in sorted(RANK_LABELS)],
             "unranked": ranks[None]}
+
+
+# ------------------------------------------------------------------ kept (core.cache)
+# A scholar's numbers are counted over every grade and chain of the database: counted once per change of the
+# database and kept in memory and in cache/scholar-….json (Bayram 2026-10-12: "her şey için önbellek").
+def _kept(conn: sqlite3.Connection, what: str, scholar: dict, counted):
+    from isnady.core import cache, i18n
+
+    name = f"scholar-{what}-{scholar.get('id', scholar.get('name', ''))}-{i18n.language()}"
+    return cache.kept(conn, name, lambda c: counted(c, scholar))
+
+
+def compiler_stats(conn: sqlite3.Connection, scholar: dict) -> list[dict]:
+    return _kept(conn, "compiler", scholar, _compiler_stats_counted)
+
+
+def grader_stats(conn: sqlite3.Connection, scholar: dict) -> dict | None:
+    return _kept(conn, "grader", scholar, _grader_stats_counted)
+
+
+def critic_stats(conn: sqlite3.Connection, scholar: dict) -> dict | None:
+    return _kept(conn, "critic", scholar, _critic_stats_counted)

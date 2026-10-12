@@ -59,9 +59,9 @@ def all_books(conn: sqlite3.Connection, include_inactive: bool = False) -> list[
     from isnady.core import titles
 
     # "name": the title in the interface language (core.titles); "source_name": as the import named it
-    from isnady.core import shelf_cache
+    from isnady.core import cache
 
-    counted = shelf_cache.kept(conn, "books", lambda c: [list(r) for r in c.execute(
+    counted = cache.kept(conn, "books", lambda c: [list(r) for r in c.execute(
         """SELECT c.key, c.name, c.tradition, COUNT(DISTINCT h.id) FROM collections c
            JOIN hadiths h ON h.collection_id = c.id
            WHERE EXISTS (SELECT 1 FROM texts t WHERE t.hadith_id = h.id)
