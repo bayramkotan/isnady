@@ -82,6 +82,12 @@ class TextBlock(QWidget):
     layout asks many times; with long Arabic text in Amiri that made a page of
     results take over a second. This widget keeps one QTextDocument and caches
     the height for each width it has been asked about.
+
+    PERF1 (2026-10-12): a layout asks at many widths before it settles (a card of a chapter of Muslim was laid out
+    at 640, 586, 661, 644, 646, 659, 633 and 635 px — 1,245 full layouts of Arabic text for 180 texts, 0.7 s).
+    Now the text is laid out once to learn how long it is; for a width it has not been shown at, the height is
+    estimated from that (no layout); the real layout is made only at the width the widget actually gets
+    (resizeEvent), and when it differs from the estimate the layout is asked again.
     """
 
     def __init__(self, html: str, font, rtl: bool = False, parent=None) -> None:
@@ -98,7 +104,8 @@ class TextBlock(QWidget):
             option.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
         self._doc.setDefaultTextOption(option)
         self._doc.setHtml(html)
-        self._heights: dict[int, int] = {}
+        self._heights: dict[int, int] = {}          # width → real height (laid out at that width)
+        self._base: tuple[int, int, int] | None = None   # (width, height, lines) of the first real layout
         self.setSizePolicy(expanding_width_policy())
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
         from PySide6.QtGui import QAction
@@ -118,14 +125,39 @@ class TextBlock(QWidget):
     def hasHeightForWidth(self) -> bool:  # noqa: N802
         return True
 
-    def heightForWidth(self, width: int) -> int:  # noqa: N802
-        width = max(width, 1)
+    def _real_height(self, width: int) -> int:
+        """Lay the text out at this width (the costly part) and keep the height."""
         height = self._heights.get(width)
         if height is None:
             self._doc.setTextWidth(width)
             height = int(self._doc.size().height() + 0.999)
             self._heights[width] = height
+            if self._base is None:
+                lines = sum(self._doc.documentLayout().blockBoundingRect(b).height() > 0 and b.layout().lineCount()
+                            for b in _blocks(self._doc))
+                self._base = (width, height, max(1, lines))
         return height
+
+    def heightForWidth(self, width: int) -> int:  # noqa: N802
+        width = max(width, 1)
+        height = self._heights.get(width)
+        if height is not None:
+            return height
+        if self._base is None:
+            # not laid out yet (a card being built, not yet at its place): a guess from the length of the text, so
+            # the one real layout is made at the width the text is shown at
+            from PySide6.QtGui import QFontMetrics
+
+            fm = QFontMetrics(self._doc.defaultFont())
+            chars = max(1, self._doc.characterCount())
+            lines = max(1, -(-chars * fm.averageCharWidth() // width))
+            return lines * fm.lineSpacing()
+        # an estimate: the same text over as many lines as its length needs at this width (no layout)
+        w0, h0, n0 = self._base
+        if n0 <= 1 and width >= w0:
+            return h0
+        lines = max(1, -(-n0 * w0 // width))            # ceil(n0 * w0 / width)
+        return max(1, round(h0 * lines / n0))
 
     def sizeHint(self) -> QSize:  # noqa: N802
         width = self.width() if self.width() > 50 else 600
@@ -139,17 +171,28 @@ class TextBlock(QWidget):
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         super().resizeEvent(event)
-        if event.oldSize().width() != event.size().width():
-            self.updateGeometry()          # a new width means a new height: let the layout ask again
+        width = event.size().width()
+        if width > 1 and (event.oldSize().width() != width or width not in self._heights):
+            real = self._real_height(width)
+            if real != event.size().height() or event.oldSize().width() != width:
+                self.updateGeometry()      # the real height at the width given: let the layout ask again
 
     def paintEvent(self, _event) -> None:  # noqa: N802
         from PySide6.QtGui import QPainter
 
         if self._doc.textWidth() != self.width():
+            self._real_height(self.width())
             self._doc.setTextWidth(self.width())
         painter = QPainter(self)
         self._doc.drawContents(painter)
         painter.end()
+
+
+def _blocks(doc):
+    block = doc.begin()
+    while block.isValid():
+        yield block
+        block = block.next()
 
 
 # ------------------------------------------------------------------ books: Sunni first, Shia after them (core.books)

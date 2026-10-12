@@ -40,7 +40,6 @@ from isnady.core import narrators as core_narrators
 from isnady.core import stats_corpus as corpus
 from isnady.core import stats_graders as core
 from isnady.core import stats_lab as lab
-from isnady.core import stats_models as models
 from isnady.core.i18n import N_, n_, tr
 from isnady.core.rijal import RANK_LABELS, TABAQA_LABELS
 from isnady.core.scholars import SCHOLARS
@@ -55,14 +54,6 @@ from isnady.gui.stats_charts import (
     StackedBars,
     StatTiles,
 )
-
-
-def _corpus_and_models(conn, key, progress, recompute) -> dict:
-    """The analyses of the corpus sections, in one background run: the descriptive one, the model, the laboratory.
-    Each road on its own scale (SH1): road B (the Shia books) on al-Najashi's categories and the four Imami grades of
-    al-Majlisi and al-Behbudi — never on Ibn Hajar's ranks or the Sunni grade groups (core.stats_corpus.Road)."""
-    return {"corpus": corpus.cached(conn, key, progress, recompute), "models": models.cached(conn, key, progress, recompute),
-            "lab": lab.cached(conn, key, progress, recompute), "road": corpus.tradition_of_scope(conn, key)}
 
 
 SECTIONS = [
@@ -149,23 +140,26 @@ def _pct(x: float) -> str:
 
 
 class _Worker(QObject):
+    """One statistics job (core.stats_jobs): saved results at once, a new computation in a separate process (PERF2)
+    so the window does not slow down while it runs."""
+
     progress = Signal(str)
     done = Signal(dict)
     failed = Signal(str)
 
-    def __init__(self, job, key, recompute: bool) -> None:
+    def __init__(self, job: str, key, recompute: bool) -> None:
         super().__init__()
         self.job, self.key, self.recompute = job, key, recompute
 
     def run(self) -> None:
-        from isnady.data import db
+        from isnady.core import stats_jobs
 
         try:
-            conn = db.connect()                       # its own connection: SQLite connections stay in their thread
-            self.done.emit(self.job(conn, self.key, self.progress.emit, self.recompute))
-            conn.close()
+            self.done.emit(stats_jobs.run(self.job, self.key, self.recompute, self.progress.emit))
         except Exception as exc:                      # shown on the page, never a silent failure
             self.failed.emit(f"{type(exc).__name__}: {exc}")
+        finally:
+            QThread.currentThread().quit()            # the thread ends even when the window's loop has stopped
 
 
 class StatisticsPage(QWidget):
@@ -178,6 +172,9 @@ class StatisticsPage(QWidget):
         self._conn_of = connection_getter
         self._thread = None
         self._gthread = None
+        from PySide6.QtWidgets import QApplication
+
+        QApplication.instance().aboutToQuit.connect(self.stop)
         self._result: dict | None = None
         self._names: dict[int, str] = {}
         root = QVBoxLayout(self)
@@ -412,7 +409,7 @@ class StatisticsPage(QWidget):
         self.c_status.setText(tr("Computing…") if recompute else tr("Reading the saved results…"))
         self.c_recompute.setEnabled(False)
         self._thread = QThread(self)
-        self._cworker = _Worker(_corpus_and_models, self.scope.currentData(), recompute)
+        self._cworker = _Worker("corpus", self.scope.currentData(), recompute)
         self._cworker.moveToThread(self._thread)
         self._thread.started.connect(self._cworker.run)
         self._cworker.progress.connect(lambda m: self.c_status.setText(m + "…"))
@@ -422,6 +419,16 @@ class StatisticsPage(QWidget):
             sig.connect(self._thread.quit)
         self._thread.finished.connect(lambda: self.c_recompute.setEnabled(True))
         self._thread.start()
+
+    def stop(self) -> None:
+        """isnady is closing: end a computation still running (its process) and let the threads finish."""
+        from isnady.core import stats_jobs
+
+        stats_jobs.stop_all()
+        for thread in (self._thread, self._gthread):
+            if thread is not None and thread.isRunning():
+                thread.quit()
+                thread.wait(3000)
 
     def retheme(self) -> None:
         self._names.clear()
@@ -1564,7 +1571,7 @@ class StatisticsPage(QWidget):
         self.status.setText(tr("Reading the saved results…") if not recompute else tr("Computing…"))
         self.recompute.setEnabled(False)
         self._gthread = QThread(self)
-        self._worker = _Worker(core.cached, key, recompute)
+        self._worker = _Worker("graders", key, recompute)
         self._worker.moveToThread(self._gthread)
         self._gthread.started.connect(self._worker.run)
         self._worker.progress.connect(lambda m: self.status.setText(m + "…"))

@@ -320,6 +320,9 @@ def _load_result_counted(conn: sqlite3.Connection, hadith_id: int, terms: list[s
             ORDER BY CASE e.language WHEN 'Arabic' THEN 0 ELSE 1 END, e.language, e.key""",
         params,
     ):
+        if not terms:                     # nothing to mark (a book being read): no need to fold the text
+            texts.append(TextHit(r[0], r[1] or "", r[2] or "ltr", r[3], [], False))
+            continue
         norm, index_map = normalize_with_map(r[3])
         spans = _spans(norm, terms, query.whole_words)
         texts.append(TextHit(r[0], r[1] or "", r[2] or "ltr", r[3],

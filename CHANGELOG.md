@@ -3,8 +3,21 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.2.6] — 2026-10-12
 
+- **Books twice as fast.** Opening a book or a chapter froze the window for about half as long as before and draws the
+  whole chapter in about half the time (measured on the full isnady-data database: Sahih Muslim 1.5 s → 0.6 s, al-Kafi
+  1.5 s → 0.7 s; the moment after the click 0.27–0.4 s → 0.1–0.2 s). A layout asks a text for its height at many
+  widths before it settles; every one of them laid out the whole Arabic text again (1,245 layouts for the 180 texts
+  of one chapter of Muslim). Now a text is laid out once, at the width it is shown at; its height at other widths is
+  estimated from that, and the page ends exactly as tall as before. A book read without a search no longer folds
+  every text for highlighting, and the cards of the chapter left behind are dropped without being taken out one by
+  one.
+- **Statistics compute without slowing the window.** The first computation of the Statistics page (about 30 s on the
+  full database) now runs in a separate Python process (`core.stats_jobs`); the window stays responsive — the
+  longest pause while it computes went from 1.2 s to 0.3 s — and the computation itself finished sooner (31 s instead
+  of 50 s). Results already saved are read at once, as before; closing isnady ends a computation still running. In
+  the packaged applications (exe, AppImage, macOS app) the computation stays in the background thread.
 - **Help → Check Installation and `iy doctor` / `iy update` see an old record pip left behind.** When pip updates
   isnady but cannot delete the old version's record (`isnady-0.2.4.dist-info` beside `isnady-0.2.5.dist-info` in
   the same folder — seen on Windows in Program Files), the code is the new version's but pip reads the old record

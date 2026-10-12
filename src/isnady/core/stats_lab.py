@@ -595,7 +595,8 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
     return out
 
 
-def cached(conn: sqlite3.Connection, collection: str | None = None, progress=None, recompute: bool = False) -> dict:
+def cached(conn: sqlite3.Connection, collection: str | None = None, progress=None, recompute: bool = False,
+           saved_only: bool = False) -> dict:
     """The laboratory from data_dir()/derived/ while the data is unchanged; computed and written otherwise (DX1)."""
     from isnady.data.paths import data_dir
 
@@ -609,6 +610,10 @@ def cached(conn: sqlite3.Connection, collection: str | None = None, progress=Non
                 return saved
         except (OSError, ValueError):
             pass
+    if saved_only:
+        from isnady.core.stats_jobs import NotSaved
+
+        raise NotSaved(str(path))
     result = analyse(conn, collection, progress)
     result["fingerprint"] = stamp
     try:

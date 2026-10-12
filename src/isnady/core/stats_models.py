@@ -524,7 +524,8 @@ def analyse(conn: sqlite3.Connection, collection: str | None = None, progress=No
             "blocks": [[k, lab, e] for k, lab, e in blocks_for(road)], "models": models, "shared": shared[:80]}
 
 
-def cached(conn: sqlite3.Connection, collection: str | None = None, progress=None, recompute: bool = False) -> dict:
+def cached(conn: sqlite3.Connection, collection: str | None = None, progress=None, recompute: bool = False,
+           saved_only: bool = False) -> dict:
     """The models from data_dir()/derived/ while the data is unchanged; fitted and written otherwise (DX1)."""
     from isnady.data.paths import data_dir
 
@@ -538,6 +539,10 @@ def cached(conn: sqlite3.Connection, collection: str | None = None, progress=Non
                 return saved
         except (OSError, ValueError):
             pass
+    if saved_only:
+        from isnady.core.stats_jobs import NotSaved
+
+        raise NotSaved(str(path))
     result = analyse(conn, collection, progress)
     result["fingerprint"] = stamp
     try:

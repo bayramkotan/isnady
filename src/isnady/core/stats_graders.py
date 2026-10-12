@@ -341,7 +341,8 @@ def analyse(conn: sqlite3.Connection, collection: str, progress=None) -> dict:
     return out
 
 
-def cached(conn: sqlite3.Connection, collection: str, progress=None, recompute: bool = False) -> dict:
+def cached(conn: sqlite3.Connection, collection: str, progress=None, recompute: bool = False,
+           saved_only: bool = False) -> dict:
     """The analysis, from data_dir()/derived/ while the grades are unchanged; computed and written otherwise."""
     from isnady.data.paths import data_dir
 
@@ -357,6 +358,10 @@ def cached(conn: sqlite3.Connection, collection: str, progress=None, recompute: 
                 return saved
         except (OSError, ValueError):
             pass
+    if saved_only:
+        from isnady.core.stats_jobs import NotSaved
+
+        raise NotSaved(str(path))
     result = analyse(conn, collection, progress)
     result["fingerprint"] = stamp
     # JSON keys are strings: hadith ids in the model's grades

@@ -101,6 +101,10 @@ def gui_main() -> int:
 
     windows[-1].check_installation_later()
     code = app.exec()
+    # a statistics computation still running in its own process ends with the window (core.stats_jobs, PERF2)
+    from isnady.core import stats_jobs
+
+    stats_jobs.stop_all()
     # an import still running after the window closed would keep the process (and the database's write lock) alive
     # in the background: the next start found "database is locked". End at once; SQLite rolls the unfinished book
     # back on the next open (WAL), the books already imported stay.

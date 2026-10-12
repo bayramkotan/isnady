@@ -6,7 +6,7 @@
  * database (used by both the Python and JavaScript packages) exists.
  */
 
-export const version = "0.2.5";
+export const version = "0.2.6";
 export const name = "isnady";
 
 /** Returns basic package information. */

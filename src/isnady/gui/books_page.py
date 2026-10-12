@@ -318,7 +318,9 @@ class BooksPage(QWidget):
             item = self.body_layout.takeAt(0)
             w = item.widget()
             if w is not None:
-                w.setParent(None)
+                # hidden and deleted when the event loop is free: taking each card out of the page one by one
+                # (setParent(None)) cost 80 ms on every new chapter (PERF1)
+                w.hide()
                 w.deleteLater()
 
     def open_chapter(self, chapter_id: int, keep_find: bool = False, focus_hadith: int | None = None,
