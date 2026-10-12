@@ -174,7 +174,8 @@ def cmd_doctor(args) -> int:
 
 
 def cmd_update(args) -> int:
-    """Update every copy of isnady where it is installed. Nothing is removed or moved."""
+    """Update every copy of isnady where it is installed. Nothing is removed or moved, except an old version's record
+    pip left beside a newer one (doctor.Leftover)."""
     from isnady import doctor
 
     report = doctor.diagnose(check_pypi=True)

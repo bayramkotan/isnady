@@ -5,6 +5,11 @@ user, in any virtual environment, with pipx, or editable from a clone. Nothing i
 updating updates each copy where it is (with sudo or the Windows administrator prompt when needed).
 Once every copy is the same version it no longer matters which one starts first.
 
+The one thing removed is not a copy: an old version's record (isnady-X.dist-info) that pip left behind in the same
+folder as the new one (seen on Windows, 2026-10-12: 0.2.4 and 0.2.5 side by side in Program Files). The code in that
+folder is the new version's; the old record only makes pip and this report read the wrong version ("pip show"
+said 0.2.4), and updating again does not remove it. Only that record folder is deleted, never the code.
+
 
 Why: a copy installed earlier in the user folder (~/.local) is found BEFORE a newer
 one in the system folder, both by Python and by the shell (~/.local/bin comes first
@@ -43,6 +48,13 @@ class Install:
 
 
 @dataclass
+class Leftover:
+    version: str
+    record: Path                   # the isnady-X.dist-info folder pip left behind
+    location: Path                 # the site-packages folder, which holds the code of another version
+
+
+@dataclass
 class Command:
     path: Path
     interpreter: str | None
@@ -56,6 +68,7 @@ class Report:
     running_version: str
     running_file: str
     installs: list[Install] = field(default_factory=list)
+    leftovers: list["Leftover"] = field(default_factory=list)
     commands: list[Command] = field(default_factory=list)
     problems: list[str] = field(default_factory=list)
     fixes: list[list[str]] = field(default_factory=list)      # argv lists; sudo ones start with "sudo"
@@ -92,37 +105,55 @@ def path_from_file_url(url: str) -> Path:
     return Path(path)
 
 
-def _source_version(clone: Path) -> str | None:
-    """The version written in a clone's source (src/isnady/__init__.py), which is what an editable copy runs."""
+def _version_in(init: Path) -> str | None:
+    """The __version__ written in an isnady/__init__.py."""
     try:
-        text = (Path(clone) / "src" / PACKAGE / "__init__.py").read_text(encoding="utf-8")
+        text = Path(init).read_text(encoding="utf-8")
     except OSError:
         return None
     m = re.search(r"""__version__\s*=\s*["']([^"']+)["']""", text)
     return m.group(1) if m else None
 
 
-def find_installs() -> list[Install]:
+def _source_version(clone: Path) -> str | None:
+    """The version written in a clone's source (src/isnady/__init__.py), which is what an editable copy runs."""
+    return _version_in(Path(clone) / "src" / PACKAGE / "__init__.py")
+
+
+def _record_path(dist) -> Path | None:
+    p = getattr(dist, "_path", None)
+    return Path(p) if p else None
+
+
+def find_installs(leftovers: list[Leftover] | None = None) -> list[Install]:
+    """Every isnady installation. An old record pip left beside a newer one in the same folder is not an
+    installation: it goes to `leftovers` (when a list is given) and not into the result."""
     user_site = Path(site.getusersitepackages())
     found, seen = [], set()
     for d in _site_dirs():
-        for dist in metadata.distributions(path=[str(d)]):
-            if (dist.metadata["Name"] or "").lower() != PACKAGE:
-                continue
+        dists = [x for x in metadata.distributions(path=[str(d)]) if (x.metadata["Name"] or "").lower() == PACKAGE]
+        plain = [x for x in dists if not _editable_of(x)]
+        if len(plain) > 1:
+            # several records, one code: the code's own __version__ says which record is true
+            code = _version_in(d / PACKAGE / "__init__.py")
+            versions = [x.version for x in plain]
+            real = code if code in versions else max(versions, key=_vkey)
+            kept_one = False
+            for x in plain:
+                if x.version == real and not kept_one:
+                    kept_one = True
+                    continue
+                record = _record_path(x)
+                if leftovers is not None and record is not None:
+                    leftovers.append(Leftover(x.version, record, d))
+                dists.remove(x)
+        for dist in dists:
             key = (str(d), dist.version)
             if key in seen:
                 continue
             seen.add(key)
             installer = (dist.read_text("INSTALLER") or "pip").strip()
-            editable = None
-            direct = dist.read_text("direct_url.json")
-            if direct:
-                try:
-                    info = json.loads(direct)
-                    if info.get("dir_info", {}).get("editable"):
-                        editable = path_from_file_url(info["url"])
-                except (ValueError, KeyError):
-                    pass
+            editable = _editable_of(dist)
             if editable:
                 kind = "editable"
                 # pip's record keeps the version of the day it was installed; a clone moves on with git pull
@@ -147,6 +178,18 @@ def find_installs() -> list[Install]:
     except ImportError:
         pass
     return found
+
+
+def _editable_of(dist) -> Path | None:
+    direct = dist.read_text("direct_url.json")
+    if direct:
+        try:
+            info = json.loads(direct)
+            if info.get("dir_info", {}).get("editable"):
+                return path_from_file_url(info["url"])
+        except (ValueError, KeyError):
+            pass
+    return None
 
 
 def _interpreter_of(path: Path) -> str | None:
@@ -230,10 +273,17 @@ def needs_admin(inst: Install) -> bool:
 def _as_admin(argv: list[str]) -> list[str]:
     if os.name == "nt":
         # Windows has no sudo: PowerShell opens the administrator prompt and waits for the result
-        args = ", ".join(f"'{a}'" for a in argv[1:])
+        # Start-Process joins the arguments with spaces: one with a space in it is put in double quotes
+        args = ", ".join("'" + (f'"{a}"' if " " in a else a).replace("'", "''") + "'" for a in argv[1:])
         return ["powershell", "-NoProfile", "-Command",
                 f"Start-Process -FilePath '{argv[0]}' -ArgumentList {args} -Verb RunAs -Wait"]
     return ["sudo"] + argv
+
+
+def remove_record_argv(left: Leftover) -> list[str]:
+    """Delete a leftover record folder (only that folder), as administrator when its folder needs it."""
+    argv = [sys.executable, "-c", "import shutil,sys;shutil.rmtree(sys.argv[1])", str(left.record)]
+    return argv if _writable(left.location) else _as_admin(argv)
 
 
 def upgrade_argv(inst: Install) -> list[str]:
@@ -259,11 +309,19 @@ def diagnose(check_pypi: bool = True) -> Report:
         running_version, running_file = isnady.__version__, isnady.__file__
     except ImportError:
         running_version, running_file = "", ""
+    leftovers: list[Leftover] = []
     rep = Report(python=sys.executable, running_version=running_version, running_file=running_file,
-                 installs=find_installs(), commands=find_commands())
+                 installs=find_installs(leftovers), leftovers=leftovers, commands=find_commands())
     rep.latest = latest_on_pypi() if check_pypi else None
 
     installs = rep.installs
+    # first: old records pip left beside a newer version (removing them is the whole fix, updating does not)
+    for left in rep.leftovers:
+        rep.problems.append(t("pip left the record of isnady {version} in {folder} beside the installed version; "
+                              "pip reads that old record (\"pip show\" gives {version}) and updating does not remove "
+                              "it. Only that record folder is deleted, not the program.",
+                              version=left.version, folder=left.location))
+        rep.fixes.append(remove_record_argv(left))
     released = [i for i in installs if i.kind != "editable"]
     newest = max([i.version for i in installs] + ([rep.latest] if rep.latest else []), key=_vkey, default=None)
     versions = sorted({i.version for i in installs}, key=_vkey)
@@ -322,6 +380,8 @@ def as_text(rep: Report) -> str:
         mark = "  <- " + t("imported") if i.active else ""
         where = f"{i.editable_path} ({t('editable')})" if i.editable_path else str(i.location)
         lines.append(f"  {i.version:10} {t(i.kind):9} {where}{mark}")
+    for left in rep.leftovers:
+        lines.append(f"  {left.version:10} {t('left over'):9} {left.record}")
     if not rep.installs:
         lines.append("  " + t("none found"))
     lines.append("\n" + t("Commands on PATH (the first of each name is the one that starts):"))

@@ -3,6 +3,17 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Help → Check Installation and `iy doctor` / `iy update` see an old record pip left behind.** When pip updates
+  isnady but cannot delete the old version's record (`isnady-0.2.4.dist-info` beside `isnady-0.2.5.dist-info` in
+  the same folder — seen on Windows in Program Files), the code is the new version's but pip reads the old record
+  (`pip show isnady` said 0.2.4). The report used to show this as two installations, both "running", asked for
+  an update that was already done, and updating again did not help. Now the record the code does not match is
+  shown as a left-over record, the problem says what it is, and Update (or `iy update`) deletes only that record
+  folder — with the administrator prompt or sudo when the folder needs it; the program itself is not touched.
+- The Windows administrator command now quotes arguments that contain spaces.
+
 ## [0.2.5] — 2026-10-12
 
 - **A cache for everything that costs time to read.** The books and their counts, the shelf of Books, the
