@@ -33,6 +33,7 @@ from isnady.gui.widgets import TextBlock
 from isnady.core.i18n import N_, tr
 
 BATCH = 12           # items drawn at a time, so a long chapter never freezes the window
+FIRST = 4            # the first few drawn at once, the rest after the window has shown them (2026-10-12)
 PAGE = 60            # items per "show more"
 
 
@@ -383,13 +384,13 @@ class BooksPage(QWidget):
         end = min(len(self._items), self._shown + PAGE)
 
         self.more.setParent(None)
-        self._draw(token, self._shown, end)
+        self._draw(token, self._shown, end, FIRST)
 
-    def _draw(self, token: int, start: int, end: int) -> None:
+    def _draw(self, token: int, start: int, end: int, batch: int = BATCH) -> None:
         if token != self._token:
             return                                       # another chapter replaced this one
         stretch = self.body_layout.takeAt(self.body_layout.count() - 1)
-        stop = min(end, start + BATCH)
+        stop = min(end, start + batch)
         query = core.SearchQuery(text="", languages=[l for l, b in self._language_checks.items() if b.isChecked()])
         for item in self._items[start:stop]:
             self.body_layout.addWidget(self._item_widget(item, query))

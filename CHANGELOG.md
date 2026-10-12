@@ -5,6 +5,13 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **Books opens and turns pages faster: the shelf's counts are kept.** How many hadith each book holds and how many
+  chapters it has were counted again over the whole database at every click (two or three times for one book).
+  Now they are counted once per change of the database and kept — in memory and in `cache/books.json` and
+  `cache/works.json` in the data folder, so even a new start does not count again (`core.shelf_cache`: a few cheap
+  numbers tell whether anything was imported or removed since). The settings and the reader's remembered places are
+  read from disk at most once a second instead of hundreds of times while a page draws (slow on Windows), and a
+  chapter shows its first four hadith at once, the rest right after.
 - **Fixed: the window froze when Books was opened** on a full database. Counting a chapter's sub-chapters and
   hadith read the whole table of chapters for every chapter (no index on the parent alone), so the first book's
   table of contents took seconds to minutes. A new index (`ix_work_nodes_child`, made once at the first start)

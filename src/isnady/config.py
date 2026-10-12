@@ -20,6 +20,7 @@ script is adding an entry to SCRIPTS.
 
 import json
 import re
+import time
 from pathlib import Path
 
 from isnady.core.i18n import N_
@@ -102,23 +103,32 @@ def settings_path() -> Path:
 
 
 _read_cache: dict = {}
+# the settings as last read and when: a page asks for settings hundreds of times while it draws; on Windows every
+# look at the file costs (antivirus), so for a second the last reading is used (writes here update it at once)
+_recent: list = []
 
 
 def _read() -> dict:
     """The settings file, read again only when it changed (its size, time or file): drawing a page asks for
     a setting over a thousand times (UI5-P). A copy is returned, so a caller may change it."""
+    now = time.monotonic()
+    if _recent and now - _recent[0] < 1.0:           # looked at less than a second ago: no disk access at all
+        return dict(_recent[1])
     path = settings_path()
     try:
         st = path.stat()
         stamp = (st.st_mtime_ns, st.st_size, st.st_ino)
         hit = _read_cache.get(path)
         if hit is not None and hit[0] == stamp:
+            _recent[:] = [now, hit[1]]
             return dict(hit[1])
         data = json.loads(path.read_text(encoding="utf-8"))
         data = data if isinstance(data, dict) else {}
         _read_cache[path] = (stamp, data)
+        _recent[:] = [now, data]
         return dict(data)
     except (OSError, ValueError):
+        _recent[:] = [now, {}]
         return {}
 
 
@@ -127,6 +137,7 @@ def _write(data: dict) -> None:
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
     tmp.replace(path)
+    _recent[:] = [time.monotonic(), dict(data)]      # the next read sees this at once
 
 
 def validate(key: str, value):
@@ -234,11 +245,18 @@ def _state_path() -> Path:
     return settings_path().with_name(STATE_FILE)
 
 
+_state_recent: list = []     # (when, contents): state.json read at most once a second (see _recent)
+
+
 def state_get(key: str, default=None):
-    try:
-        return json.loads(_state_path().read_text(encoding="utf-8")).get(key, default)
-    except (OSError, ValueError):
-        return default
+    now = time.monotonic()
+    if not (_state_recent and now - _state_recent[0] < 1.0):
+        try:
+            data = json.loads(_state_path().read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            data = {}
+        _state_recent[:] = [now, data if isinstance(data, dict) else {}]
+    return _state_recent[1].get(key, default)
 
 
 def state_forget(prefix: str) -> None:
@@ -250,6 +268,7 @@ def state_forget(prefix: str) -> None:
     except (OSError, ValueError):
         return
     kept = {k: v for k, v in data.items() if not k.startswith(prefix)}
+    _state_recent.clear()
     if kept != data:
         try:
             tmp = path.with_suffix(".tmp")
@@ -273,3 +292,4 @@ def state_set(key: str, value) -> None:
         tmp.replace(path)
     except OSError:
         pass                      # remembering a position must never stop reading
+    _state_recent[:] = [time.monotonic(), data]

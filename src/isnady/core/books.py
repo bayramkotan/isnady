@@ -59,13 +59,16 @@ def all_books(conn: sqlite3.Connection, include_inactive: bool = False) -> list[
     from isnady.core import titles
 
     # "name": the title in the interface language (core.titles); "source_name": as the import named it
+    from isnady.core import shelf_cache
+
+    counted = shelf_cache.kept(conn, "books", lambda c: [list(r) for r in c.execute(
+        """SELECT c.key, c.name, c.tradition, COUNT(DISTINCT h.id) FROM collections c
+           JOIN hadiths h ON h.collection_id = c.id
+           WHERE EXISTS (SELECT 1 FROM texts t WHERE t.hadith_id = h.id)
+           GROUP BY c.id""")])
     rows = [{"key": k, "name": titles.book(k, n), "source_name": n, "tradition": t or "sunni", "count": c,
              "active": k not in off}
-            for k, n, t, c in conn.execute(
-                """SELECT c.key, c.name, c.tradition, COUNT(DISTINCT h.id) FROM collections c
-                   JOIN hadiths h ON h.collection_id = c.id
-                   WHERE EXISTS (SELECT 1 FROM texts t WHERE t.hadith_id = h.id)
-                   GROUP BY c.id""")]
+            for k, n, t, c in counted]
     rows.sort(key=_key)
     return rows if include_inactive else [r for r in rows if r["active"]]
 
