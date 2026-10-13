@@ -309,9 +309,12 @@ def stylesheet(t: Tokens) -> str:
                            border-radius: 17px; padding: 0 16px; min-height: 34px; }}
     QPushButton#Example:hover {{ border-color: {t.gold}; color: {t.gold}; }}
     QComboBox {{ background: {t.surface}; color: {t.ink}; border: 1px solid {t.border}; border-radius: 7px;
-                 padding: 5px 10px; min-height: 18px; }}
+                 padding: 5px 10px; min-height: 18px; combobox-popup: 0; }}
     QComboBox:hover {{ border-color: {t.lapis}; }}
     QComboBox::drop-down {{ border: none; width: 24px; }}
+    QComboBox QAbstractItemView {{ background: {t.surface}; color: {t.ink}; border: 1px solid {t.border};
+                                   selection-background-color: {t.lapis_soft}; selection-color: {t.ink}; outline: 0; }}
+    QComboBox QAbstractItemView::item {{ padding: 5px 10px; }}
     QPushButton#BookPicker {{ background: {t.surface}; color: {t.ink}; border: 1px solid {t.border}; border-radius: 7px;
                               padding: 5px 12px; min-height: 18px; text-align: left; font-weight: normal; }}
     QPushButton#BookPicker:hover {{ border-color: {t.lapis}; }}

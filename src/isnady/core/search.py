@@ -27,6 +27,7 @@ from isnady.core.i18n import tr
 MODES = ("all", "any", "phrase")
 _MIN_TRIGRAM = 3
 _BATCH = 2000
+_BULK = 5000            # this many texts or more to index: their search index built without the trigger
 
 
 # ------------------------------------------------------------------- index
@@ -101,18 +102,36 @@ def ensure_index(conn: sqlite3.Connection, progress: Callable[[str], None] | Non
         conn.commit()
         return 0
     say(tr("Indexing {missing} texts for search", missing=missing))
+    # the texts to index, found once (each batch used to look for them again from the first text: slower and
+    # slower as the index grew); many at once: their search index built in one statement, not row by row by the
+    # trigger (the full isnady-data: 89 s → about 35 s, the same index)
+    ids = [r[0] for r in conn.execute(
+        "SELECT t.id FROM texts t LEFT JOIN text_norm n ON n.text_id = t.id WHERE n.text_id IS NULL ORDER BY t.id")]
+    bulk = len(ids) >= _BULK and has_fts(conn)
+    # an empty index (a first import): FTS5 builds it from the table in one pass, faster still than in chunks
+    fresh = bulk and conn.execute("SELECT 1 FROM text_norm LIMIT 1").fetchone() is None
+    if bulk:
+        conn.execute("DROP TRIGGER IF EXISTS text_norm_ai")
     added = 0
-    while True:
-        rows = conn.execute(
-            "SELECT t.id, t.text FROM texts t LEFT JOIN text_norm n ON n.text_id = t.id "
-            "WHERE n.text_id IS NULL LIMIT ?", (_BATCH,)
-        ).fetchall()
-        if not rows:
-            break
-        conn.executemany("INSERT INTO text_norm (text_id, norm) VALUES (?, ?)",
-                         [(r[0], normalize(r[1])) for r in rows])
-        conn.commit()
-        added += len(rows)
+    try:
+        for start in range(0, len(ids), _BATCH):
+            chunk = ids[start:start + _BATCH]
+            rows = conn.execute(f"SELECT id, text FROM texts WHERE id IN ({','.join('?' * len(chunk))})",
+                                chunk).fetchall()
+            conn.executemany("INSERT INTO text_norm (text_id, norm) VALUES (?, ?)",
+                             [(r[0], normalize(r[1])) for r in rows])
+            if bulk and not fresh:
+                conn.execute(f"INSERT INTO texts_fts (rowid, norm) SELECT text_id, norm FROM text_norm "
+                             f"WHERE text_id IN ({','.join('?' * len(chunk))})", chunk)
+            conn.commit()
+            added += len(rows)
+        if fresh:
+            conn.execute("INSERT INTO texts_fts (texts_fts) VALUES ('rebuild')")
+            conn.commit()
+    finally:
+        if bulk:
+            _create_index_tables(conn)               # the trigger again, for the texts added one by one later
+            conn.commit()
     return added
 
 

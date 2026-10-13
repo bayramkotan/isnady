@@ -57,11 +57,44 @@ def run_many(conn: sqlite3.Connection, requests: list[tuple[str, ImportRequest]]
 
     Returns (imported, failed, narrator stats). A source that fails does not stop the others.
     """
-    from isnady.data.fetch import ResourceError
-
     say = progress or (lambda _m: None)
     imported, failed = [], []
+    try:
+        _import_each(conn, requests, say, imported, failed)
+    finally:
+        from isnady.data import fetch
+
+        fetch.forget_prefetched()
+    db.cleanup(conn)
+    core_search.ensure_index(conn, progress=say)
+    core_isnad.ensure_isnads(conn, progress=say)
+    narrators = core_narrators.link_narrators(conn, progress=say)
+    return imported, failed, narrators
+
+
+AHEAD = 3          # books downloaded ahead of the one being written (their files are held in memory until then)
+
+
+def _ahead(request: ImportRequest) -> None:
+    """Start downloading a public source before its turn."""
+    from isnady.data import fetch
+
+    if request.auth.kind != "none" or not fetch.is_url(request.location):
+        return
+    if request.format_id == "isnady":
+        from isnady.data.importers import isnady_book
+
+        isnady_book.prefetch(request.location, request.options)
+    else:
+        fetch.prefetch(request.location)
+
+
+def _import_each(conn, requests, say, imported, failed) -> None:
+    from isnady.data.fetch import ResourceError
+
     for i, (label, request) in enumerate(requests, 1):
+        for _label, later in requests[i - 1: i + AHEAD]:
+            _ahead(later)
         say(f"[{i}/{len(requests)}] {label}")
         try:
             importer = get_importer(request.format_id)
@@ -70,8 +103,3 @@ def run_many(conn: sqlite3.Connection, requests: list[tuple[str, ImportRequest]]
             imported.append((label, importer.run(conn, source, request.options, progress=say)))
         except (ResourceError, KeyError, ValueError) as exc:
             failed.append((label, str(exc.args[0] if exc.args else exc)))
-    db.cleanup(conn)
-    core_search.ensure_index(conn, progress=say)
-    core_isnad.ensure_isnads(conn, progress=say)
-    narrators = core_narrators.link_narrators(conn, progress=say)
-    return imported, failed, narrators

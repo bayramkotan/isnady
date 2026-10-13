@@ -117,9 +117,14 @@ class InstallDialog(QDialog):
         self.text.verticalScrollBar().setValue(self.text.verticalScrollBar().maximum())
         self.update_button.setVisible(bool(after.fixes and after.problems))
         self.update_button.setEnabled(True)
+        note = doctor.lag_note(after)
+        if note:
+            self.text.appendPlainText("\n" + note)
         if failed:
             self.summary.setText(tr("{failed} of {total} update command(s) did not succeed; the output is below.",
                                     failed=len(failed), total=len(results)))
+        elif note:
+            self.summary.setText(note)
         elif after.problems:
             self.summary.setText(tr("Updated; {problems} thing(s) still to look at, see below.",
                                     problems=len(after.problems)))

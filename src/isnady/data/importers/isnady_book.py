@@ -34,6 +34,26 @@ def _json(location: str, auth) -> dict:
         raise ResourceError(f"Not valid JSON: {location} ({exc})") from exc
 
 
+def wanted_languages(book: dict, options: dict) -> list[str]:
+    """The language files of a book that are imported: the ones chosen that the book has, or its first."""
+    offered = book.get("languages", {})
+    return [c for c in (options.get("languages") or []) if c in offered] or list(offered)[:1]
+
+
+def prefetch(location: str, options: dict) -> None:
+    """Start downloading a book and, as soon as its book.json is in, the language files that will be imported
+    (core.imports.run_many: the next books download while this one is written)."""
+    from isnady.data import fetch
+
+    def then(data: bytes) -> None:
+        book = json.loads(data.decode("utf-8-sig"))
+        offered = book.get("languages", {})
+        for code in wanted_languages(book, options):
+            fetch.prefetch(resolve(location, offered[code]["file"]))
+
+    fetch.prefetch(location, then)
+
+
 class IsnadyBookImporter(Importer):
     format_id = "isnady"
     title = "isnady book (isnady-data)"
@@ -48,7 +68,7 @@ class IsnadyBookImporter(Importer):
             raise ResourceError(f"{source.location} is not an isnady book (schema {SCHEMA}).")
         key = book["key"]
         offered = book.get("languages", {})
-        wanted = [c for c in (options.get("languages") or []) if c in offered] or list(offered)[:1]
+        wanted = wanted_languages(book, options)
         source_key = f"isnady-{key}"
         report = ImportReport(source_key=source_key)
         tier = source.tier or tier_for_license(book.get("license") or source.license)

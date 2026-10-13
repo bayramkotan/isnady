@@ -37,6 +37,16 @@ COMMANDS = ("isnady", "iy", "isnady-gui", "isnady-cli")
 KINDS = (N_("user"), N_("system"), N_("venv"), N_("pipx"), N_("editable"))   # shown in the report, translated
 
 
+class Step(list):
+    """One update command: the list is what the report shows (and what can be pasted in a terminal); `run` is what
+    is really started — for the Windows administrator prompt, the same command that also brings pip's output and
+    exit code back (the prompt's own window closes and takes them with it)."""
+
+    def __init__(self, shown, run=None) -> None:
+        super().__init__(shown)
+        self.run = list(run) if run is not None else list(shown)
+
+
 @dataclass
 class Install:
     version: str
@@ -270,13 +280,34 @@ def needs_admin(inst: Install) -> bool:
     return inst.kind == "system" and not _writable(inst.location)
 
 
+def _ps_args(args: list[str]) -> str:
+    # Start-Process joins the arguments with spaces: one with a space in it is put in double quotes
+    return ", ".join("'" + (f'"{a}"' if " " in a else a).replace("'", "''") + "'" for a in args)
+
+
+# run by the elevated Python: the command (its own Python + the arguments), its output into a file the caller reads
+_LOGGED = ("import subprocess,sys;f=open(sys.argv[1],'w',encoding='utf-8');"
+           "r=subprocess.run([sys.executable]+sys.argv[2:],stdout=f,stderr=subprocess.STDOUT);f.close();"
+           "sys.exit(r.returncode)")
+
+
 def _as_admin(argv: list[str]) -> list[str]:
     if os.name == "nt":
-        # Windows has no sudo: PowerShell opens the administrator prompt and waits for the result
-        # Start-Process joins the arguments with spaces: one with a space in it is put in double quotes
-        args = ", ".join("'" + (f'"{a}"' if " " in a else a).replace("'", "''") + "'" for a in argv[1:])
-        return ["powershell", "-NoProfile", "-Command",
-                f"Start-Process -FilePath '{argv[0]}' -ArgumentList {args} -Verb RunAs -Wait"]
+        # Windows has no sudo: PowerShell opens the administrator prompt and waits for the result. Shown: the plain
+        # command. Run: the same, with pip's output written to a file and printed here, and its exit code returned
+        # (2026-10-12: the prompt's window closed with pip's "already up to date" in it, and the report said nothing)
+        shown = ["powershell", "-NoProfile", "-Command",
+                 f"Start-Process -FilePath '{argv[0]}' -ArgumentList {_ps_args(argv[1:])} -Verb RunAs -Wait"]
+        import tempfile
+
+        log = os.path.join(tempfile.gettempdir(), f"isnady-admin-{os.getpid()}.log")
+        lit = log.replace("'", "''")
+        script = (f"$log = '{lit}'; Remove-Item -LiteralPath $log -ErrorAction SilentlyContinue; "
+                  f"$p = Start-Process -FilePath '{argv[0]}' -ArgumentList {_ps_args(['-c', _LOGGED, log] + argv[1:])} "
+                  f"-Verb RunAs -Wait -PassThru; "
+                  f"if (Test-Path -LiteralPath $log) {{ Get-Content -LiteralPath $log -Encoding UTF8; "
+                  f"Remove-Item -LiteralPath $log -ErrorAction SilentlyContinue }}; exit $p.ExitCode")
+        return Step(shown, ["powershell", "-NoProfile", "-Command", script])
     return ["sudo"] + argv
 
 
@@ -286,20 +317,51 @@ def remove_record_argv(left: Leftover) -> list[str]:
     return argv if _writable(left.location) else _as_admin(argv)
 
 
-def upgrade_argv(inst: Install) -> list[str]:
+def _pip_spec(latest: str | None) -> list[str]:
+    """What pip is asked for: always without its cached copy of PyPI's list of versions — pip keeps that list for
+    10 minutes, and right after a release it still said "already up to date" (2026-10-12, 0.2.6 published at 15:50,
+    updated at 15:51). With the version PyPI reported: "isnady>=X" (never a step back)."""
+    return ["--no-cache-dir", f"{PACKAGE}>={latest}" if latest else PACKAGE]
+
+
+def upgrade_argv(inst: Install, latest: str | None = None) -> list[str]:
     """Update this copy where it is installed."""
     extra = ["--break-system-packages"] if _externally_managed() else []
+    spec = _pip_spec(latest)
     if inst.kind == "editable" and inst.editable_path:
         return ["git", "-C", str(inst.editable_path), "pull", "--ff-only"]
     if inst.kind == "pipx":
-        return ["pipx", "upgrade", PACKAGE]
+        return ["pipx", "upgrade", "--pip-args=--no-cache-dir", PACKAGE]
     if inst.kind == "user":
-        return [sys.executable, "-m", "pip", "install", "--user", "-U", PACKAGE] + extra
+        return [sys.executable, "-m", "pip", "install", "--user", "-U", *spec] + extra
     if inst.kind == "venv":
-        return [sys.executable, "-m", "pip", "install", "-U", PACKAGE]
+        return [sys.executable, "-m", "pip", "install", "-U", *spec]
     # system: "-s" so pip looks at the system copy, not the user folder in front of it
-    argv = [sys.executable, "-s", "-m", "pip", "install", "-U", PACKAGE] + extra
+    argv = [sys.executable, "-s", "-m", "pip", "install", "-U", *spec] + extra
     return _as_admin(argv) if needs_admin(inst) else argv
+
+
+def _same_python(a: str, b: str) -> bool:
+    """pythonw.exe (the window launchers' Python) and python.exe beside it are one installation: updating it twice
+    ran pip a second time without administrator rights, silently (2026-10-12)."""
+    def norm(p: str) -> Path:
+        path = Path(p).resolve()
+        return path.with_name(path.name.lower().replace("pythonw", "python"))
+    try:
+        return norm(a) == norm(b)
+    except OSError:
+        return a == b
+
+
+def lag_note(rep: Report) -> str | None:
+    """After updating, a copy still behind PyPI: say why that can be and what to do."""
+    released = [i for i in rep.installs if i.kind != "editable"]
+    if rep.latest and any(_vkey(i.version) < _vkey(rep.latest) for i in released):
+        return t("isnady {latest} is on PyPI, but this computer still has {have}. Right after a release PyPI's list "
+                 "of versions can lag a few minutes behind; pip's output above says what it found. Run the update "
+                 "again in a few minutes.", latest=rep.latest,
+                 have=", ".join(sorted({i.version for i in released}, key=_vkey)))
+    return None
 
 
 def diagnose(check_pypi: bool = True) -> Report:
@@ -343,13 +405,13 @@ def diagnose(check_pypi: bool = True) -> Report:
     for inst in installs:
         behind = newest and _vkey(inst.version) < _vkey(newest)
         if behind or (inst.kind == "editable" and rep.latest):
-            rep.fixes.append(upgrade_argv(inst))
+            rep.fixes.append(upgrade_argv(inst, rep.latest))
     # commands from ANOTHER Python (another virtual environment) that start an older copy
     for c in rep.commands:
         exe = c.interpreter
         if c.version and newest and _vkey(c.version) < _vkey(newest) and exe and Path(exe).exists() \
-                and Path(exe).resolve() != Path(sys.executable).resolve():
-            argv = [exe, "-m", "pip", "install", "-U", PACKAGE]
+                and not _same_python(exe, sys.executable):
+            argv = [exe, "-m", "pip", "install", "-U", *_pip_spec(rep.latest)]
             if argv not in rep.fixes:
                 rep.fixes.append(argv)
     user_bin = user_scripts_dir()
@@ -393,7 +455,8 @@ def as_text(rep: Report) -> str:
         lines += [f"  - {p}" for p in rep.problems]
         if rep.fixes:
             lines.append("\n" + t("To update every copy where it is (iy update runs these):"))
-            lines += ["  " + " ".join(f'"{a}"' if " " in a else a for a in f) for f in rep.fixes]
+            # quoted when a shell would split or redirect it (a space; "isnady>=0.2.6")
+            lines += ["  " + " ".join(f'"{a}"' if any(c in a for c in ' <>|&') else a for a in f) for f in rep.fixes]
         lines.append("\n" + t("If 'iy update' itself does not start because an old copy runs instead: {rescue}",
                               rescue=RESCUE))
     else:
@@ -418,19 +481,23 @@ def run_plan(plan: list[list[str]], say, window: bool = False) -> list[tuple[lis
     Returns (command, exit code) for each; a command that could not be run has code -1."""
     results = []
     for argv in plan:
-        run = for_window(argv) if window else argv
+        actual = getattr(argv, "run", argv)
+        run = for_window(actual) if window else actual
         if run is None:
             say(t("Needs administrator rights and no graphical prompt was found; run in a terminal:") + "\n  "
                 + " ".join(argv))
             results.append((argv, -1))
             continue
-        say("$ " + " ".join(run))
+        say("$ " + " ".join(argv if run is actual else run))
         try:
+            flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0     # no console flashing up
             proc = subprocess.Popen(run, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                    encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL)
+                                    encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL, creationflags=flags)
             for line in proc.stdout:
                 say(line.rstrip())
             code = proc.wait()
+            if code != 0:
+                say(t("The command ended with code {code}.", code=code))
         except OSError as exc:
             say(str(exc))
             code = -1

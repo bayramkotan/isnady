@@ -156,7 +156,10 @@ def _run_plan(plan: list[list[str]], yes: bool) -> None:
                 print("  skipped")
                 continue
         print(f"$ {shown}")
-        subprocess.run(argv, check=False)
+        # a Windows administrator step runs as a command that prints pip's output here and returns its exit code
+        code = subprocess.run(getattr(argv, "run", argv), check=False).returncode
+        if code != 0:
+            print(f"  ended with code {code}")
 
 
 def cmd_doctor(args) -> int:
@@ -168,8 +171,11 @@ def cmd_doctor(args) -> int:
         return 1 if report.problems else 0
     print()
     _run_plan(report.fixes, args.yes)
-    after = doctor.diagnose(check_pypi=False)
+    after = doctor.diagnose(check_pypi=not args.offline)
     print("\nAfter updating:\n" + doctor.as_text(after))
+    note = doctor.lag_note(after)
+    if note:
+        print("\n" + note)
     return 1 if after.problems else 0
 
 
@@ -185,8 +191,11 @@ def cmd_update(args) -> int:
         return 0
     print("Updating every copy of isnady where it is installed:")
     _run_plan(report.fixes, args.yes)
-    after = doctor.diagnose(check_pypi=False)
+    after = doctor.diagnose(check_pypi=True)       # against PyPI again: "no problems" must mean up to date
     print("\n" + doctor.as_text(after))
+    note = doctor.lag_note(after)
+    if note:
+        print("\n" + note)
     print("\nIf the shell still starts an old copy, open a new terminal (or run: hash -r).")
     return 1 if after.problems else 0
 

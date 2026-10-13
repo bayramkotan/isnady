@@ -155,11 +155,22 @@ class _Worker(QObject):
         from isnady.core import stats_jobs
 
         try:
-            self.done.emit(stats_jobs.run(self.job, self.key, self.recompute, self.progress.emit))
+            result = stats_jobs.run(self.job, self.key, self.recompute, self._say)
+            self._emit(self.done, result)
         except Exception as exc:                      # shown on the page, never a silent failure
-            self.failed.emit(f"{type(exc).__name__}: {exc}")
+            self._emit(self.failed, f"{type(exc).__name__}: {exc}")
         finally:
             QThread.currentThread().quit()            # the thread ends even when the window's loop has stopped
+
+    def _say(self, text: str) -> None:
+        self._emit(self.progress, text)
+
+    @staticmethod
+    def _emit(signal, value) -> None:
+        try:
+            signal.emit(value)
+        except RuntimeError:                          # the page is gone (isnady closing): nobody to tell
+            pass
 
 
 class StatisticsPage(QWidget):
@@ -404,8 +415,14 @@ class StatisticsPage(QWidget):
         self._refresh_graders()
 
     def compute_corpus(self, recompute: bool) -> None:
-        if self.conn is None or (self._thread is not None and self._thread.isRunning()):
+        if self.conn is None:
             return
+        if self._thread is not None and self._thread.isRunning():
+            # another book chosen while one is computed: it is computed when that one ends (it used to be dropped,
+            # and the first book's results were shown under the second's name)
+            self._corpus_again = True
+            return
+        self._corpus_again = False
         self.c_status.setText(tr("Computing…") if recompute else tr("Reading the saved results…"))
         self.c_recompute.setEnabled(False)
         self._thread = QThread(self)
@@ -413,12 +430,24 @@ class StatisticsPage(QWidget):
         self._cworker.moveToThread(self._thread)
         self._thread.started.connect(self._cworker.run)
         self._cworker.progress.connect(lambda m: self.c_status.setText(m + "…"))
-        self._cworker.done.connect(self._show_corpus)
+        self._cworker.done.connect(self._corpus_done)
         self._cworker.failed.connect(lambda m: self.c_status.setText(tr("Could not compute: {error}", error=m)))
         for sig in (self._cworker.done, self._cworker.failed):
             sig.connect(self._thread.quit)
-        self._thread.finished.connect(lambda: self.c_recompute.setEnabled(True))
+        self._thread.finished.connect(self._corpus_finished)
         self._thread.start()
+
+    def _corpus_done(self, both: dict) -> None:
+        if getattr(self, "_cworker", None) is not None and self._cworker.key != self.scope.currentData():
+            self._corpus_again = True                # computed for a book no longer chosen: not shown
+            return
+        self._show_corpus(both)
+
+    def _corpus_finished(self) -> None:
+        self.c_recompute.setEnabled(True)
+        if getattr(self, "_corpus_again", False):
+            self._corpus_again = False
+            self.compute_corpus(False)
 
     def stop(self) -> None:
         """isnady is closing: end a computation still running (its process) and let the threads finish."""
@@ -1566,8 +1595,12 @@ class StatisticsPage(QWidget):
 
     def compute(self, recompute: bool) -> None:
         key = self.book.currentData()
-        if not key or (self._gthread is not None and self._gthread.isRunning()):
+        if not key:
             return
+        if self._gthread is not None and self._gthread.isRunning():
+            self._graders_again = True               # another book chosen meanwhile: computed when this one ends
+            return
+        self._graders_again = False
         self.status.setText(tr("Reading the saved results…") if not recompute else tr("Computing…"))
         self.recompute.setEnabled(False)
         self._gthread = QThread(self)
@@ -1579,10 +1612,19 @@ class StatisticsPage(QWidget):
         self._worker.failed.connect(lambda m: self.status.setText(tr("Could not compute: {error}", error=m)))
         for sig in (self._worker.done, self._worker.failed):
             sig.connect(self._gthread.quit)
-        self._gthread.finished.connect(lambda: self.recompute.setEnabled(True))
+        self._gthread.finished.connect(self._graders_finished)
         self._gthread.start()
 
+    def _graders_finished(self) -> None:
+        self.recompute.setEnabled(True)
+        if getattr(self, "_graders_again", False):
+            self._graders_again = False
+            self.compute(False)
+
     def _keep_and_show(self, r: dict) -> None:
+        if getattr(self, "_worker", None) is not None and self._worker.key != self.book.currentData():
+            self._graders_again = True               # computed for a book no longer chosen: not shown
+            return
         self._gresult = r
         self._show(r)
 

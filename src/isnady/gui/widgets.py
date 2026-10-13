@@ -205,6 +205,15 @@ def fill_book_combo(combo, conn, all_label: str | None = None) -> None:
 
     current = combo.currentData()
     combo.blockSignals(True)
+    # a list below the box that scrolls, long enough for a shelf (the Fusion style showed every book at once around
+    # the current one, and the first entries — "All Sunni books", "All Shia books" — went off the screen;
+    # theme.py: combobox-popup: 0)
+    combo.setMaxVisibleItems(20)
+    if not combo.property("roomy"):
+        from PySide6.QtWidgets import QStyledItemDelegate
+
+        combo.setItemDelegate(QStyledItemDelegate(combo))      # rows as tall as before (theme.py: ::item padding)
+        combo.setProperty("roomy", True)
     combo.clear()
     if all_label is not None:
         combo.addItem(all_label, None)

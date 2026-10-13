@@ -3,6 +3,31 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Book menus scroll.** A list of books (Statistics, Search, the Lab, the Graders) opened as tall as all its books
+  around the chosen one, and with 33 books its first entries — "All Sunni books", "All Shia books" — were above the
+  screen. Every drop-down list now opens below its box and scrolls (20 rows at a time for the books, with the same
+  row height as before).
+- **Statistics: a book chosen while another is computed is computed next.** It used to be dropped, and the first
+  book's results were then shown under the second book's name. The Graders section likewise.
+- **Importing the sources two and a half times faster.** Every book of isnady-data took about 4 minutes (228 s on
+  the test machine), now 1.5 minutes (92 s) — and the database is the same, table for table. Most of the time was
+  never the download: it was the work after it. Identifying the narrators (80 s → 18 s): a name written in thousands
+  of chains is looked up once, and the tabaqa test compares with the smallest and largest tabaqa of the neighbours
+  instead of every pair. The search index (89 s → 32 s): the texts to index are found once, a first index is built
+  by FTS5 in one pass, and the texts are folded by `str.translate` (twice as fast). The downloads (about 30 s, one
+  after the other): the next three books download while one is written.
+- **Updating tells what happened, and right after a release it works.** On Windows the update of a copy installed
+  for all users runs behind the administrator prompt, in a window of its own that closed with pip's answer in it:
+  the report then said "No problems found" although the copy was still the old version (checked without asking
+  PyPI again). Now pip's output and its exit code come back to Help → Check Installation and `iy update`; the
+  report after updating asks PyPI again, and when a copy is still behind it says so and why. pip is asked for the
+  version PyPI reported (`isnady>=X`, never a step back), and always with `--no-cache-dir` — pip keeps PyPI's list
+  of versions for 10 minutes, so an update a minute after a release found "already up to date". `pythonw.exe` beside
+  `python.exe` is the same installation: it is no longer updated a second time (that run, without administrator
+  rights, did nothing). The command lines shown are quoted for pasting (`"isnady>=0.2.6"`).
+
 ## [0.2.6] — 2026-10-12
 
 - **Books twice as fast.** Opening a book or a chapter froze the window for about half as long as before and draws the

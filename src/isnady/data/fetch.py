@@ -72,27 +72,74 @@ def _build_request(url: str, auth: Auth) -> urllib.request.Request:
     return urllib.request.Request(url, headers=headers)
 
 
+# ------------------------------------------------------------------ downloads ahead of time
+# Importing many books: the next books' files are downloaded while the current one is written (core.imports.run_many).
+# They used to come one after the other, each waiting for the last: the downloads alone took about 35 s of the
+# full isnady-data, now they overlap with the work.
+_AHEAD: dict = {}                   # url → Future of its bytes
+_POOL = None
+
+
+def prefetch(url: str, then=None) -> None:
+    """Start downloading a public URL now; read_bytes(url) takes it when it is asked for. then(bytes) runs in the
+    download thread when it is done (to start the files it names)."""
+    global _POOL
+    if not is_url(url) or url in _AHEAD:
+        return
+    if _POOL is None:
+        from concurrent.futures import ThreadPoolExecutor
+
+        _POOL = ThreadPoolExecutor(max_workers=6, thread_name_prefix="isnady-download")
+
+    def job() -> bytes:
+        data = _download(url, NO_AUTH, None)
+        if then is not None:
+            try:
+                then(data)
+            except Exception:  # noqa: BLE001 — a guess about the next files; the import reads them itself anyway
+                pass
+        return data
+
+    _AHEAD[url] = _POOL.submit(job)
+
+
+def forget_prefetched() -> None:
+    """Drop the downloads nobody asked for (an import that stopped early)."""
+    for future in _AHEAD.values():
+        future.cancel()
+    _AHEAD.clear()
+
+
+def _download(location: str, auth: Auth, timeout: float | None) -> bytes:
+    request = _build_request(location, auth)
+    try:
+        with urllib.request.urlopen(request, timeout=timeout or TIMEOUT_SECONDS) as response:
+            return response.read()
+    except urllib.error.HTTPError as exc:
+        if exc.code in (401, 403):
+            raise ResourceError(
+                f"Access denied ({exc.code}) for {location}. "
+                "The resource may need authentication, or the credentials were rejected."
+            ) from exc
+        if exc.code == 404:
+            raise ResourceError(f"Not found (404): {location}") from exc
+        raise ResourceError(f"HTTP {exc.code} while reading {location}") from exc
+    except urllib.error.URLError as exc:
+        raise ResourceError(f"Could not reach {location}: {exc.reason}") from exc
+    except TimeoutError as exc:
+        raise ResourceError(f"Timed out after {timeout or TIMEOUT_SECONDS}s: {location}") from exc
+
+
 def read_bytes(location: str, auth: Auth = NO_AUTH, timeout: float | None = None) -> bytes:
     """Return the raw bytes of a local file or a URL."""
-    if is_url(location):
-        request = _build_request(location, auth)
+    if is_url(location) and auth.kind == "none" and location in _AHEAD:
+        future = _AHEAD.pop(location)
         try:
-            with urllib.request.urlopen(request, timeout=timeout or TIMEOUT_SECONDS) as response:
-                return response.read()
-        except urllib.error.HTTPError as exc:
-            if exc.code in (401, 403):
-                raise ResourceError(
-                    f"Access denied ({exc.code}) for {location}. "
-                    "The resource may need authentication, or the credentials were rejected."
-                ) from exc
-            if exc.code == 404:
-                raise ResourceError(f"Not found (404): {location}") from exc
-            raise ResourceError(f"HTTP {exc.code} while reading {location}") from exc
-        except urllib.error.URLError as exc:
-            raise ResourceError(f"Could not reach {location}: {exc.reason}") from exc
-        except TimeoutError as exc:
-            raise ResourceError(f"Timed out after {timeout or TIMEOUT_SECONDS}s: {location}") from exc
-
+            return future.result()
+        except Exception:  # noqa: BLE001 — downloaded again below, which says what went wrong
+            pass
+    if is_url(location):
+        return _download(location, auth, timeout)
     path = Path(location).expanduser()
     if location.startswith("file://"):
         path = Path(urllib.request.url2pathname(urllib.parse.urlparse(location).path))

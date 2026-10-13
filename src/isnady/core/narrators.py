@@ -52,6 +52,8 @@ class Index:
         self.tabaqa, self.marks, self.full = {}, defaultdict(set), {}
         self.names: dict[str, list[tuple[int, list[str], bool]]] = defaultdict(list)   # first token -> entries
         self.exact: dict[str, set[int]] = defaultdict(set)
+        self._found: dict[tuple, frozenset] = {}         # a name written in a chain → its candidates (asked again and
+        #                                                  again: the same narrators carry thousands of chains)
         # only narrators of the chains' own tradition (SH1, the two roads): a Sunni book's chains are read in the
         # Sunni rijal works, a Shia book's in the Shia ones — a narrator of the other tradition with the same name
         # is another source's judgment, never a candidate for these links
@@ -80,7 +82,15 @@ class Index:
         ancestor is), and the remaining words (grandfather, nisba) must follow in order.
         """
         if not toks:
-            return set()
+            return frozenset()
+        key = tuple(toks)
+        hit = self._found.get(key)
+        if hit is not None:
+            return hit
+        hit = self._found[key] = frozenset(self._candidates(toks))
+        return hit
+
+    def _candidates(self, toks: list[str]) -> set[int]:
         # names written exactly AND names that fit the rule, together: a shortcut to the exact ones alone
         # dropped Abu Dharr al-Ghifari (entry "أبو ذر الغفاري ...") in favour of 'Umar b. Dharr, kunya Abu Dharr
         found = set(self.exact.get(" ".join(toks), ()))
@@ -176,8 +186,16 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
         if companions:
             cands[-1] = companions
 
-    def t(p):
-        return index.tabaqa.get(p)
+    t = index.tabaqa.get
+
+    def lowest(group):
+        """The smallest tabaqa in the group, or None when one of them has none."""
+        values = [t(q) for q in group]
+        return None if None in values else min(values)
+
+    def highest(group):
+        values = [t(q) for q in group]
+        return None if None in values else max(values)
 
     changed = True
     while changed:                                  # the tabaqa never grows towards the Prophet
@@ -186,10 +204,14 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
             keep = set(cands[i])
             later = next((cands[j] for j in range(i + 1, n) if cands[j]), None)
             earlier = next((cands[j] for j in range(i - 1, -1, -1) if cands[j]), None)
-            if later and all(t(q) is not None for q in later):
-                keep = {p for p in keep if t(p) is None or any(t(q) <= t(p) for q in later)}
-            if earlier and all(t(q) is not None for q in earlier):
-                keep = {p for p in keep if t(p) is None or any(t(q) >= t(p) for q in earlier)}
+            # "some later narrator's tabaqa ≤ p's" is "the smallest later tabaqa ≤ p's" (and ≥ for the earlier
+            # ones): the same test without comparing every pair (82 million comparisons on the full data)
+            low = lowest(later) if later else None
+            if low is not None:
+                keep = {p for p in keep if t(p) is None or low <= t(p)}
+            high = highest(earlier) if earlier else None
+            if high is not None:
+                keep = {p for p in keep if t(p) is None or high >= t(p)}
             if keep and keep != cands[i]:
                 cands[i] = keep
                 changed = True
@@ -230,19 +252,25 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
            WHERE i.problem IS NULL"""
     ).fetchall()
     total = identified = 0
+    # every link read at once (not one query per chain), the answers written together
+    links_of: dict[int, list[dict]] = defaultdict(list)
+    for isnad_id, position, raw_name in conn.execute(
+            "SELECT isnad_id, position, raw_name FROM isnad_links ORDER BY isnad_id, position"):
+        links_of[isnad_id].append({"position": position, "raw_name": raw_name})
+    updates = []
     for isnad_id, reaches, collection, tradition in chains:
         # road A or road B: each book's chains are identified in its own tradition's rijal works
         road = "shia" if tradition == "shia" else "sunni"
         if road not in indexes:
             indexes[road] = Index(conn, road)
-        links = [dict(r) for r in conn.execute(
-            "SELECT position, raw_name FROM isnad_links WHERE isnad_id = ? ORDER BY position", (isnad_id,))]
+        links = links_of.get(isnad_id, [])
         results = match_chain(indexes[road], links, collection, bool(reaches))
         for link, (pid, confidence, count) in zip(links, results):
-            conn.execute("UPDATE isnad_links SET person_id = ?, match_confidence = ?, candidates = ? "
-                         "WHERE isnad_id = ? AND position = ?", (pid, confidence, count, isnad_id, link["position"]))
+            updates.append((pid, confidence, count, isnad_id, link["position"]))
             total += 1
             identified += pid is not None
+    conn.executemany("UPDATE isnad_links SET person_id = ?, match_confidence = ?, candidates = ? "
+                     "WHERE isnad_id = ? AND position = ?", updates)
     conn.execute("INSERT OR REPLACE INTO core_meta (key, value) VALUES ('narrator_matcher', ?)", (stamp,))
     conn.commit()
     return {"chains": len(chains), "links": total, "identified": identified}

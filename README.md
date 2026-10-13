@@ -215,8 +215,9 @@ iy chain kafi 5:1740           # a Shia chain, read the Shia way
 iy narrator الزهري             # who a narrator is
 ```
 
-Importing takes a minute or two a book; the search index, the chains and the narrators are built as
-part of it. No network? See [Without the network](#without-the-network) below.
+Importing every book of isnady-data takes about a minute and a half: the next books download while one is
+written, and the search index, the chains and the narrators are built once, at the end. No network? See
+[Without the network](#without-the-network) below.
 
 ---
 
