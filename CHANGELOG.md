@@ -3,7 +3,7 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.2.8] — 2026-10-13
 
 - **Every hadith shows its chain, as far as it can be read — no box instead of it.** v0.2.7 put a box "Chain not split
   into narrators" where a chain could not be split; now the chain is drawn: whole when it is read whole, as far as it
