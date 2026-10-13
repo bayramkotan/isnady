@@ -272,10 +272,35 @@ class IsnadPage(QWidget):
         head.addStretch(1)
         self.body_layout.addLayout(head)
 
-        verdict = self._verdict(chain)
-        self.body_layout.addWidget(verdict)
+        if chain and chain["problem"]:
+            from isnady.gui.chain_widgets import unsplit_box
+
+            self.body_layout.addWidget(unsplit_box(chain, compact=True))     # what happened and why, not to be missed
+        else:
+            self.body_layout.addWidget(self._verdict(chain))
         self.body_layout.addSpacing(16)
 
+        drawn = [c for c in chains if c["links"]]
+        if len(drawn) > 1:
+            self.body_layout.addWidget(_label(
+                n_("{n} chain", "{n} chains: the compiler joined these roads in one hadith (tahwil, ح); each is drawn "
+                   "whole, the links the roads share included.", len(drawn)), "ChainCount", wrap=True))
+            self.body_layout.addSpacing(8)
+        for i, c in enumerate(drawn, 1):
+            if len(drawn) > 1:
+                self.body_layout.addWidget(_label(tr("Chain {i}", i=i), "ChainSection"))
+            self._draw_chain(c, info)
+            self.body_layout.addSpacing(14)
+        self.body_layout.addSpacing(4)
+
+        text = core_isnad.arabic_text(self.conn, hid)
+        if text:
+            self.body_layout.addWidget(self._text_card(text, chain))
+        self.body_layout.addStretch(1)
+        self.scroll.verticalScrollBar().setValue(0)
+
+    def _draw_chain(self, chain: dict, info: dict) -> None:
+        """One chain from the compiler's book to whom it reaches, node by node."""
         if chain and chain["links"]:
             self.body_layout.addWidget(ChainNode(info["book_name"], tr("The compiler's book, where the chain begins"),
                                                  first=True, latin=True))
@@ -296,13 +321,6 @@ class IsnadPage(QWidget):
                 # "رفعه": the narrator raises it to the Ma'sum without the links between — a gap, shown as one
                 self.body_layout.addWidget(ChainNode("رفعه", tr("Raised (marfu'): the rest of the chain is left out — "
                                                         "whom it reaches is not named"), None, last=True))
-        self.body_layout.addSpacing(18)
-
-        text = core_isnad.arabic_text(self.conn, hid)
-        if text:
-            self.body_layout.addWidget(self._text_card(text, chain))
-        self.body_layout.addStretch(1)
-        self.scroll.verticalScrollBar().setValue(0)
 
     def _verdict(self, chain: dict | None) -> QLabel:
         if chain is None:

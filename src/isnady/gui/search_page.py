@@ -29,7 +29,7 @@ from isnady.core import narrators as core_narrators
 from isnady.core import search as core
 from isnady.data import db
 from isnady.gui import theme
-from isnady.gui.chain_widgets import ChainStrip
+from isnady.gui.chain_widgets import ChainStrip, unsplit_box
 from isnady.gui.widgets import BookPicker, FlowLayout, TextBlock, expanding_width_policy
 from isnady.core import titles
 from isnady.core.i18n import N_, n_, tr
@@ -102,7 +102,7 @@ def _more_languages(conn, imported: list[str]) -> list[str]:
 class ResultCard(QFrame):
     def __init__(self, result: core.SearchResult, chain: dict | None = None, open_chain=None,
                  people: dict | None = None, score: float | None = None, related: list | None = None,
-                 open_book=None, folded: list | None = None) -> None:
+                 open_book=None, folded: list | None = None, chains: list | None = None) -> None:
         super().__init__()
         self.setObjectName("Card")
         t = theme.current()
@@ -169,12 +169,19 @@ class ResultCard(QFrame):
             if open_chain is not None:
                 also.linkActivated.connect(lambda hid: open_chain(int(hid)))
             box.addWidget(also)
-        if chain and chain["links"]:
-            box.addWidget(ChainStrip(chain, people))
+        drawn = [c for c in (chains or ([chain] if chain else [])) if c["links"]]
+        if drawn:
+            if len(drawn) > 1:
+                # a tahwil: the compiler joined roads in one hadith — each drawn (2026-10-13)
+                box.addWidget(_label(n_("{n} chain", "{n} chains: roads joined in one hadith (tahwil)", len(drawn)),
+                                     "ChainCount"))
+            for i, c in enumerate(drawn, 1):
+                if len(drawn) > 1:
+                    box.addWidget(_label(tr("Chain {i}", i=i), "Caption"))
+                box.addWidget(ChainStrip(c, people))
             box.addSpacing(6)
         elif chain and chain["problem"]:
-            note = _label(tr("Chain kept whole, not split: {reason}", reason=tr(chain["problem"])), "Caption", wrap=True)
-            box.addWidget(note)
+            box.addWidget(unsplit_box(chain))
 
         if result.grades:
             pills = FlowLayout(spacing=6)
@@ -966,8 +973,11 @@ class SearchPage(QWidget):
                 result = replace(result, texts=kept)
         chains = core_isnad.chain(self._conn, result.hadith_id)
         chain = chains[0] if chains else None
-        card = ResultCard(result, chain, self.open_chain.emit, self._people(chain), score, self._related(result.hadith_id),
-                          None if in_book else self.open_book.emit, folded)
+        people: dict = {}
+        for c in chains:
+            people.update(self._people(c))
+        card = ResultCard(result, chain, self.open_chain.emit, people, score, self._related(result.hadith_id),
+                          None if in_book else self.open_book.emit, folded, chains)
         card.setProperty("hadith_id", result.hadith_id)
         return card
 

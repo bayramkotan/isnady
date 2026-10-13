@@ -416,6 +416,11 @@ def stylesheet(t: Tokens) -> str:
     QLabel#Hero {{ color: {t.ink}; }}
     QLabel#HeroArabic {{ color: {t.gold}; }}
     QLabel#Lead {{ color: {t.muted}; font-size: 11pt; }}
+    QFrame#ChainUnsplit {{ background: {t.pill}; border: 1px solid {t.gold}; border-left: 5px solid {t.gold};
+                           border-radius: 8px; }}
+    QLabel#ChainUnsplitTitle {{ color: {t.gold}; font-weight: 700; font-size: 10.5pt; background: transparent; border: none; }}
+    QLabel#ChainCount {{ color: {t.lapis}; font-weight: 700; }}
+    QLabel#ChainSection {{ color: {t.ink}; font-weight: 700; font-size: 11pt; margin-top: 4px; }}
     QLabel#PageTitle {{ color: {t.ink}; }}
 
     QScrollBar:vertical {{ background: transparent; width: 11px; margin: 2px; }}

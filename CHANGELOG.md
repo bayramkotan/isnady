@@ -5,6 +5,22 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **Chains joined by tahwil (ح) are drawn — each of them.** When a compiler joins a second road to the first with
+  "ح" (Sahih al-Bukhari 89: Abu al-Yaman ← Shu'ayb ← al-Zuhri, ح, Ibn Wahb ← Yunus ← Ibn Shihab ← 'Ubayd Allah ←
+  Ibn 'Abbas ← 'Umar), the hadith had no chain at all. Now each road is read and completed with the links the roads
+  share — where "قالا / كلاهما / جميعاً" stands, or where the same narrator is named in both (al-Zuhri = Ibn
+  Shihab) — and every chain is shown: on the search card and in the reader one under the other ("Chain 1", "Chain
+  2"), on Isnad Chains each drawn whole, in `iy chain` one after the other. A narrator cited without a term of
+  hearing ("وقال ابن وهب", ta'liq) is a link of its own ("said").
+- **525 chains were taken for a tahwil that was not there:** the reader cut the text and the first letter of
+  "حدثنا" or "حتى" left a lone "ح" at the cut. They are read as the plain chains they are.
+- Together, on the full isnady-data: 950 more hadith have a chain (unsplit 20,237 → 19,287), 511 of them with two
+  roads or more; every other chain is unchanged (checked chain for chain). A database read by the earlier rules
+  reads only those hadith again, in seconds, not every chain.
+- **A chain that could not be split is shown so it cannot be missed:** a gold-edged box with what happened ("Chain
+  not split into narrators"), why, and the chain as written — instead of a grey line.
+- Narrators are matched only for the chains with links not looked up yet when nothing else changed (18 s → 2 s after
+  such an update).
 - **Book menus scroll.** A list of books (Statistics, Search, the Lab, the Graders) opened as tall as all its books
   around the chosen one, and with 33 books its first entries — "All Sunni books", "All Shia books" — were above the
   screen. Every drop-down list now opens below its box and scrolls (20 rows at a time for the books, with the same

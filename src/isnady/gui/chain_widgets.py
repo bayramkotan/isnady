@@ -81,6 +81,30 @@ def person_summary(person: dict | None) -> str:
     return " · ".join(parts)
 
 
+def unsplit_box(chain: dict, compact: bool = False) -> QWidget:
+    """A chain that could not be split into narrators, shown so it cannot be missed (2026-10-13, Bayram: "bu kısımların
+    çok belirgin olmasını istiyorum"): a gold-edged box with what happened, why, and the chain as it is written."""
+    from isnady.gui.widgets import TextBlock
+
+    box = QFrame()
+    box.setObjectName("ChainUnsplit")
+    lay = QVBoxLayout(box)
+    lay.setContentsMargins(16, 10, 16, 12)
+    lay.setSpacing(4)
+    head = QLabel(tr("Chain not split into narrators"))
+    head.setObjectName("ChainUnsplitTitle")
+    lay.addWidget(head)
+    why = QLabel(tr("Why: {reason}", reason=tr(chain["problem"])).rstrip(".") + ". " +
+                 tr("The hadith has a chain; isnady could not yet read its links one by one, so no narrator is drawn."))
+    why.setWordWrap(True)
+    why.setObjectName("Caption")
+    lay.addWidget(why)
+    raw = (chain.get("raw") or "").strip()
+    if raw and not compact:
+        lay.addWidget(TextBlock(html.escape(raw), theme.script_font("arabic", factor=0.62), rtl=True))
+    return box
+
+
 class ChainStrip(QWidget):
     """Narrator names in reading order (right to left), ending at the Prophet when the chain does.
     Identified narrators are filled chips; names not yet identified have a dashed outline."""

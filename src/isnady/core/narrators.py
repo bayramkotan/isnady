@@ -245,11 +245,15 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
 
     say(tr("Identifying narrators"))
     indexes: dict[str, Index] = {}
+    # the same matcher and the same narrators: only the chains with links not looked up yet (new books, chains read
+    # again) — each chain is matched on its own, so the others would come out the same
+    only_new = not rebuild and row is not None and row[0] == stamp
     chains = conn.execute(
         """SELECT i.id, i.reaches_prophet AND COALESCE(i.ends_with, 'prophet') = 'prophet', c.key,
                   COALESCE(c.tradition, 'sunni') FROM isnads i
            JOIN hadiths h ON h.id = i.hadith_id JOIN collections c ON c.id = h.collection_id
-           WHERE i.problem IS NULL"""
+           WHERE i.problem IS NULL""" + (" AND EXISTS (SELECT 1 FROM isnad_links x WHERE x.isnad_id = i.id "
+                                         "AND x.candidates IS NULL)" if only_new else "")
     ).fetchall()
     total = identified = 0
     # every link read at once (not one query per chain), the answers written together
