@@ -327,18 +327,20 @@ def _compiler_stats_counted(conn: sqlite3.Connection, scholar: dict) -> list[dic
         hadith = conn.execute("SELECT COUNT(*) FROM hadiths WHERE collection_id = ?", (cid,)).fetchone()[0]
         chains = conn.execute(
             """SELECT COUNT(*), SUM(i.problem IS NULL), SUM(i.reaches_prophet) FROM isnads i
-               JOIN hadiths h ON h.id = i.hadith_id WHERE h.collection_id = ?""", (cid,)).fetchone()
+               JOIN hadiths h ON h.id = i.hadith_id WHERE h.collection_id = ?
+                 AND (i.problem IS NULL OR i.ordinal = 1)""", (cid,)).fetchone()
         links = conn.execute(
             """SELECT COUNT(*), SUM(l.person_id IS NOT NULL) FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id
-               JOIN hadiths h ON h.id = i.hadith_id WHERE h.collection_id = ?""", (cid,)).fetchone()
+               JOIN hadiths h ON h.id = i.hadith_id WHERE h.collection_id = ? AND i.problem IS NULL""", (cid,)).fetchone()
         teachers = [{"id": r[0], "name": display_name(r[1]), "count": r[2]} for r in conn.execute(
             """SELECT l.person_id, p.name_ar, COUNT(*) FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id
                JOIN hadiths h ON h.id = i.hadith_id JOIN persons p ON p.id = l.person_id
-               WHERE h.collection_id = ? AND l.position = 1 GROUP BY l.person_id ORDER BY 3 DESC LIMIT 12""", (cid,))]
+               WHERE h.collection_id = ? AND l.position = 1 AND i.problem IS NULL
+               GROUP BY l.person_id ORDER BY 3 DESC LIMIT 12""", (cid,))]
         companions = [{"id": r[0], "name": display_name(r[1]), "count": r[2]} for r in conn.execute(
             """SELECT l.person_id, p.name_ar, COUNT(*) FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id
                JOIN hadiths h ON h.id = i.hadith_id JOIN persons p ON p.id = l.person_id
-               WHERE h.collection_id = ? AND p.tabaqa = 1
+               WHERE h.collection_id = ? AND p.tabaqa = 1 AND i.problem IS NULL
                  AND l.position = (SELECT MAX(position) FROM isnad_links x WHERE x.isnad_id = l.isnad_id)
                GROUP BY l.person_id ORDER BY 3 DESC LIMIT 12""", (cid,))]
         # road B: whom the chains reach — the Prophet or an Imam (isnads.ends_with), not "the Companions"

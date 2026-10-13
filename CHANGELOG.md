@@ -3,6 +3,22 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Every hadith shows its chain, as far as it can be read — no box instead of it.** v0.2.7 put a box "Chain not split
+  into narrators" where a chain could not be split; now the chain is drawn: whole when it is read whole, as far as it
+  is read otherwise (ending in "…", its reason in the tooltip), and with the narrators identified on it.
+- **Two narrators at one link are two chains** ("حدثنا أيوب، ويونس، عن الحسن", Sahih al-Bukhari 31; "قالا / كلاهما"):
+  the same links, that one replaced — as for a tahwil.
+- **More chains read:** the Muwatta's "وحدثني عن مالك" (the narrator who says "haddathani" is not named), the
+  Musnad's "قال حدثنا …" (Abdullah b. Ahmad's own "qala"), a number or a mark before the first term, "وحدثنيه".
+  "وعنه" / "وعنها" (Mishkat, Riyad al-Salihin) and "وبهذا الإسناد" / "وبإسناده" take the chain of the hadith before
+  them (the Companion alone for "from him", the whole chain for "with this chain").
+- On the full isnady-data: 83,836 hadith with a whole chain (80,497 before), 12,476 more drawn as far as read or with
+  the chain before them; 3,255 hadith without any link (19,287 before) — mostly texts that give no chain at all
+  ("وقال رسول الله", "وفي رواية"). The statistics still measure whole chains only, so no chain is counted twice.
+- A database read with the earlier rules reads only its unsplit chains again, once, at start.
+
 ## [0.2.7] — 2026-10-13
 
 - **Chains joined by tahwil (ح) are drawn — each of them.** When a compiler joins a second road to the first with

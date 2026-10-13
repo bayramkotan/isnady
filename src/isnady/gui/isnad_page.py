@@ -272,19 +272,16 @@ class IsnadPage(QWidget):
         head.addStretch(1)
         self.body_layout.addLayout(head)
 
-        if chain and chain["problem"]:
-            from isnady.gui.chain_widgets import unsplit_box
-
-            self.body_layout.addWidget(unsplit_box(chain, compact=True))     # what happened and why, not to be missed
-        else:
+        if chain is None or not chain["problem"]:
             self.body_layout.addWidget(self._verdict(chain))
         self.body_layout.addSpacing(16)
 
         drawn = [c for c in chains if c["links"]]
         if len(drawn) > 1:
             self.body_layout.addWidget(_label(
-                n_("{n} chain", "{n} chains: the compiler joined these roads in one hadith (tahwil, ح); each is drawn "
-                   "whole, the links the roads share included.", len(drawn)), "ChainCount", wrap=True))
+                n_("{n} chain", "{n} chains of this hadith: the compiler joined roads (tahwil, ح) or two narrators "
+                   "stand at one link; each is drawn whole, the links they share included.", len(drawn)),
+                "ChainCount", wrap=True))
             self.body_layout.addSpacing(8)
         for i, c in enumerate(drawn, 1):
             if len(drawn) > 1:
@@ -321,6 +318,10 @@ class IsnadPage(QWidget):
                 # "رفعه": the narrator raises it to the Ma'sum without the links between — a gap, shown as one
                 self.body_layout.addWidget(ChainNode("رفعه", tr("Raised (marfu'): the rest of the chain is left out — "
                                                         "whom it reaches is not named"), None, last=True))
+            elif chain.get("problem"):
+                from isnady.gui.chain_widgets import stop_note
+
+                self.body_layout.addWidget(ChainNode("…", stop_note(chain), None, last=True))
 
     def _verdict(self, chain: dict | None) -> QLabel:
         if chain is None:

@@ -29,7 +29,7 @@ from isnady.core import narrators as core_narrators
 from isnady.core import search as core
 from isnady.data import db
 from isnady.gui import theme
-from isnady.gui.chain_widgets import ChainStrip, unsplit_box
+from isnady.gui.chain_widgets import ChainStrip
 from isnady.gui.widgets import BookPicker, FlowLayout, TextBlock, expanding_width_policy
 from isnady.core import titles
 from isnady.core.i18n import N_, n_, tr
@@ -173,15 +173,12 @@ class ResultCard(QFrame):
         if drawn:
             if len(drawn) > 1:
                 # a tahwil: the compiler joined roads in one hadith — each drawn (2026-10-13)
-                box.addWidget(_label(n_("{n} chain", "{n} chains: roads joined in one hadith (tahwil)", len(drawn)),
-                                     "ChainCount"))
+                box.addWidget(_label(n_("{n} chain", "{n} chains of this hadith", len(drawn)), "ChainCount"))
             for i, c in enumerate(drawn, 1):
                 if len(drawn) > 1:
                     box.addWidget(_label(tr("Chain {i}", i=i), "Caption"))
                 box.addWidget(ChainStrip(c, people))
             box.addSpacing(6)
-        elif chain and chain["problem"]:
-            box.addWidget(unsplit_box(chain))
 
         if result.grades:
             pills = FlowLayout(spacing=6)

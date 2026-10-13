@@ -237,8 +237,7 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
     stamp = f"{MATCHER_ID}|{persons_now}"
     row = conn.execute("SELECT value FROM core_meta WHERE key = 'narrator_matcher'").fetchone()
     pending = conn.execute(
-        """SELECT COUNT(*) FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id
-           WHERE i.problem IS NULL AND l.candidates IS NULL"""
+        """SELECT COUNT(*) FROM isnad_links l WHERE l.candidates IS NULL"""
     ).fetchone()[0]
     if not rebuild and row is not None and row[0] == stamp and pending == 0:
         return {"chains": 0, "links": 0, "identified": 0, "note": "up to date"}
@@ -252,7 +251,7 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
         """SELECT i.id, i.reaches_prophet AND COALESCE(i.ends_with, 'prophet') = 'prophet', c.key,
                   COALESCE(c.tradition, 'sunni') FROM isnads i
            JOIN hadiths h ON h.id = i.hadith_id JOIN collections c ON c.id = h.collection_id
-           WHERE i.problem IS NULL""" + (" AND EXISTS (SELECT 1 FROM isnad_links x WHERE x.isnad_id = i.id "
+           WHERE EXISTS (SELECT 1 FROM isnad_links y WHERE y.isnad_id = i.id)""" + (" AND EXISTS (SELECT 1 FROM isnad_links x WHERE x.isnad_id = i.id "
                                          "AND x.candidates IS NULL)" if only_new else "")
     ).fetchall()
     total = identified = 0

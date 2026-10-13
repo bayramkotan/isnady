@@ -278,8 +278,11 @@ def _chains(conn: sqlite3.Connection, book_ids: list[int]) -> list[dict]:
     for isnad_id, hadith_id, book, reaches, position, person in conn.execute(
             f"""SELECT i.id, i.hadith_id, h.collection_id, i.reaches_prophet, l.position, l.person_id
                 FROM isnads i JOIN hadiths h ON h.id = i.hadith_id
-                LEFT JOIN isnad_links l ON l.isnad_id = i.id
-                WHERE h.collection_id IN ({marks}) ORDER BY i.id, l.position""", book_ids):
+                LEFT JOIN isnad_links l ON l.isnad_id = i.id AND i.problem IS NULL
+                WHERE h.collection_id IN ({marks}) AND (i.problem IS NULL OR i.ordinal = 1)
+                ORDER BY i.id, l.position""", book_ids):
+        # a chain not split into narrators (its links as far as read, or borrowed from the hadith before) is drawn on
+        # the pages but measured here as before: no links — no chain is counted twice, none half
         c = chains.setdefault(isnad_id, {"hadith": hadith_id, "book": book, "reaches": bool(reaches), "links": []})
         if position is not None:
             c["links"].append(person)

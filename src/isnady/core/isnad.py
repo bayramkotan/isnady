@@ -32,11 +32,11 @@ from isnady.core.normalize import normalize as normalize_name
 from isnady.core.normalize import normalize_with_map
 from isnady.core.i18n import N_, t, tr
 
-PARSER_ID = "isnady-isnad-7"   # bump when rules change (7: tahwil split into its chains, 2026-10-13)
+PARSER_ID = "isnady-isnad-8"   # bump when rules change (7: tahwil split; 8: two narrators at a link, a chain kept as far as read)
 
 # normalised form -> term id; longer forms first so "حدثني" is not read as "حدث"
 TERMS = [
-    ("حدثناه", "haddathana"), ("حدثنا", "haddathana"), ("حدثني", "haddathani"), ("ثنا", "haddathana"),
+    ("حدثناه", "haddathana"), ("حدثنيه", "haddathani"), ("حدثنا", "haddathana"), ("حدثني", "haddathani"), ("ثنا", "haddathana"),
     ("اخبرنا", "akhbarana"), ("اخبرني", "akhbarani"), ("انبانا", "anba'ana"), ("انباني", "anba'ani"),
     ("سمعت", "sami'tu"), ("سمع", "sami'a"), ("قرات علي", "qara'tu 'ala"), ("قري علي", "quri'a 'ala"),
     ("زعم", "za'ama"), ("عن", "'an"), ("ان", "anna"),
@@ -64,6 +64,16 @@ _GENERIC_SUBJECT_RE = re.compile(
 # a transmission term soon after the point where reading stopped: the chain goes on
 _CONTINUES_RE = re.compile(r"^(?:\S+\s+){0,8}?(?:و)?(?:حدثنا|حدثني|اخبرنا|اخبرني|انبانا|سمعت|زعم|عن)\s+[^،,\s]")
 _MAX_NAME_WORDS = 10
+# what may stand before the first term: a number ("11 - ", "5ـ"), a brace or a quote, and the reporter's own "قال"
+# (Abdullah b. Ahmad in the Musnad: "قال حدثنا عبد الصمد"; "قال قرأت على عبد الرحمن")
+_SUNNI_PREAMBLE_RE = re.compile(
+    r"^[\s{\[(\"'\u200f\u200e]*(?:\d+\s*[-ـ.)]?\s*)?(?:و?قال\s*:?\s*(?=و?(?:حدثنا|حدثني|اخبرنا|اخبرني|انبانا|انباني|"
+    r"سمعت|قرات علي|عن)(?!\w)))?")
+# a second narrator at the same link, before the next term: "حدثنا أيوب، ويونس، عن الحسن",
+# "حدثنا عثمان، وأبو بكر ابنا أبي شيبة قالا حدثنا", "عن أبيه، ونافع، عن ابن عمر" (qiran)
+_CO_NARRATOR_RE = re.compile(
+    r"[\s،,]*و(?!\s)([^،,.:]{2,60}?)[\s،,]*(?:(?:قالا|قالوا|كلاهما|كلهم|جميعا)[\s،,]*)?"
+    r"(?=و?(?:حدثنا|حدثني|اخبرنا|اخبرني|انبانا|انباني|سمعت|عن)(?!\w))")
 
 
 @dataclass
@@ -82,6 +92,7 @@ class ParsedIsnad:
     ends_with: str = ""               # traditions.MASUM key of whom the chain reaches ("prophet", "sadiq" …)
     raised: bool = False              # "رفعه": raised to the Ma'sum without the rest of its links
     joined: int = 0                   # roads joined by "جميعاً" (the first road is the one stored)
+    alternates: list = field(default_factory=list)   # (link index, Link): a second narrator at that link (qiran)
 
 
 def _tahwil_before(norm: str, end: int) -> bool:
@@ -156,7 +167,7 @@ def parse_all(text: str, tradition: str | None = None) -> list[ParsedIsnad]:
         return [_parse_shia(text)]
     first = _parse_sunni(text)
     if first.problem != TAHWIL:
-        return [first]
+        return _expand(first)
     return _split_tahwil(text) or [first]
 
 
@@ -215,8 +226,22 @@ def _split_tahwil(text: str, depth: int = 0) -> list[ParsedIsnad] | None:
 def parse_all_sunni(text: str, depth: int = 0) -> list[ParsedIsnad]:
     first = _parse_sunni(text)
     if first.problem != TAHWIL:
-        return [first]
+        return _expand(first)
     return _split_tahwil(text, depth) or [first]
+
+
+def _expand(p: ParsedIsnad) -> list[ParsedIsnad]:
+    """A chain with a second narrator at a link (qiran: "حدثنا أيوب، ويونس، عن الحسن") is two chains: the same
+    links, that one replaced (2026-10-13; before, such a hadith had no chain drawn at all)."""
+    out = [p]
+    for index, other in p.alternates:
+        if index >= len(p.links):
+            continue
+        links = [Link(l.position, l.term, l.raw_name) for l in p.links]
+        links[index] = Link(index + 1, links[index].term, other.raw_name)
+        out.append(ParsedIsnad(raw_isnad=p.raw_isnad, links=links, reaches_prophet=p.reaches_prophet,
+                               problem=p.problem, ends_with=p.ends_with, raised=p.raised))
+    return out
 
 
 def _orig_len(text: str, norm_len: int) -> int:
@@ -258,12 +283,13 @@ def _parse_sunni(text: str) -> ParsedIsnad:
     if not norm.strip():
         result.problem = N_("does not start with a transmission term")
         return result
-    first = _TERM_RE.match(head.lstrip("{ "))
+    preamble = _SUNNI_PREAMBLE_RE.match(norm)
+    pos = preamble.end() if preamble else 0
+    first = _TERM_RE.match(head, pos) if pos < len(head) else None
     if not first:
         result.problem = N_("does not start with a transmission term")
         return result
 
-    pos = 0
     links: list[Link] = []
     ends: list[tuple[int, int]] = []      # (end before this link, end after it)
     end_of_chain = 0
@@ -276,8 +302,12 @@ def _parse_sunni(text: str) -> ParsedIsnad:
             break
         term_id = _TERM_ID[term.group(1)]
         name_start = term.end()
-        while name_start < n and norm[name_start] in " \t":
+        while name_start < n and norm[name_start] in " \t،,":
             name_start += 1
+        if links == [] and _TERM_RE.match(norm, name_start):
+            # "وحدثني عن مالك" (the Muwatta): the one who says "haddathani" is not named; the chain starts at Malik
+            pos = name_start
+            continue
 
         # the Prophet ends the chain
         prophet = _PROPHET_RE.match(norm, name_start)
@@ -311,6 +341,7 @@ def _parse_sunni(text: str) -> ParsedIsnad:
         if re.search(r"\.\s*\S", core_norm.strip()):          # a sentence ends inside: a second chain follows
             result.raw_isnad = _clean_name(orig(0, min(n, name_end + 80)))
             result.problem = N_("a second chain follows the first; not split in version 1")
+            result.links = links                     # the chain as far as it was read: shown, never hidden
             return result
         if not words or len(words) > _MAX_NAME_WORDS:
             break                                   # narrative has begun
@@ -320,6 +351,18 @@ def _parse_sunni(text: str) -> ParsedIsnad:
         ends.append((end_of_chain, name_end))
         end_of_chain = name_end
         pos = honor.end() if honor and honor.end() > name_end else name_end
+        while True:                                  # another narrator at this same link: a second road (qiran)
+            co = _CO_NARRATOR_RE.match(norm, pos)
+            if not co:
+                break
+            co_name = co.group(1).strip()
+            if _TERM_RE.match(co_name) or _TERM_RE.search(co_name) or len(co_name.split()) > 7 \
+                    or _PROPHET_RE.search(co_name) or _NARRATES_RE.search(co_name):
+                break
+            start = co.start(1)
+            result.alternates.append((len(links) - 1, Link(len(links), term_id, _clean_name(
+                _JOINED_RE.sub("", orig(start, start + len(co.group(1)))).strip()))))
+            pos = end_of_chain = co.end()
         if _tahwil_at(norm, pos):
             break
 
@@ -340,22 +383,26 @@ def _parse_sunni(text: str) -> ParsedIsnad:
     if links and not result.reaches_prophet and _JOINT_START_RE.match(tail) and _JOINT_WORD_RE.search(tail):
         result.raw_isnad = _clean_name(orig(0, min(n, end_of_chain + 140)))
         result.problem = N_("two narrators at one link (qiran); not split in version 1")
+        result.links = links                         # the chain as far as it was read: shown, never hidden
         return result
 
     if _tahwil_before(norm, end_of_chain + 60):
         result.raw_isnad = _clean_name(orig(0, min(n, end_of_chain + 60)))
         result.problem = TAHWIL
+        result.links = links                         # the chain as far as it was read: shown, never hidden
         return result
     goes_on = _CONTINUES_RE.match(tail)
     prophet_at = _PROPHET_RE.search(tail)
     if links and goes_on and (not prophet_at or goes_on.end() <= prophet_at.start()):
         result.raw_isnad = _clean_name(orig(0, min(n, end_of_chain + 140)))
         result.problem = N_("chain continues after words that were not understood")
+        result.links = links                         # the chain as far as it was read: shown, never hidden
         return result
 
     if _tahwil_before(norm, max(end_of_chain, pos) + 40):
         result.raw_isnad = _clean_name(orig(0, max(end_of_chain, 1)))
         result.problem = TAHWIL
+        result.links = links                         # the chain as far as it was read: shown, never hidden
         return result
     if not links:
         result.problem = N_("no narrator found after the transmission term")
@@ -579,8 +626,53 @@ def _parse_shia(text: str) -> ParsedIsnad:
 # ------------------------------------------------------------------ storage
 # the parser a database was read with → the chains the new rules can change (the others stay as they are)
 PARTIAL_UPGRADES = {
-    "isnady-isnad-6": "problem LIKE 'tahwil%'",       # 7: tahwil split; the false tahwil (a slice) mended
+    # 8: two narrators at a link, a chain kept as far as read, "وعنه" / "بهذا الإسناد" — only chains that were not
+    # split change (10 split ones would gain a second Companion at the last link; a full rebuild gives them that)
+    "isnady-isnad-6": "problem IS NOT NULL",
+    "isnady-isnad-7": "problem IS NOT NULL",
 }
+
+
+BORROWED = N_("the chain of the hadith before it (\"from him\" / \"with this chain\")")
+# "وعنه قال" (Mishkat, Riyad: from the Companion of the hadith before), "وبهذا الإسناد", "وبإسناده" (the same chain)
+_FROM_HIM_RE = re.compile(r"^[\s\d{\[(\"'\u200f\u200e.ـ-]*و?(?:عنه|عنها|عنهما)(?!\w)")
+_SAME_CHAIN_START_RE = re.compile(r"^[\s\d{\[(\"'\u200f\u200e.ـ-]*(?:قال\s+)?و?(?:بهذا الاسناد|باسناده|بالاسناد|به)(?!\w)")
+
+
+def _borrow_previous(conn: sqlite3.Connection, hadith_ids: list[int]) -> int:
+    """A hadith that gives no chain of its own but points to the one before ("وعنه", "وبهذا الإسناد"): the chain of the
+    nearest hadith before it in the book is drawn for it — the Companion alone for "from him", the whole chain for
+    "with this chain". Kept apart from the statistics (problem BORROWED), so no chain is counted twice."""
+    done = 0
+    for hid in hadith_ids:
+        row = conn.execute("SELECT h.collection_id, h.number_sort, t.text FROM hadiths h JOIN texts t ON t.hadith_id = h.id "
+                           "JOIN editions e ON e.id = t.edition_id WHERE h.id = ? AND e.language = 'Arabic'", (hid,)).fetchone()
+        if row is None:
+            continue
+        norm = normalize_name(row[2] or "")[:80]
+        whole = bool(_SAME_CHAIN_START_RE.match(norm))
+        if not whole and not _FROM_HIM_RE.match(norm):
+            continue
+        prev = conn.execute(
+            """SELECT i.id, i.reaches_prophet, i.ends_with FROM hadiths h JOIN isnads i ON i.hadith_id = h.id
+               WHERE h.collection_id = ? AND h.number_sort < ? AND i.ordinal = 1
+                 AND EXISTS (SELECT 1 FROM isnad_links l WHERE l.isnad_id = i.id)
+               ORDER BY h.number_sort DESC LIMIT 1""", (row[0], row[1])).fetchone()
+        if prev is None:
+            continue
+        links = conn.execute("SELECT position, raw_name, transmission FROM isnad_links WHERE isnad_id = ? "
+                             "ORDER BY position", (prev[0],)).fetchall()
+        if not whole:
+            links = links[-1:]
+        mine = conn.execute("SELECT id FROM isnads WHERE hadith_id = ? AND ordinal = 1", (hid,)).fetchone()
+        if mine is None or conn.execute("SELECT 1 FROM isnad_links WHERE isnad_id = ?", (mine[0],)).fetchone():
+            continue
+        conn.execute("UPDATE isnads SET problem = ?, reaches_prophet = ?, ends_with = ? WHERE id = ?",
+                     (BORROWED, prev[1], prev[2], mine[0]))
+        conn.executemany("INSERT INTO isnad_links (isnad_id, position, raw_name, transmission) VALUES (?, ?, ?, ?)",
+                         [(mine[0], i, r[1], r[2]) for i, r in enumerate(links, 1)])
+        done += 1
+    return done
 
 
 def ensure_isnads(conn: sqlite3.Connection, progress: Callable[[str], None] | None = None,
@@ -613,6 +705,7 @@ def ensure_isnads(conn: sqlite3.Connection, progress: Callable[[str], None] | No
         conn.commit()
         return stats
     say(tr("Reading isnads of {todo} hadith", todo=len(todo)))
+    no_links: list[int] = []
     for hadith_id, text, source_id, tradition in todo:
         chains = parse_all(text, tradition)
         for ordinal, p in enumerate(chains, 1):         # a tahwil: each road its own chain (ordinal 1 written first)
@@ -628,6 +721,8 @@ def ensure_isnads(conn: sqlite3.Connection, progress: Callable[[str], None] | No
                 [(isnad_id, link.position, link.raw_name, link.term) for link in p.links],
             )
         p = chains[0]
+        if not p.links:
+            no_links.append(hadith_id)
         if p.links:
             stats["parsed"] += 1
             stats["links"] += len(p.links)
@@ -635,6 +730,7 @@ def ensure_isnads(conn: sqlite3.Connection, progress: Callable[[str], None] | No
         else:
             stats["raw_only"] += 1
             stats["problems"][p.problem] = stats["problems"].get(p.problem, 0) + 1
+    stats["borrowed"] = _borrow_previous(conn, sorted(no_links))
     conn.commit()
     return stats
 
@@ -852,15 +948,17 @@ def _book_stats_counted(conn: sqlite3.Connection) -> list[dict]:
         f"""SELECT c.id, c.key, c.name, COUNT(*) AS chains, SUM(i.problem IS NULL) AS split,
                   SUM(i.problem IS NULL AND i.reaches_prophet = 1) AS marfu, COALESCE(c.tradition, 'sunni')
            FROM isnads i JOIN hadiths h ON h.id = i.hadith_id JOIN collections c ON c.id = h.collection_id
-           WHERE i.derived_by IS NOT NULL GROUP BY c.id ORDER BY {books.order_sql(conn)}"""
+           WHERE i.derived_by IS NOT NULL AND (i.problem IS NULL OR i.ordinal = 1)
+           GROUP BY c.id ORDER BY {books.order_sql(conn)}"""
     ):
         problems = conn.execute(
             """SELECT i.problem, COUNT(*) FROM isnads i JOIN hadiths h ON h.id = i.hadith_id
-               WHERE h.collection_id = ? AND i.problem IS NOT NULL GROUP BY i.problem ORDER BY 2 DESC""", (r[0],)
+               WHERE h.collection_id = ? AND i.problem IS NOT NULL AND i.ordinal = 1 GROUP BY i.problem ORDER BY 2 DESC""",
+            (r[0],)
         ).fetchall()
         links = conn.execute(
             """SELECT COUNT(*) FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id JOIN hadiths h ON h.id = i.hadith_id
-               WHERE h.collection_id = ?""", (r[0],)
+               WHERE h.collection_id = ? AND i.problem IS NULL""", (r[0],)
         ).fetchone()[0]
         out.append({"key": r[1], "name": r[2], "chains": r[3], "split": r[4] or 0, "marfu": r[5] or 0,
                     "tradition": r[6],

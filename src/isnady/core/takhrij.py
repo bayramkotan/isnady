@@ -37,7 +37,7 @@ def _companions(conn: sqlite3.Connection) -> dict[int, int]:
     out = {}
     for hid, pid in conn.execute(
             """SELECT i.hadith_id, l.person_id FROM isnad_links l JOIN isnads i ON i.id = l.isnad_id
-               WHERE i.ordinal = 1 AND l.person_id IS NOT NULL
+               WHERE i.ordinal = 1 AND i.problem IS NULL AND l.person_id IS NOT NULL
                  AND l.position = (SELECT MAX(position) FROM isnad_links x WHERE x.isnad_id = l.isnad_id)"""):
         out[hid] = pid
     return out

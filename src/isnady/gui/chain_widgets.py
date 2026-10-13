@@ -81,28 +81,9 @@ def person_summary(person: dict | None) -> str:
     return " · ".join(parts)
 
 
-def unsplit_box(chain: dict, compact: bool = False) -> QWidget:
-    """A chain that could not be split into narrators, shown so it cannot be missed (2026-10-13, Bayram: "bu kısımların
-    çok belirgin olmasını istiyorum"): a gold-edged box with what happened, why, and the chain as it is written."""
-    from isnady.gui.widgets import TextBlock
-
-    box = QFrame()
-    box.setObjectName("ChainUnsplit")
-    lay = QVBoxLayout(box)
-    lay.setContentsMargins(16, 10, 16, 12)
-    lay.setSpacing(4)
-    head = QLabel(tr("Chain not split into narrators"))
-    head.setObjectName("ChainUnsplitTitle")
-    lay.addWidget(head)
-    why = QLabel(tr("Why: {reason}", reason=tr(chain["problem"])).rstrip(".") + ". " +
-                 tr("The hadith has a chain; isnady could not yet read its links one by one, so no narrator is drawn."))
-    why.setWordWrap(True)
-    why.setObjectName("Caption")
-    lay.addWidget(why)
-    raw = (chain.get("raw") or "").strip()
-    if raw and not compact:
-        lay.addWidget(TextBlock(html.escape(raw), theme.script_font("arabic", factor=0.62), rtl=True))
-    return box
+def stop_note(chain: dict) -> str:
+    """Why a chain drawn as far as it was read stops there (a tooltip, never a box)."""
+    return tr("The chain is read as far as here; the rest is in the text. ({reason})", reason=tr(chain["problem"]))
 
 
 class ChainStrip(QWidget):
@@ -133,6 +114,10 @@ class ChainStrip(QWidget):
                        tr("not identified: no narrator of this name in the rijal work"))
                 flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChipUnknown",
                                      f"{link['raw_name']}\n{why}\n{arabic}: {meaning}"))
+        if chain.get("problem") and not (chain["reaches_prophet"] or chain.get("ends_with")):
+            # read as far as here: the rest of the chain runs on in the text (shown below the chain)
+            flow.addWidget(_arrow())
+            flow.addWidget(_chip("…", "ChainChipUnknown", stop_note(chain)))
         if chain["reaches_prophet"] or chain.get("ends_with"):
             flow.addWidget(_arrow())
             flow.addWidget(_chip(end_chip(chain), "ChainChipProphet",
