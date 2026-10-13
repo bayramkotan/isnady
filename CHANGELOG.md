@@ -3,7 +3,7 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.2.7] — 2026-10-13
 
 - **Chains joined by tahwil (ح) are drawn — each of them.** When a compiler joins a second road to the first with
   "ح" (Sahih al-Bukhari 89: Abu al-Yaman ← Shu'ayb ← al-Zuhri, ح, Ibn Wahb ← Yunus ← Ibn Shihab ← 'Ubayd Allah ←
