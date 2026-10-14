@@ -793,6 +793,8 @@ def cmd_search(args) -> int:
     conn.close()
     print(f"{page.total} hadith found in {page.elapsed_ms} ms"
           f"{'' if page.used_index else ' (no FTS5 index available; slower scan)'}")
+    if page.spellings:
+        print(f"near spellings: {core_search.spellings_text(page.spellings)}")
     for r in page.results:
         print(f"\n{r.collection_name} #{r.number}")
         if r.grades:

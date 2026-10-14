@@ -54,6 +54,7 @@ def _create_index_tables(conn: sqlite3.Connection) -> None:
             text_id INTEGER PRIMARY KEY REFERENCES texts(id) ON DELETE CASCADE,
             norm    TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS words (word TEXT PRIMARY KEY, n INTEGER NOT NULL) WITHOUT ROWID;
         """
     )
     if _fts_available(conn):
@@ -79,6 +80,7 @@ def _drop_index(conn: sqlite3.Connection) -> None:
         DROP TRIGGER IF EXISTS text_norm_ad;
         DROP TABLE IF EXISTS texts_fts;
         DROP TABLE IF EXISTS text_norm;
+        DROP TABLE IF EXISTS words;
         """
     )
 
@@ -99,6 +101,10 @@ def ensure_index(conn: sqlite3.Connection, progress: Callable[[str], None] | Non
         "SELECT COUNT(*) FROM texts t LEFT JOIN text_norm n ON n.text_id = t.id WHERE n.text_id IS NULL"
     ).fetchone()[0]
     if not missing:
+        if conn.execute("SELECT 1 FROM words LIMIT 1").fetchone() is None and \
+                conn.execute("SELECT 1 FROM text_norm LIMIT 1").fetchone() is not None:
+            say(tr("Listing the words of the texts (once)"))
+            _add_words(conn, None, rebuild=True)       # a database indexed before the word list existed
         conn.commit()
         return 0
     say(tr("Indexing {missing} texts for search", missing=missing))
@@ -128,11 +134,36 @@ def ensure_index(conn: sqlite3.Connection, progress: Callable[[str], None] | Non
         if fresh:
             conn.execute("INSERT INTO texts_fts (texts_fts) VALUES ('rebuild')")
             conn.commit()
+        # every word again on a first import, or when the word list is still empty (a database from before it)
+        _add_words(conn, ids, rebuild=fresh or conn.execute("SELECT 1 FROM words LIMIT 1").fetchone() is None)
     finally:
         if bulk:
             _create_index_tables(conn)               # the trigger again, for the texts added one by one later
             conn.commit()
     return added
+
+
+_WORD_RE = re.compile(r"\w+")
+
+
+def _add_words(conn: sqlite3.Connection, text_ids: list[int] | None, rebuild: bool = False) -> None:
+    """The words of the texts with how often each is (spellings, S4b): all of them, or those of new texts added."""
+    from collections import Counter
+
+    counts: Counter = Counter()
+    if rebuild or text_ids is None:
+        conn.execute("DELETE FROM words")
+        for (norm,) in conn.execute("SELECT norm FROM text_norm"):
+            counts.update(_WORD_RE.findall(norm))
+    else:
+        for start in range(0, len(text_ids), _BATCH):
+            chunk = text_ids[start:start + _BATCH]
+            for (norm,) in conn.execute(f"SELECT norm FROM text_norm WHERE text_id IN ({','.join('?' * len(chunk))})",
+                                        chunk):
+                counts.update(_WORD_RE.findall(norm))
+    conn.executemany("INSERT INTO words (word, n) VALUES (?, ?) ON CONFLICT(word) DO UPDATE SET n = n + excluded.n",
+                     counts.items())
+    conn.commit()
 
 
 def rebuild_index(conn: sqlite3.Connection, progress: Callable[[str], None] | None = None) -> int:
@@ -182,15 +213,21 @@ class SearchPage:
     results: list[SearchResult]
     used_index: bool
     elapsed_ms: int
+    spellings: dict = field(default_factory=dict)   # a word as typed → the spellings found for it (?, *, near)
 
 
 # punctuation that clings to a word in a pasted passage ("قَالَ:", "«لَا", "أَوْ؟"): not part of what is looked for
-# (2026-10-14: a passage of Musnad Ahmad 12338 pasted with «» and ":" found nothing)
-_PUNCT_RE = re.compile(r"[«»“”„\"‘’:;؛،,.!؟?()\[\]{}<>…–—\-*/\\|~﴿﴾]+")
+# (2026-10-14: a passage of Musnad Ahmad 12338 pasted with «» and ":" found nothing). "?" and "؟" inside a word and
+# "*" anywhere are wildcards: one unknown letter, any letters ("ي?من", "مسل*")
+_PUNCT_RE = re.compile(r"[«»“”„\"‘’:;؛،,.!()\[\]{}<>…–—\-/\\|~﴿﴾]+")
+_QUESTION_END_RE = re.compile(r"(?<=\w)[?؟]+(?=\s|$)")
+WILDCARDS = "?؟*"
 
 
 def _terms(query: SearchQuery) -> list[str]:
-    norm = " ".join(_PUNCT_RE.sub(" ", normalize(query.text)).split())
+    text = _QUESTION_END_RE.sub(" ", normalize(query.text))      # a question mark ending a word is punctuation
+    norm = " ".join(_PUNCT_RE.sub(" ", text).split())
+    norm = " ".join(w for w in norm.split() if w.strip(WILDCARDS))  # a lone "?" or "*" is no word
     if not norm:
         return []
     if query.mode == "phrase":
@@ -203,6 +240,79 @@ def _terms(query: SearchQuery) -> list[str]:
     return terms
 
 
+# ------------------------------------------------------------------ spellings: wildcards and near ones (S4b)
+# Bayram (2026-10-14): "Aramanın çok çok iyi olmasını istiyorum. Bir (ya da fazla) hareke veya bir (ya da fazla)
+# bilinmeyen harf varsa da bulmasını istiyorum." Harakat never mattered (normalize). A word with an unknown letter is
+# written with "?" (one letter) or "*" (any letters); a word not found as typed is looked for in its spellings one
+# letter away (a letter more, less or different) — every word of the query may have its own. The words come from
+# the words of the texts (table `words`, filled with the search index).
+NEAR_MAX = 30                  # spellings tried for one word, the most frequent first
+NEAR_MIN_LENGTH = 3            # shorter words have too many neighbours to mean anything
+
+
+def _vocabulary(conn: sqlite3.Connection) -> tuple[str, dict]:
+    """Every word of the texts, one per line (for one regular expression over them all), and how often each is."""
+    from isnady.core import cache
+
+    def load():
+        counts = dict(conn.execute("SELECT word, n FROM words"))
+        return "\n".join(counts), counts
+    return cache.memo(conn, "vocabulary", "all", load)
+
+
+def _in_vocabulary(conn: sqlite3.Connection, pattern: str, limit: int = NEAR_MAX) -> list[str]:
+    lines, counts = _vocabulary(conn)
+    found = re.findall(r"^(?:" + pattern + r")$", lines, re.M)
+    return sorted(set(found), key=lambda w: -counts.get(w, 0))[:limit]
+
+
+def spellings_text(spellings: dict, most: int = 4) -> str:
+    """"يمن → يومن; مسل* → مسلم, مسلمه …": what a search found its words as (for the result line)."""
+    return "; ".join(f"{w} → " + ", ".join(alts[:most]) + (" …" if len(alts) > most else "")
+                     for w, alts in spellings.items())
+
+
+def _wildcard_pattern(word: str) -> str:
+    return "".join("." if ch in "?؟" else ".*" if ch == "*" else re.escape(ch) for ch in word)
+
+
+def _near_pattern(word: str) -> str:
+    """Every spelling one letter away: a letter changed, left out, or added."""
+    pats = set()
+    for i in range(len(word)):
+        pats.add(re.escape(word[:i]) + "." + re.escape(word[i + 1:]))
+        pats.add(re.escape(word[:i]) + re.escape(word[i + 1:]))
+    for i in range(len(word) + 1):
+        pats.add(re.escape(word[:i]) + "." + re.escape(word[i:]))
+    return "|".join(sorted(pats))
+
+
+def _spell(conn: sqlite3.Connection, terms: list[str], mode: str, near: str = "") -> tuple[list[str], dict]:
+    """The terms with each word that has a wildcard replaced by its spellings, joined by "|"; with near="unknown"
+    also each word found in no text, with near="all" every word long enough, by the word and its spellings one
+    letter away. Returns (terms, {word: spellings})."""
+    spellings: dict = {}
+    _lines, counts = _vocabulary(conn)
+
+    def word(w: str) -> str:
+        if any(ch in w for ch in WILDCARDS):
+            alts = _in_vocabulary(conn, _wildcard_pattern(w))
+        elif near and len(w) >= NEAR_MIN_LENGTH and (near == "all" or w not in counts):
+            alts = [a for a in _in_vocabulary(conn, _near_pattern(w)) if a != w and len(a) >= _MIN_TRIGRAM]
+            alts = [w] + alts
+        else:
+            return w
+        if not alts:
+            alts = [w.strip(WILDCARDS) or w]          # nothing like it: the word as typed (found nowhere)
+        if alts != [w]:
+            spellings[w] = [a for a in alts if a != w]
+        return "|".join(alts)
+
+    if mode == "phrase":
+        return [" ".join(word(w) for w in terms[0].split())], spellings
+    return [word(t) for t in terms], spellings
+
+
 def _fts_literal(term: str) -> str:
     return '"' + term.replace('"', "") + '"'
 
@@ -211,10 +321,15 @@ def _word_re(term: str) -> re.Pattern:
     return re.compile(r"(?<!\w)" + re.escape(term) + r"(?!\w)")
 
 
+def _alt_re(word: str) -> str:
+    alts = word.split("|")
+    return re.escape(alts[0]) if len(alts) == 1 else "(?:" + "|".join(re.escape(a) for a in alts) + ")"
+
+
 def _phrase_re(phrase: str, whole_words: bool) -> re.Pattern:
     """The words of a phrase in order, whatever punctuation or spaces stand between them in the text
-    ("قال لا يومن" finds "قال: «لا يومن" and "قال، لا يومن")."""
-    body = r"[^\w]+".join(re.escape(w) for w in phrase.split())
+    ("قال لا يومن" finds "قال: «لا يومن" and "قال، لا يومن"); a word may be several spellings ("a|b")."""
+    body = r"[^\w]+".join(_alt_re(w) for w in phrase.split())
     return re.compile(r"(?<!\w)" + body + r"(?!\w)" if whole_words else body)
 
 
@@ -224,7 +339,7 @@ def _spans(norm: str, terms: list[str], whole_words: bool, mode: str = "all") ->
         for term in terms:
             spans.extend(m.span() for m in _phrase_re(term, whole_words).finditer(norm))
         terms = []
-    for term in terms:
+    for term in [a for t in terms for a in t.split("|")]:
         if whole_words:
             spans.extend(m.span() for m in _word_re(term).finditer(norm))
         else:
@@ -255,9 +370,9 @@ def _text_matches(norm: str, terms: list[str], mode: str, whole_words: bool) -> 
     if mode == "phrase":
         return all(_phrase_re(t, whole_words).search(norm) for t in terms)
     if whole_words:
-        found = [bool(_word_re(t).search(norm)) for t in terms]
+        found = [any(_word_re(a).search(norm) for a in t.split("|")) for t in terms]
     else:
-        found = [t in norm for t in terms]
+        found = [any(a in norm for a in t.split("|")) for t in terms]
     return any(found) if mode == "any" else all(found)
 
 
@@ -279,20 +394,40 @@ def _search_counted(conn: sqlite3.Connection, query: SearchQuery) -> SearchPage:
     use_index = has_fts(conn)
     if not terms:
         return SearchPage(query, terms, 0, [], use_index, 0)
+    typed = list(terms)
+    terms, spellings = _spell(conn, typed, query.mode, near=False)
+    page = _search_terms(conn, query, terms, use_index, started, spellings)
+    for near in ("unknown", "all"):
+        if page.total:
+            break
+        # nothing as typed: the words found in no text (then every word) also in their spellings one letter away
+        near_terms, near_spellings = _spell(conn, typed, query.mode, near)
+        if near_terms != terms:
+            terms = near_terms
+            page = _search_terms(conn, query, terms, use_index, started, near_spellings)
+    return page
+
+
+def _search_terms(conn: sqlite3.Connection, query: SearchQuery, terms: list[str], use_index: bool, started: float,
+                  spellings: dict) -> SearchPage:
 
     # 1. candidate texts: index for terms long enough, instr() otherwise; a phrase: texts with all its words (the
     #    punctuation between them may differ), checked in order below
     joiner = " OR " if query.mode == "any" else " AND "
-    words = list(dict.fromkeys(terms[0].split())) if query.mode == "phrase" else terms
-    fts_terms = [t for t in words if use_index and len(t) >= _MIN_TRIGRAM]
-    scan_terms = [t for t in words if t not in fts_terms]
+    groups = list(dict.fromkeys(terms[0].split())) if query.mode == "phrase" else terms
     conditions, params = [], []
-    if fts_terms:
-        conditions.append("n.text_id IN (SELECT rowid FROM texts_fts WHERE texts_fts MATCH ?)")
-        params.append(joiner.join(_fts_literal(t) for t in fts_terms))
-    for t in scan_terms:
-        conditions.append("instr(n.norm, ?) > 0")
-        params.append(t)
+    for group in groups:                         # a word, or its spellings "a|b|c": any of them
+        alts = group.split("|")
+        long_ = [a for a in alts if use_index and len(a) >= _MIN_TRIGRAM]
+        short = [a for a in alts if a not in long_]
+        parts = []
+        if long_:
+            parts.append("n.text_id IN (SELECT rowid FROM texts_fts WHERE texts_fts MATCH ?)")
+            params.append(" OR ".join(_fts_literal(a) for a in long_))
+        for a in short:
+            parts.append("instr(n.norm, ?) > 0")
+            params.append(a)
+        conditions.append("(" + " OR ".join(parts) + ")")
     where = [f"({joiner.join(conditions)})"]
     from isnady.core import books as core_books
 
@@ -329,8 +464,13 @@ def _search_counted(conn: sqlite3.Connection, query: SearchQuery) -> SearchPage:
     total = len(hadith_ids)
     page_ids = hadith_ids[query.offset: query.offset + query.limit]
     results = [_load_result(conn, hid, terms, query) for hid in page_ids]
+    if spellings:
+        # tell only the spellings the shown hadith really have
+        seen = {w for r in results for t in r.texts if t.matched for w in _WORD_RE.findall(normalize(t.text))}
+        spellings = {w: [a for a in alts if a in seen] for w, alts in spellings.items()}
+        spellings = {w: alts for w, alts in spellings.items() if alts}
     elapsed = int((time.perf_counter() - started) * 1000)
-    return SearchPage(query, terms, total, results, use_index, elapsed)
+    return SearchPage(query, terms, total, results, use_index, elapsed, spellings if total else {})
 
 
 def _load_result(conn: sqlite3.Connection, hadith_id: int, terms: list[str], query: SearchQuery) -> SearchResult:

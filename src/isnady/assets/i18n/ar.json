@@ -801,7 +801,7 @@
  "Exact phrase": "العبارة بنصها",
  "By meaning (AI)": "بالمعنى (ذكاء اصطناعي)",
  "Scholars": "العلماء",
- "Search the hadith: a word or phrase in Arabic, Turkish or English": "ابحث في الحديث: كلمة أو عبارة بالعربية أو التركية أو الإنجليزية",
+ "Search the hadith: a word or phrase in Arabic, Turkish or English (? an unknown letter, * any letters)": "ابحث في الحديث: كلمة أو عبارة بالعربية أو التركية أو الإنجليزية (؟ حرف مجهول، * أي حروف)",
  "Search the hadith": "ابحث في الحديث",
  "Search the narrators by name: Arabic, English or Turkish spelling": "ابحث عن الرواة بالاسم: بالكتابة العربية أو الإنجليزية أو التركية",
  "Search the narrators": "ابحث عن الرواة",
@@ -1319,5 +1319,7 @@
  "Copy text": "انسخ النص",
  "Search all books, or tick the ones to search": "ابحث في كل الكتب، أو حدّد ما تبحث فيه",
  "{n} books": "{n} كتب",
- "Search these": "ابحث في هذه"
+ "Search these": "ابحث في هذه",
+ "Listing the words of the texts (once)": "تُحصى كلمات النصوص (مرة واحدة)",
+ "near spellings: {spellings}": "بكتابة قريبة: {spellings}"
 }

@@ -42,7 +42,7 @@ MODE_LABELS = (("all", N_("All words")), ("any", N_("Any word")), ("phrase", N_(
 EXAMPLES = ("النيات", "الصلاة", "niyet", "komşu")
 KINDS = (("hadith", N_("Hadith")), ("narrators", N_("Narrators")), ("scholars", N_("Scholars")))
 KIND_TEXT = {   # placeholder, start-page title, start-page lead, examples
-    "hadith": (N_("Search the hadith: a word or phrase in Arabic, Turkish or English"), N_("Search the hadith"), "",
+    "hadith": (N_("Search the hadith: a word or phrase in Arabic, Turkish or English (? an unknown letter, * any letters)"), N_("Search the hadith"), "",
                EXAMPLES),
     "narrators": (N_("Search the narrators by name: Arabic, English or Turkish spelling"), N_("Search the narrators"),
                   N_("Every narrator of both traditions — Ibn Hajar's Taqrib for the Sunni books, al-Najashi's Rijal for "
@@ -281,7 +281,7 @@ class SearchPage(QWidget):
         # search bar
         self.query_edit = QLineEdit()
         self.query_edit.setObjectName("SearchField")
-        self.query_edit.setPlaceholderText(tr("Search the hadith: a word or phrase in Arabic, Turkish or English"))
+        self.query_edit.setPlaceholderText(tr("Search the hadith: a word or phrase in Arabic, Turkish or English (? an unknown letter, * any letters)"))
         self.query_edit.setClearButtonEnabled(True)
         self.query_edit.returnPressed.connect(self.run_search)
         self.search_button = QPushButton(tr("Search"))
@@ -809,6 +809,8 @@ class SearchPage(QWidget):
         if page.query.mode == "meaning":
             note = " " + tr("by meaning") + (" · " + tr("index older than the data (Tools → Build Meaning Index)")
                                              if getattr(self, "_meaning_stale", False) else "")
+        if page.spellings:          # words found in another spelling (? and *, or one letter away)
+            note += " · " + tr("near spellings: {spellings}", spellings=core.spellings_text(page.spellings))
         self.summary.setText(tr("{total:,} hadith, {ms} ms", total=page.total, ms=page.elapsed_ms) + note)
 
     # -------------------------------------------------------------- people (S3)

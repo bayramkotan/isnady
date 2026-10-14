@@ -801,7 +801,7 @@
  "Exact phrase": "Tam ifade",
  "By meaning (AI)": "Anlamca (yapay zekâ)",
  "Scholars": "Âlimler",
- "Search the hadith: a word or phrase in Arabic, Turkish or English": "Hadislerde arayın: Arapça, Türkçe veya İngilizce bir kelime ya da ifade",
+ "Search the hadith: a word or phrase in Arabic, Turkish or English (? an unknown letter, * any letters)": "Hadislerde arayın: Arapça, Türkçe veya İngilizce bir kelime ya da ifade (? bilinmeyen bir harf, * herhangi harfler)",
  "Search the hadith": "Hadislerde arayın",
  "Search the narrators by name: Arabic, English or Turkish spelling": "Râvîleri adıyla arayın: Arapça, İngilizce veya Türkçe yazılış",
  "Search the narrators": "Râvîleri arayın",
@@ -1319,5 +1319,7 @@
  "Copy text": "Metni kopyala",
  "Search all books, or tick the ones to search": "Bütün kitaplarda arayın ya da aranacakları işaretleyin",
  "{n} books": "{n} kitap",
- "Search these": "Bunlarda ara"
+ "Search these": "Bunlarda ara",
+ "Listing the words of the texts (once)": "Metinlerin kelimeleri listeleniyor (bir kez)",
+ "near spellings: {spellings}": "yakın yazımlarla: {spellings}"
 }

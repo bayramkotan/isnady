@@ -3,8 +3,16 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.2.9] — 2026-10-14
 
+- **A word with a letter you do not know, or a letter wrong, is found.** `?` stands for one unknown letter and `*` for
+  any letters ("ي?من", "مسل*"). A search that finds nothing as typed is tried again with its words one letter away
+  (a letter more, less or different), first the words found in no text, then every word — so several words may each
+  have their own mistake: "لا يمن احدكم حتى يحب لاخبه" (two mistakes) finds the 14 hadith of "لا يؤمن أحدكم حتى يحب
+  لأخيه", and "amelller niyetlere" finds "ameller niyetlere". The result line names the spellings used ("near
+  spellings: يمن → يومن; لاخبه → لاخيه"); `iy search` prints the same line. Diacritics never mattered. The words
+  of the texts are listed once with the search index (about 7 s on the full isnady-data, at the first start).
+  Searches found as typed find what they found before.
 - **A passage pasted from another source is found.** Punctuation that clings to a word — "قَالَ:", "«لَا", a comma,
   a question mark — is no longer part of the word looked for, and a phrase is found whatever punctuation or spaces
   stand between its words in the text ("قال: «لا يؤمن" finds "قال \"لا يؤمن"). A passage of the hadith "لا يؤمن

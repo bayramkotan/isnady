@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.2.8-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.2.9-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.2.8-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.2.9-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.2.8).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.2.9).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -331,6 +331,9 @@ without authentication (credentials are never stored), are read as well.
 | **Attached prefixes** | `النيات` finds `بالنيات`, because Arabic joins bi-, wa-, fa- and al- to the word. *Whole words only* turns this off |
 | **Latin-script text** | Case and accents are ignored: `NIYET`, `niyet` and `nîyet` are one word; `Muʿādh`, `Mu'adh` and `Muadh` too |
 | **Match** | All words, any word, the exact phrase — or by meaning (AI, below) |
+| **Unknown letters** | `?` stands for one letter you do not know, `*` for any letters: `ي?من` finds `يؤمن`, `مسل*` finds `مسلم`, `مسلمون` … |
+| **Misspellings** | A search that finds nothing as typed is tried again with each word one letter away — a letter more, less or different, in as many words as needed: `لا يمن احدكم حتى يحب لاخبه` finds `لا يؤمن أحدكم حتى يحب لأخيه`. The spellings used are named on the result line |
+| **Pasted passages** | Punctuation and quotation marks clinging to the words do not matter |
 | **Books** | All books, all Sunni, all Shia, or any few ticked one by one |
 | **Order** | Book by book in the order of the book lists — Sahih al-Bukhari, Sahih Muslim, Sunan Abi Dawud … then the Shia books — and within a book by its numbering |
 | **Language** | One language to search in; the languages you do not read are folded behind an arrow on each hadith, a click opens them. The list holds the languages imported; the languages the same books have in isnady-data (Urdu, Indonesian, Bengali, French, Russian, Tamil) are named at its end — choosing them opens **File → Data Sources** to import them |
