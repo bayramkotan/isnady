@@ -184,8 +184,13 @@ class SearchPage:
     elapsed_ms: int
 
 
+# punctuation that clings to a word in a pasted passage ("قَالَ:", "«لَا", "أَوْ؟"): not part of what is looked for
+# (2026-10-14: a passage of Musnad Ahmad 12338 pasted with «» and ":" found nothing)
+_PUNCT_RE = re.compile(r"[«»“”„\"‘’:;؛،,.!؟?()\[\]{}<>…–—\-*/\\|~﴿﴾]+")
+
+
 def _terms(query: SearchQuery) -> list[str]:
-    norm = " ".join(normalize(query.text).split())
+    norm = " ".join(_PUNCT_RE.sub(" ", normalize(query.text)).split())
     if not norm:
         return []
     if query.mode == "phrase":
@@ -206,8 +211,19 @@ def _word_re(term: str) -> re.Pattern:
     return re.compile(r"(?<!\w)" + re.escape(term) + r"(?!\w)")
 
 
-def _spans(norm: str, terms: list[str], whole_words: bool) -> list[tuple[int, int]]:
+def _phrase_re(phrase: str, whole_words: bool) -> re.Pattern:
+    """The words of a phrase in order, whatever punctuation or spaces stand between them in the text
+    ("قال لا يومن" finds "قال: «لا يومن" and "قال، لا يومن")."""
+    body = r"[^\w]+".join(re.escape(w) for w in phrase.split())
+    return re.compile(r"(?<!\w)" + body + r"(?!\w)" if whole_words else body)
+
+
+def _spans(norm: str, terms: list[str], whole_words: bool, mode: str = "all") -> list[tuple[int, int]]:
     spans = []
+    if mode == "phrase":
+        for term in terms:
+            spans.extend(m.span() for m in _phrase_re(term, whole_words).finditer(norm))
+        terms = []
     for term in terms:
         if whole_words:
             spans.extend(m.span() for m in _word_re(term).finditer(norm))
@@ -236,6 +252,8 @@ def _to_original(spans: list[tuple[int, int]], index_map: list[int], original_le
 
 
 def _text_matches(norm: str, terms: list[str], mode: str, whole_words: bool) -> bool:
+    if mode == "phrase":
+        return all(_phrase_re(t, whole_words).search(norm) for t in terms)
     if whole_words:
         found = [bool(_word_re(t).search(norm)) for t in terms]
     else:
@@ -262,10 +280,12 @@ def _search_counted(conn: sqlite3.Connection, query: SearchQuery) -> SearchPage:
     if not terms:
         return SearchPage(query, terms, 0, [], use_index, 0)
 
-    # 1. candidate texts: index for terms long enough, instr() otherwise
+    # 1. candidate texts: index for terms long enough, instr() otherwise; a phrase: texts with all its words (the
+    #    punctuation between them may differ), checked in order below
     joiner = " OR " if query.mode == "any" else " AND "
-    fts_terms = [t for t in terms if use_index and len(t) >= _MIN_TRIGRAM]
-    scan_terms = [t for t in terms if t not in fts_terms]
+    words = list(dict.fromkeys(terms[0].split())) if query.mode == "phrase" else terms
+    fts_terms = [t for t in words if use_index and len(t) >= _MIN_TRIGRAM]
+    scan_terms = [t for t in words if t not in fts_terms]
     conditions, params = [], []
     if fts_terms:
         conditions.append("n.text_id IN (SELECT rowid FROM texts_fts WHERE texts_fts MATCH ?)")
@@ -343,7 +363,7 @@ def _load_result_counted(conn: sqlite3.Connection, hadith_id: int, terms: list[s
             texts.append(TextHit(r[0], r[1] or "", r[2] or "ltr", r[3], [], False))
             continue
         norm, index_map = normalize_with_map(r[3])
-        spans = _spans(norm, terms, query.whole_words)
+        spans = _spans(norm, terms, query.whole_words, query.mode)
         texts.append(TextHit(r[0], r[1] or "", r[2] or "ltr", r[3],
                              _to_original(spans, index_map, len(r[3])), bool(spans)))
     grades = [(g[0], g[1]) for g in conn.execute(

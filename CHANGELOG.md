@@ -3,6 +3,14 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **A passage pasted from another source is found.** Punctuation that clings to a word — "قَالَ:", "«لَا", a comma,
+  a question mark — is no longer part of the word looked for, and a phrase is found whatever punctuation or spaces
+  stand between its words in the text ("قال: «لا يؤمن" finds "قال \"لا يؤمن"). A passage of the hadith "لا يؤمن
+  أحدكم حتى يحب لأخيه" pasted with «» and ":" found nothing; now all words: Sahih Muslim 170, al-Nasa'i 5039, Musnad
+  Ahmad 12338 and 13371; the exact phrase: Muslim 170. Searches without punctuation find what they found before.
+
 ## [0.2.8] — 2026-10-13
 
 - **Every hadith shows its chain, as far as it can be read — no box instead of it.** v0.2.7 put a box "Chain not split
