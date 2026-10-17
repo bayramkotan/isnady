@@ -28,9 +28,9 @@ VERSION = 1
 
 
 def path() -> Path:
-    from isnady.data.paths import data_dir
+    from isnady.core import profiles
 
-    return data_dir() / "bookmarks.json"
+    return profiles.folder() / "bookmarks.json"      # the profile in use (PRF1); the data folder for the first
 
 
 @dataclass

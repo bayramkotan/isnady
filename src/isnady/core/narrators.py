@@ -12,6 +12,27 @@ Evidence, in order; nothing is guessed:
      is from tabaqa 9 or later.
   4. RELATIVES — "عن أبيه", "عن جده" are read from the previous narrator's
      name (the father of Hisham b. 'Urwa is 'Urwa).
+  5. TEACHER AND STUDENT (NR-ID1, 2026-10-18) — a name left with several
+     candidates ("نافع", "أنس", "إبراهيم", "أبي إسحاق") is the one candidate who
+     is seen, in the chains already identified, taking from the identified
+     narrator after him or giving to the one before him ("مالك عن نافع عن ابن
+     عمر": Nafi' the client of Ibn 'Umar, whom the chains that name him in full
+     show between Malik and Ibn 'Umar). Only a clear lead decides (at least
+     twice, three times the next candidate; both neighbours must be known and
+     he must be seen with both — the last link, the Companion, by the narrator
+     before him, three times); confidence 0.6.
+  6. CLIENT — "نافع عن ابن عمر": of the candidates, the one whose entry calls
+     him the client of the next narrator ("مولى ابن عمر", "مولى ابن عباس").
+  7. THE BARE NAME (al-muhmal) — a short hand-written table of names the chains
+     leave bare and the neighbours that show which narrator is meant ("إبراهيم
+     عن علقمة" is al-Nakha'i, "أبي إسحاق عن البراء" al-Sabi'i, "قتادة عن الحسن"
+     al-Basri, "إبراهيم عن علقمة عن عبد الله" 'Alqama b. Qays).
+
+A Companion whose Taqrib entry gives no tabaqa (Anas b. Malik: "خادم رسول الله
+… مشهور", Ubayy b. Ka'b) is read as tabaqa 1 when the entry says so in other
+words (صحابي, له صحبة, خادم رسول الله, بدري …). A name the rijal work gives as
+"X عن أمه" (how a woman is named in some chains) is not a name of hers by
+itself: "أنس بن مالك عن أمه" made Umm Sulaym a candidate for every "أنس بن مالك".
 
 When more than one person remains, the link stays unidentified and the number
 of candidates is stored, so the interface can say so. MATCHER_ID changes when
@@ -27,11 +48,42 @@ from isnady.core.i18n import t, tr
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
-MATCHER_ID = "isnady-narrators-8"
+MATCHER_ID = "isnady-narrators-9"
 _TEACHER_MIN_TABAQA = 9           # the compilers' own teachers (Ibn Hajar's tabaqat 9-12)
 _HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم).*$")
 _CLARIFY = re.compile(r"[،,]?\s*-?\s*(?:يعني|هو)\s+([^-]+?)\s*-?\s*$")
 _RELATIVE = {"ابيه": "father", "ابوه": "father", "جده": "grandfather", "امه": "mother", "عمه": "uncle"}
+# a Taqrib entry without "من الثالثة" … that still says its man is a Companion (normalized spelling)
+_COMPANION = re.compile(r"صحابي|له صحبه|لها صحبه|من الصحابه|خادم رسول الله|مولي رسول الله|مولي النبي|بدري|"
+                        r"شهد بدرا|ام المومنين|زوج النبي|بنت رسول الله|بنت النبي|من كبار الصحابه")
+_UNSURE = re.compile(r"مختلف في صحبته|يقال له صحبه|قيل له صحبه|لا تصح صحبته|ذكر في الصحابه|ارسل")
+_EDGE_MIN, _EDGE_LEAD, _EDGE_CONFIDENCE = 2, 3.0, 0.6
+
+# Evidence 7: names the chains leave bare ("المهمل") that the scholars of the field read by the narrators around
+# them (tamyiz al-muhmal): the narrator meant, the bare names, and the teachers or students that show him. Only
+# neighbours that point to him alone are listed ("الأعمش عن إبراهيم" alone could be al-Nakha'i or al-Taymi;
+# "إبراهيم عن علقمة" is al-Nakha'i). Road A (Taqrib keys) only.
+_MUHMAL = [
+    ("taqrib:270", ("إبراهيم",),                                       # Ibrahim b. Yazid al-Nakha'i
+     ("الأسود", "الأسود بن يزيد", "علقمة", "علقمة بن قيس", "عبد الرحمن بن يزيد", "عبيدة", "عبيدة السلماني",
+      "همام", "همام بن الحارث", "مسروق", "عابس بن ربيعة", "عبيد بن نضيلة", "أبي عبد الله الجدلي", "شريح",
+      "سويد بن غفلة", "خالد بن سعد"), ()),
+    ("taqrib:5065", ("أبي إسحاق", "أبو إسحاق"),                        # 'Amr b. 'Abd Allah, Abu Ishaq al-Sabi'i
+     ("البراء", "البراء بن عازب", "الأسود", "الأسود بن يزيد", "أبي الأحوص", "الحارث", "الحارث الأعور",
+      "عاصم بن ضمرة", "عمرو بن ميمون", "أبي عبيدة", "عبد الرحمن بن يزيد", "حارثة بن مضرب", "حارثة بن وهب",
+      "عبد الرحمن بن الأسود", "هانئ بن هانئ", "هبيرة", "هبيرة بن يريم", "أبي حية", "زيد بن أرقم",
+      "صلة بن زفر", "عبد الله بن يزيد", "شريح بن النعمان", "ناجية بن كعب"),
+     ("إسرائيل", "يونس بن أبي إسحاق", "عمار بن رزيق")),
+    ("taqrib:1227", ("الحسن",),                                         # al-Hasan al-Basri
+     ("سمرة", "سمرة بن جندب", "أبي بكرة", "عمران بن حصين", "عبد الله بن مغفل", "عبد الرحمن بن سمرة",
+      "عمرو بن تغلب", "معقل بن يسار", "الأحنف بن قيس", "عائذ بن عمرو", "الأسود بن سريع", "سعد بن هشام"),
+     ("قتادة", "يونس بن عبيد", "يونس", "حميد", "حميد الطويل", "عوف", "أشعث", "المبارك", "المبارك بن فضالة",
+      "علي بن زيد", "جرير بن حازم", "ابن عون", "هشام بن حسان", "منصور بن زاذان", "قرة", "الربيع بن صبيح",
+      "أبو الأشهب", "زياد الأعلم", "خالد الحذاء", "سعيد بن أبي عروبة")),
+    ("taqrib:4681", ("علقمة",),                                         # 'Alqama b. Qays al-Nakha'i
+     ("عبد الله", "ابن مسعود", "عبد الله بن مسعود", "أبي مسعود", "أبي الدرداء"),
+     ("إبراهيم", "إبراهيم النخعي", "عبد الرحمن بن يزيد", "الشعبي", "هني بن نويرة", "عبد الرحمن بن الأسود")),
+]
 
 
 def tokens(name: str) -> list[str]:
@@ -50,6 +102,7 @@ class Index:
     def __init__(self, conn: sqlite3.Connection, tradition: str = "sunni") -> None:
         self.tradition = tradition
         self.tabaqa, self.marks, self.full = {}, defaultdict(set), {}
+        self.muhmal: dict[tuple, list[tuple[int, set, set]]] = defaultdict(list)
         self.names: dict[str, list[tuple[int, list[str], bool]]] = defaultdict(list)   # first token -> entries
         self.exact: dict[str, set[int]] = defaultdict(set)
         self._found: dict[tuple, frozenset] = {}         # a name written in a chain → its candidates (asked again and
@@ -59,13 +112,26 @@ class Index:
         # is another source's judgment, never a candidate for these links
         for pid, tabaqa, name in conn.execute("SELECT id, tabaqa, name_ar FROM persons WHERE COALESCE(tradition, 'sunni') = ?",
                                               (tradition,)):
+            if tabaqa is None and tradition == "sunni" and name:
+                plain = normalize(name)
+                if _COMPANION.search(plain) and not _UNSURE.search(plain):
+                    tabaqa = 1                      # a Companion in other words (Anas b. Malik, Ubayy b. Ka'b)
             self.tabaqa[pid] = tabaqa
             self.full[pid] = tokens(name)
+        if tradition == "sunni":
+            keys = dict(conn.execute("SELECT key, id FROM persons WHERE key LIKE 'taqrib:%'"))
+            for key, names, teachers, students in _MUHMAL:
+                if key in keys:
+                    for name in names:
+                        self.muhmal[tuple(tokens(name))].append(
+                            (keys[key], {tuple(tokens(x)) for x in teachers}, {tuple(tokens(x)) for x in students}))
         for pid, mark in conn.execute("SELECT person_id, mark FROM person_marks"):
             self.marks[pid].add(mark)
         for pid, name, kind in conn.execute("SELECT n.person_id, n.name, n.kind FROM person_names n JOIN persons p ON p.id = n.person_id "
                                             "WHERE COALESCE(p.tradition, 'sunni') = ?", (tradition,)):
             toks = tokens(name)
+            if kind != "full" and "عن" in toks[1:]:
+                continue                            # "أنس بن مالك عن أمه": how a chain reaches her, not her name
             if toks:
                 self.names[toks[0]].append((pid, toks, kind != "full"))
                 self.exact[" ".join(toks)].add(pid)
@@ -151,16 +217,20 @@ def name_tokens(raw_name: str, previous: list[str] | None) -> tuple[list[str], s
     return toks, how
 
 
-def match_chain(index: Index, links: list[dict], collection: str, reaches_prophet: bool) -> list[tuple]:
-    """For each link: (person_id or None, confidence or None, number of candidates)."""
+def match_chain(index: Index, links: list[dict], collection: str, reaches_prophet: bool,
+                left: list | None = None) -> list[tuple]:
+    """For each link: (person_id or None, confidence or None, number of candidates). left, when given, receives
+    the candidates left for each link (for the teacher-and-student evidence, `by_neighbours`)."""
     from isnady.core import traditions
 
     allowed_marks = COLLECTION_MARKS.get(collection)
     cands: list[set[int]] = []
+    written: list[list[str]] = []
     previous: list[str] | None = None
     for link in links:
         if index.tradition == "shia" and traditions.link_kind(link["raw_name"]) != "person":
             cands.append(set())                    # a group, "عنه", "عن رجل": no one to look up
+            written.append([])
             previous = None
             continue
         toks, _how = name_tokens(link["raw_name"], previous)
@@ -173,6 +243,7 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
             in_book = {p for p in found if index.marks[p] & allowed_marks}
             found = in_book                        # a narrator of this book must carry its mark
         cands.append(found)
+        written.append(toks)
         previous = index.full[next(iter(found))] if len(found) == 1 else toks
 
     first_counts = [len(c) for c in cands]
@@ -216,6 +287,31 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
                 cands[i] = keep
                 changed = True
 
+    # evidence 6: "نافع عن ابن عمر" — of the Nafi's, the one whose entry calls him "مولى ابن عمر"
+    for i in range(n - 1):
+        if len(cands[i]) > 1 and written[i + 1]:
+            after = written[i + 1]
+            forms = {" ".join(after)}
+            if "بن" in after[1:]:
+                forms.add(" ".join(after[after.index("بن", 1):]))      # "عبد الله بن عمر" → "بن عمر"
+            marks = [" مولي " + f + " " for f in forms] + [" مولي " + f for f in forms]
+            hits = {p for p in cands[i]
+                    if any(m in " " + " ".join(index.full.get(p, [])) + " " for m in marks)}
+            if len(hits) == 1:
+                cands[i] = hits
+                first_counts[i] = max(first_counts[i], 2)      # not the name alone: confidence 0.8
+    # evidence 7: a bare name read by its neighbours (_MUHMAL)
+    for i in range(n):
+        if len(cands[i]) > 1 and tuple(written[i]) in index.muhmal:
+            after = tuple(written[i + 1]) if i + 1 < n else ()
+            before = tuple(written[i - 1]) if i > 0 else ()
+            for pid, teachers, students in index.muhmal[tuple(written[i])]:
+                if pid in cands[i] and (after in teachers or before in students):
+                    cands[i] = {pid}
+                    first_counts[i] = max(first_counts[i], 2)
+                    break
+    if left is not None:
+        left.extend(cands)
     out = []
     for i, c in enumerate(cands):
         if len(c) == 1:
@@ -224,6 +320,49 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
         else:
             out.append((None, None, len(c)))
     return out
+
+
+def by_neighbours(chains: list[tuple[list, list]], rounds: int = 3) -> int:
+    """Evidence 5: [(results, candidates)] per chain, results changed in place where the narrators around a link
+    decide between its candidates. Returns how many links were identified this way."""
+    found = 0
+    for _ in range(rounds):
+        edges: dict[tuple[int, int], int] = defaultdict(int)       # (student, teacher) → how many chains show it
+        for results, _c in chains:
+            for i in range(len(results) - 1):
+                a, b = results[i][0], results[i + 1][0]
+                if a is not None and b is not None and results[i][1] and results[i][1] >= 0.8 \
+                        and results[i + 1][1] and results[i + 1][1] >= 0.8:
+                    edges[(a, b)] += 1
+        if not edges:
+            break
+        changed = 0
+        for results, cands in chains:
+            for i, (pid, _conf, count) in enumerate(results):
+                if pid is not None or len(cands[i]) < 2:
+                    continue
+                student = results[i - 1][0] if i > 0 else None
+                teacher = results[i + 1][0] if i + 1 < len(results) else None
+                last = i + 1 == len(results)        # the last link: the Prophet ﷺ or the end of the chain above him
+                if student is None or (teacher is None and not last):
+                    continue                        # one side alone favours the one named in full elsewhere
+                rows = []
+                for p in cands[i]:
+                    below = edges.get((student, p), 0) if student else 0
+                    above = edges.get((p, teacher), 0) if teacher else 0
+                    # he must be seen with both: a narrator often named in full is not the one a bare name
+                    # means just because they share a student ("الأعمش عن إبراهيم" is not al-Taymi)
+                    rows.append((below if last else min(below, above), p))
+                rows.sort()
+                best, who = rows[-1]
+                second = rows[-2][0]
+                if best >= (_EDGE_MIN + 1 if last else _EDGE_MIN) and best >= _EDGE_LEAD * second and best > second:
+                    results[i] = (who, _EDGE_CONFIDENCE, count)
+                    changed += 1
+        found += changed
+        if not changed:
+            break
+    return found
 
 
 def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | None = None,
@@ -264,13 +403,22 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
             "SELECT isnad_id, position, raw_name FROM isnad_links ORDER BY isnad_id, position"):
         links_of[isnad_id].append({"position": position, "raw_name": raw_name})
     updates = []
+    done: dict[str, list] = defaultdict(list)          # road → [(results, candidates)], for evidence 5
+    order = []
     for isnad_id, reaches, collection, tradition in chains:
         # road A or road B: each book's chains are identified in its own tradition's rijal works
         road = "shia" if tradition == "shia" else "sunni"
         if road not in indexes:
             indexes[road] = Index(conn, road)
         links = links_of.get(isnad_id, [])
-        results = match_chain(indexes[road], links, collection, bool(reaches))
+        kept: list = []
+        results = match_chain(indexes[road], links, collection, bool(reaches), kept)
+        done[road].append((results, kept))
+        order.append((isnad_id, links, results))
+    if not only_new:
+        for road, pairs in done.items():
+            by_neighbours(pairs)                    # the lists of results are changed in place
+    for isnad_id, links, results in order:
         for link, (pid, confidence, count) in zip(links, results):
             updates.append((pid, confidence, count, isnad_id, link["position"]))
             total += 1

@@ -1,0 +1,443 @@
+{
+ "about": "Which entry of the classical biographical works each life written for isnady is summarised from (BIO2b): [volume, entry number] in the edition named in core.source_entries.WORKS. Hand-checked against the entry headings.",
+ "works": {
+  "siyar": {
+   "talha": [
+    1,
+    2
+   ],
+   "zubayr": [
+    1,
+    3
+   ],
+   "abd-al-rahman-b-awf": [
+    1,
+    4
+   ],
+   "sad-b-abi-waqqas": [
+    1,
+    5
+   ],
+   "said-b-zayd": [
+    1,
+    6
+   ],
+   "abu-ubayda": [
+    1,
+    1
+   ],
+   "abu-hurayra": [
+    2,
+    126
+   ],
+   "aisha": [
+    2,
+    19
+   ],
+   "ibn-umar": [
+    3,
+    45
+   ],
+   "ibn-abbas": [
+    3,
+    51
+   ],
+   "anas": [
+    3,
+    62
+   ],
+   "jabir": [
+    3,
+    38
+   ],
+   "abu-said": [
+    3,
+    28
+   ],
+   "ibn-masud": [
+    1,
+    87
+   ],
+   "ibn-amr": [
+    3,
+    17
+   ],
+   "abu-musa": [
+    2,
+    82
+   ],
+   "bara": [
+    3,
+    39
+   ],
+   "abu-dharr": [
+    2,
+    10
+   ],
+   "muadh": [
+    1,
+    86
+   ],
+   "ubayy": [
+    1,
+    82
+   ],
+   "zayd-b-thabit": [
+    2,
+    85
+   ],
+   "fatima": [
+    2,
+    18
+   ],
+   "hasan-b-ali": [
+    3,
+    47
+   ],
+   "husayn-b-ali": [
+    3,
+    48
+   ],
+   "umm-salama": [
+    2,
+    20
+   ],
+   "hafsa": [
+    2,
+    25
+   ],
+   "maymuna": [
+    2,
+    27
+   ],
+   "umm-habiba": [
+    2,
+    23
+   ],
+   "asma-bint-abi-bakr": [
+    2,
+    52
+   ],
+   "abu-darda": [
+    2,
+    68
+   ],
+   "salman": [
+    1,
+    91
+   ],
+   "ammar": [
+    1,
+    84
+   ],
+   "hudhayfa": [
+    2,
+    76
+   ],
+   "bilal": [
+    1,
+    76
+   ],
+   "abu-ayyub": [
+    2,
+    83
+   ],
+   "usama": [
+    2,
+    104
+   ],
+   "imran-b-husayn": [
+    2,
+    105
+   ],
+   "sahl-b-sad": [
+    3,
+    72
+   ],
+   "numan-b-bashir": [
+    3,
+    66
+   ],
+   "jabir-b-samura": [
+    3,
+    36
+   ],
+   "uqba-b-amir": [
+    2,
+    90
+   ],
+   "abu-qatada": [
+    2,
+    87
+   ],
+   "muawiya": [
+    3,
+    25
+   ],
+   "mughira": [
+    3,
+    7
+   ],
+   "abu-bakra": [
+    3,
+    1
+   ],
+   "samura": [
+    3,
+    35
+   ],
+   "thawban": [
+    3,
+    5
+   ],
+   "zayd-b-arqam": [
+    3,
+    27
+   ],
+   "adi-b-hatim": [
+    3,
+    26
+   ],
+   "kab-b-malik": [
+    2,
+    107
+   ],
+   "rafi-b-khadij": [
+    3,
+    34
+   ],
+   "abu-umama": [
+    3,
+    52
+   ],
+   "said-b-al-musayyab": [
+    4,
+    88
+   ],
+   "urwa": [
+    4,
+    168
+   ],
+   "zuhri": [
+    5,
+    160
+   ],
+   "nafi": [
+    5,
+    34
+   ],
+   "salim": [
+    4,
+    176
+   ],
+   "qasim": [
+    5,
+    18
+   ],
+   "hasan-basri": [
+    4,
+    223
+   ],
+   "ibn-sirin": [
+    4,
+    246
+   ],
+   "ata": [
+    5,
+    29
+   ],
+   "mujahid": [
+    4,
+    175
+   ],
+   "said-b-jubayr": [
+    4,
+    116
+   ],
+   "ikrima": [
+    5,
+    9
+   ],
+   "nakhai": [
+    4,
+    213
+   ],
+   "shabi": [
+    4,
+    113
+   ],
+   "qatada": [
+    5,
+    132
+   ],
+   "tawus": [
+    5,
+    13
+   ],
+   "alqama": [
+    4,
+    14
+   ],
+   "masruq": [
+    4,
+    17
+   ],
+   "abu-salama": [
+    4,
+    108
+   ],
+   "araj": [
+    5,
+    25
+   ],
+   "abu-salih": [
+    5,
+    10
+   ],
+   "hisham-b-urwa": [
+    6,
+    12
+   ],
+   "amash": [
+    6,
+    110
+   ],
+   "abu-ishaq": [
+    5,
+    180
+   ],
+   "yahya-b-said-ansari": [
+    5,
+    213
+   ],
+   "ibn-jurayj": [
+    6,
+    138
+   ],
+   "mamar": [
+    7,
+    1
+   ],
+   "ibn-ishaq": [
+    7,
+    15
+   ],
+   "shuba": [
+    7,
+    80
+   ],
+   "thawri": [
+    7,
+    82
+   ],
+   "awzai": [
+    7,
+    48
+   ],
+   "layth": [
+    8,
+    12
+   ],
+   "hammad-b-zayd": [
+    7,
+    169
+   ],
+   "hammad-b-salama": [
+    7,
+    168
+   ],
+   "ibn-uyayna": [
+    8,
+    120
+   ],
+   "ibn-al-mubarak": [
+    8,
+    112
+   ],
+   "waki": [
+    9,
+    48
+   ],
+   "yahya-qattan": [
+    9,
+    53
+   ],
+   "ibn-mahdi": [
+    9,
+    56
+   ],
+   "abd-al-razzaq": [
+    9,
+    220
+   ],
+   "abu-hanifa": [
+    6,
+    163
+   ],
+   "shafii": [
+    10,
+    1
+   ],
+   "ahmad": [
+    11,
+    78
+   ],
+   "ibn-main": [
+    11,
+    28
+   ],
+   "ibn-al-madini": [
+    11,
+    22
+   ],
+   "ishaq": [
+    11,
+    79
+   ],
+   "ibn-abi-shayba": [
+    11,
+    44
+   ],
+   "qutayba": [
+    11,
+    8
+   ],
+   "musaddad": [
+    10,
+    208
+   ],
+   "bukhari": [
+    12,
+    171
+   ],
+   "muslim": [
+    12,
+    217
+   ],
+   "abudawud": [
+    13,
+    117
+   ],
+   "tirmidhi": [
+    13,
+    132
+   ],
+   "nasai": [
+    14,
+    67
+   ],
+   "ibnmajah": [
+    13,
+    133
+   ],
+   "malik": [
+    8,
+    10
+   ],
+   "darimi": [
+    12,
+    78
+   ]
+  }
+ }
+}

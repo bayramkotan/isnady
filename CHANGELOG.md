@@ -3,6 +3,38 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.3.2] — 2026-10-18
+
+- **More narrators identified in the chains (NR-ID1).** A name in a chain is now read by its neighbours too: whom the
+  same teacher and student are in the chains where they are named in full (in three rounds, a reading kept only when
+  it is three times as frequent as the next one), a client named as the "mawla" of his patron, and the well-known
+  men a bare name means in a given circle — Ibrahim from 'Alqama is al-Nakha'i, Abu Ishaq from al-Bara' al-Sabi'i,
+  al-Hasan from Anas al-Basri. A Companion whose generation the Taqrib leaves empty is read as a Companion.
+  About 218,000 links are identified (52.6% of the Sunni chains' links, 42.4% of the Shia); Anas b. Malik now in
+  1,295 chains, Nafi' in 2,037. The chains are read again once, the first time isnady opens (about half a minute).
+- **Search in several languages at once (LANG3).** The language of the search is a list to tick: Arabic and Turkish
+  together, say. The languages named in the Preferences are shown in the interface language.
+- **All books in the Statistics (BK1).** The book list begins with *All books*: every section measured on both roads
+  at once, each road under its own heading, never added together. `iy stats corpus --book @all` (with `--csv`, a
+  folder for each road).
+- **The Musnad's Companions in Turkish and English (BK2b).** All 1,252 chapters of Musnad Ahmad — the musnad of each
+  Companion — are named in Turkish and English as well as Arabic, with the honorific the heading has: "Hz. Ebû Bekir
+  es-Sıddîk (r.a.) müsnedi", "Musnad of Abu Bakr al-Siddiq (RA)".
+- **Profiles (PRF1).** Several people on one isnady, each with their own settings, place in the books and bookmarks:
+  **File → Profiles** — new, switch, rename, delete, export to one `.isnady-profile.zip` file and import it on another
+  computer. The books and the database are shared; the first profile is the data folder itself, so nothing moves.
+  `iy profile list|new|use|rename|delete|export|import`; `ISNADY_PROFILE` for a single command.
+- **The Prophet ﷺ in the Genealogies (GEN1-P).** His name opens his life — birth, prophethood, Hijra, passing, family —
+  in English, Turkish and Arabic, from Ibn Hisham, Ibn Sa'd, al-Tabari, Ibn Kathir, with al-Tirmidhi's *al-Shama'il*
+  to read in isnady and Ibn Hisham's *Sira* in OpenITI.
+- **The hadith about a prophet (GEN1-H).** A prophet of the tree opens the hadith that speak of him — the Sunni and the
+  Shia books apart, each a click from its place in its book. `iy tree prophets Musa --hadith`.
+- **The classical entry beside the written life (BIO2b) and the lives in the tree (GEN1-L).** For 109 written lives
+  the entry of al-Dhahabi's *Siyar A'lam al-Nubala'* in its own words (vol. and number), downloaded once on request
+  (about 22 MB, OpenITI) and kept in the data folder. `iy life "Abu Hurayra" --source`. The Companions, caliphs and
+  Imams of the tree of Quraysh open their lives there, and the Narrators page links back to their place in the tree.
+  The side panel of the Genealogies scrolls instead of squeezing its text.
+
 ## [0.3.1] — 2026-10-17
 
 - **Musnad Ahmad and Sunan al-Darimi read by their chapters.** The two books come as numbered texts only, and the

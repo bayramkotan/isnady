@@ -102,6 +102,7 @@ def ensure_collection_works(conn: sqlite3.Connection) -> int:
         rebuilt += 1
     if rebuilt:
         _TITLES.clear()
+        _KEYS.clear()
     return rebuilt
 
 
@@ -154,6 +155,16 @@ def _chapter_titles(conn: sqlite3.Connection, work_id: int) -> dict[str, str]:
     return _TITLES[key]
 
 
+_KEYS: dict = {}
+
+
+def _work_key(conn: sqlite3.Connection, work_id: int) -> str | None:
+    if work_id not in _KEYS:
+        row = conn.execute("SELECT key FROM works WHERE id = ?", (work_id,)).fetchone()
+        _KEYS[work_id] = row[0] if row else None
+    return _KEYS[work_id]
+
+
 def _shown(conn: sqlite3.Connection, work_id: int, kind: str, label, title):
     """A chapter's title as shown: in the interface language where isnady has it; the titles isnady writes itself
     ("Chapter 3", "Without a chapter in the source") translated."""
@@ -167,6 +178,10 @@ def _shown(conn: sqlite3.Connection, work_id: int, kind: str, label, title):
         part = core_chapters.part_title(title)          # a part of a table isnady keeps (Musnad Ahmad, al-Darimi)
         if part:
             return part
+    if kind == "bab" and label and str(label).isdigit():
+        key = _work_key(conn, work_id)
+        if key and core_chapters.table(key):
+            return core_chapters.chapter_title(key, int(label)) or title
     m = re.fullmatch(r"Chapter (\d+)", title or "")
     return t("Chapter {n}", n=m.group(1)) if m else title
 

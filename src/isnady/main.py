@@ -82,8 +82,9 @@ def gui_main() -> int:
         window.show()
 
     def _switch() -> None:
-        """Another interface language: the window is built again in it, where the reader was."""
+        """Another interface language, or another profile (PRF1): the window is built again, where the reader was."""
         old = windows.pop()
+        theme.apply(app)                       # another profile may have another theme and fonts
         _speak()
         _open(old)
         old.hide()

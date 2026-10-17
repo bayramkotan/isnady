@@ -356,3 +356,119 @@ class BookPicker(QWidget):
         popup.adjustSize()
         popup.move(self.button.mapToGlobal(self.button.rect().bottomLeft()))
         popup.show()
+
+
+class LanguagePicker(QWidget):
+    """Choose the languages to search (LANG3, 2026-10-18): all of them, or any few ticked. The button shows the
+    choice ("All languages", "Arabic", "Arabic, Turkish"); the list holds every imported language by its name in the
+    interface language, and — when the data repository has more — a line that opens Data Sources (wants_import).
+    selected() is [] for every language."""
+
+    changed = Signal()
+    wants_import = Signal()
+
+    def __init__(self, parent=None) -> None:
+        from PySide6.QtWidgets import QHBoxLayout, QPushButton
+
+        super().__init__(parent)
+        self._languages: list[str] = []
+        self._more: list[str] = []
+        self._chosen: set[str] = set()                   # empty: every language
+        self.button = QPushButton(tr("All languages"))
+        self.button.setObjectName("BookPicker")
+        self.button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.button.setToolTip(tr("Search every language, or tick the ones to search"))
+        self.button.clicked.connect(self._open)
+        row = QHBoxLayout(self)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.addWidget(self.button)
+
+    def fill(self, languages: list[str], more: list[str] | None = None) -> None:
+        self._languages = list(languages)
+        self._more = list(more or [])
+        self._chosen &= set(self._languages)
+        if self._chosen == set(self._languages):
+            self._chosen = set()
+        self._label()
+
+    def selected(self) -> list[str]:
+        return [lang for lang in self._languages if lang in self._chosen]
+
+    def set_selected(self, languages: list[str]) -> None:
+        self._chosen = {lang for lang in languages if lang in self._languages}
+        if self._chosen == set(self._languages):
+            self._chosen = set()
+        self._label()
+
+    def _label(self) -> None:
+        if not self._chosen:
+            text = tr("All languages")
+        else:
+            names = [tr(lang) for lang in self.selected()]
+            text = ", ".join(names) if len(names) <= 2 else tr("{n} languages", n=len(names))
+        self.button.setText(text + "   ▾")
+        self.button.setProperty("active", bool(self._chosen))
+        self.button.style().unpolish(self.button)
+        self.button.style().polish(self.button)
+
+    def _open(self) -> None:
+        from PySide6.QtWidgets import QCheckBox, QFrame, QHBoxLayout, QPushButton, QVBoxLayout
+
+        popup = QFrame(self, Qt.WindowType.Popup)
+        popup.setObjectName("Card")
+        lay = QVBoxLayout(popup)
+        lay.setContentsMargins(12, 10, 12, 10)
+        lay.setSpacing(6)
+        everything = QCheckBox(tr("All languages"))
+        everything.setChecked(not self._chosen)
+        lay.addWidget(everything)
+        checks = []
+        for lang in self._languages:
+            c = QCheckBox(tr(lang))
+            c.setProperty("language", lang)
+            c.setChecked(not self._chosen or lang in self._chosen)
+            lay.addWidget(c)
+            checks.append(c)
+
+        def whole(on: bool) -> None:
+            for c in checks:
+                c.blockSignals(True)
+                c.setChecked(on)
+                c.blockSignals(False)
+
+        def one(_on: bool) -> None:
+            everything.blockSignals(True)
+            everything.setChecked(all(c.isChecked() for c in checks))
+            everything.blockSignals(False)
+        everything.toggled.connect(whole)
+        for c in checks:
+            c.toggled.connect(one)
+        if self._more:
+            names = ", ".join(tr(n) for n in self._more[:5]) + (" …" if len(self._more) > 5 else "")
+            more = QPushButton(tr("More languages: {names} — import", names=names))
+            more.setObjectName("Link")
+            more.setCursor(Qt.CursorShape.PointingHandCursor)
+            more.setToolTip(tr("These books are in the data repository in more languages: {names}. File → Data Sources "
+                               "imports them (tick the languages beside a book); they then appear in this list.",
+                               names=", ".join(tr(n) for n in self._more)))
+            more.clicked.connect(lambda: (popup.close(), self.wants_import.emit()))
+            lay.addWidget(more)
+        row = QHBoxLayout()
+        row.addStretch(1)
+        done = QPushButton(tr("Search these"))
+        done.setObjectName("Primary")
+        row.addWidget(done)
+        lay.addLayout(row)
+
+        def apply() -> None:
+            picked = {c.property("language") for c in checks if c.isChecked()}
+            new = set() if not picked or picked == set(self._languages) else picked
+            popup.close()
+            if new != self._chosen:
+                self._chosen = new
+                self._label()
+                self.changed.emit()
+        done.clicked.connect(apply)
+        popup.adjustSize()
+        popup.move(self.button.mapToGlobal(self.button.rect().bottomLeft()))
+        popup.show()

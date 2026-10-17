@@ -518,7 +518,8 @@ class PreferencesDialog(QDialog):
         chosen = language.content_languages()
         lang_checks = []
         for lang in available:
-            c = QCheckBox(lang)
+            c = QCheckBox(tr(lang))                 # the language's name in the interface language (LANG3)
+            c.setProperty("language", lang)
             c.setChecked(not chosen or lang in chosen)
             c.toggled.connect(lambda _on: save_languages())
             flow.addWidget(c)
@@ -534,7 +535,7 @@ class PreferencesDialog(QDialog):
         box.addStretch(1)
 
         def save_languages() -> None:
-            picked = [c.text() for c in lang_checks if c.isChecked()]
+            picked = [c.property("language") for c in lang_checks if c.isChecked()]
             language.set_content_languages([] if not picked or len(picked) == len(lang_checks) else picked)
             self.languages_changed.emit()
 

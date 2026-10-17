@@ -26,6 +26,11 @@ Examples
   iy config set text.arabic.size 22
   iy config set colors.dark.gilt "#5A4A1E"
   iy config reset text.arabic
+  iy profile list
+  iy profile new Ayşe --copy default
+  iy profile use Ayşe
+  iy profile export Ayşe ~/Desktop
+  iy profile import ~/Desktop/Ayşe.isnady-profile.zip
   iy catalog list
   iy catalog import fawaz-muslim --language ara --language tur
   iy catalog import taqrib
@@ -95,6 +100,51 @@ def _auth_from_args(args) -> Auth:
             return Auth(kind="apikey", token=api_key, key_name=args.api_key_param, key_in="query")
         return Auth(kind="apikey", token=api_key, key_name=args.api_key_header or "X-API-Key", key_in="header")
     return Auth()
+
+
+def cmd_profile(args) -> int:
+    """iy profile list|new|use|rename|delete|export|import — several people on one isnady (PRF1)."""
+    from isnady.core import profiles as P
+
+    def which(text):
+        pid = P.find(text) if text else None
+        if text and not pid:
+            raise P.ProfileError(f"No profile {text}. See: iy profile list")
+        return pid
+
+    try:
+        if args.action == "list":
+            for p in P.all_profiles():
+                name = p["name"] or "Default"
+                print(f"{'*' if p['active'] else ' '} {name:24} {p['id']:20} {P.folder(p['id'])}")
+            print("\n* the profile in use. Its settings, place and bookmarks are its own; the books are shared.")
+        elif args.action == "new":
+            pid = P.create(args.name or "", which(args.copy) if args.copy else None)
+            print(f"Made the profile {args.name} ({pid}). Use it: iy profile use \"{args.name}\"")
+        elif args.action == "use":
+            P.switch(which(args.name or "") or P.DEFAULT)
+            print(f"In use: {P.name_of(P.active()) or 'Default'}")
+        elif args.action == "rename":
+            if not args.value:
+                raise P.ProfileError("Give the new name: iy profile rename OLD NEW")
+            P.rename(which(args.name or "") or P.DEFAULT, args.value)
+            print(f"Renamed to {args.value}")
+        elif args.action == "delete":
+            P.delete(which(args.name or "") or "")
+            print(f"Deleted {args.name}")
+        elif args.action == "export":
+            pid = which(args.name) if args.name else P.active()
+            written = P.export(pid, args.value or ".")
+            print(f"Written: {written}")
+        elif args.action == "import":
+            if not args.name:
+                raise P.ProfileError("Give the file: iy profile import FILE.isnady-profile.zip")
+            pid = P.import_file(args.name, args.value)
+            print(f"Imported as {P.name_of(pid)} ({pid}). Use it: iy profile use \"{P.name_of(pid)}\"")
+    except P.ProfileError as exc:
+        print(exc, file=sys.stderr)
+        return 2
+    return 0
 
 
 def cmd_config(args) -> int:
@@ -493,9 +543,22 @@ def cmd_stats_graders(args) -> int:
 
 def cmd_stats_corpus(args) -> int:
     """iy stats narrators|chains|grades|books — the corpus statistics of the Statistics page (ST7), as text;
-    --csv DIR writes every table behind them."""
+    --csv DIR writes every table behind them. --book @all: the Sunni road, then the Shia road (BK1), each apart."""
     from isnady.core import stats_corpus as sc
 
+    if args.book == sc.ALL_SCOPE:
+        import copy
+
+        code = 0
+        for i, road in enumerate((None, sc.SHIA_SCOPE)):
+            if i:
+                print("\n" + "=" * 72 + "\nThe Shia road, measured apart on its own scale (never together with the Sunni books)\n")
+            one = copy.copy(args)
+            one.book = road
+            if args.csv:
+                one.csv = os.path.join(args.csv, "sunni" if road is None else "shia")
+            code = cmd_stats_corpus(one) or code
+        return code
     conn = _connect()
     r = sc.cached(conn, args.book, lambda m: print(f"  … {m}", file=sys.stderr), args.recompute)
     if r.get("empty"):
@@ -916,6 +979,23 @@ def cmd_life(args) -> int:
             print()
             print(textwrap.fill("; ".join(info["sources"]), width, initial_indent="  " + i18n.t("Sources") + ": ",
                                 subsequent_indent="    "))
+        for r in info.get("read", []):
+            print(f"  → {r['text']}" + (f": {r['url']}" if r.get("url") else f" (iy book {r['book']})"))
+        for e in info.get("entries", []):
+            print(f"\n  {i18n.t('In the source')}: {e['title']}, {e['where']}")
+            if args.source:
+                from isnady.core import source_entries
+
+                if not source_entries.available(e["work"]):
+                    print(f"  … {i18n.t('Downloading')} (≈{source_entries.WORKS[e['work']]['size_mb']} MB, once)",
+                          file=sys.stderr)
+                    source_entries.fetch(e["work"], lambda m: print(f"  … {m}", file=sys.stderr))
+                found = source_entries.entry(e["work"], e["volume"], e["number"])
+                if found:
+                    print(f"  {found['heading']}\n")
+                    print(found["text"])
+            else:
+                print("  (iy life ... --source prints it in the author's own words)")
     return 0
 
 
@@ -936,6 +1016,21 @@ def cmd_tree(args) -> int:
                 for which in ("note", "disputed"):
                     if getattr(n, which):
                         print(f"  {which}: {n.text(which, 'en')}")
+            if args.hadith:
+                n = hits[0]
+                if n.id == "muhammad":
+                    print("\nHis life ﷺ: iy life muhammad")
+                    return 0
+                conn = _connect()
+                found = genealogy.prophet_hadith(conn, n.id, limit=args.width * 10)
+                conn.close()
+                print(f"\nHadith that speak of {n.name('en')}: {found['total']:,}"
+                      + ("" if found["total"] else " (none names him in words that can only mean him)"))
+                for road in ("sunni", "shia"):
+                    items = found["by_road"][road]
+                    if items:
+                        print(f"  {road.capitalize()} books ({found['counts'][road]:,}): "
+                              + ", ".join(f"{i['book']} {i['number']}" for i in items))
             return 0
         print(genealogy.as_text(tree, "en"))
         return 0
@@ -1373,6 +1468,14 @@ def build_parser() -> argparse.ArgumentParser:
     cfg.add_argument("value", nargs="?", help="value for set; an empty string restores the default")
     cfg.add_argument("--prefix", default="", help="list only keys starting with this, e.g. text.arabic")
     cfg.set_defaults(func=cmd_config)
+    prf = sub.add_parser("profile", help="profiles: several people on one isnady, each with their own settings, "
+                                         "place and bookmarks (the same as File → Profiles)")
+    prf.add_argument("action", choices=["list", "new", "use", "rename", "delete", "export", "import"])
+    prf.add_argument("name", nargs="?", help="the profile's name (import: the file)")
+    prf.add_argument("value", nargs="?", help="rename: the new name; export: the file or folder to write; "
+                                              "import: a name for the new profile")
+    prf.add_argument("--copy", metavar="PROFILE", help="new: start from this profile's settings")
+    prf.set_defaults(func=cmd_profile)
     sub.add_parser("formats", help="list supported data formats").set_defaults(func=cmd_formats)
     cat = sub.add_parser("catalog", help="built-in sources and your own: list, import, remove, add, delete")
     cat.add_argument("action", choices=["list", "import", "remove", "add", "delete"])
@@ -1464,12 +1567,16 @@ def build_parser() -> argparse.ArgumentParser:
     lf.add_argument("--lang", choices=["en", "tr", "ar"], help="the language (default: the interface language)")
     lf.add_argument("--tradition", choices=["sunni", "shia"], help="look only among the narrators of one tradition")
     lf.add_argument("--limit", type=int, default=1, help="how many people to show (default 1)")
+    lf.add_argument("--source", action="store_true", help="also print his entry in the classical work the life is "
+                                                          "summarised from (al-Dhahabi's Siyar; downloaded once)")
     lf.set_defaults(func=cmd_life)
     tr_ = sub.add_parser("tree", help="genealogies: the prophets, Quraysh, a narrator's family, his line of learning")
     tr_.add_argument("which", choices=["prophets", "quraysh", "family", "learning"])
     tr_.add_argument("name", nargs="?", help="a narrator (family, learning) or someone to find in the tree")
     tr_.add_argument("--depth", type=int, default=2, help="learning: steps of teachers and of students (default 2)")
     tr_.add_argument("--width", type=int, default=4, help="learning: how many at each step (default 4)")
+    tr_.add_argument("--hadith", action="store_true", help="prophets: the hadith that speak of the prophet found "
+                                                           "(e.g. iy tree prophets Musa --hadith)")
     tr_.set_defaults(func=cmd_tree)
     ca = sub.add_parser("cache", help="the cache that keeps the counts of books, narrators, scholars …: info, clear")
     ca.add_argument("action", nargs="?", choices=["info", "clear"], default="info")
@@ -1521,7 +1628,8 @@ def build_parser() -> argparse.ArgumentParser:
                          "graded higher or lower than their chain; lab: correlations (Spearman, partial, BH) and tests (Stuart–Maxwell, Kruskal–Wallis, Mann–Whitney); graders: agreement, model, strictness, disputed hadith")
     st.add_argument("--grader", help="with 'model': only the scholars whose name contains this")
     st.add_argument("--csv", metavar="DIR", help="also write every table behind the statistics as CSV files into DIR")
-    st.add_argument("--book", help="collection key, e.g. abudawud; @shia for all Shia books (default: all Sunni books; "
+    st.add_argument("--book", help="collection key, e.g. abudawud; @shia for all Shia books; @all for both roads, one "
+                                   "after the other (default: all Sunni books; "
                                    "for graders, the book with most graders)")
     st.add_argument("--recompute", action="store_true", help="compute again instead of reading the saved results")
     st.add_argument("--limit", type=int, default=10, help="rows to list (disputed hadith, strongest relations)")

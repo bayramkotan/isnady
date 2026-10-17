@@ -54,6 +54,7 @@ FACTS = {
     "works": N_("Works"),
     "known": N_("Known for"),
     "hadith": N_("Hadith"),
+    "prophethood": N_("Prophethood"),
 }
 
 # the works the written lives are summarised from: how each is named in every language
@@ -70,6 +71,8 @@ SOURCES = {
     "taqrib": {"en": "Ibn Hajar, Taqrib al-Tahdhib", "tr": "İbn Hacer, Takrîbü't-Tehzîb", "ar": "ابن حجر، تقريب التهذيب"},
     "tarikh_baghdad": {"en": "al-Khatib al-Baghdadi, Tarikh Baghdad", "tr": "Hatîb el-Bağdâdî, Târîhu Bağdâd", "ar": "الخطيب البغدادي، تاريخ بغداد"},
     "jarh": {"en": "Ibn Abi Hatim, al-Jarh wa'l-Ta'dil", "tr": "İbn Ebî Hâtim, el-Cerh ve't-ta'dîl", "ar": "ابن أبي حاتم، الجرح والتعديل"},
+    "tabari": {"en": "al-Tabari, Tarikh al-Rusul wa'l-Muluk", "tr": "Taberî, Târîhu'r-rusül ve'l-mülûk", "ar": "الطبري، تاريخ الرسل والملوك"},
+    "shamail_tirmidhi": {"en": "al-Tirmidhi, al-Shama'il al-Muhammadiyya", "tr": "Tirmizî, eş-Şemâilü'l-Muhammediyye", "ar": "الترمذي، الشمائل المحمدية"},
     "ibnhisham": {"en": "Ibn Hisham, al-Sira al-Nabawiyya", "tr": "İbn Hişâm, es-Sîretü'n-nebeviyye", "ar": "ابن هشام، السيرة النبوية"},
     "bidaya": {"en": "Ibn Kathir, al-Bidaya wa'l-Nihaya", "tr": "İbn Kesîr, el-Bidâye ve'n-nihâye", "ar": "ابن كثير، البداية والنهاية"},
     "wafayat": {"en": "Ibn Khallikan, Wafayat al-A'yan", "tr": "İbn Hallikân, Vefeyâtü'l-a'yân", "ar": "ابن خلكان، وفيات الأعيان"},
@@ -164,7 +167,22 @@ def view(life: dict, lang: str | None = None) -> dict:
         "facts": [(t(FACTS.get(f["k"], f["k"])), _in(f, lang)) for f in life.get("facts", []) if _in(f, lang)],
         "paragraphs": list(_in(life.get("text"), lang) or []),
         "sources": [_in(SOURCES.get(s, {"en": s}), lang) for s in life.get("sources", [])],
+        # where to read more: a book in isnady ({"book": key}) or a free text on the web ({"url": …}) (GEN1-P)
+        "read": [{"kind": r.get("kind", "url"), "book": r.get("book"), "url": r.get("url"), "text": _in(r, lang)}
+                 for r in life.get("read", [])],
+        # the entries of the classical works it is summarised from, to be read in their own words (BIO2b)
+        "entries": _entries(life["id"], lang),
     }
+
+
+def _entries(life_id: str, lang: str | None) -> list[dict]:
+    from isnady.core import source_entries
+
+    out = []
+    for e in source_entries.of_life(life_id):
+        out.append({**e, "title": source_entries.title(e["work"], lang or language()),
+                    "where": t("vol. {volume}, no. {number}", volume=e["volume"], number=e["number"])})
+    return out
 
 
 def ce(year_ah: int) -> int:

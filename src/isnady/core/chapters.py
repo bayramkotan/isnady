@@ -8,10 +8,11 @@ holds the book's own headings, two levels deep:
      "parts":    [{"ar": "مسند العشرة المبشرين بالجنة", "en": "The Ten promised Paradise", "tr": "…"}, …],
      "chapters": [["1", 0, "مسند أبي بكر الصديق رضي الله عنه"], ["78", 0, "مسند عمر بن الخطاب …"], …]}
 
-A chapter is [the number of its first hadith, its part, its Arabic title]; it runs to the hadith before the next
-chapter's first. The parts (the Musnad's thirteen parts, al-Darimi's books) are written in English, Turkish and
-Arabic; the chapters keep the Arabic of the edition — the Companions' names and al-Darimi's chapter titles as the
-book gives them. The headings were placed at their hadith by matching the texts with an edition in OpenITI
+A chapter is [the number of its first hadith, its part, its Arabic title, (its Turkish title, its English title)]; it
+runs to the hadith before the next chapter's first. The parts (the Musnad's thirteen parts, al-Darimi's books) are
+written in English, Turkish and Arabic. The Musnad's chapters — each Companion's musnad — carry the Companion's name
+in Turkish and English too (BK2b, written by hand and checked; "(r.a.)", "(RA)" as the heading has it, or for a
+named Companion where it has none); al-Darimi's 1,382 chapter titles keep the Arabic of the edition. The headings were placed at their hadith by matching the texts with an edition in OpenITI
 (tools: Handoff "BK2").
 
 core.works builds the reader's tree from this table — part → chapter → hadith — only while the imported data
@@ -80,7 +81,8 @@ def plan(key: str, hadith: list[tuple[int, str, float | None]]) -> list[tuple[di
         return None
     index = {number: i for i, (_hid, number, _sort) in enumerate(hadith)}
     starts = []
-    for n, (first, part, title) in enumerate(data["chapters"], 1):
+    for n, row in enumerate(data["chapters"], 1):
+        first, part, title = row[0], row[1], row[2]
         if first in index:
             starts.append((index[first], n, part, title))
     if not starts:
@@ -97,3 +99,17 @@ def plan(key: str, hadith: list[tuple[int, str, float | None]]) -> list[tuple[di
             out.append((data["parts"][part], []))
         out[-1][1].append((n, title, rows))
     return out
+
+
+def chapter_title(key: str, number: int, lang: str | None = None) -> str | None:
+    """A chapter's title in the language (Turkish and English where the table has them), or None."""
+    data = table(key)
+    if data is None or not 1 <= number <= len(data["chapters"]):
+        return None
+    row = data["chapters"][number - 1]
+    code = lang or i18n.language()
+    if code == "tr" and len(row) > 3 and row[3]:
+        return row[3]
+    if code not in ("tr", "ar", "fa", "ur", "prs", "ps", "ug") and len(row) > 4 and row[4]:
+        return row[4]
+    return row[2]

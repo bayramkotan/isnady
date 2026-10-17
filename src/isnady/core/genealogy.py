@@ -114,8 +114,9 @@ def find(tree: Tree, text: str) -> list[Node]:
     for n in tree.nodes.values():
         hay = normalize(" ".join(n.names.values())).casefold()
         if words and all(w in hay for w in words):
-            out.append(n)
-    return out
+            out.append((len(hay), n))
+    out.sort(key=lambda x: x[0])        # the closest name first: "Musa" is Moses before "'Imran, father of Musa"
+    return [n for _l, n in out]
 
 
 # ---------------------------------------------------------------------- narrators' families, from their names
@@ -270,3 +271,143 @@ def _line(n: Node, lang: str) -> str:
     if n.disputed:
         text += "   [" + i18n.t("disputed") + "]"
     return text
+
+
+# ------------------------------------------------------------------ the prophets in the hadith (GEN1-H, 2026-10-18)
+# Bayram: "Peygamberlere şecere kısmında tıklayınca ilgili hadisler çıksın (daha sonra Kur'an'dan âyetlere
+# yönlendirsin)". A prophet is found in the hadith texts by the words that can only mean him — his name with
+# "عليه السلام", "نبي الله …", and the phrases the hadith use of him ("يونس بن متى", "ابن مريم", "خليل الرحمن") —
+# never by his bare name, which is also the name of many narrators (Musa b. Isma'il, Abu Musa, Yunus b. Yazid), nor
+# by "X b. Y" when a narrator bears it too (Ishaq b. Ibrahim, Sulayman b. Dawud, Yahya b. Zakariyya). A match that
+# stands after "أبي الحسن", "بن" … is another man (on road B "أبي الحسن موسى عليه السلام" is Imam al-Kazim).
+# on road B "موسى عليه السلام" is most often Imam Musa al-Kazim ("أبي إبراهيم موسى", "لابنها موسى"): there the prophet
+# Musa is found only by the phrases that are his alone (موسى بن عمران, كليم الله, يا موسى …)
+_ROAD_B_ONLY_OWN = {"musa"}
+_NOT_HIM = re.compile(r"(?:^|\s)(?:بن|ابن|ابو|ابي|ابا|ام|عبد|الحسن|جعفر)\s+$")
+_HONOURED = ("عليه السلام", "عليه الصلاة والسلام", "صلى الله عليه وسلم", "صلوات الله عليه")
+PROPHET_WORDS: dict[str, tuple[str, tuple[str, ...]]] = {
+    "adam": ("آدم", ("خلق الله آدم", "خلق آدم", "يا آدم", "احتج آدم", "فيأتون آدم", "أبو البشر", "أبونا آدم",
+                     "آدم وموسى", "حاج آدم")),
+    "shith": ("شيث", ()),
+    "idris": ("إدريس", ("مرحبا بالنبي الصالح والأخ الصالح ثم مررت بإدريس", "بإدريس")),
+    "nuh": ("نوح", ("يا نوح", "فيأتون نوحا", "أول الرسل", "قوم نوح", "نوحا")),
+    "hud": ("هود", ("قوم هود", "عاد قوم هود")),
+    "salih": ("صالح النبي", ("ناقة صالح", "قوم صالح", "نبي الله صالح")),
+    "ibrahim": ("إبراهيم", ("خليل الرحمن", "خليل الله", "ملة إبراهيم", "آل إبراهيم", "فيأتون إبراهيم", "أبينا إبراهيم",
+                            "اختتن إبراهيم", "إبراهيم خليل")),
+    "lut": ("لوط", ("قوم لوط", "يرحم الله لوطا", "آل لوط")),
+    "ismail": ("إسماعيل", ("أبيكم إسماعيل", "بني إسماعيل", "ولد إسماعيل", "أم إسماعيل")),
+    "ishaq": ("إسحاق", ("بني إسحاق",)),
+    "yaqub": ("يعقوب", ("إسرائيل يعقوب",)),
+    "yusuf": ("يوسف", ("صواحب يوسف", "إخوة يوسف", "الكريم ابن الكريم ابن الكريم", "شطر الحسن")),
+    "ayyub": ("أيوب", ("بينا أيوب", "أيوب يغتسل")),
+    "shuayb": ("شعيب", ("قوم شعيب", "خطيب الأنبياء")),
+    "dhulkifl": ("ذو الكفل", ("ذا الكفل", "ذي الكفل")),
+    "musa": ("موسى", ("موسى بن عمران", "يا موسى", "فيأتون موسى", "نبي الله موسى", "كليم الله", "لقي آدم موسى",
+                      "احتج آدم وموسى", "صلاة موسى", "صوم موسى", "نجى الله موسى")),
+    "harun": ("هارون", ("هارون من موسى", "هارون أخي", "هارون أخو موسى")),
+    "ilyas": ("إلياس", ()),
+    "alyasa": ("اليسع", ()),
+    "yunus": ("يونس", ("يونس بن متى", "ذا النون", "ذو النون", "دعوة ذي النون", "صاحب الحوت")),
+    "dawud": ("داود", ("صيام داود", "صوم داود", "صلاة داود", "نبي الله داود", "آل داود", "مزامير آل داود",
+                       "داود النبي", "زبور")),
+    "sulayman": ("سليمان", ("نبي الله سليمان", "سليمان بن داود عليهما السلام")),
+    "zakariyya": ("زكريا", ("كان زكريا نجارا", "زكريا نجارا")),
+    "yahya": ("يحيى", ("يحيى بن زكريا عليهما السلام", "ابني الخالة")),
+    "isa": ("عيسى", ("ابن مريم", "عيسى ابن مريم", "عيسى بن مريم", "المسيح ابن مريم", "روح الله", "فيأتون عيسى",
+                     "ينزل عيسى", "نزول عيسى")),
+}
+
+
+def prophet_phrases(node_id: str) -> list[str]:
+    """The phrases (normalized) that name this prophet in a hadith text; [] for one the hadith do not name."""
+    entry = PROPHET_WORDS.get(node_id)
+    if not entry:
+        return []
+    name, extra = entry
+    out = [f"{name} {h}" for h in _HONOURED] + [f"نبي الله {name}"] + list(extra)
+    seen, phrases = set(), []
+    for p in out:
+        n = " ".join(normalize(p).split())
+        if len(n) >= 3 and n not in seen:
+            seen.add(n)
+            phrases.append(n)
+    return phrases
+
+
+def _really_him(conn: sqlite3.Connection, hadith_id: int, phrases: list[str], name: str) -> bool:
+    """A phrase beginning with his name counts only where no "أبي الحسن", "بن" … stands just before it."""
+    if not phrases:
+        return False
+    for (norm,) in conn.execute("SELECT n.norm FROM text_norm n JOIN texts t ON t.id = n.text_id WHERE t.hadith_id = ?",
+                                (hadith_id,)):
+        for p in phrases:
+            start = norm.find(p)
+            while start >= 0:
+                if not p.startswith(name) or not _NOT_HIM.search(norm[max(0, start - 12):start]):
+                    return True
+                start = norm.find(p, start + 1)
+    return False
+
+
+def prophet_hadith(conn: sqlite3.Connection, node_id: str, limit: int = 60) -> dict:
+    """The hadith whose texts name this prophet: {"total", "by_road": {"sunni": [...], "shia": [...]}}, each item
+    {"hadith_id", "book", "number"} in the books' reading order — the two roads apart (SH1)."""
+    phrases = prophet_phrases(node_id)
+    out = {"total": 0, "by_road": {"sunni": [], "shia": []}, "phrases": phrases}
+    if not phrases:
+        return out
+    has_fts = conn.execute("SELECT 1 FROM sqlite_master WHERE name = 'texts_fts'").fetchone() is not None
+    found: dict[int, tuple] = {}
+    if has_fts:
+        match = " OR ".join('"' + p.replace('"', "") + '"' for p in phrases)
+        rows = conn.execute(
+            """SELECT DISTINCT h.id, c.key, h.number, h.number_sort, COALESCE(c.tradition, 'sunni')
+               FROM texts_fts f JOIN texts t ON t.id = f.rowid JOIN hadiths h ON h.id = t.hadith_id
+               JOIN collections c ON c.id = h.collection_id WHERE texts_fts MATCH ?""", (match,)).fetchall()
+    else:                                   # an SQLite without FTS5: the normalized texts, read one by one
+        rows = []
+        for hid, key, number, sort, trad, norm in conn.execute(
+                """SELECT h.id, c.key, h.number, h.number_sort, COALESCE(c.tradition, 'sunni'), n.norm
+                   FROM text_norm n JOIN texts t ON t.id = n.text_id JOIN hadiths h ON h.id = t.hadith_id
+                   JOIN collections c ON c.id = h.collection_id"""):
+            if any(p in norm for p in phrases):
+                rows.append((hid, key, number, sort, trad))
+    name = " ".join(normalize(PROPHET_WORDS[node_id][0]).split())
+    for hid, key, number, sort, trad in rows:
+        if hid in found:
+            continue
+        own = phrases
+        if trad == "shia" and node_id in _ROAD_B_ONLY_OWN:
+            honoured = {" ".join(normalize(f"{PROPHET_WORDS[node_id][0]} {h}").split()) for h in _HONOURED}
+            own = [p for p in phrases if p not in honoured]
+        if not _really_him(conn, hid, own, name):
+            continue
+        found[hid] = (key, number, sort or 0, "shia" if trad == "shia" else "sunni")
+    from isnady.core import books as core_books
+
+    order = {b["key"]: i for i, b in enumerate(core_books.all_books(conn, include_inactive=True))}
+    off = set(core_books.disabled())
+    items = sorted(((v[3], order.get(v[0], 999), v[2], hid, v[0], v[1]) for hid, v in found.items() if v[0] not in off))
+    out["total"] = len(items)
+    for road, _o, _s, hid, key, number in items:
+        if len(out["by_road"][road]) < limit:
+            out["by_road"][road].append({"hadith_id": hid, "book": key, "number": number})
+    out["counts"] = {r: sum(1 for i in items if i[0] == r) for r in ("sunni", "shia")}
+    return out
+
+
+# ------------------------------------------------------------------ the written lives in the written trees (GEN1-L)
+# A person with a written life (core.lives) who stands in a written tree: from his life to his place in the tree, and
+# from his box in the tree to his life. The tree and the node id of each.
+LIFE_NODES: dict[str, tuple[str, str]] = {
+    "muhammad": ("quraysh", "muhammad"), "abu-bakr": ("quraysh", "abubakr"), "umar": ("quraysh", "umar"),
+    "uthman": ("quraysh", "uthman"), "ali": ("quraysh", "ali"), "fatima": ("quraysh", "fatima"),
+    "hasan-b-ali": ("quraysh", "hasan"), "husayn-b-ali": ("quraysh", "husayn"),
+    "ibn-abbas": ("quraysh", "abdallah_ibnabbas"), "muawiya": ("quraysh", "muawiya"),
+}
+
+
+def node_life(tree_key: str, node_id: str) -> str | None:
+    """The written life of the person in this box of this tree, or None."""
+    return next((life for life, (t, n) in LIFE_NODES.items() if t == tree_key and n == node_id), None)

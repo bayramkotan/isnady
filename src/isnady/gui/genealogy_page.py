@@ -214,6 +214,8 @@ def _label(text: str, name: str = "", wrap: bool = True, rich: bool = False) -> 
 
 class GenealogyPage(QWidget):
     open_narrator = Signal(int)
+    open_hadith = Signal(int)          # a hadith that names a prophet, opened in its book (GEN1-H)
+    open_book = Signal(str)            # a book named under the Prophet's life ﷺ (al-Shama'il, GEN1-P)
 
     def __init__(self, connection, parent=None) -> None:
         super().__init__(parent)
@@ -270,16 +272,24 @@ class GenealogyPage(QWidget):
 
         self.side = QFrame()
         self.side.setObjectName("Card")
-        self.side.setFixedWidth(310)
         self.side_box = QVBoxLayout(self.side)
         self.side_box.setContentsMargins(18, 16, 18, 16)
         self.side_box.setSpacing(8)
+        # the panel scrolls: a prophet's hadith or a life written for isnady are longer than the window (GEN1-P/H)
+        from PySide6.QtWidgets import QScrollArea
+
+        self.side_scroll = QScrollArea()
+        self.side_scroll.setWidget(self.side)
+        self.side_scroll.setWidgetResizable(True)
+        self.side_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.side_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.side_scroll.setFixedWidth(380)
 
         self.caption = _label("", "Caption", rich=True)
         middle = QHBoxLayout()
         middle.setSpacing(14)
         middle.addWidget(board, 1)
-        middle.addWidget(self.side)
+        middle.addWidget(self.side_scroll)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(24, 20, 24, 18)
@@ -392,6 +402,7 @@ class GenealogyPage(QWidget):
         for w in widgets:
             self.side_box.addWidget(w)
         self.side_box.addStretch(1)
+        self.side_scroll.verticalScrollBar().setValue(0)
 
     def _show_node(self, node: core.Node) -> None:
         t = theme.current()
@@ -433,6 +444,12 @@ class GenealogyPage(QWidget):
             widgets.append(box)
         if node.count:
             widgets.append(_label(tr("{n:,} links in the imported chains", n=node.count), "Caption"))
+        if node.id == "muhammad" and self.view_key in core.WRITTEN:
+            widgets.extend(self._prophet_life())
+        elif self.view_key in core.WRITTEN and core.node_life(self.view_key, node.id):
+            widgets.extend(self._written_life(core.node_life(self.view_key, node.id)))
+        elif node.kind == "prophet" and node.id in core.PROPHET_WORDS and self.view_key in core.WRITTEN:
+            widgets.extend(self._prophet_hadith(node))
         if node.person_id is not None:
             row = QVBoxLayout()
             row.setSpacing(2)
@@ -463,6 +480,90 @@ class GenealogyPage(QWidget):
             except Exception:          # bookmarks are a convenience: never stop the tree
                 pass
         self._side(widgets)
+
+    # ------------------------------------------------------------------ the prophets (GEN1-P, GEN1-H)
+    def _prophet_life(self) -> list:
+        """The short life of the Prophet ﷺ (core.lives "muhammad"), with where to read more."""
+        from isnady.core import lives
+        from isnady.gui.life_card import life_card
+
+        life = lives.by_id("muhammad")
+        if life is None:
+            return []
+        return [life_card(lives.view(life), True, open_book=self.open_book.emit)]
+
+    def _written_life(self, life_id: str) -> list:
+        """The life written for isnady of the person in this box (GEN1-L), and a way to him in Narrators."""
+        from isnady.core import lives
+        from isnady.gui.life_card import life_card
+
+        life = lives.by_id(life_id)
+        if life is None:
+            return []
+        out = []
+        conn = self.conn
+        pid = lives.person_of(conn, life) if conn is not None else None
+        if pid is not None:
+            b = QPushButton(tr("Open in Narrators"))
+            b.setObjectName("Link")
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            b.clicked.connect(lambda: self.open_narrator.emit(pid))
+            out.append(b)
+        out.append(life_card(lives.view(life), True, open_book=self.open_book.emit))
+        return out
+
+    def show_node_of_life(self, life_id: str) -> bool:
+        """Open the written tree a life stands in, at his box (from the Narrators page). False when he is in none."""
+        where = core.LIFE_NODES.get(life_id)
+        if not where:
+            return False
+        tree_key, node_id = where
+        self.show_view(tree_key)
+        if self.tree is not None and node_id in self.tree.nodes:
+            self.view.centre(node_id)
+            self._clicked(self.tree.nodes[node_id])
+        return True
+
+    def _prophet_hadith(self, node: core.Node) -> list:
+        """The hadith whose texts name this prophet, the Sunni books and the Shia books apart (SH1)."""
+        conn = self.conn
+        if conn is None:
+            return []
+        from isnady.core import titles
+
+        found = core.prophet_hadith(conn, node.id, limit=40)
+        out = []
+        title = _label(tr("Hadith that speak of him"), "CardTitle")
+        title.setFont(theme.reading_font(14, bold=True))
+        out.append(title)
+        if not found["total"]:
+            out.append(_label(tr("No hadith in the imported books names him in words that can only mean him."), "Caption"))
+            return out
+        out.append(_label(tr("{n:,} hadith name him (his name with “peace be upon him”, “the prophet of Allah …”, "
+                             "and the words the hadith use of him) — never his bare name, which many narrators bear.",
+                             n=found["total"]), "Caption"))
+        for road, heading in (("sunni", tr("Sunni books")), ("shia", tr("Shia books"))):
+            items = found["by_road"][road]
+            if not items:
+                continue
+            count = found["counts"][road]
+            out.append(_label(f"<b>{html.escape(heading)}</b> · {count:,}", "Lead", rich=True))
+            holder = QWidget()
+            flow = QVBoxLayout(holder)
+            flow.setContentsMargins(0, 0, 0, 0)
+            flow.setSpacing(0)
+            for it in items:
+                b = QPushButton(f"{titles.book(it['book'], it['book'])} {it['number']}")
+                b.setObjectName("Link")
+                b.setCursor(Qt.CursorShape.PointingHandCursor)
+                b.clicked.connect(lambda _c=False, h=it["hadith_id"]: self.open_hadith.emit(h))
+                flow.addWidget(b, 0, Qt.AlignmentFlag.AlignLeft)
+            if count > len(items):
+                flow.addWidget(_label(tr("… and {n:,} more", n=count - len(items)), "Caption"))
+            out.append(holder)
+        out.append(_label(tr("The verses of the Qur'an about him will be shown here when the Qur'an is in isnady (Q1)."),
+                          "Caption"))
+        return out
 
     # ------------------------------------------------------------------ finding
     def _find_live(self) -> None:
@@ -501,6 +602,12 @@ class GenealogyPage(QWidget):
         self.show_view(self.view_key, item.data(Qt.ItemDataRole.UserRole))
 
     def show_person(self, person_id: int, which: str = "family") -> None:
+        if which in core.WRITTEN:                    # his box in a written tree (GEN1-L)
+            from isnady.core import lives
+
+            life = lives.of_person(self.conn, person_id) if self.conn is not None else None
+            if life and self.show_node_of_life(life["id"]):
+                return
         self.show_view(which, person_id)
 
     def retheme(self) -> None:

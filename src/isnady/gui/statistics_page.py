@@ -139,6 +139,9 @@ def _pct(x: float) -> str:
     return f"{100 * x:.1f}%"
 
 
+ALL_SCOPE, SHIA_SCOPE_KEY = "@all", "@shia"
+
+
 class _Worker(QObject):
     """One statistics job (core.stats_jobs): saved results at once, a new computation in a separate process (PERF2)
     so the window does not slow down while it runs."""
@@ -155,7 +158,13 @@ class _Worker(QObject):
         from isnady.core import stats_jobs
 
         try:
-            result = stats_jobs.run(self.job, self.key, self.recompute, self._say)
+            if self.job == "corpus" and self.key == ALL_SCOPE:
+                # "All books" (BK1): each road measured on its own, shown one after the other — never together (SH1)
+                roads = [stats_jobs.run(self.job, None, self.recompute, self._say),
+                         stats_jobs.run(self.job, SHIA_SCOPE_KEY, self.recompute, self._say)]
+                result = {"roads": roads}
+            else:
+                result = stats_jobs.run(self.job, self.key, self.recompute, self._say)
             self._emit(self.done, result)
         except Exception as exc:                      # shown on the page, never a silent failure
             self._emit(self.failed, f"{type(exc).__name__}: {exc}")
@@ -406,6 +415,8 @@ class StatisticsPage(QWidget):
         fill_book_combo(self.scope, conn, tr("All Sunni books ({n})", n=sunni))
         if shia:
             self.scope.insertItem(1, tr("All Shia books ({shia})", shia=shia), corpus.SHIA_SCOPE)
+            # BK1: every book — the Sunni road, then the Shia road below it, each on its own scale
+            self.scope.insertItem(0, tr("All books ({n})", n=sunni + shia), corpus.ALL_SCOPE)
         index = self.scope.findData(current)
         self.scope.setCurrentIndex(index if index >= 0 else 0)
         self.scope.blockSignals(False)
@@ -472,14 +483,35 @@ class StatisticsPage(QWidget):
 
     # ------------------------------------------------------------------ the corpus sections
     def _show_corpus(self, both: dict) -> None:
+        if "roads" in both:
+            # "All books" (BK1): the Sunni road, then the Shia road — each under its own heading, on its own scale
+            self._clear_sections()
+            heads = [(tr("Sunni books"), tr("Measured on Ibn Hajar's ranks; the chains reach the Prophet ﷺ.")),
+                     (tr("Shia books"), tr("Measured apart, on al-Najashi's Imami categories; the chains reach a "
+                                           "Ma'sum. The two roads are never measured together."))]
+            for road, (title, note) in zip(both["roads"], heads):
+                for box in self._boxes.values():
+                    head = _label(f"<b>{title}</b> — {note}", "Lead", rich=True)
+                    head.setContentsMargins(4, 12, 4, 2)
+                    box.addWidget(head)
+                self._show_corpus_one(road)
+            self._result = both
+            for box in self._boxes.values():
+                box.addStretch(1)
+            return
+        self._clear_sections()
+        self._show_corpus_one(both)
+        for box in self._boxes.values():
+            box.addStretch(1)
+
+    def _show_corpus_one(self, both: dict) -> None:
+        """One road's (or one book's) findings, added below what the sections already hold."""
         self._result = both
         r, self._models = both["corpus"], both.get("models") or {}
-        self._clear_sections()
         if r.get("empty") or not r.get("overview", {}).get("chains"):
             for key in self._boxes:
                 self._boxes[key].addWidget(_label(tr("Nothing to measure yet: import a hadith collection (File → Data Sources), and a book of narrators "
                                                     "(Ibn Hajar's Taqrib) to identify them."), "Lead"))
-                self._boxes[key].addStretch(1)
             self.c_status.setText("")
             return
         self.c_status.setText(
@@ -492,8 +524,6 @@ class StatisticsPage(QWidget):
         self._model_section()
         self._lab_section(both.get("lab") or {})
         self._books(r)
-        for box in self._boxes.values():
-            box.addStretch(1)
 
     def _group_categories(self, r: dict) -> list[tuple[str, str]]:
         return list(zip([tr(name) for name, _d in r["groups"]], self._colors()))
@@ -820,15 +850,19 @@ class StatisticsPage(QWidget):
         wrap = QWidget()
         wrap.setLayout(self._model_box)
         box.addWidget(wrap)
+        mine, own = self._model_box, self._result      # "All books": each road keeps its own box and result
 
         def show(i: int) -> None:
             self._model_index = i
+            self._model_box, shown = mine, self._result
+            self._result = own
             while self._model_box.count():
                 w = self._model_box.takeAt(0).widget()
                 if w is not None:
                     w.setParent(None)
                     w.deleteLater()
             self._model_findings(ms[i], ms)
+            self._result = shown
         pick.currentIndexChanged.connect(show)
         show(pick.currentIndex())
         self._shared_surprises()
@@ -1091,9 +1125,12 @@ class StatisticsPage(QWidget):
         wrap = QWidget()
         wrap.setLayout(self._lab_box)
         box.addWidget(wrap)
+        mine, own = self._lab_box, self._result
 
         def show(i: int) -> None:
             self._lab_index = i
+            self._lab_box, shown = mine, self._result
+            self._result = own
             while self._lab_box.count():
                 w = self._lab_box.takeAt(0).widget()
                 if w is not None:
@@ -1102,6 +1139,7 @@ class StatisticsPage(QWidget):
             if ms:
                 self._lab_book(ms[i], [t for t in r.get("graders", []) if t["book"] == ms[i]["book"]])
                 self._lab_brant([b for b in r.get("brant", []) if b["book"] == ms[i]["book"]])
+            self._result = shown
         if len(ms) > 1:
             pick.currentIndexChanged.connect(show)
         show(min(getattr(self, "_lab_index", 0), max(0, len(ms) - 1)))
@@ -1552,10 +1590,11 @@ class StatisticsPage(QWidget):
         keys = [k for k, _n, _c in books]
         name = self.scope.currentText().split(" (")[0]
         message = None
-        if scope in (None, corpus.SHIA_SCOPE) and books:
+        if scope in (None, corpus.SHIA_SCOPE, corpus.ALL_SCOPE) and books:
             # "all books": the graders are compared book by book — the first such book of this road, or a word
             road = "shia" if scope == corpus.SHIA_SCOPE else "sunni"
-            mine = [(k, n) for k, n, _c in books if corpus.tradition_of_scope(self.conn, k) == road]
+            mine = [(k, n) for k, n, _c in books
+                    if scope == corpus.ALL_SCOPE or corpus.tradition_of_scope(self.conn, k) == road]
             if not mine:
                 message = tr("No book of this road has two graders to compare. The books that have: {books}.",
                              books=", ".join(n for _k, n, _c in books))
@@ -1577,7 +1616,7 @@ class StatisticsPage(QWidget):
             self.box.addWidget(_label(message, "Lead"))
             self.box.addStretch(1)
             return
-        if scope and scope != corpus.SHIA_SCOPE and self.book.currentData() != scope:
+        if scope and scope not in (corpus.SHIA_SCOPE, corpus.ALL_SCOPE) and self.book.currentData() != scope:
             self.book.blockSignals(True)
             self.book.setCurrentIndex(self.book.findData(scope))
             self.book.blockSignals(False)

@@ -29,6 +29,7 @@ from isnady.core.i18n import N_, tr
 
 METHOD = "isnady-corpus-3"
 SHIA_SCOPE = "@shia"           # every active Shia book (road B)
+ALL_SCOPE = "@all"             # every active book: the two roads shown one after the other, each measured apart (BK1)
 BOOT = 200
 SEED = 1405
 
@@ -519,4 +520,4 @@ def cached(conn: sqlite3.Connection, collection: str | None = None, progress=Non
 
 
 __all__ = ["Road", "road_of", "IMAMI_ORDER", "analyse", "cached", "kendall_from_table", "association", "lorenz", "pagerank", "RANK_GROUPS",
-           "RANK_GROUPS_SHIA", "SHIA_SCOPE", "tradition_of_scope", "isnad_only", "group"]
+           "RANK_GROUPS_SHIA", "SHIA_SCOPE", "ALL_SCOPE", "tradition_of_scope", "isnad_only", "group"]

@@ -75,7 +75,10 @@ class MainWindow(QMainWindow):
 
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("isnady")
+        from isnady.core import profiles
+
+        person = profiles.name_of(profiles.active())
+        self.setWindowTitle(f"isnady — {person}" if person else "isnady")        # the profile in use (PRF1)
         self.resize(1240, 820)
         self.setMinimumSize(900, 600)
 
@@ -198,6 +201,8 @@ class MainWindow(QMainWindow):
         # GEN1 and BM1
         self.nav.currentRowChanged.connect(lambda row: row == self._row("genealogy") and self.genealogy_page.ensure())
         self.genealogy_page.open_narrator.connect(self._open_narrator)
+        self.genealogy_page.open_hadith.connect(self._open_in_book)
+        self.genealogy_page.open_book.connect(self._open_book)
         self.narrators_page.open_genealogy.connect(self._open_genealogy)
         self.bookmarks_page.open_hadith.connect(self._open_in_book)
         self.bookmarks_page.open_narrator.connect(self._open_narrator)
@@ -328,6 +333,135 @@ class MainWindow(QMainWindow):
             actions[key].setShortcut(QKeySequence(f"Ctrl+{i + 1}"))
 
     # --------------------------------------------------------------- menus
+    # ------------------------------------------------------------------ profiles (PRF1)
+    def _fill_profile_menu(self, menu) -> None:
+        """File → Profiles: the profiles to switch to, and making, renaming, deleting, exporting, importing one."""
+        from isnady.core import profiles
+
+        menu.clear()
+        group = QActionGroup(menu)
+        for p in profiles.all_profiles():
+            action = menu.addAction(p["name"] or tr("Default"))
+            action.setCheckable(True)
+            action.setChecked(p["active"])
+            group.addAction(action)
+            action.triggered.connect(lambda _c=False, pid=p["id"]: self._use_profile(pid))
+        menu.addSeparator()
+        menu.addAction(tr("New Profile…"), self._new_profile).setToolTip(
+            tr("Another person's own settings, place in the books and bookmarks; the books are shared"))
+        menu.addAction(tr("Rename This Profile…"), self._rename_profile)
+        menu.addAction(tr("Delete a Profile…"), self._delete_profile)
+        menu.addSeparator()
+        menu.addAction(tr("Export This Profile…"), self._export_profile).setToolTip(
+            tr("One file with this profile's settings, place and bookmarks — for another computer"))
+        menu.addAction(tr("Import a Profile…"), self._import_profile)
+
+    def _use_profile(self, pid: str) -> None:
+        from isnady.core import profiles
+
+        if pid == profiles.active():
+            return
+        profiles.switch(pid)
+        self.language_switched.emit()        # main.py builds the window again, with this profile's settings
+
+    def _profile_error(self, exc) -> None:
+        from PySide6.QtWidgets import QMessageBox
+
+        QMessageBox.warning(self, tr("Profiles"), str(exc))
+
+    def _new_profile(self) -> None:
+        from PySide6.QtWidgets import QInputDialog
+
+        from isnady.core import profiles
+
+        name, ok = QInputDialog.getText(self, tr("New Profile"), tr("Name of the new profile:"))
+        if not ok or not name.strip():
+            return
+        try:
+            pid = profiles.create(name)
+        except profiles.ProfileError as exc:
+            self._profile_error(exc)
+            return
+        self._use_profile(pid)
+
+    def _rename_profile(self) -> None:
+        from PySide6.QtWidgets import QInputDialog
+
+        from isnady.core import profiles
+
+        pid = profiles.active()
+        name, ok = QInputDialog.getText(self, tr("Rename This Profile"), tr("New name:"),
+                                        text=profiles.name_of(pid) or tr("Default"))
+        if not ok or not name.strip():
+            return
+        try:
+            profiles.rename(pid, name)
+        except profiles.ProfileError as exc:
+            self._profile_error(exc)
+            return
+        self.setWindowTitle(f"isnady — {name.strip()}")
+
+    def _delete_profile(self) -> None:
+        from PySide6.QtWidgets import QInputDialog, QMessageBox
+
+        from isnady.core import profiles
+
+        others = [p for p in profiles.all_profiles() if p["id"] not in (profiles.DEFAULT, profiles.active())]
+        if not others:
+            QMessageBox.information(self, tr("Profiles"), tr("There is no other profile to delete. The first profile and "
+                                                            "the one in use cannot be deleted."))
+            return
+        names = [p["name"] for p in others]
+        name, ok = QInputDialog.getItem(self, tr("Delete a Profile"),
+                                        tr("Its settings, place and bookmarks are deleted; the books stay."), names, 0, False)
+        if not ok:
+            return
+        try:
+            profiles.delete(others[names.index(name)]["id"])
+        except profiles.ProfileError as exc:
+            self._profile_error(exc)
+
+    def _export_profile(self) -> None:
+        from PySide6.QtWidgets import QFileDialog
+
+        from isnady.core import profiles
+
+        pid = profiles.active()
+        suggested = (profiles.name_of(pid) or "default") + profiles.EXTENSION
+        path, _f = QFileDialog.getSaveFileName(self, tr("Export This Profile"), suggested,
+                                               tr("isnady profile") + f" (*{profiles.EXTENSION})")
+        if not path:
+            return
+        if not path.endswith(profiles.EXTENSION):
+            path += profiles.EXTENSION
+        try:
+            written = profiles.export(pid, path)
+        except (OSError, profiles.ProfileError) as exc:
+            self._profile_error(exc)
+            return
+        from PySide6.QtWidgets import QMessageBox
+
+        QMessageBox.information(self, tr("Profiles"), tr("Written: {path}", path=str(written)))
+
+    def _import_profile(self) -> None:
+        from PySide6.QtWidgets import QFileDialog, QMessageBox
+
+        from isnady.core import profiles
+
+        path, _f = QFileDialog.getOpenFileName(self, tr("Import a Profile"), "",
+                                               tr("isnady profile") + f" (*{profiles.EXTENSION} *.zip)")
+        if not path:
+            return
+        try:
+            pid = profiles.import_file(path)
+        except profiles.ProfileError as exc:
+            self._profile_error(exc)
+            return
+        answer = QMessageBox.question(self, tr("Profiles"),
+                                      tr("Imported as {name}. Use it now?", name=profiles.name_of(pid)))
+        if answer == QMessageBox.StandardButton.Yes:
+            self._use_profile(pid)
+
     def _action(self, menu, text: str, slot, shortcut=None, tip: str = "") -> QAction:
         action = QAction(text, self)
         if shortcut:
@@ -348,6 +482,9 @@ class MainWindow(QMainWindow):
                      tip=tr("Import built-in sources with one click, or add your own"))
         self._action(file_menu, tr("Open Data Folder"), self._open_data_folder,
                      tip=tr("Open the folder that holds the isnady database"))
+        profile_menu = file_menu.addMenu(tr("Profiles"))
+        profile_menu.setToolTipsVisible(True)
+        profile_menu.aboutToShow.connect(lambda m=profile_menu: self._fill_profile_menu(m))
         file_menu.addSeparator()
         self._action(file_menu, tr("Quit"), QApplication.quit, "Ctrl+Q")
 
@@ -464,6 +601,12 @@ class MainWindow(QMainWindow):
         self._books_loaded = True
         self.nav.setCurrentRow(self._row("books"))
         self.books_page.show_person(person_id)
+
+    def _open_book(self, key: str) -> None:
+        self._books_loaded = True
+        self.nav.setCurrentRow(self._row("books"))
+        self.books_page.refresh()
+        self.books_page.select_work(key)
 
     def _open_in_book(self, hadith_id: int) -> None:
         self._books_loaded = True

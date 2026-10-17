@@ -498,6 +498,16 @@ class NarratorsPage(QWidget):
                                                                              "below him, from the imported chains"))):
             link = _link(text, lambda _c=False, w=which: self.open_genealogy.emit(person_id, w), tip)
             trees.addWidget(link)
+        from isnady.core import genealogy as core_genealogy
+        from isnady.core import lives as core_lives
+
+        own = core_lives.of_person(conn, person_id)
+        if own and own["id"] in core_genealogy.LIFE_NODES:
+            tree_key = core_genealogy.LIFE_NODES[own["id"]][0]
+            # his box in a written tree (GEN1-L): Abu Bakr in the tree of Quraysh, beside the Prophet's line ﷺ
+            trees.addWidget(_link(tr("his place in the tree of Quraysh"),
+                                  lambda _c=False, k=tree_key: self.open_genealogy.emit(person_id, k),
+                                  tr("The family of Quraysh as the genealogists give it, with him in it")))
         trees.addStretch(1)
         self.detail_box.addLayout(trees)
 

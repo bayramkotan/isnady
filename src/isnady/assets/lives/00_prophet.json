@@ -1,0 +1,44 @@
+{
+ "version": 1,
+ "license": "CC BY 4.0 — written for isnady",
+ "about": "The short life of the Prophet Muhammad ﷺ, opened from his name in the Genealogies (GEN1-P). Summarised from the classical works of the sira named under it; the reader is pointed to the sira of Ibn Hisham (OpenITI) and to al-Tirmidhi's al-Shama'il in isnady.",
+ "lives": [
+  {
+   "id": "muhammad", "road": "sunni", "kind": "prophet", "persons": [],
+   "name": {"en": "The Prophet Muhammad ﷺ", "tr": "Peygamber Efendimiz Hz. Muhammed ﷺ", "ar": "النبي محمد ﷺ"},
+   "facts": [
+    {"k": "name", "en": "Muhammad b. 'Abd Allah b. 'Abd al-Muttalib b. Hashim, of Quraysh; kunya Abu al-Qasim", "tr": "Muhammed b. Abdullah b. Abdülmuttalib b. Hâşim; Kureyş'ten; künyesi Ebü'l-Kâsım", "ar": "محمد بن عبد الله بن عبد المطلب بن هاشم القرشي، أبو القاسم ﷺ"},
+    {"k": "born", "en": "Mecca, on a Monday of Rabi' al-Awwal in the Year of the Elephant (about 571 CE)", "tr": "Mekke, Fil Yılı'nda Rebîülevvel ayının bir pazartesi günü (m. 571 civarı)", "ar": "مكة، يوم الاثنين من شهر ربيع الأول عام الفيل (نحو 571م)"},
+    {"k": "prophethood", "en": "The revelation began in the cave of Hira when he was forty (610 CE); thirteen years in Mecca, ten in Medina after the Hijra (622 CE)", "tr": "Vahiy kırk yaşında Hira mağarasında başladı (m. 610); on üç yıl Mekke'de, hicretten (m. 622) sonra on yıl Medine'de", "ar": "بدأ الوحي في غار حراء وهو ابن أربعين سنة (610م)؛ ثلاث عشرة سنة بمكة، وعشر سنين بالمدينة بعد الهجرة (622م)"},
+    {"k": "died", "en": "Medina, on a Monday of Rabi' al-Awwal 11 AH (June 632 CE), aged sixty-three; buried in the room of 'A'isha (may Allah be pleased with her)", "tr": "Medine, hicrî 11 yılı Rebîülevvel ayının bir pazartesi günü (Haziran 632), altmış üç yaşında; Hz. Âişe'nin (r.anhâ) odasına defnedildi", "ar": "المدينة، يوم الاثنين من ربيع الأول سنة 11هـ (يونيو 632م)، وهو ابن ثلاث وستين سنة؛ ودُفن في حجرة عائشة رضي الله عنها"},
+    {"k": "family", "en": "His father 'Abd Allah and his mother Amina bint Wahb; raised by his grandfather 'Abd al-Muttalib and his uncle Abu Talib. His first wife Khadija (may Allah be pleased with her); his children al-Qasim, Zaynab, Ruqayya, Umm Kulthum, Fatima, 'Abd Allah and Ibrahim", "tr": "Babası Abdullah, annesi Âmine bint Vehb; dedesi Abdülmuttalib ve amcası Ebû Tâlib büyüttü. İlk eşi Hz. Hatice (r.anhâ); çocukları Kâsım, Zeyneb, Rukıyye, Ümmü Külsûm, Fâtıma, Abdullah ve İbrâhim", "ar": "أبوه عبد الله وأمه آمنة بنت وهب؛ كفله جده عبد المطلب ثم عمه أبو طالب. أول أزواجه خديجة رضي الله عنها؛ وأولاده القاسم وزينب ورقية وأم كلثوم وفاطمة وعبد الله وإبراهيم"},
+    {"k": "known", "en": "The Messenger of Allah and the Seal of the Prophets (al-Ahzab 33:40), sent as a mercy to the worlds (al-Anbiya' 21:107)", "tr": "Allah'ın Resûlü ve peygamberlerin sonuncusu (Ahzâb 33:40), âlemlere rahmet olarak gönderildi (Enbiyâ 21:107)", "ar": "رسول الله وخاتم النبيين (الأحزاب 40)، أُرسل رحمة للعالمين (الأنبياء 107)"}
+   ],
+   "text": {
+    "en": [
+     "The Prophet Muhammad ﷺ was born in Mecca in the Year of the Elephant. His father 'Abd Allah died before he was born, and his mother Amina when he was six; his grandfather 'Abd al-Muttalib took him in, and after him his uncle Abu Talib. In his youth he tended flocks and traded, and the people of Mecca called him al-Amin, the trustworthy, for his truthfulness. At twenty-five he married Khadija (may Allah be pleased with her).",
+     "At forty, while he was in retreat in the cave of Hira, the first revelation came to him: “Read in the name of your Lord who created” (al-'Alaq 96:1–5). The first to believe were Khadija, Abu Bakr, 'Ali and Zayd b. Haritha (may Allah be pleased with them). For thirteen years he called the people of Mecca to the worship of the One God; his Companions were persecuted, and some of them emigrated to Abyssinia. In the year of sorrow Khadija and Abu Talib passed away; the Night Journey and the Ascension (al-Isra' wa'l-Mi'raj) belong to these years.",
+     "After the pledges of al-'Aqaba he emigrated with Allah's leave to Medina, with Abu Bakr (may Allah be pleased with him), in 622 CE — the Hijra, from which the Islamic calendar is counted. In Medina he built his mosque and made the Emigrants and the Ansar brothers. After Badr, Uhud and the Trench came the treaty of al-Hudaybiya; in the eighth year of the Hijra Mecca was opened, and the Ka'ba was cleansed of its idols.",
+     "In the tenth year he made the Farewell Pilgrimage, and in his sermon at 'Arafat declared the sanctity of life, property and honour. He passed away in Medina in Rabi' al-Awwal of the year 11, at sixty-three, in the room of 'A'isha (may Allah be pleased with her), where he is buried. The Qur'an calls him “a mercy to the worlds” (al-Anbiya' 21:107) and “the Seal of the Prophets” (al-Ahzab 33:40); his character and his ways are told in the books of hadith, and gathered in al-Tirmidhi's al-Shama'il."
+    ],
+    "tr": [
+     "Peygamber Efendimiz Hz. Muhammed ﷺ, Fil Yılı'nda Mekke'de dünyaya geldi. Babası Abdullah o doğmadan vefat etmişti; altı yaşında annesi Âmine'yi de kaybetti. Önce dedesi Abdülmuttalib, onun vefatından sonra amcası Ebû Tâlib onu himayesine aldı. Gençliğinde çobanlık ve ticaret yaptı; doğruluğu sebebiyle Mekkeliler ona “el-Emîn” (güvenilir) derdi. Yirmi beş yaşında Hz. Hatice (r.anhâ) ile evlendi.",
+     "Kırk yaşında, Hira mağarasında inzivada iken ilk vahiy geldi: “Yaratan Rabbinin adıyla oku!” (Alak 96:1–5). İlk iman edenler Hz. Hatice, Hz. Ebû Bekir, Hz. Ali ve Zeyd b. Hârise (r.anhüm) oldu. On üç yıl Mekkelileri tek olan Allah'a kulluğa çağırdı; ashabı ağır baskılara uğradı, bir kısmı Habeşistan'a hicret etti. Hüzün yılında Hz. Hatice ve Ebû Tâlib vefat etti; İsrâ ve Mi'râc bu yıllardadır.",
+     "Akabe biatlarından sonra Allah'ın izniyle Hz. Ebû Bekir (r.a.) ile birlikte Medine'ye hicret etti (m. 622); İslâm takvimi bu hicretten başlar. Medine'de mescidini kurdu, muhacirlerle ensarı kardeş yaptı. Bedir, Uhud ve Hendek'ten sonra Hudeybiye antlaşması yapıldı; hicretin sekizinci yılında Mekke fethedildi ve Kâbe putlardan temizlendi.",
+     "Hicretin onuncu yılında Vedâ Haccı'nı yaptı; Arafat'taki hutbesinde can, mal ve namusun dokunulmazlığını ilan etti. Hicrî 11 yılının Rebîülevvel ayında, altmış üç yaşında, Medine'de Hz. Âişe'nin (r.anhâ) odasında vefat etti ve orada defnedildi. Kur'an onu “âlemlere rahmet” (Enbiyâ 21:107) ve “peygamberlerin sonuncusu” (Ahzâb 33:40) diye anar; ahlâkı ve hâlleri hadis kitaplarında anlatılır, Tirmizî'nin eş-Şemâil'inde bir araya getirilmiştir."
+    ],
+    "ar": [
+     "وُلد النبي محمد ﷺ بمكة عام الفيل، وتوفي أبوه عبد الله قبل مولده، وتوفيت أمه آمنة وهو ابن ست سنين، فكفله جده عبد المطلب ثم عمه أبو طالب. ورعى الغنم في شبابه واشتغل بالتجارة، وكان أهل مكة يسمونه الأمين لصدقه وأمانته. وتزوج خديجة رضي الله عنها وهو ابن خمس وعشرين سنة.",
+     "ولما بلغ الأربعين نزل عليه الوحي وهو يتحنث في غار حراء: «اقرأ باسم ربك الذي خلق» (العلق 1–5). وكان أول من آمن به خديجة وأبو بكر وعلي وزيد بن حارثة رضي الله عنهم. ودعا قومه بمكة ثلاث عشرة سنة إلى عبادة الله وحده، فأوذي أصحابه وهاجر بعضهم إلى الحبشة، وفي عام الحزن توفيت خديجة وأبو طالب، وفي هذه السنين كان الإسراء والمعراج.",
+     "وبعد بيعتي العقبة هاجر بإذن الله إلى المدينة ومعه أبو بكر رضي الله عنه سنة 622م، ومن الهجرة يُؤرَّخ التقويم الإسلامي. فبنى مسجده بالمدينة وآخى بين المهاجرين والأنصار، وبعد بدر وأحد والخندق كان صلح الحديبية، وفي السنة الثامنة من الهجرة فُتحت مكة وطُهّرت الكعبة من الأصنام.",
+     "وفي السنة العاشرة حج حجة الوداع، وأعلن في خطبته بعرفة حرمة الدماء والأموال والأعراض. وتوفي ﷺ بالمدينة في شهر ربيع الأول سنة إحدى عشرة وهو ابن ثلاث وستين سنة، في حجرة عائشة رضي الله عنها، وفيها دُفن. ووصفه القرآن بأنه «رحمة للعالمين» (الأنبياء 107) و«خاتم النبيين» (الأحزاب 40)، وأخلاقه وشمائله مروية في كتب الحديث، وقد جمعها الترمذي في الشمائل."
+    ]
+   },
+   "sources": ["ibnhisham", "ibnsad", "tabari", "bidaya", "shamail_tirmidhi"],
+   "read": [
+    {"kind": "book", "book": "shamail", "en": "Read al-Tirmidhi's al-Shama'il in isnady", "tr": "Tirmizî'nin eş-Şemâil'ini isnady'de okuyun", "ar": "اقرأ الشمائل للترمذي في isnady"},
+    {"kind": "url", "url": "https://github.com/OpenITI/0225AH/blob/master/data/0213IbnHisham/0213IbnHisham.SiraNabawiyya/0213IbnHisham.SiraNabawiyya.Shamela0023833-ara1.completed", "en": "Ibn Hisham's al-Sira al-Nabawiyya, the Arabic text (OpenITI, free)", "tr": "İbn Hişâm'ın es-Sîretü'n-nebeviyye'si, Arapça metin (OpenITI, ücretsiz)", "ar": "السيرة النبوية لابن هشام، النص العربي (OpenITI، مجاني)"}
+   ]
+  }
+ ]
+}

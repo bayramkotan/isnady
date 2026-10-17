@@ -1,6 +1,6 @@
 """User settings — Qt-free, shared by the window and the command line.
 
-Stored as JSON in the isnady data folder (settings.json). Every key has a
+Stored as JSON in the isnady data folder (settings.json; another profile's in profiles/<id>/, core.profiles). Every key has a
 default; a stored value of "" or a missing key means "use the default".
 
 Keys
@@ -99,7 +99,17 @@ class ConfigError(ValueError):
 
 
 def settings_path() -> Path:
-    return data_dir() / SETTINGS_FILE
+    """settings.json of the profile in use (core.profiles, PRF1): the data folder itself for the first profile."""
+    from isnady.core import profiles
+
+    return profiles.folder() / SETTINGS_FILE
+
+
+def forget() -> None:
+    """Read the settings and the remembered state from disk again (another profile was chosen)."""
+    _recent.clear()
+    _read_cache.clear()
+    _state_recent.clear()
 
 
 _read_cache: dict = {}

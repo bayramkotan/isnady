@@ -30,7 +30,7 @@ from isnady.core import search as core
 from isnady.data import db
 from isnady.gui import theme
 from isnady.gui.chain_widgets import ChainStrip
-from isnady.gui.widgets import BookPicker, FlowLayout, TextBlock, expanding_width_policy
+from isnady.gui.widgets import BookPicker, FlowLayout, LanguagePicker, TextBlock, expanding_width_policy
 from isnady.core import titles
 from isnady.core.i18n import N_, n_, tr
 
@@ -303,10 +303,10 @@ class SearchPage(QWidget):
         )
         self.book_combo = BookPicker()            # all books, all Sunni, all Shia, or any few ticked
         self.book_combo.changed.connect(self._rerun_if_searched)
-        self.language_combo = QComboBox()
-        self.language_combo.activated.connect(self._language_picked)
-        self._language_before = 0
-        for combo in (self.mode_combo, self.language_combo):
+        self.language_combo = LanguagePicker()     # all languages, or any few ticked (LANG3)
+        self.language_combo.changed.connect(self._rerun_if_searched)
+        self.language_combo.wants_import.connect(self.wants_sources.emit)
+        for combo in (self.mode_combo,):
             combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
             combo.currentIndexChanged.connect(self._rerun_if_searched)
         self.whole_words.toggled.connect(self._rerun_if_searched)
@@ -465,38 +465,18 @@ class SearchPage(QWidget):
 
     def _fill_filters(self) -> None:
         self.book_combo.fill(self._conn)
-        current_lang = self.language_combo.currentData()
-        self.language_combo.blockSignals(True)
-        self.language_combo.clear()
-        self.language_combo.addItem(tr("All languages"), None)
         imported = core.list_languages(self._conn)
-        for language in imported:
-            self.language_combo.addItem(tr(language), language)
-        more = _more_languages(self._conn, imported)
-        if more:
-            # the languages the imported books have in the data repository but not on this computer: the list only
-            # holds what was imported, so say where the others are
-            self.language_combo.insertSeparator(self.language_combo.count())
-            names = ", ".join(tr(n) for n in more[:5]) + (" …" if len(more) > 5 else "")
-            self.language_combo.addItem(tr("More languages: {names} — import", names=names), "__import__")
-            self.language_combo.setItemData(self.language_combo.count() - 1, tr(
-                "These books are in the data repository in more languages: {names}. File → Data Sources imports them "
-                "(tick the languages beside a book); they then appear in this list.", names=", ".join(tr(n) for n in more)),
-                Qt.ItemDataRole.ToolTipRole)
-        self.language_combo.setCurrentIndex(max(self.language_combo.findData(current_lang), 0))
-        self._language_before = self.language_combo.currentIndex()
-        self.language_combo.blockSignals(False)
+        # the languages the imported books have in the data repository but not on this computer: the list only
+        # holds what was imported, so it says where the others are
+        self.language_combo.fill(imported, _more_languages(self._conn, imported))
 
     # -------------------------------------------------------------- search
     def _query(self, offset: int) -> core.SearchQuery:
         books = self.book_combo.selected()
-        language = self.language_combo.currentData()
-        if language == "__import__":
-            language = None            # "more languages" opens Data Sources; the list goes back at once
         return core.SearchQuery(
             text=self.query_edit.text(), mode=self.mode_combo.currentData(),
             whole_words=self.whole_words.isChecked(),
-            collections=books or [], languages=[language] if language else [],
+            collections=books or [], languages=self.language_combo.selected(),
             limit=PAGE_SIZE, offset=offset,
         )
 
@@ -600,15 +580,6 @@ class SearchPage(QWidget):
         semantic_mode = self.mode_combo.currentData() == "meaning"
         if ok and self.query_edit.text().strip() and (semantic_mode or self._results):
             self.run_search()
-
-    def _language_picked(self, index: int) -> None:
-        if self.language_combo.itemData(index) == "__import__":
-            self.language_combo.blockSignals(True)
-            self.language_combo.setCurrentIndex(self._language_before)
-            self.language_combo.blockSignals(False)
-            self.wants_sources.emit()
-        else:
-            self._language_before = index
 
     def _rerun_if_searched(self, *_args) -> None:
         if (self._page is not None or self._found is not None) and self.query_edit.text().strip():
