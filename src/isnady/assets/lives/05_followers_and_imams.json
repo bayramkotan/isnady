@@ -1,0 +1,585 @@
+{
+ "version": 1,
+ "license": "CC BY 4.0 — written for isnady",
+ "about": "The followers of the Successors, the imams of law and the great critics and teachers of the compilers.",
+ "lives": [
+  {
+   "id": "ibn-jurayj", "road": "sunni", "kind": "follower", "persons": ["taqrib:4193"],
+   "name": {"en": "Ibn Jurayj", "tr": "İbn Cüreyc", "ar": "ابن جريج"},
+   "facts": [
+    {"k": "name", "en": "'Abd al-Malik b. 'Abd al-'Aziz b. Jurayj, of Mecca; Abu al-Walid", "tr": "Abdülmelik b. Abdülaziz b. Cüreyc; Mekkeli; künyesi Ebü'l-Velîd", "ar": "عبد الملك بن عبد العزيز بن جريج المكي، أبو الوليد"},
+    {"k": "died", "en": "Mecca, 150 AH (767 CE), past seventy", "tr": "Mekke, 150 (767), yetmişini geçmiş olarak", "ar": "مكة سنة 150هـ (767م) وقد جاوز السبعين"},
+    {"k": "known", "en": "Among the first to arrange hadith in books", "tr": "Hadisleri kitaplarda ilk tasnif edenlerden", "ar": "من أول من صنّف الكتب"}
+   ],
+   "text": {
+    "en": [
+     "Ibn Jurayj, a client of Umayya of Byzantine descent, sat with 'Ata' b. Abi Rabah for some twenty years and became the scholar of Mecca after him. He was among the first anywhere to gather hadith and rulings into arranged books.",
+     "The critics held him trustworthy but noted that he narrated with “from” what he had not heard; his reports count where he says “he told me.”"
+    ],
+    "tr": [
+     "Rum asıllı, Ümeyye oğullarının mevlâsı İbn Cüreyc, yirmi yıl kadar Atâ b. Ebî Rebâh'ın yanında oturdu ve ondan sonra Mekke'nin âlimi oldu. Hadisleri ve hükümleri tasnif edilmiş kitaplarda toplayan ilk kişilerdendir.",
+     "Münekkitler onu güvenilir saydı, ama işitmediğini “an” ile rivayet ettiğini belirtti; rivayetleri “bana haber verdi” dediği yerde geçerlidir."
+    ],
+    "ar": [
+     "ابن جريج مولى بني أمية من أصل رومي، لازم عطاء بن أبي رباح نحو عشرين سنة، وصار عالم مكة بعده، وهو من أول من صنّف الكتب في الحديث والأحكام.",
+     "ووثّقه النقاد ووصفوه بالتدليس، فيُعتمد ما صرّح فيه بالسماع."
+    ]
+   },
+   "sources": ["siyar", "tahdhib_kamal", "tahdhib", "taqrib"]
+  },
+  {
+   "id": "mamar", "road": "sunni", "kind": "follower", "persons": ["taqrib:6809"],
+   "name": {"en": "Ma'mar b. Rashid", "tr": "Ma'mer b. Râşid", "ar": "معمر بن راشد"},
+   "facts": [
+    {"k": "died", "en": "San'a, 154 AH (771 CE), aged 58", "tr": "San'a, 154 (771), 58 yaşında", "ar": "صنعاء سنة 154هـ (771م) وله ثمان وخمسون"},
+    {"k": "works", "en": "al-Jami', preserved in the Musannaf of his student 'Abd al-Razzaq", "tr": "el-Câmi'; talebesi Abdürrezzâk'ın Musannef'i içinde korunmuştur", "ar": "الجامع، محفوظ في مصنّف تلميذه عبد الرزاق"}
+   ],
+   "text": {
+    "en": [
+     "Ma'mar, born in Basra, learned from Qatada and al-Zuhri and from Hammam b. Munabbih, whose written collection from Abu Hurayra he transmitted. He settled in Yemen, where he married and taught.",
+     "His book al-Jami' is among the oldest surviving collections of hadith; through his student 'Abd al-Razzaq the Yemen chain “Ma'mar from al-Zuhri” reached all the later books."
+    ],
+    "tr": [
+     "Basra'da doğan Ma'mer, Katâde'den, Zührî'den ve Ebû Hüreyre'den yazdığı sahîfeyi rivayet ettiği Hemmâm b. Münebbih'ten öğrendi. Yemen'e yerleşti, orada evlendi ve ders verdi.",
+     "el-Câmi' adlı kitabı günümüze ulaşan en eski hadis mecmualarındandır; talebesi Abdürrezzâk aracılığıyla Yemen'deki “Ma'mer, Zührî'den” senedi sonraki bütün kitaplara ulaştı."
+    ],
+    "ar": [
+     "وُلد معمر بالبصرة، وأخذ عن قتادة والزهري وهمام بن منبه وروى صحيفته عن أبي هريرة، ونزل اليمن فتزوج بها وحدّث.",
+     "وكتابه الجامع من أقدم ما بقي من كتب الحديث، ومن طريق تلميذه عبد الرزاق انتشر إسناد «معمر عن الزهري» في الكتب."
+    ]
+   },
+   "sources": ["siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "ibn-ishaq", "road": "sunni", "kind": "follower", "persons": ["taqrib:5725"],
+   "name": {"en": "Ibn Ishaq", "tr": "İbn İshak", "ar": "ابن إسحاق"},
+   "facts": [
+    {"k": "name", "en": "Muhammad b. Ishaq b. Yasar, of Medina; Abu Bakr", "tr": "Muhammed b. İshak b. Yesâr; Medineli; künyesi Ebû Bekir", "ar": "محمد بن إسحاق بن يسار المدني، أبو بكر"},
+    {"k": "died", "en": "Baghdad, 150 or 151 AH (768 CE)", "tr": "Bağdat, 150 veya 151 (768)", "ar": "بغداد سنة 150 أو 151هـ (768م)"},
+    {"k": "works", "en": "The Sira — the life of the Prophet ﷺ, known through Ibn Hisham's edition", "tr": "Sîre — Resûlullah'ın ﷺ hayatı; İbn Hişâm'ın rivayetiyle bilinir", "ar": "السيرة النبوية، المعروفة برواية ابن هشام"}
+   ],
+   "text": {
+    "en": [
+     "Ibn Ishaq grew up in Medina, the grandson of a captive taken in Iraq, and gathered every report he could find on the life and campaigns of the Prophet ﷺ. The caliph al-Mansur asked him to write it as a book; his Sira, in the edition of Ibn Hisham, is the foundation of every later biography.",
+     "In hadith on law the critics judged him truthful but given to narrating with “from”; Malik disputed with him. His reports are taken as “good” where he says he heard them."
+    ],
+    "tr": [
+     "Irak'ta esir alınan birinin torunu olan İbn İshak Medine'de büyüdü ve Resûlullah'ın ﷺ hayatı ve gazveleri hakkında bulabildiği her rivayeti topladı. Halife Mansûr bunu bir kitap hâline getirmesini istedi; İbn Hişâm'ın rivayetiyle bilinen Sîre'si sonraki bütün siyer kitaplarının temelidir.",
+     "Fıkıh hadislerinde münekkitler onu doğru sözlü ama “an” ile rivayete meyilli saydı; Mâlik ile arası açıktı. İşittiğini söylediği rivayetleri “hasen” kabul edilir."
+    ],
+    "ar": [
+     "نشأ ابن إسحاق بالمدينة، وجده من سبي العراق، فجمع ما وجد من أخبار سيرة النبي ﷺ ومغازيه، وطلب منه المنصور أن يصنّف كتابًا فكانت سيرته، برواية ابن هشام، أصل كل سيرة بعدها.",
+     "وأما في حديث الأحكام فهو عند النقاد صدوق مدلس، وتكلّم فيه مالك، ويُحسَّن حديثه إذا صرّح بالسماع."
+    ]
+   },
+   "sources": ["siyar", "tarikh_baghdad", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "shuba", "road": "sunni", "kind": "critic", "persons": ["taqrib:2790"],
+   "name": {"en": "Shu'ba b. al-Hajjaj", "tr": "Şu'be b. Haccâc", "ar": "شعبة بن الحجاج"},
+   "facts": [
+    {"k": "born", "en": "Wasit, 82 or 83 AH (702 CE)", "tr": "Vâsıt, 82 veya 83 (702)", "ar": "واسط سنة 82 أو 83هـ (702م)"},
+    {"k": "died", "en": "Basra, 160 AH (776 CE), aged 77", "tr": "Basra, 160 (776), 77 yaşında", "ar": "البصرة سنة 160هـ (776م) وله سبع وسبعون"},
+    {"k": "known", "en": "“The commander of the faithful in hadith”; the first in Iraq to examine narrators", "tr": "“Hadiste mü'minlerin emîri”; Irak'ta râvileri ilk inceleyen", "ar": "أمير المؤمنين في الحديث، وأول من فتّش عن الرجال بالعراق"}
+   ],
+   "text": {
+    "en": [
+     "Shu'ba was the first in Iraq to search into narrators — who heard from whom, who lied, who erred — and warned against the weak; al-Shafi'i said that without Shu'ba hadith would not have been known in Iraq. Sufyan al-Thawri called him “the commander of the faithful in hadith.”",
+     "He was poor and generous to the poor, and so careful that a chain he accepted is evidence in itself: when Shu'ba narrates from a man known for tadlis, the critics take it that he heard directly."
+    ],
+    "tr": [
+     "Şu'be, Irak'ta râvileri — kim kimden işitti, kim yalan söyledi, kim hata etti — ilk araştıran ve zayıflara karşı uyaran kişidir; Şâfiî, Şu'be olmasaydı Irak'ta hadisin bilinmeyeceğini söyler. Süfyân es-Sevrî ona “hadiste mü'minlerin emîri” dedi.",
+     "Yoksuldu ve yoksullara cömertti; öyle titizdi ki kabul ettiği sened başlı başına delildir: tedlîsiyle bilinen birinden Şu'be rivayet ediyorsa münekkitler onun doğrudan işittiği sonucunu çıkarır."
+    ],
+    "ar": [
+     "شعبة أول من فتّش بالعراق عن أمر المحدّثين وجانب الضعفاء والمتروكين، وقال الشافعي: لولا شعبة ما عُرف الحديث بالعراق، وقال سفيان الثوري: شعبة أمير المؤمنين في الحديث.",
+     "وكان فقيرًا جوادًا على الفقراء، شديد التحرّي حتى صارت روايته عن المدلّس دليلًا على سماعه."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tadhkira", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "thawri", "road": "sunni", "kind": "imam", "persons": ["taqrib:2445"],
+   "name": {"en": "Sufyan al-Thawri", "tr": "Süfyân es-Sevrî", "ar": "سفيان الثوري"},
+   "facts": [
+    {"k": "name", "en": "Sufyan b. Sa'id b. Masruq al-Thawri, of Kufa; Abu 'Abd Allah", "tr": "Süfyân b. Saîd b. Mesrûk es-Sevrî; Kûfeli; künyesi Ebû Abdullah", "ar": "سفيان بن سعيد بن مسروق الثوري الكوفي، أبو عبد الله"},
+    {"k": "born", "en": "Kufa, 97 AH (716 CE)", "tr": "Kûfe, 97 (716)", "ar": "الكوفة سنة 97هـ (716م)"},
+    {"k": "died", "en": "Basra, in hiding, 161 AH (778 CE), aged 64", "tr": "Basra, saklanırken, 161 (778), 64 yaşında", "ar": "البصرة متخفيًا سنة 161هـ (778م) وله أربع وستون"}
+   ],
+   "text": {
+    "en": [
+     "Sufyan al-Thawri was the great imam of Kufa in hadith, law and renunciation; Shu'ba and Ibn 'Uyayna and Ibn Ma'in called him “the commander of the faithful in hadith.” He had a school of law of his own, followed for some centuries.",
+     "He refused the judgeship and the gifts of the 'Abbasid caliphs and spoke against their injustice; al-Mahdi sought him, and he died in hiding in Basra. His students included Ibn al-Mubarak, Waki', Yahya al-Qattan and 'Abd al-Razzaq."
+    ],
+    "tr": [
+     "Süfyân es-Sevrî, hadis, fıkıh ve zühdde Kûfe'nin büyük imamıdır; Şu'be, İbn Uyeyne ve İbn Maîn ona “hadiste mü'minlerin emîri” dedi. Kendine ait, birkaç asır takip edilen bir fıkıh mezhebi vardı.",
+     "Abbâsî halifelerinin kadılık teklifini ve hediyelerini reddetti, zulümlerine karşı konuştu; Mehdî onu aradı ve Basra'da saklanırken vefat etti. Talebeleri arasında İbnü'l-Mübârek, Vekî', Yahyâ el-Kattân ve Abdürrezzâk vardır."
+    ],
+    "ar": [
+     "سفيان الثوري إمام الكوفة في الحديث والفقه والزهد، وسمّاه شعبة وابن عيينة وابن معين أمير المؤمنين في الحديث، وكان له مذهب متبوع زمنًا.",
+     "وأبى القضاء وجوائز خلفاء بني العباس وأنكر جورهم، فطلبه المهدي فمات متخفيًا بالبصرة. ومن أصحابه ابن المبارك ووكيع ويحيى القطان وعبد الرزاق."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tarikh_baghdad", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "awzai", "road": "sunni", "kind": "imam", "persons": ["taqrib:3967"],
+   "name": {"en": "al-Awza'i", "tr": "Evzâî", "ar": "الأوزاعي"},
+   "facts": [
+    {"k": "name", "en": "'Abd al-Rahman b. 'Amr al-Awza'i; Abu 'Amr", "tr": "Abdurrahman b. Amr el-Evzâî; künyesi Ebû Amr", "ar": "عبد الرحمن بن عمرو الأوزاعي، أبو عمرو"},
+    {"k": "born", "en": "Baalbek, 88 AH (707 CE)", "tr": "Ba'lebek, 88 (707)", "ar": "بعلبك سنة 88هـ (707م)"},
+    {"k": "died", "en": "Beirut, 157 AH (774 CE)", "tr": "Beyrut, 157 (774)", "ar": "بيروت سنة 157هـ (774م)"}
+   ],
+   "text": {
+    "en": [
+     "Al-Awza'i was the imam of Syria. Orphaned young, he learned in Yamama from Yahya b. Abi Kathir and in Basra and the Hijaz, and settled as a frontier guard in Beirut. His school of law was followed in Syria and in al-Andalus for some two centuries.",
+     "He spoke the truth to the 'Abbasid conqueror of Syria, 'Abd Allah b. 'Ali, at the risk of his life, and remained known for piety and gentleness."
+    ],
+    "tr": [
+     "Evzâî Şam'ın imamıdır. Küçük yaşta yetim kaldı; Yemâme'de Yahyâ b. Ebî Kesîr'den, ayrıca Basra ve Hicaz'da öğrendi; Beyrut'ta sınır nöbetçisi olarak yerleşti. Fıkıh mezhebi Şam'da ve Endülüs'te iki asır kadar takip edildi.",
+     "Şam'ı fetheden Abbâsî Abdullah b. Ali'nin karşısında hayatı pahasına hakkı söyledi; takvası ve yumuşaklığıyla tanındı."
+    ],
+    "ar": [
+     "الأوزاعي إمام أهل الشام، نشأ يتيمًا، وأخذ باليمامة عن يحيى بن أبي كثير وبالبصرة والحجاز، ونزل بيروت مرابطًا، وكان مذهبه متبوعًا بالشام والأندلس نحو قرنين.",
+     "وصدع بالحق عند عبد الله بن علي العباسي فاتح الشام على خطر من نفسه، وعُرف بالورع والحلم."
+    ]
+   },
+   "sources": ["siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "layth", "road": "sunni", "kind": "imam", "persons": ["taqrib:5684"],
+   "name": {"en": "al-Layth b. Sa'd", "tr": "Leys b. Sa'd", "ar": "الليث بن سعد"},
+   "facts": [
+    {"k": "born", "en": "Egypt, 94 AH (713 CE)", "tr": "Mısır, 94 (713)", "ar": "مصر سنة 94هـ (713م)"},
+    {"k": "died", "en": "Egypt, Sha'ban 175 AH (791 CE)", "tr": "Mısır, Şaban 175 (791)", "ar": "مصر، شعبان سنة 175هـ (791م)"}
+   ],
+   "text": {
+    "en": [
+     "Al-Layth was the imam of Egypt in hadith and law, rich and lavishly generous: he paid the debts of scholars and sent Malik gifts. His letter to Malik, discussing the practice of Medina, survives.",
+     "Al-Shafi'i said: “Al-Layth knew more law than Malik, but his students did not preserve his teaching.”"
+    ],
+    "tr": [
+     "Leys, hadiste ve fıkıhta Mısır'ın imamıydı; zengin ve son derece cömertti: âlimlerin borçlarını öder, Mâlik'e hediyeler gönderirdi. Medine amelini tartıştığı Mâlik'e mektubu günümüze ulaşmıştır.",
+     "Şâfiî şöyle der: “Leys fıkıhta Mâlik'ten daha bilgiliydi, ama talebeleri onun ilmini korumadı.”"
+    ],
+    "ar": [
+     "الليث إمام أهل مصر في الحديث والفقه، وكان غنيًّا جوادًا، يقضي ديون العلماء ويهدي إلى مالك، وبقيت رسالته إلى مالك في عمل أهل المدينة.",
+     "وقال الشافعي: الليث أفقه من مالك إلا أن أصحابه لم يقوموا به."
+    ]
+   },
+   "sources": ["siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "hammad-b-zayd", "road": "sunni", "kind": "follower", "persons": ["taqrib:1498"],
+   "name": {"en": "Hammad b. Zayd", "tr": "Hammâd b. Zeyd", "ar": "حماد بن زيد"},
+   "facts": [
+    {"k": "died", "en": "Basra, 179 AH (795 CE), aged 81", "tr": "Basra, 179 (795), 81 yaşında", "ar": "البصرة سنة 179هـ (795م) وله إحدى وثمانون"}
+   ],
+   "text": {
+    "en": [
+     "Hammad b. Zayd was the imam of Basra in his time and the most reliable of the students of Ayyub al-Sakhtiyani. Though blind, he narrated from memory with the greatest exactness; Ibn Mahdi said he had seen no one more learned than him in Basra.",
+     "He and Hammad b. Salama are “the two Hammads” of Basra; the critics generally put him above his namesake."
+    ],
+    "tr": [
+     "Hammâd b. Zeyd zamanında Basra'nın imamı ve Eyyûb es-Sahtiyânî'nin talebelerinin en güvenilirlerindendi. Âmâ olduğu hâlde ezberinden büyük bir titizlikle rivayet ederdi; İbn Mehdî Basra'da ondan daha âlimini görmediğini söyler.",
+     "O ve Hammâd b. Seleme Basra'nın “iki Hammâd”ıdır; münekkitler onu genellikle adaşından üstün tutar."
+    ],
+    "ar": [
+     "حماد بن زيد إمام أهل البصرة في زمانه، وأثبت أصحاب أيوب السختياني، وكان ضريرًا يحدّث من حفظه بإتقان، وقال ابن مهدي: ما رأيت بالبصرة أفقه منه.",
+     "وهو وحماد بن سلمة «الحمّادان»، والنقاد يقدّمونه على صاحبه."
+    ]
+   },
+   "sources": ["siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "hammad-b-salama", "road": "sunni", "kind": "follower", "persons": ["taqrib:1499"],
+   "name": {"en": "Hammad b. Salama", "tr": "Hammâd b. Seleme", "ar": "حماد بن سلمة"},
+   "facts": [
+    {"k": "died", "en": "Basra, 167 AH (784 CE)", "tr": "Basra, 167 (784)", "ar": "البصرة سنة 167هـ (784م)"}
+   ],
+   "text": {
+    "en": [
+     "Hammad b. Salama was a scholar, grammarian and devout man of Basra, the most reliable of all narrators from Thabit al-Bunani. It was said that if he were told he would die tomorrow, he could not have added to his deeds.",
+     "His memory weakened in old age; al-Bukhari did not rely on him, while Muslim narrated much from him, especially from Thabit."
+    ],
+    "tr": [
+     "Hammâd b. Seleme Basralı bir âlim, nahivci ve âbid; Sâbit el-Bünânî'den rivayet edenlerin en sağlamıydı. Kendisine yarın öleceği söylense amellerine bir şey ekleyemeyeceği söylenirdi.",
+     "Yaşlılığında hafızası zayıfladı; Buhârî ona dayanmadı, Müslim ise özellikle Sâbit'ten rivayetlerinde ondan çok rivayet etti."
+    ],
+    "ar": [
+     "حماد بن سلمة عالم نحوي عابد من أهل البصرة، أثبت الناس في ثابت البناني، وقيل: لو قيل له إنك تموت غدًا ما قدر أن يزيد في العمل شيئًا.",
+     "وتغيّر حفظه في كبره، فلم يحتجّ به البخاري، وأكثر عنه مسلم ولا سيما عن ثابت."
+    ]
+   },
+   "sources": ["siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "ibn-uyayna", "road": "sunni", "kind": "follower", "persons": ["taqrib:2451"],
+   "name": {"en": "Sufyan b. 'Uyayna", "tr": "Süfyân b. Uyeyne", "ar": "سفيان بن عيينة"},
+   "facts": [
+    {"k": "born", "en": "Kufa, 107 AH (725 CE)", "tr": "Kûfe, 107 (725)", "ar": "الكوفة سنة 107هـ (725م)"},
+    {"k": "died", "en": "Mecca, Rajab 198 AH (814 CE), aged 91", "tr": "Mekke, Receb 198 (814), 91 yaşında", "ar": "مكة، رجب سنة 198هـ (814م) وله إحدى وتسعون"},
+    {"k": "students", "en": "al-Shafi'i, Ahmad b. Hanbal, Ibn al-Madini, Ibn Ma'in, al-Humaydi …", "tr": "Şâfiî, Ahmed b. Hanbel, İbnü'l-Medînî, İbn Maîn, Humeydî …", "ar": "الشافعي، وأحمد بن حنبل، وابن المديني، وابن معين، والحميدي"}
+   ],
+   "text": {
+    "en": [
+     "Sufyan b. 'Uyayna was born in Kufa and settled in Mecca, where for decades he was the teacher to whom every pilgrim scholar came. He heard al-Zuhri and 'Amr b. Dinar, and was said to have made the pilgrimage some seventy times.",
+     "Al-Shafi'i said: “Were it not for Malik and Sufyan, the knowledge of the Hijaz would have gone.”"
+    ],
+    "tr": [
+     "Süfyân b. Uyeyne Kûfe'de doğdu, Mekke'ye yerleşti; on yıllarca hacca gelen her âlimin ders aldığı hoca oldu. Zührî'den ve Amr b. Dînâr'dan dinledi; yetmiş kadar hac yaptığı söylenir.",
+     "Şâfiî şöyle der: “Mâlik ve Süfyân olmasaydı Hicaz'ın ilmi kaybolurdu.”"
+    ],
+    "ar": [
+     "وُلد سفيان بن عيينة بالكوفة ونزل مكة، فكان عقودًا شيخ من يحج من العلماء، وسمع الزهري وعمرو بن دينار، وقيل إنه حج سبعين حجة.",
+     "وقال الشافعي: لولا مالك وسفيان لذهب علم الحجاز."
+    ]
+   },
+   "sources": ["siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "ibn-al-mubarak", "road": "sunni", "kind": "follower", "persons": ["taqrib:3570"],
+   "name": {"en": "'Abd Allah b. al-Mubarak", "tr": "Abdullah b. Mübârek", "ar": "عبد الله بن المبارك"},
+   "facts": [
+    {"k": "born", "en": "Marw, 118 AH (736 CE)", "tr": "Merv, 118 (736)", "ar": "مرو سنة 118هـ (736م)"},
+    {"k": "died", "en": "Hit on the Euphrates, returning from a campaign, 181 AH (797 CE), aged 63", "tr": "Fırat kıyısında Hît, seferden dönerken, 181 (797), 63 yaşında", "ar": "بهِيت على الفرات منصرفًا من الغزو سنة 181هـ (797م) وله ثلاث وستون"},
+    {"k": "works", "en": "Kitab al-Zuhd, Kitab al-Jihad", "tr": "Kitâbü'z-Zühd, Kitâbü'l-Cihâd", "ar": "كتاب الزهد، وكتاب الجهاد"}
+   ],
+   "text": {
+    "en": [
+     "Ibn al-Mubarak of Marw was scholar, merchant, ascetic and soldier at once. He travelled to every centre of learning, spent his trade's profits on scholars and the poor, and went out to fight on the frontiers.",
+     "He said: “The chain of transmission is part of the religion; were it not for the chain, anyone would say whatever he wished” — words quoted at the head of Muslim's Sahih."
+    ],
+    "tr": [
+     "Mervli İbnü'l-Mübârek aynı anda âlim, tüccar, zâhid ve askerdi. Bütün ilim merkezlerine gitti, ticaretinin kazancını âlimlere ve yoksullara harcadı ve sınırlarda savaşa çıktı.",
+     "“İsnad dindendir; isnad olmasaydı dileyen dilediğini söylerdi” sözü Müslim'in Sahîh'inin başında yer alır."
+    ],
+    "ar": [
+     "ابن المبارك من أهل مرو، جمع العلم والتجارة والزهد والجهاد، فرحل إلى الآفاق، وأنفق ربح تجارته على العلماء والفقراء، وخرج إلى الثغور غازيًا.",
+     "ومن كلامه في مقدمة صحيح مسلم: «الإسناد من الدين، ولولا الإسناد لقال من شاء ما شاء»."
+    ]
+   },
+   "sources": ["siyar", "tarikh_baghdad", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "waki", "road": "sunni", "kind": "follower", "persons": ["taqrib:7414"],
+   "name": {"en": "Waki' b. al-Jarrah", "tr": "Vekî' b. Cerrâh", "ar": "وكيع بن الجراح"},
+   "facts": [
+    {"k": "born", "en": "Kufa, 129 AH (746 CE)", "tr": "Kûfe, 129 (746)", "ar": "الكوفة سنة 129هـ (746م)"},
+    {"k": "died", "en": "Fayd, returning from the pilgrimage, end of 196 AH (812 CE), aged 70", "tr": "Feyd, hacdan dönerken, 196 sonu (812), 70 yaşında", "ar": "بفَيْد منصرفًا من الحج آخر سنة 196هـ (812م) وله سبعون سنة"},
+    {"k": "students", "en": "Ahmad b. Hanbal, Ibn Abi Shayba, Ibn Ma'in, Ishaq b. Rahwayh …", "tr": "Ahmed b. Hanbel, İbn Ebî Şeybe, İbn Maîn, İshak b. Râhûye …", "ar": "أحمد بن حنبل، وابن أبي شيبة، وابن معين، وإسحاق بن راهويه"}
+   ],
+   "text": {
+    "en": [
+     "Waki' was the hadith scholar of Kufa after al-Thawri, famed for his memory: he narrated from memory and was rarely seen with a book. Ahmad b. Hanbal, his student, said he had never seen anyone more retentive.",
+     "He refused the judgeship offered him by Harun al-Rashid, fasted constantly, and died on the road home from the pilgrimage."
+    ],
+    "tr": [
+     "Vekî', Sevrî'den sonra Kûfe'nin muhaddisiydi; hafızasıyla meşhurdu: ezberinden rivayet eder, elinde kitapla nadiren görülürdü. Talebesi Ahmed b. Hanbel ondan daha iyi ezberleyeni görmediğini söyler.",
+     "Hârûnürreşîd'in kadılık teklifini reddetti, sürekli oruç tuttu ve hacdan dönüş yolunda vefat etti."
+    ],
+    "ar": [
+     "وكيع محدّث الكوفة بعد الثوري، اشتهر بالحفظ، يحدّث من حفظه ولا يكاد يُرى معه كتاب، وقال تلميذه أحمد: ما رأيت أوعى للعلم منه.",
+     "وأبى القضاء حين عرضه عليه الرشيد، وكان يسرد الصوم، ومات منصرفًا من الحج."
+    ]
+   },
+   "sources": ["siyar", "tarikh_baghdad", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "yahya-qattan", "road": "sunni", "kind": "critic", "persons": ["taqrib:7557"],
+   "name": {"en": "Yahya b. Sa'id al-Qattan", "tr": "Yahyâ b. Saîd el-Kattân", "ar": "يحيى بن سعيد القطان"},
+   "facts": [
+    {"k": "born", "en": "Basra, 120 AH (738 CE)", "tr": "Basra, 120 (738)", "ar": "البصرة سنة 120هـ (738م)"},
+    {"k": "died", "en": "Basra, 198 AH (813 CE), aged 78", "tr": "Basra, 198 (813), 78 yaşında", "ar": "البصرة سنة 198هـ (813م) وله ثمان وسبعون"},
+    {"k": "known", "en": "With Ibn Mahdi, the founder of the criticism of narrators as a discipline", "tr": "İbn Mehdî ile birlikte râvi tenkidini bir ilim hâline getiren", "ar": "مؤسس علم الجرح والتعديل مع ابن مهدي"}
+   ],
+   "text": {
+    "en": [
+     "Yahya al-Qattan of Basra was the strictest of critics: he examined every narrator and every report, and his verdicts became the foundation of the science of narrators. Ahmad b. Hanbal said: “My eyes have not seen the like of Yahya b. Sa'id.”",
+     "Ibn Ma'in, Ibn al-Madini and Ahmad sat before him daily, asking about men, and he would answer standing in the mosque until the sunset prayer."
+    ],
+    "tr": [
+     "Basralı Yahyâ el-Kattân münekkitlerin en titiziydi: her râviyi ve her rivayeti inceler; hükümleri ricâl ilminin temeli oldu. Ahmed b. Hanbel “Gözlerim Yahyâ b. Saîd'in benzerini görmedi” der.",
+     "İbn Maîn, İbnü'l-Medînî ve Ahmed her gün onun önünde oturup râvileri sorar, o da akşam namazına kadar mescitte ayakta cevap verirdi."
+    ],
+    "ar": [
+     "يحيى القطان البصري أشد النقاد تحرّيًا، فتّش عن الرجال والروايات فكانت أحكامه أساس علم الرجال، وقال أحمد: ما رأيت بعينيّ مثل يحيى بن سعيد.",
+     "وكان ابن معين وابن المديني وأحمد يقفون بين يديه بعد العصر يسألونه عن الرجال وهو قائم حتى تجب صلاة المغرب."
+    ]
+   },
+   "sources": ["siyar", "tadhkira", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "ibn-mahdi", "road": "sunni", "kind": "critic", "persons": ["taqrib:4018"],
+   "name": {"en": "'Abd al-Rahman b. Mahdi", "tr": "Abdurrahman b. Mehdî", "ar": "عبد الرحمن بن مهدي"},
+   "facts": [
+    {"k": "born", "en": "Basra, 135 AH (752 CE)", "tr": "Basra, 135 (752)", "ar": "البصرة سنة 135هـ (752م)"},
+    {"k": "died", "en": "Basra, 198 AH (813 CE)", "tr": "Basra, 198 (813)", "ar": "البصرة سنة 198هـ (813م)"}
+   ],
+   "text": {
+    "en": [
+     "Ibn Mahdi of Basra was, with Yahya al-Qattan, the master critic of his generation; Ibn al-Madini said he was the most knowledgeable of people in hadith.",
+     "He asked al-Shafi'i to write a book on how the Qur'an, the Sunna, consensus and analogy work together, and al-Shafi'i wrote al-Risala for him."
+    ],
+    "tr": [
+     "Basralı İbn Mehdî, Yahyâ el-Kattân ile birlikte neslinin büyük münekkidiydi; İbnü'l-Medînî onu hadisi en iyi bilen kişi sayar.",
+     "Şâfiî'den Kur'an, sünnet, icmâ ve kıyasın birlikte nasıl işlediğine dair bir kitap yazmasını istedi; Şâfiî de er-Risâle'yi onun için yazdı."
+    ],
+    "ar": [
+     "ابن مهدي البصري ناقد عصره مع يحيى القطان، وقال ابن المديني: كان أعلم الناس بالحديث.",
+     "وطلب من الشافعي أن يضع كتابًا في معاني القرآن والسنة والإجماع والقياس، فكتب له الرسالة."
+    ]
+   },
+   "sources": ["siyar", "tarikh_baghdad", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "abd-al-razzaq", "road": "sunni", "kind": "follower", "persons": ["taqrib:4064"],
+   "name": {"en": "'Abd al-Razzaq al-San'ani", "tr": "Abdürrezzâk es-San'ânî", "ar": "عبد الرزاق الصنعاني"},
+   "facts": [
+    {"k": "name", "en": "'Abd al-Razzaq b. Hammam b. Nafi' al-Himyari; Abu Bakr", "tr": "Abdürrezzâk b. Hemmâm b. Nâfi' el-Himyerî; künyesi Ebû Bekir", "ar": "عبد الرزاق بن همام بن نافع الحميري، أبو بكر"},
+    {"k": "born", "en": "San'a, 126 AH (744 CE)", "tr": "San'a, 126 (744)", "ar": "صنعاء سنة 126هـ (744م)"},
+    {"k": "died", "en": "San'a, 211 AH (827 CE), aged 85", "tr": "San'a, 211 (827), 85 yaşında", "ar": "صنعاء سنة 211هـ (827م) وله خمس وثمانون"},
+    {"k": "works", "en": "al-Musannaf", "tr": "el-Musannef", "ar": "المصنّف"}
+   ],
+   "text": {
+    "en": [
+     "'Abd al-Razzaq studied with Ma'mar for seven years and also heard Ibn Jurayj, al-Thawri and Malik. His Musannaf, arranged by subject, preserves thousands of reports of the Prophet ﷺ, the Companions and the Successors.",
+     "Scholars travelled to Yemen to hear him — Ahmad b. Hanbal and Ibn Ma'in among them. He lost his sight around 200 AH, and the critics prefer what was heard from him before that."
+    ],
+    "tr": [
+     "Abdürrezzâk yedi yıl Ma'mer'in yanında okudu; İbn Cüreyc'ten, Sevrî'den ve Mâlik'ten de dinledi. Konulara göre düzenlenmiş Musannef'i Resûlullah'tan ﷺ, sahâbe ve tâbiînden binlerce rivayeti korur.",
+     "Âlimler onu dinlemek için Yemen'e gitti; Ahmed b. Hanbel ve İbn Maîn bunlardandır. 200 civarında gözlerini kaybetti; münekkitler ondan bundan önce işitileni tercih eder."
+    ],
+    "ar": [
+     "لازم عبد الرزاق معمرًا سبع سنين، وسمع ابن جريج والثوري ومالكًا، ومصنّفه المرتب على الأبواب يحفظ آلاف الآثار عن النبي ﷺ والصحابة والتابعين.",
+     "ورحل إليه الأئمة إلى اليمن، منهم أحمد وابن معين. وعمي نحو سنة مائتين، فقدّم النقاد ما سُمع منه قبل ذلك."
+    ]
+   },
+   "sources": ["siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "abu-hanifa", "road": "sunni", "kind": "imam", "persons": ["taqrib:7153"],
+   "name": {"en": "Abu Hanifa", "tr": "İmâm-ı Âzam Ebû Hanîfe", "ar": "أبو حنيفة"},
+   "facts": [
+    {"k": "name", "en": "al-Nu'man b. Thabit, of Kufa, of Persian descent", "tr": "Nu'mân b. Sâbit; Kûfeli, Fars asıllı", "ar": "النعمان بن ثابت الكوفي، من أصل فارسي"},
+    {"k": "born", "en": "Kufa, 80 AH (699 CE)", "tr": "Kûfe, 80 (699)", "ar": "الكوفة سنة 80هـ (699م)"},
+    {"k": "died", "en": "Baghdad, 150 AH (767 CE), aged 70", "tr": "Bağdat, 150 (767), 70 yaşında", "ar": "بغداد سنة 150هـ (767م) وله سبعون سنة"},
+    {"k": "teachers", "en": "Hammad b. Abi Sulayman for eighteen years; 'Ata', Nafi' …", "tr": "On sekiz yıl Hammâd b. Ebî Süleyman; Atâ, Nâfi' …", "ar": "حماد بن أبي سليمان ثماني عشرة سنة، وعطاء، ونافع"},
+    {"k": "students", "en": "Abu Yusuf, Muhammad b. al-Hasan al-Shaybani, Zufar …", "tr": "Ebû Yûsuf, Muhammed b. Hasan eş-Şeybânî, Züfer …", "ar": "أبو يوسف، ومحمد بن الحسن الشيباني، وزفر"},
+    {"k": "known", "en": "Founder of the Hanafi school of law", "tr": "Hanefî mezhebinin kurucusu", "ar": "إمام المذهب الحنفي"}
+   ],
+   "text": {
+    "en": [
+     "Abu Hanifa was a silk merchant of Kufa who saw Anas b. Malik in his youth and sat for eighteen years with Hammad b. Abi Sulayman, heir of the school of Ibn Mas'ud and Ibrahim al-Nakha'i. He taught by discussion: a question was argued among his students until a ruling was reached, and they recorded it.",
+     "He refused the judgeship under both the Umayyads and the 'Abbasids and was imprisoned for it; he died in Baghdad. Al-Shafi'i said: “In law, people are dependants of Abu Hanifa.” The school his students wrote down became the most widely followed in the Muslim world."
+    ],
+    "tr": [
+     "Ebû Hanîfe Kûfeli bir ipek tüccarıydı; gençliğinde Enes b. Mâlik'i gördü ve İbn Mes'ûd ile İbrâhim en-Nehaî ekolünün vârisi Hammâd b. Ebî Süleyman'ın yanında on sekiz yıl oturdu. Müzakereyle öğretirdi: bir mesele talebeleri arasında bir hükme varılıncaya kadar tartışılır, onlar da kaydederdi.",
+     "Hem Emevîler hem Abbâsîler döneminde kadılığı reddetti ve bu yüzden hapsedildi; Bağdat'ta vefat etti. Şâfiî “Fıkıhta insanlar Ebû Hanîfe'nin çocuklarıdır” der. Talebelerinin yazıya geçirdiği mezhep İslâm dünyasında en çok takip edilen mezhep oldu."
+    ],
+    "ar": [
+     "كان أبو حنيفة بزّازًا بالكوفة، رأى أنس بن مالك في صغره، ولازم حماد بن أبي سليمان ثماني عشرة سنة، وارث فقه ابن مسعود وإبراهيم النخعي. وكان يعلّم بالمذاكرة، تُعرض المسألة على أصحابه فيتناظرون حتى يستقر الحكم فيكتبونه.",
+     "وأبى القضاء في الدولتين الأموية والعباسية فحُبس، ومات ببغداد. وقال الشافعي: الناس في الفقه عيال على أبي حنيفة. وصار مذهبه الذي دوّنه أصحابه أوسع المذاهب انتشارًا."
+    ]
+   },
+   "sources": ["tarikh_baghdad", "siyar", "tahdhib_kamal", "wafayat", "taqrib"]
+  },
+  {
+   "id": "shafii", "road": "sunni", "kind": "imam", "persons": ["taqrib:5717"],
+   "name": {"en": "al-Shafi'i", "tr": "İmam Şâfiî", "ar": "الشافعي"},
+   "facts": [
+    {"k": "name", "en": "Muhammad b. Idris b. al-'Abbas b. 'Uthman b. Shafi', of al-Muttalib of Quraysh; Abu 'Abd Allah", "tr": "Muhammed b. İdrîs b. Abbâs b. Osman b. Şâfi'; Kureyş'in Muttalib kolundan; künyesi Ebû Abdullah", "ar": "محمد بن إدريس بن العباس بن عثمان بن شافع المطلبي القرشي، أبو عبد الله"},
+    {"k": "born", "en": "Gaza, 150 AH (767 CE)", "tr": "Gazze, 150 (767)", "ar": "غزة سنة 150هـ (767م)"},
+    {"k": "died", "en": "Fustat (Cairo), 204 AH (820 CE), aged 54", "tr": "Fustat (Kahire), 204 (820), 54 yaşında", "ar": "الفسطاط سنة 204هـ (820م) وله أربع وخمسون"},
+    {"k": "works", "en": "al-Risala, al-Umm", "tr": "er-Risâle, el-Ümm", "ar": "الرسالة، والأم"},
+    {"k": "known", "en": "Founder of the Shafi'i school; the first to set out the principles of jurisprudence", "tr": "Şâfiî mezhebinin kurucusu; fıkıh usulünü ilk yazıya geçiren", "ar": "إمام المذهب الشافعي، وأول من صنّف في أصول الفقه"}
+   ],
+   "text": {
+    "en": [
+     "Al-Shafi'i was born in Gaza, an orphan of Quraysh, and raised in Mecca, where he learned the Qur'an, Arabic and law; he memorised the Muwatta' and went to Medina to read it with Malik. In Iraq he studied the law of Abu Hanifa's school with Muhammad b. al-Hasan.",
+     "Bringing the two schools together, he wrote al-Risala, the first book on the principles of jurisprudence: how the Qur'an, the Sunna, consensus and analogy are used, and why a sound solitary hadith is binding. He settled in Egypt in 199 AH, rewrote his teaching there, and died in Fustat at fifty-four."
+    ],
+    "tr": [
+     "Şâfiî Gazze'de doğdu; Kureyş'ten yetim bir çocuk olarak Mekke'de büyüdü, Kur'an'ı, Arapçayı ve fıkhı orada öğrendi; Muvatta'ı ezberleyip Mâlik'e okumak için Medine'ye gitti. Irak'ta Ebû Hanîfe ekolünün fıkhını Muhammed b. Hasan'dan okudu.",
+     "İki ekolü birleştirerek fıkıh usulünün ilk kitabı er-Risâle'yi yazdı: Kur'an, sünnet, icmâ ve kıyas nasıl kullanılır, sahih haber-i vâhid niçin bağlayıcıdır. 199'da Mısır'a yerleşti, görüşlerini orada yeniden yazdı ve elli dört yaşında Fustat'ta vefat etti."
+    ],
+    "ar": [
+     "وُلد الشافعي بغزة يتيمًا من قريش، ونشأ بمكة فأخذ القرآن والعربية والفقه، وحفظ الموطأ ورحل إلى مالك بالمدينة فقرأه عليه، ثم أخذ فقه أهل العراق عن محمد بن الحسن.",
+     "فجمع بين الطريقتين، وكتب الرسالة أول كتاب في أصول الفقه: في الاحتجاج بالكتاب والسنة والإجماع والقياس، وحجية خبر الواحد. ونزل مصر سنة 199 فجدّد فيها مذهبه، ومات بالفسطاط وله أربع وخمسون."
+    ]
+   },
+   "sources": ["tarikh_baghdad", "siyar", "tabaqat_shafiiyya", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "ahmad", "road": "sunni", "kind": "imam", "persons": ["taqrib:96"], "scholar": "ahmad",
+   "name": {"en": "Ahmad b. Hanbal", "tr": "Ahmed b. Hanbel", "ar": "أحمد بن حنبل"},
+   "facts": [
+    {"k": "name", "en": "Ahmad b. Muhammad b. Hanbal b. Hilal al-Shaybani; Abu 'Abd Allah", "tr": "Ahmed b. Muhammed b. Hanbel b. Hilâl eş-Şeybânî; künyesi Ebû Abdullah", "ar": "أحمد بن محمد بن حنبل بن هلال الشيباني، أبو عبد الله"},
+    {"k": "born", "en": "Baghdad, Rabi' al-Awwal 164 AH (780 CE)", "tr": "Bağdat, Rebîülevvel 164 (780)", "ar": "بغداد، ربيع الأول سنة 164هـ (780م)"},
+    {"k": "died", "en": "Baghdad, Rabi' al-Awwal 241 AH (855 CE), aged 77", "tr": "Bağdat, Rebîülevvel 241 (855), 77 yaşında", "ar": "بغداد، ربيع الأول سنة 241هـ (855م) وله سبع وسبعون"},
+    {"k": "teachers", "en": "Hushaym, Sufyan b. 'Uyayna, Yahya al-Qattan, Waki', 'Abd al-Razzaq, al-Shafi'i …", "tr": "Hüşeym, Süfyân b. Uyeyne, Yahyâ el-Kattân, Vekî', Abdürrezzâk, Şâfiî …", "ar": "هشيم، وسفيان بن عيينة، ويحيى القطان، ووكيع، وعبد الرزاق، والشافعي"},
+    {"k": "students", "en": "al-Bukhari, Muslim, Abu Dawud, his sons Salih and 'Abd Allah …", "tr": "Buhârî, Müslim, Ebû Dâvûd, oğulları Sâlih ve Abdullah …", "ar": "البخاري، ومسلم، وأبو داود، وابناه صالح وعبد الله"},
+    {"k": "works", "en": "al-Musnad — some 27,000 hadith arranged by Companion", "tr": "el-Müsned — sahâbîlere göre düzenlenmiş 27.000 kadar hadis", "ar": "المسند، نحو سبعة وعشرين ألف حديث مرتبة على الصحابة"},
+    {"k": "known", "en": "Founder of the Hanbali school; held firm in the Mihna", "tr": "Hanbelî mezhebinin kurucusu; Mihne'de direndi", "ar": "إمام المذهب الحنبلي، وثبت في المحنة"}
+   ],
+   "text": {
+    "en": [
+     "Ahmad grew up an orphan in Baghdad and began seeking hadith at fifteen. He travelled on foot to Kufa, Basra, Mecca, Yemen and Syria, learning from Hushaym, Ibn 'Uyayna, Yahya al-Qattan and 'Abd al-Razzaq, and studied law with al-Shafi'i, who said he left no one in Baghdad more learned or more devout.",
+     "In the Mihna, when the caliphs al-Ma'mun and al-Mu'tasim demanded that scholars declare the Qur'an created, he refused, was imprisoned and flogged, and did not yield; al-Mutawakkil ended the inquisition. His Musnad, gathered from some 750,000 reports he had heard and arranged under the Companion who narrates each hadith, was transmitted and expanded by his son 'Abd Allah.",
+     "His answers on law, collected by his students, became the Hanbali school. When he died, hundreds of thousands followed his funeral in Baghdad."
+    ],
+    "tr": [
+     "Ahmed Bağdat'ta yetim büyüdü ve on beş yaşında hadis talebine başladı. Kûfe'ye, Basra'ya, Mekke'ye, Yemen'e ve Şam'a yaya gitti; Hüşeym, İbn Uyeyne, Yahyâ el-Kattân ve Abdürrezzâk'tan öğrendi; fıkhı Şâfiî'den okudu. Şâfiî, Bağdat'ta ondan daha âlim ve daha takvalı kimseyi bırakmadığını söyler.",
+     "Mihne'de halifeler Me'mûn ve Mu'tasım âlimlerden Kur'an'ın mahlûk olduğunu söylemelerini isteyince reddetti; hapsedildi, kırbaçlandı ama boyun eğmedi; Mütevekkil bu soruşturmaya son verdi. Dinlediği 750.000 kadar rivayetten seçip her hadisi rivayet eden sahâbînin altına dizdiği Müsned'i, oğlu Abdullah rivayet etti ve ekledi.",
+     "Talebelerinin topladığı fıkhî cevapları Hanbelî mezhebi oldu. Vefat ettiğinde Bağdat'ta yüz binlerce kişi cenazesine katıldı."
+    ],
+    "ar": [
+     "نشأ أحمد يتيمًا ببغداد، وطلب الحديث وهو ابن خمس عشرة، ورحل ماشيًا إلى الكوفة والبصرة ومكة واليمن والشام، فأخذ عن هشيم وابن عيينة ويحيى القطان وعبد الرزاق، وتفقّه بالشافعي الذي قال: خرجت من بغداد وما خلّفت بها أفقه ولا أورع من أحمد.",
+     "وامتُحن في القول بخلق القرآن زمن المأمون والمعتصم فأبى، فحُبس وضُرب ولم يُجب، حتى رفع المتوكل المحنة. وانتقى مسنده من نحو سبعمائة وخمسين ألف حديث سمعها، ورتّبه على مسانيد الصحابة، ورواه ابنه عبد الله وزاد فيه.",
+     "وجمع أصحابه أجوبته في الفقه فكانت المذهب الحنبلي، ولما مات شيّعه ببغداد مئات الألوف."
+    ]
+   },
+   "sources": ["tarikh_baghdad", "siyar", "tahdhib_kamal", "wafayat", "taqrib"]
+  },
+  {
+   "id": "ibn-main", "road": "sunni", "kind": "critic", "persons": ["taqrib:7651"],
+   "name": {"en": "Yahya b. Ma'in", "tr": "Yahyâ b. Maîn", "ar": "يحيى بن معين"},
+   "facts": [
+    {"k": "born", "en": "158 AH (775 CE)", "tr": "158 (775)", "ar": "سنة 158هـ (775م)"},
+    {"k": "died", "en": "Medina, during the pilgrimage, 233 AH (848 CE)", "tr": "Medine, hac yolculuğunda, 233 (848)", "ar": "المدينة في طريق الحج سنة 233هـ (848م)"},
+    {"k": "known", "en": "The imam of the criticism of narrators", "tr": "Ricâl tenkidinin imamı", "ar": "إمام الجرح والتعديل"}
+   ],
+   "text": {
+    "en": [
+     "Ibn Ma'in of Baghdad inherited a large fortune and spent all of it on hadith, until he had no sandals to wear. He wrote with his own hand, he said, a million hadith, so as to know the good from the false.",
+     "His verdicts on thousands of narrators, recorded by his students (al-Duri, al-Darimi and others), are a foundation of every later book of narrators. Ahmad b. Hanbal said: “Any hadith Yahya b. Ma'in does not know is no hadith.” He died in Medina on pilgrimage."
+    ],
+    "tr": [
+     "Bağdatlı İbn Maîn büyük bir servet miras aldı ve hepsini hadis için harcadı; giyecek ayakkabısı kalmadı. Doğruyu yanlıştan ayırmak için kendi eliyle bir milyon hadis yazdığını söyler.",
+     "Talebelerinin (Dûrî, Dârimî ve başkaları) kaydettiği binlerce râvi hakkındaki hükümleri sonraki bütün ricâl kitaplarının temelidir. Ahmed b. Hanbel “Yahyâ b. Maîn'in bilmediği hadis, hadis değildir” der. Hac yolculuğunda Medine'de vefat etti."
+    ],
+    "ar": [
+     "ورث ابن معين البغدادي مالًا كثيرًا فأنفقه كله على الحديث حتى لم يبق له نعل يلبسه، وقال: كتبت بيدي ألف ألف حديث.",
+     "وأحكامه في آلاف الرواة التي دوّنها أصحابه كالدوري والدارمي أصل لكتب الرجال بعده، وقال أحمد: كل حديث لا يعرفه يحيى بن معين فليس بحديث. ومات بالمدينة حاجًّا."
+    ]
+   },
+   "sources": ["tarikh_baghdad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "ibn-al-madini", "road": "sunni", "kind": "critic", "persons": ["taqrib:4760"],
+   "name": {"en": "'Ali b. al-Madini", "tr": "Ali b. el-Medînî", "ar": "علي بن المديني"},
+   "facts": [
+    {"k": "born", "en": "Basra, 161 AH (778 CE)", "tr": "Basra, 161 (778)", "ar": "البصرة سنة 161هـ (778م)"},
+    {"k": "died", "en": "Samarra, 234 AH (849 CE)", "tr": "Sâmerrâ, 234 (849)", "ar": "سامراء سنة 234هـ (849م)"},
+    {"k": "known", "en": "Master of the hidden defects of hadith ('ilal); teacher of al-Bukhari", "tr": "Hadis illetlerinin üstadı; Buhârî'nin hocası", "ar": "إمام علل الحديث، وشيخ البخاري"}
+   ],
+   "text": {
+    "en": [
+     "Ibn al-Madini was the greatest authority of his age on the hidden defects of hadith — where a sound-looking chain conceals an error. Al-Bukhari said: “I never felt small before anyone except 'Ali b. al-Madini.”",
+     "In the Mihna he gave the answer the caliph demanded, which cost him the regard of some of his fellows; his learning in hadith was never in question."
+    ],
+    "tr": [
+     "İbnü'l-Medînî, zamanında hadis illetlerinin — sağlam görünen bir senedin gizlediği hatanın — en büyük otoritesiydi. Buhârî “Ali b. el-Medînî'den başka hiç kimsenin yanında kendimi küçük görmedim” der.",
+     "Mihne'de halifenin istediği cevabı verdi; bu bazı meslektaşlarının ona bakışını değiştirdi; ama hadisteki ilmi hiç tartışılmadı."
+    ],
+    "ar": [
+     "ابن المديني إمام عصره في علل الحديث، وقال البخاري: ما استصغرت نفسي عند أحد إلا عند علي بن المديني.",
+     "وأجاب في المحنة فعتب عليه بعض أقرانه، ولم يختلفوا في إمامته في الحديث."
+    ]
+   },
+   "sources": ["tarikh_baghdad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "ishaq", "road": "sunni", "kind": "imam", "persons": ["taqrib:332"],
+   "name": {"en": "Ishaq b. Rahwayh", "tr": "İshak b. Râhûye", "ar": "إسحاق بن راهويه"},
+   "facts": [
+    {"k": "name", "en": "Ishaq b. Ibrahim b. Makhlad al-Hanzali; Abu Ya'qub", "tr": "İshak b. İbrâhim b. Mahled el-Hanzalî; künyesi Ebû Ya'kûb", "ar": "إسحاق بن إبراهيم بن مخلد الحنظلي، أبو يعقوب"},
+    {"k": "died", "en": "Nishapur, 238 AH (853 CE)", "tr": "Nîşâbur, 238 (853)", "ar": "نيسابور سنة 238هـ (853م)"}
+   ],
+   "text": {
+    "en": [
+     "Ishaq b. Rahwayh was the imam of Khurasan in hadith and law, a friend and peer of Ahmad b. Hanbal, famed for his memory.",
+     "In his gathering he once wished someone would compile a short book of only the sound hadith of the Prophet ﷺ; al-Bukhari, his student, said this was what moved him to write his Sahih."
+    ],
+    "tr": [
+     "İshak b. Râhûye hadis ve fıkıhta Horasan'ın imamı, Ahmed b. Hanbel'in dostu ve akranıydı; hafızasıyla meşhurdu.",
+     "Bir meclisinde birinin yalnızca Resûlullah'ın ﷺ sahih hadislerini içeren kısa bir kitap derlemesini diledi; talebesi Buhârî, Sahîh'ini yazmaya bunun sevk ettiğini söyler."
+    ],
+    "ar": [
+     "إسحاق بن راهويه إمام خراسان في الحديث والفقه، قرين أحمد بن حنبل وصديقه، مشهور بالحفظ.",
+     "وقال في مجلسه: لو جمعتم كتابًا مختصرًا لصحيح سنة النبي ﷺ، فقال تلميذه البخاري: فوقع ذلك في قلبي فأخذت في جمع الصحيح."
+    ]
+   },
+   "sources": ["tarikh_baghdad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "ibn-abi-shayba", "road": "sunni", "kind": "narrator", "persons": ["taqrib:3575"],
+   "name": {"en": "Abu Bakr b. Abi Shayba", "tr": "Ebû Bekir b. Ebî Şeybe", "ar": "أبو بكر بن أبي شيبة"},
+   "facts": [
+    {"k": "name", "en": "'Abd Allah b. Muhammad b. Abi Shayba, of Kufa", "tr": "Abdullah b. Muhammed b. Ebî Şeybe; Kûfeli", "ar": "عبد الله بن محمد بن أبي شيبة الكوفي"},
+    {"k": "died", "en": "Kufa, 235 AH (849 CE)", "tr": "Kûfe, 235 (849)", "ar": "الكوفة سنة 235هـ (849م)"},
+    {"k": "works", "en": "al-Musannaf", "tr": "el-Musannef", "ar": "المصنّف"}
+   ],
+   "text": {
+    "en": [
+     "Abu Bakr b. Abi Shayba, of a Kufan family of scholars, compiled the great Musannaf, which gathers hadith and the rulings of the Companions and Successors by subject.",
+     "He taught al-Bukhari, Muslim, Abu Dawud and Ibn Maja; Muslim narrates from him more than from any other teacher."
+    ],
+    "tr": [
+     "Kûfeli bir âlim ailesinden Ebû Bekir b. Ebî Şeybe, hadisleri ve sahâbe ile tâbiînin hükümlerini konulara göre toplayan büyük Musannef'i derledi.",
+     "Buhârî, Müslim, Ebû Dâvûd ve İbn Mâce'nin hocasıdır; Müslim, hocaları içinde en çok ondan rivayet eder."
+    ],
+    "ar": [
+     "أبو بكر بن أبي شيبة من بيت علم بالكوفة، صنّف المصنّف الكبير الجامع للأحاديث وآثار الصحابة والتابعين على الأبواب.",
+     "وروى عنه البخاري ومسلم وأبو داود وابن ماجه، وهو أكثر شيوخ مسلم رواية عنه."
+    ]
+   },
+   "sources": ["tarikh_baghdad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "qutayba", "road": "sunni", "kind": "narrator", "persons": ["taqrib:5522"],
+   "name": {"en": "Qutayba b. Sa'id", "tr": "Kuteybe b. Saîd", "ar": "قتيبة بن سعيد"},
+   "facts": [
+    {"k": "born", "en": "Baghlan near Balkh, 150 AH (767 CE)", "tr": "Belh yakınında Baglân, 150 (767)", "ar": "بغلان من أعمال بلخ سنة 150هـ (767م)"},
+    {"k": "died", "en": "Baghlan, 240 AH (854 CE), aged 90", "tr": "Baglân, 240 (854), 90 yaşında", "ar": "بغلان سنة 240هـ (854م) عن تسعين سنة"}
+   ],
+   "text": {
+    "en": [
+     "Qutayba of Baghlan in Khurasan travelled to the Hijaz, Iraq, Syria and Egypt, hearing Malik, al-Layth and Ibn 'Uyayna. Scholars came to him from everywhere in his long old age.",
+     "He was a teacher of the authors of the six books, and is one of the links most often met in their chains."
+    ],
+    "tr": [
+     "Horasan'da Baglânlı Kuteybe Hicaz'a, Irak'a, Şam'a ve Mısır'a gidip Mâlik'ten, Leys'ten ve İbn Uyeyne'den dinledi. Uzun yaşlılığında her yerden âlimler ona geldi.",
+     "Kütüb-i Sitte musanniflerinin hocasıdır ve onların senedlerinde en sık rastlanan halkalardandır."
+    ],
+    "ar": [
+     "رحل قتيبة من بغلان بخراسان إلى الحجاز والعراق والشام ومصر، فسمع مالكًا والليث وابن عيينة، ورحل إليه الناس في شيخوخته الطويلة.",
+     "وهو من شيوخ أصحاب الكتب الستة، ومن أكثر الرجال دورانًا في أسانيدهم."
+    ]
+   },
+   "sources": ["siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "musaddad", "road": "sunni", "kind": "narrator", "persons": ["taqrib:6598"],
+   "name": {"en": "Musaddad b. Musarhad", "tr": "Müsedded b. Müserhed", "ar": "مسدد بن مسرهد"},
+   "facts": [
+    {"k": "died", "en": "Basra, 228 AH (843 CE)", "tr": "Basra, 228 (843)", "ar": "البصرة سنة 228هـ (843م)"}
+   ],
+   "text": {
+    "en": [
+     "Musaddad of Basra was a trustworthy memoriser and, it is said, the first in Basra to compile a Musnad. He heard Yahya al-Qattan, Hammad b. Zayd and Abu 'Awana.",
+     "Al-Bukhari and Abu Dawud narrate a great deal from him; he is among the commonest first links in al-Bukhari's chains."
+    ],
+    "tr": [
+     "Basralı Müsedded güvenilir bir hâfızdı ve Basra'da ilk Müsned'i derleyenin o olduğu söylenir. Yahyâ el-Kattân'dan, Hammâd b. Zeyd'den ve Ebû Avâne'den dinledi.",
+     "Buhârî ve Ebû Dâvûd ondan çok rivayet eder; Buhârî'nin senedlerinde en sık geçen ilk halkalardandır."
+    ],
+    "ar": [
+     "مسدد البصري ثقة حافظ، قيل: هو أول من صنّف المسند بالبصرة، سمع يحيى القطان وحماد بن زيد وأبا عوانة.",
+     "وأكثر عنه البخاري وأبو داود، وهو من أكثر شيوخ البخاري في أسانيده."
+    ]
+   },
+   "sources": ["siyar", "tahdhib_kamal", "taqrib"]
+  }
+ ]
+}

@@ -3,8 +3,25 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.3.0] — 2026-10-17
 
+- **The lives of the Companions, the Successors, the narrators and the scholars.** A card *Life* on the Narrators
+  and Hadith Scholars pages, in English, Turkish or Arabic. 152 lives written for isnady — the Companions who
+  narrated most and the ten promised Paradise, the Mothers of the Believers, the Prophet's family, the great
+  Successors and their followers, the imams of law and the great critics, the compilers of every book in isnady,
+  the graders, and on road B the companions of the Imams, the narrators of Qum and the Imami scholars — each with
+  the facts at a glance (full name, birth, death, family, teachers, students, works) and a life in a few
+  paragraphs, summarised from the classical works named under it, each road from its own works. Every other
+  narrator gets his life as far as the data says it, in plain sentences. The Hadith Scholars page no longer says
+  "his life is planned". `iy life NAME` (`--lang en|tr|ar`).
+- **Years of death read right.** Ibn Hajar names the tens once for several years ("died in seven, or eight, or
+  nine and fifty" = 57–59): isnady read the first as 7 or 8 — Abu Hurayra showed "d. 8", Zayd b. Thabit "d. 5".
+  And his rule for the century (tabaqa 3–8 after 100, 9 on after 200) put Successors who died in the 90s a century
+  late ("Urwa d. 194", Sa'id b. Jubayr 195) and Yahya al-Qattan and Ibn Mahdi (198) in 298. 238 years of death
+  are corrected, once, at the first start; the lists kept in the cache are counted again.
+- **Every compiler on the Hadith Scholars page:** Ahmad b. Hanbal (al-Musnad), al-Darimi, al-Khatib al-Tabrizi
+  (Mishkat al-Masabih) added; al-Adab al-Mufrad under al-Bukhari, al-Shama'il under al-Tirmidhi, Riyad al-Salihin
+  under al-Nawawi, Bulugh al-Maram under Ibn Hajar.
 - **Every narrator found can be reached.** The Search page ranked the closest 400 narrators and then said "add a word
   to find the others"; now "Show more" goes on past them, through every match ("محمد": 1,775). The Narrators page
   stopped at its first 200 ("narrow the search to see others"); now the next 200 are read when the list is scrolled

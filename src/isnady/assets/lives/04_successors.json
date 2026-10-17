@@ -1,0 +1,604 @@
+{
+ "version": 1,
+ "license": "CC BY 4.0 — written for isnady",
+ "about": "The Successors (tabi'un): the generation that learned from the Companions.",
+ "lives": [
+  {
+   "id": "said-b-al-musayyab", "road": "sunni", "kind": "successor", "persons": ["taqrib:2396"],
+   "name": {"en": "Sa'id b. al-Musayyab", "tr": "Saîd b. Müseyyeb", "ar": "سعيد بن المسيب"},
+   "facts": [
+    {"k": "name", "en": "Sa'id b. al-Musayyab b. Hazn, of Makhzum of Quraysh; Abu Muhammad", "tr": "Saîd b. Müseyyeb b. Hazn; Kureyş'in Mahzûm kolundan; künyesi Ebû Muhammed", "ar": "سعيد بن المسيب بن حزن المخزومي القرشي، أبو محمد"},
+    {"k": "born", "en": "Medina, in the second year of 'Umar's caliphate (15 AH, 636 CE)", "tr": "Medine, Hz. Ömer'in halifeliğinin ikinci yılında (15 h., 636)", "ar": "المدينة لسنتين مضتا من خلافة عمر (15هـ، 636م)"},
+    {"k": "died", "en": "Medina, about 94 AH (713 CE), close to eighty", "tr": "Medine, 94 civarı (713), seksen yaşlarında", "ar": "المدينة نحو سنة 94هـ (713م) وقد ناهز الثمانين"},
+    {"k": "family", "en": "Son-in-law of Abu Hurayra", "tr": "Ebû Hüreyre'nin damadı", "ar": "صهر أبي هريرة"},
+    {"k": "students", "en": "al-Zuhri, Qatada, Yahya b. Sa'id al-Ansari, 'Amr b. Dinar …", "tr": "Zührî, Katâde, Yahyâ b. Saîd el-Ensârî, Amr b. Dînâr …", "ar": "الزهري، وقتادة، ويحيى بن سعيد الأنصاري، وعمرو بن دينار"},
+    {"k": "known", "en": "“The master of the Successors”; one of the seven jurists of Medina", "tr": "“Tâbiînin efendisi”; Medine'nin yedi fakihinden", "ar": "سيد التابعين، وأحد الفقهاء السبعة بالمدينة"}
+   ],
+   "text": {
+    "en": [
+     "Sa'id b. al-Musayyab was born in the caliphate of 'Umar and grew up among the Companions in Medina. He married the daughter of Abu Hurayra and learned his hadith; he knew the judgments of 'Umar so well that Ibn 'Umar would send people to ask him about his own father's rulings. He was the first of the seven jurists of Medina, and his mursal reports — where he names the Prophet ﷺ without the Companion — were held the strongest of all.",
+     "He was fearless before rulers: he refused to pledge allegiance to two heirs at once under 'Abd al-Malik and was flogged for it, and he married his daughter to a poor student rather than to the caliph's son. For forty years, it was said, the call to prayer never found him outside the mosque."
+    ],
+    "tr": [
+     "Saîd b. Müseyyeb Hz. Ömer'in halifeliğinde doğdu ve Medine'de sahâbîler arasında yetişti. Ebû Hüreyre'nin kızıyla evlendi ve onun hadislerini öğrendi; Hz. Ömer'in hükümlerini o kadar iyi bilirdi ki İbn Ömer, babasının hükümlerini sormak isteyenleri ona gönderirdi. Medine'nin yedi fakihinin ilkidir; sahâbîyi atlayıp doğrudan Resûlullah'tan ﷺ naklettiği mürsel rivayetleri en sağlam mürseller sayıldı.",
+     "Yöneticilerin karşısında korkusuzdu: Abdülmelik döneminde iki veliahda birden biat etmeyi reddetti ve bu yüzden kırbaçlandı; kızını halifenin oğluna değil yoksul bir talebesine verdi. Kırk yıl boyunca ezanın onu mescidin dışında bulmadığı söylenir."
+    ],
+    "ar": [
+     "وُلد سعيد بن المسيب في خلافة عمر، ونشأ بين الصحابة بالمدينة، وتزوج بنت أبي هريرة وأخذ حديثه، وكان أعلم الناس بأقضية عمر حتى كان ابن عمر يرسل إليه يسأله عنها. وهو رأس الفقهاء السبعة بالمدينة، ومراسيله أصح المراسيل عندهم.",
+     "وكان لا يهاب السلطان، أبى أن يبايع لوليّي عهد معًا في زمن عبد الملك فضُرب، وزوّج ابنته طالبًا فقيرًا وردّ ابن الخليفة. وقيل: ما أذّن المؤذن منذ أربعين سنة إلا وهو في المسجد."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "tahdhib", "taqrib"]
+  },
+  {
+   "id": "urwa", "road": "sunni", "kind": "successor", "persons": ["taqrib:4561"],
+   "name": {"en": "'Urwa b. al-Zubayr", "tr": "Urve b. Zübeyr", "ar": "عروة بن الزبير"},
+   "facts": [
+    {"k": "born", "en": "Medina, early in 'Uthman's caliphate (c. 23–29 AH)", "tr": "Medine, Hz. Osman'ın halifeliğinin başlarında (23–29 civarı)", "ar": "المدينة في أوائل خلافة عثمان (نحو 23–29هـ)"},
+    {"k": "died", "en": "Medina, 94 AH (713 CE)", "tr": "Medine, 94 (713)", "ar": "المدينة سنة 94هـ (713م)"},
+    {"k": "family", "en": "Son of al-Zubayr and Asma' bint Abi Bakr; nephew of 'A'isha; father of Hisham b. 'Urwa", "tr": "Zübeyr ile Esmâ bt. Ebî Bekir'in oğlu; Hz. Âişe'nin yeğeni; Hişâm b. Urve'nin babası", "ar": "ابن الزبير وأسماء بنت أبي بكر، وابن أخت عائشة، وأبو هشام بن عروة"},
+    {"k": "students", "en": "His sons Hisham and Muhammad, al-Zuhri, Abu al-Aswad Yatim 'Urwa …", "tr": "Oğulları Hişâm ve Muhammed, Zührî, Ebü'l-Esved Yetîmü Urve …", "ar": "ابناه هشام ومحمد، والزهري، وأبو الأسود يتيم عروة"},
+    {"k": "known", "en": "One of the seven jurists of Medina; the first to write on the Prophet's campaigns (maghazi)", "tr": "Medine'nin yedi fakihinden; Resûlullah'ın ﷺ gazveleri (meğâzî) hakkında ilk yazanlardan", "ar": "أحد الفقهاء السبعة، وأول من صنّف في المغازي"}
+   ],
+   "text": {
+    "en": [
+     "'Urwa was the son of al-Zubayr and of Asma' bint Abi Bakr, and so the nephew of 'A'isha, whose house he frequented; much of her knowledge reached later generations through him. He was one of the seven jurists of Medina, and gathered the reports of the Prophet's life and campaigns — the beginning of the written sira.",
+     "In his old age his leg had to be cut off for gangrene; he bore it without a cry, and the same journey he lost one of his sons, saying: “You gave me four limbs and took one, and four sons and took one.” He kept reciting a quarter of the Qur'an each day."
+    ],
+    "tr": [
+     "Urve, Zübeyr ile Esmâ bt. Ebî Bekir'in oğlu, dolayısıyla evine sık gittiği Hz. Âişe'nin yeğenidir; Hz. Âişe'nin ilminin çoğu sonraki nesillere onun yoluyla ulaştı. Medine'nin yedi fakihinden biridir; Resûlullah'ın ﷺ hayatı ve gazvelerine dair haberleri topladı — yazılı siyerin başlangıcı.",
+     "Yaşlılığında kangren yüzünden bacağı kesildi; bir inilti bile çıkarmadı. Aynı yolculukta bir oğlunu da kaybetti ve “Bana dört uzuv verdin, birini aldın; dört oğul verdin, birini aldın” dedi. Her gün Kur'an'ın dörtte birini okumayı sürdürdü."
+    ],
+    "ar": [
+     "عروة ابن الزبير وأسماء بنت أبي بكر، فهو ابن أخت عائشة، لزم بيتها فوصل كثير من علمها إلى من بعده من طريقه. وهو أحد الفقهاء السبعة، وجمع أخبار السيرة والمغازي فكان أول من صنّف فيها.",
+     "وقُطعت رجله في كبره من الأكلة فلم يتأوّه، وأصيب في سفره ذلك بابن له، فقال: اللهم كانت لي أطراف أربعة فأخذت واحدًا وأبقيت ثلاثة، وكان لي بنون أربعة فأخذت واحدًا وأبقيت ثلاثة. وكان يقرأ ربع القرآن كل يوم."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "tahdhib", "taqrib"]
+  },
+  {
+   "id": "zuhri", "road": "sunni", "kind": "successor", "persons": ["taqrib:6296"],
+   "name": {"en": "Ibn Shihab al-Zuhri", "tr": "İbn Şihâb ez-Zührî", "ar": "ابن شهاب الزهري"},
+   "facts": [
+    {"k": "name", "en": "Muhammad b. Muslim b. 'Ubayd Allah b. 'Abd Allah b. Shihab, of Zuhra of Quraysh; Abu Bakr", "tr": "Muhammed b. Müslim b. Ubeydullah b. Abdullah b. Şihâb; Kureyş'in Zühre kolundan; künyesi Ebû Bekir", "ar": "محمد بن مسلم بن عبيد الله بن عبد الله بن شهاب الزهري القرشي، أبو بكر"},
+    {"k": "born", "en": "Medina, 50 or 51 AH (670 CE)", "tr": "Medine, 50 veya 51 (670)", "ar": "المدينة سنة 50 أو 51هـ (670م)"},
+    {"k": "died", "en": "On his estate between the Hijaz and Syria, 124 or 125 AH (742 CE)", "tr": "Hicaz ile Şam arasındaki arazisinde, 124 veya 125 (742)", "ar": "بضيعته بين الحجاز والشام سنة 124 أو 125هـ (742م)"},
+    {"k": "teachers", "en": "Ibn 'Umar, Anas, Sa'id b. al-Musayyab, 'Urwa, Salim, 'Ubayd Allah b. 'Abd Allah …", "tr": "İbn Ömer, Enes, Saîd b. Müseyyeb, Urve, Sâlim, Ubeydullah b. Abdullah …", "ar": "ابن عمر، وأنس، وسعيد بن المسيب، وعروة، وسالم، وعبيد الله بن عبد الله"},
+    {"k": "students", "en": "Malik, Ma'mar, Sufyan b. 'Uyayna, al-Layth, Ibn Jurayj, al-Awza'i, Yunus, 'Uqayl, Shu'ayb …", "tr": "Mâlik, Ma'mer, Süfyân b. Uyeyne, Leys, İbn Cüreyc, Evzâî, Yûnus, Ukayl, Şuayb …", "ar": "مالك، ومعمر، وسفيان بن عيينة، والليث، وابن جريج، والأوزاعي، ويونس، وعقيل، وشعيب"},
+    {"k": "known", "en": "The first to gather hadith in writing for the state", "tr": "Hadisi devlet için ilk yazıya geçiren", "ar": "أول من دوّن الحديث بأمر السلطان"}
+   ],
+   "text": {
+    "en": [
+     "Al-Zuhri learned in Medina from the last Companions and the great Successors, sitting for years with Sa'id b. al-Musayyab and serving 'Ubayd Allah b. 'Abd Allah. His memory was proverbial — he said he never asked a man to repeat a hadith and never forgot what he had learned — and he wrote down everything he heard, which few did then.",
+     "'Umar b. 'Abd al-'Aziz ordered the hadith to be gathered and al-Zuhri was the first to do it, sending copies to the provinces. He was close to the Umayyad court and taught the caliph's sons. Almost every great narrator of the next generation learned from him: half the hadith of the Hijaz, it was said, passed through his hands, and a chain “al-Zuhri from Salim from his father” or “from Sa'id from Abu Hurayra” is among the soundest."
+    ],
+    "tr": [
+     "Zührî, Medine'de son sahâbîlerden ve büyük tâbiîlerden ders aldı; yıllarca Saîd b. Müseyyeb'in meclisinde oturdu ve Ubeydullah b. Abdullah'a hizmet etti. Hafızası darb-ı mesel olmuştu — hiç kimseden bir hadisi tekrar etmesini istemediğini ve öğrendiğini unutmadığını söylerdi — ve o dönemde az kimsenin yaptığı gibi işittiği her şeyi yazardı.",
+     "Ömer b. Abdülaziz hadislerin toplanmasını emretti; bunu ilk yapan Zührî oldu ve nüshalar eyaletlere gönderildi. Emevî sarayına yakındı ve halifenin oğullarına hocalık yaptı. Sonraki neslin büyük râvilerinin neredeyse hepsi ondan öğrendi: Hicaz hadisinin yarısının onun elinden geçtiği söylenir; “Zührî, Sâlim'den, o babasından” ya da “Saîd'den, o Ebû Hüreyre'den” senedleri en sağlam senedlerdendir."
+    ],
+    "ar": [
+     "أخذ الزهري بالمدينة عن بقية الصحابة وكبار التابعين، ولازم سعيد بن المسيب سنين، وخدم عبيد الله بن عبد الله. وكان حفظه يُضرب به المثل، قال: ما استعدت حديثًا قط، ولا شككت في حديث إلا حديثًا واحدًا. وكان يكتب كل ما يسمع.",
+     "وأمر عمر بن عبد العزيز بتدوين الحديث فكان الزهري أول من دوّنه، وبُعثت الدفاتر إلى الآفاق. وكان قريبًا من بني أمية وأدّب أولاد الخليفة. وأخذ عنه عامة أئمة الجيل التالي، وقيل: إن نصف حديث الحجاز يدور عليه، ومن أصح الأسانيد: الزهري عن سالم عن أبيه، والزهري عن سعيد عن أبي هريرة."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tadhkira", "tahdhib_kamal", "tahdhib", "taqrib"]
+  },
+  {
+   "id": "nafi", "road": "sunni", "kind": "successor", "persons": ["taqrib:7086"],
+   "name": {"en": "Nafi', the freedman of Ibn 'Umar", "tr": "Nâfi', İbn Ömer'in âzatlısı", "ar": "نافع مولى ابن عمر"},
+   "facts": [
+    {"k": "died", "en": "Medina, 117 AH (735 CE) or a little after", "tr": "Medine, 117 (735) ya da biraz sonra", "ar": "المدينة سنة 117هـ (735م) أو بعدها"},
+    {"k": "students", "en": "Malik, Ayyub al-Sakhtiyani, 'Ubayd Allah b. 'Umar, al-Layth, Ibn Jurayj …", "tr": "Mâlik, Eyyûb es-Sahtiyânî, Ubeydullah b. Ömer, Leys, İbn Cüreyc …", "ar": "مالك، وأيوب السختياني، وعبيد الله بن عمر، والليث، وابن جريج"},
+    {"k": "known", "en": "“Malik from Nafi' from Ibn 'Umar” — the chain al-Bukhari held the soundest", "tr": "“Mâlik, Nâfi'den, o İbn Ömer'den” — Buhârî'nin en sahih saydığı sened", "ar": "«مالك عن نافع عن ابن عمر» أصح الأسانيد عند البخاري"}
+   ],
+   "text": {
+    "en": [
+     "Nafi' was taken captive as a boy in a campaign and came into the hands of 'Abd Allah b. 'Umar, whom he served for some thirty years; Ibn 'Umar freed him, and he became the keeper of his master's knowledge.",
+     "'Umar b. 'Abd al-'Aziz sent him to Egypt to teach the people the Sunna. Malik sat with him for years; the chain Malik from Nafi' from Ibn 'Umar was called the golden chain."
+    ],
+    "tr": [
+     "Nâfi' çocukken bir seferde esir düştü ve Abdullah b. Ömer'in eline geçti; ona otuz yıl kadar hizmet etti. İbn Ömer onu azat etti; o da efendisinin ilminin muhafızı oldu.",
+     "Ömer b. Abdülaziz onu halka sünneti öğretmesi için Mısır'a gönderdi. Mâlik yıllarca onun derslerine devam etti; Mâlik–Nâfi'–İbn Ömer senedine “altın zincir” (silsiletü'z-zeheb) dendi."
+    ],
+    "ar": [
+     "أُسر نافع صغيرًا في بعض المغازي فصار إلى عبد الله بن عمر، فخدمه نحوًا من ثلاثين سنة وأعتقه، فكان حافظ علم مولاه.",
+     "وبعثه عمر بن عبد العزيز إلى مصر يعلّم أهلها السنن، ولازمه مالك سنين، فسُمّي إسناد مالك عن نافع عن ابن عمر السلسلة الذهبية."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "salim", "road": "sunni", "kind": "successor", "persons": ["taqrib:2176"],
+   "name": {"en": "Salim b. 'Abd Allah b. 'Umar", "tr": "Sâlim b. Abdullah b. Ömer", "ar": "سالم بن عبد الله بن عمر"},
+   "facts": [
+    {"k": "died", "en": "Medina, 106 AH (725 CE)", "tr": "Medine, 106 (725)", "ar": "المدينة سنة 106هـ (725م)"},
+    {"k": "known", "en": "One of the seven jurists of Medina; the son most like his father", "tr": "Medine'nin yedi fakihinden; babasına en çok benzeyen oğlu", "ar": "أحد الفقهاء السبعة، وأشبه ولد عبد الله به"}
+   ],
+   "text": {
+    "en": [
+     "Salim was the grandson of 'Umar and the son of Ibn 'Umar, and the one of his sons most like him in conduct. He wore coarse clothes and lived simply, and was among the seven jurists of Medina.",
+     "When the caliph met him inside the Ka'ba and offered to grant him any need, he said he was ashamed to ask anyone but Allah in His own house. “Al-Zuhri from Salim from his father” is among the soundest chains."
+    ],
+    "tr": [
+     "Sâlim, Hz. Ömer'in torunu ve İbn Ömer'in oğludur; oğulları içinde huyca ona en çok benzeyendi. Kaba elbiseler giyer, sade yaşardı; Medine'nin yedi fakihindendir.",
+     "Halife onunla Kâbe'nin içinde karşılaşıp her ihtiyacını karşılamayı teklif edince, Allah'ın evinde O'ndan başkasından bir şey istemekten utandığını söyledi. “Zührî, Sâlim'den, o babasından” senedi en sağlam senedlerdendir."
+    ],
+    "ar": [
+     "سالم حفيد عمر وابن عبد الله بن عمر، وأشبه ولده به هديًا. كان يلبس الخشن ويعيش عيشًا يسيرًا، وهو أحد الفقهاء السبعة.",
+     "ولقيه الخليفة في جوف الكعبة فقال: سلني حاجتك، فقال: إني أستحيي من الله أن أسأل في بيته غيره. ومن أصح الأسانيد: الزهري عن سالم عن أبيه."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "qasim", "road": "sunni", "kind": "successor", "persons": ["taqrib:5489"],
+   "name": {"en": "al-Qasim b. Muhammad b. Abi Bakr", "tr": "Kâsım b. Muhammed b. Ebî Bekir", "ar": "القاسم بن محمد بن أبي بكر"},
+   "facts": [
+    {"k": "died", "en": "Qudayd between Mecca and Medina, 106 AH (725 CE)", "tr": "Mekke ile Medine arasında Kudeyd'de, 106 (725)", "ar": "بقُدَيد بين مكة والمدينة سنة 106هـ (725م)"},
+    {"k": "family", "en": "Grandson of Abu Bakr; raised by his aunt 'A'isha", "tr": "Hz. Ebû Bekir'in torunu; halası Hz. Âişe'nin yanında büyüdü", "ar": "حفيد أبي بكر، نشأ في حجر عمته عائشة"},
+    {"k": "known", "en": "One of the seven jurists of Medina", "tr": "Medine'nin yedi fakihinden", "ar": "أحد الفقهاء السبعة"}
+   ],
+   "text": {
+    "en": [
+     "Al-Qasim's father Muhammad b. Abi Bakr was killed in Egypt when al-Qasim was a child, and he grew up in the house of his aunt 'A'isha, who taught him. With 'Urwa and 'Amra he was the best informed on her hadith.",
+     "He was one of the seven jurists of Medina, careful in fatwa — he would rather say “I do not know” than speak without knowledge. 'Umar b. 'Abd al-'Aziz is reported to have wished he could make him his successor. He lost his sight late in life."
+    ],
+    "tr": [
+     "Kâsım'ın babası Muhammed b. Ebî Bekir, Kâsım çocukken Mısır'da öldürüldü; Kâsım halası Hz. Âişe'nin evinde büyüdü ve ondan ilim aldı. Urve ve Amre ile birlikte onun hadislerini en iyi bilendi.",
+     "Medine'nin yedi fakihindendir; fetvada titizdi — bilgisiz konuşmaktansa “bilmiyorum” demeyi tercih ederdi. Ömer b. Abdülaziz'in onu yerine bırakabilmeyi dilediği rivayet edilir. Ömrünün sonunda gözlerini kaybetti."
+    ],
+    "ar": [
+     "قُتل أبوه محمد بن أبي بكر بمصر والقاسم صغير، فنشأ في حجر عمته عائشة وتفقّه بها، فكان هو وعروة وعمرة أعلم الناس بحديثها.",
+     "وهو أحد الفقهاء السبعة، شديد التحرّي في الفتيا، يقول: لأن يعيش الرجل جاهلًا خير له من أن يقول على الله ما لا يعلم. ورُوي أن عمر بن عبد العزيز تمنّى أن يستخلفه، وذهب بصره في آخر عمره."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "hasan-basri", "road": "sunni", "kind": "successor", "persons": ["taqrib:1227"],
+   "name": {"en": "al-Hasan al-Basri", "tr": "Hasan-ı Basrî", "ar": "الحسن البصري"},
+   "facts": [
+    {"k": "name", "en": "al-Hasan b. Abi al-Hasan Yasar; Abu Sa'id", "tr": "Hasan b. Ebi'l-Hasan Yesâr; künyesi Ebû Saîd", "ar": "الحسن بن أبي الحسن يسار، أبو سعيد"},
+    {"k": "born", "en": "Medina, 21 AH (642 CE)", "tr": "Medine, 21 (642)", "ar": "المدينة سنة 21هـ (642م)"},
+    {"k": "died", "en": "Basra, Rajab 110 AH (728 CE), nearly ninety", "tr": "Basra, Receb 110 (728), doksan yaşlarında", "ar": "البصرة، رجب سنة 110هـ (728م) وقد قارب التسعين"},
+    {"k": "family", "en": "His mother Khayra was a freedwoman of Umm Salama", "tr": "Annesi Hayra, Ümmü Seleme'nin âzatlısıydı", "ar": "أمه خيرة مولاة أم سلمة"}
+   ],
+   "text": {
+    "en": [
+     "Al-Hasan was born in Medina; his mother served Umm Salama, and he grew up in the houses of the Prophet's wives. He moved to Basra, where for decades he was its greatest preacher and scholar: his sermons on the fear of Allah, death and this world were remembered word for word.",
+     "He spoke against the tyranny of al-Hajjaj but would not join armed revolt against him. Much of what he narrates he gives without naming the Companion he heard it from, and the critics weighed his reports from each Companion one by one. When he died, the whole of Basra followed his bier, and no one was left in the mosque for the afternoon prayer."
+    ],
+    "tr": [
+     "Hasan Medine'de doğdu; annesi Ümmü Seleme'ye hizmet ederdi ve o, Resûlullah'ın ﷺ eşlerinin evlerinde büyüdü. Basra'ya taşındı; on yıllarca şehrin en büyük vaizi ve âlimi oldu: Allah korkusu, ölüm ve dünya hakkındaki vaazları kelimesi kelimesine aktarıldı.",
+     "Haccâc'ın zulmüne karşı konuştu, ama ona karşı silahlı isyana katılmadı. Rivayet ettiklerinin çoğunu kimden işittiğini söylemeden nakleder; münekkitler onun her sahâbîden rivayetini ayrı ayrı tartmıştır. Vefat ettiğinde bütün Basra cenazesine katıldı; ikindi namazı için mescitte kimse kalmadı."
+    ],
+    "ar": [
+     "وُلد الحسن بالمدينة، وكانت أمه تخدم أم سلمة، فنشأ في بيوت أزواج النبي ﷺ. ثم نزل البصرة فكان واعظها وعالمها عقودًا، تُحفظ مواعظه في الخوف والموت والدنيا بألفاظها.",
+     "وأنكر ظلم الحجاج ولم يخرج عليه بالسيف. وكثير من حديثه يرسله ولا يسمّي من سمعه منه، فنظر النقاد في سماعه من كل صحابي على حدة. ولما مات تبع الناس كلهم جنازته حتى لم تُقم صلاة العصر في المسجد."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "tahdhib", "taqrib"]
+  },
+  {
+   "id": "ibn-sirin", "road": "sunni", "kind": "successor", "persons": ["taqrib:5947"],
+   "name": {"en": "Muhammad b. Sirin", "tr": "Muhammed b. Sîrîn", "ar": "محمد بن سيرين"},
+   "facts": [
+    {"k": "born", "en": "Basra, 33 AH (653 CE)", "tr": "Basra, 33 (653)", "ar": "البصرة سنة 33هـ (653م)"},
+    {"k": "died", "en": "Basra, 110 AH (729 CE), about a hundred days after al-Hasan", "tr": "Basra, 110 (729), Hasan-ı Basrî'den yüz gün kadar sonra", "ar": "البصرة سنة 110هـ (729م) بعد الحسن بنحو مائة يوم"},
+    {"k": "family", "en": "His father Sirin was a freedman of Anas b. Malik", "tr": "Babası Sîrîn, Enes b. Mâlik'in âzatlısıydı", "ar": "أبوه سيرين مولى أنس بن مالك"}
+   ],
+   "text": {
+    "en": [
+     "Ibn Sirin's father was a captive freed by Anas b. Malik. A cloth merchant of Basra, he was famed for scrupulous honesty in trade and for interpreting dreams, and was one of the most careful narrators of his time: he would narrate a hadith only in its exact words.",
+     "Two sayings of his stand at the head of Muslim's Sahih: “This knowledge is religion, so look to whom you take your religion from,” and “They used not to ask about the chain; when the strife came, they said: name us your men.”"
+    ],
+    "tr": [
+     "İbn Sîrîn'in babası, Enes b. Mâlik'in azat ettiği bir esirdi. Basralı bir kumaş tüccarıydı; ticaretteki titiz dürüstlüğü ve rüya tabiriyle meşhurdu; zamanının en dikkatli râvilerindendi: bir hadisi yalnızca aynı lafızlarıyla rivayet ederdi.",
+     "İki sözü Müslim'in Sahîh'inin başında yer alır: “Bu ilim dindir; dininizi kimden aldığınıza bakın” ve “Önceleri senedi sormazlardı; fitne çıkınca 'adamlarınızın adını verin' dediler.”"
+    ],
+    "ar": [
+     "كان أبو ابن سيرين أسيرًا أعتقه أنس بن مالك. وكان بزّازًا بالبصرة مشهورًا بالورع في التجارة وبتعبير الرؤيا، ومن أشد الناس تحرّيًا في الرواية، يحدّث بالحديث على لفظه.",
+     "ومن كلامه في مقدمة صحيح مسلم: «إن هذا العلم دين فانظروا عمن تأخذون دينكم»، و«لم يكونوا يسألون عن الإسناد، فلما وقعت الفتنة قالوا: سمّوا لنا رجالكم»."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "ata", "road": "sunni", "kind": "successor", "persons": ["taqrib:4591"],
+   "name": {"en": "'Ata' b. Abi Rabah", "tr": "Atâ b. Ebî Rebâh", "ar": "عطاء بن أبي رباح"},
+   "facts": [
+    {"k": "died", "en": "Mecca, 114 AH (732 CE), aged about 88", "tr": "Mekke, 114 (732), 88 yaşlarında", "ar": "مكة سنة 114هـ (732م) وله نحو ثمان وثمانين"},
+    {"k": "known", "en": "The mufti of Mecca; the authority on the rites of pilgrimage", "tr": "Mekke müftüsü; hac menâsikinin otoritesi", "ar": "مفتي مكة، وإمام المناسك"}
+   ],
+   "text": {
+    "en": [
+     "'Ata' was a dark-skinned freedman of Mecca, lame and later blind, who said he met two hundred Companions. He learned above all from Ibn 'Abbas, and became the mufti of Mecca: in the pilgrimage season the caliphs had it called out that no one but 'Ata' should give fatwas.",
+     "Abu Hanifa said he had never met anyone better than 'Ata'. He spent much of his life in the Sacred Mosque, and the scholars who came for pilgrimage carried his rulings on the rites everywhere."
+    ],
+    "tr": [
+     "Atâ, Mekkeli esmer tenli bir âzatlıydı; topal, sonraları da âmâydı; iki yüz sahâbîye yetiştiğini söylerdi. En çok İbn Abbâs'tan öğrendi ve Mekke müftüsü oldu: hac mevsiminde halifeler Atâ'dan başkasının fetva vermemesini ilan ettirirdi.",
+     "Ebû Hanîfe ondan daha faziletlisini görmediğini söyler. Ömrünün çoğunu Mescid-i Haram'da geçirdi; hacca gelen âlimler onun menâsik hakkındaki görüşlerini her yere taşıdı."
+    ],
+    "ar": [
+     "عطاء مولى أسود من أهل مكة، أعرج ثم عمي، قال: أدركت مائتين من الصحابة. وأخذ أكثر علمه عن ابن عباس، وصار مفتي مكة، حتى كان الخلفاء يأمرون في الموسم أن لا يفتي الناس إلا عطاء.",
+     "وقال أبو حنيفة: ما رأيت أفضل من عطاء. وكان المسجد الحرام فراشه عامة عمره، وحمل الحجاج من العلماء فتاواه في المناسك إلى الآفاق."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "mujahid", "road": "sunni", "kind": "successor", "persons": ["taqrib:6481"],
+   "name": {"en": "Mujahid b. Jabr", "tr": "Mücâhid b. Cebr", "ar": "مجاهد بن جبر"},
+   "facts": [
+    {"k": "died", "en": "Mecca, between 101 and 104 AH (c. 721 CE), aged 83", "tr": "Mekke, 101 ile 104 arasında (721 civarı), 83 yaşında", "ar": "مكة بين سنة 101 و104هـ (نحو 721م) وله ثلاث وثمانون"},
+    {"k": "known", "en": "Imam of Qur'anic commentary among the Successors", "tr": "Tâbiîn arasında tefsir imamı", "ar": "إمام التفسير من التابعين"}
+   ],
+   "text": {
+    "en": [
+     "Mujahid, a freedman of Makhzum in Mecca, said he went through the whole Qur'an with Ibn 'Abbas three times, stopping at every verse to ask about it. He became the leading commentator of the Successors; al-Shafi'i and al-Bukhari relied on his commentary.",
+     "He travelled to see the wonders of the world he read of, and was known for devotion; it is said he died in prostration."
+    ],
+    "tr": [
+     "Mekke'de Mahzûm oğullarının âzatlısı olan Mücâhid, Kur'an'ı baştan sona üç kez İbn Abbâs'ın önünde okuduğunu, her âyette durup onu sorduğunu söyler. Tâbiînin önde gelen müfessiri oldu; Şâfiî ve Buhârî onun tefsirine dayandı.",
+     "Okuduğu harikaları görmek için yolculuklar yaptı ve ibadete düşkünlüğüyle tanındı; secdede vefat ettiği söylenir."
+    ],
+    "ar": [
+     "مجاهد مولى بني مخزوم بمكة، قال: عرضت المصحف على ابن عباس ثلاث عرضات أقف عند كل آية أسأله عنها. فصار إمام التابعين في التفسير، واعتمد تفسيره الشافعي والبخاري.",
+     "وكان يرحل ليرى عجائب الدنيا، وعُرف بالعبادة، وقيل إنه مات وهو ساجد."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "said-b-jubayr", "road": "sunni", "kind": "successor", "persons": ["taqrib:2278"],
+   "name": {"en": "Sa'id b. Jubayr", "tr": "Saîd b. Cübeyr", "ar": "سعيد بن جبير"},
+   "facts": [
+    {"k": "died", "en": "Wasit, killed by al-Hajjaj, 95 AH (714 CE), not yet fifty", "tr": "Vâsıt, Haccâc tarafından öldürüldü, 95 (714), henüz elli yaşında değildi", "ar": "واسط، قتله الحجاج سنة 95هـ (714م) ولم يكمل الخمسين"},
+    {"k": "known", "en": "Student of Ibn 'Abbas; commentator and jurist of Kufa", "tr": "İbn Abbâs'ın talebesi; Kûfe'nin müfessir ve fakihi", "ar": "تلميذ ابن عباس، ومفسّر الكوفة وفقيهها"}
+   ],
+   "text": {
+    "en": [
+     "Sa'id, a freedman of the Banu Asad of Kufa, was among the closest students of Ibn 'Abbas, who would send the people of Kufa to him: “Is Ibn Umm al-Dahma' not among you?” He recited the whole Qur'an in a rak'a at the Ka'ba and was a pillar of commentary and law.",
+     "He joined the revolt of Ibn al-Ash'ath against al-Hajjaj, hid for years in Mecca, and was finally handed over. His dialogue with al-Hajjaj before his death became famous; al-Hajjaj died a few months after him."
+    ],
+    "tr": [
+     "Kûfe'de Esed oğullarının âzatlısı Saîd, İbn Abbâs'ın en yakın talebelerindendi; İbn Abbâs Kûfelileri ona gönderir, “Aranızda İbn Ümmü'd-Dehmâ yok mu?” derdi. Kâbe'de bir rekâtta Kur'an'ı hatmeder; tefsirin ve fıkhın direklerindendi.",
+     "İbn Eş'as'ın Haccâc'a karşı isyanına katıldı, yıllarca Mekke'de saklandı ve sonunda teslim edildi. Ölümünden önce Haccâc ile konuşması meşhur oldu; Haccâc ondan birkaç ay sonra öldü."
+    ],
+    "ar": [
+     "سعيد مولى بني أسد بالكوفة، من أخص أصحاب ابن عباس، وكان ابن عباس يقول لأهل الكوفة: أليس فيكم ابن أم الدهماء؟ وكان يختم القرآن في ركعة بالبيت، وهو من أركان التفسير والفقه.",
+     "وخرج مع ابن الأشعث على الحجاج، ثم اختفى بمكة سنين حتى أُخذ، واشتهرت محاورته للحجاج قبل قتله، ومات الحجاج بعده بأشهر."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "ikrima", "road": "sunni", "kind": "successor", "persons": ["taqrib:4673"],
+   "name": {"en": "'Ikrima, the freedman of Ibn 'Abbas", "tr": "İkrime, İbn Abbâs'ın âzatlısı", "ar": "عكرمة مولى ابن عباس"},
+   "facts": [
+    {"k": "died", "en": "Medina, 104 AH (722 CE) or a little after", "tr": "Medine, 104 (722) ya da biraz sonra", "ar": "المدينة سنة 104هـ (722م) أو بعدها"},
+    {"k": "known", "en": "Commentator of the Qur'an from Ibn 'Abbas", "tr": "İbn Abbâs'tan tefsir rivayet eden müfessir", "ar": "مفسّر، راوية ابن عباس"}
+   ],
+   "text": {
+    "en": [
+     "'Ikrima was a Berber slave of Ibn 'Abbas, who taught him the Qur'an and the Sunna so insistently that, 'Ikrima said, he bound his feet to keep him at his lessons. He became one of the great commentators and travelled widely, teaching in Khurasan, Egypt and the Maghrib.",
+     "Some accused him of holding Kharijite opinions; others defended him. Al-Bukhari relied on him, while Muslim narrated from him only together with another narrator."
+    ],
+    "tr": [
+     "İkrime, İbn Abbâs'ın Berberî bir kölesiydi; İbn Abbâs ona Kur'an'ı ve sünneti öyle ısrarla öğretti ki, İkrime'nin anlattığına göre derslerden kaçmasın diye ayağına bağ vururdu. Büyük müfessirlerden oldu; Horasan, Mısır ve Mağrib'de ders vererek çok yolculuk yaptı.",
+     "Bazıları onu Hâricî görüşler taşımakla suçladı, bazıları savundu. Buhârî ona dayandı; Müslim ondan yalnız başka bir râviyle birlikte rivayet etti."
+    ],
+    "ar": [
+     "عكرمة مولى بربري لابن عباس، علّمه القرآن والسنن حتى قال: كان ابن عباس يجعل في رجلي الكبل يعلّمني القرآن ويعلّمني السنن. فصار من كبار المفسرين، وطاف البلدان معلّمًا بخراسان ومصر والمغرب.",
+     "ورماه بعضهم برأي الخوارج ودافع عنه آخرون، واحتجّ به البخاري، وأخرج له مسلم مقرونًا بغيره."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "tahdhib", "taqrib"]
+  },
+  {
+   "id": "nakhai", "road": "sunni", "kind": "successor", "persons": ["taqrib:270"],
+   "name": {"en": "Ibrahim al-Nakha'i", "tr": "İbrâhim en-Nehaî", "ar": "إبراهيم النخعي"},
+   "facts": [
+    {"k": "name", "en": "Ibrahim b. Yazid b. Qays, of Nakha'; Abu 'Imran", "tr": "İbrâhim b. Yezîd b. Kays; Nehâ kabilesinden; künyesi Ebû İmrân", "ar": "إبراهيم بن يزيد بن قيس النخعي، أبو عمران"},
+    {"k": "died", "en": "Kufa, 96 AH (714–5 CE), about fifty", "tr": "Kûfe, 96 (714–5), elli yaşlarında", "ar": "الكوفة سنة 96هـ (714م) وهو ابن نحو خمسين"},
+    {"k": "known", "en": "The jurist of Kufa; the school of Ibn Mas'ud passed through him to Hammad and Abu Hanifa", "tr": "Kûfe'nin fakihi; İbn Mes'ûd ekolü onun aracılığıyla Hammâd'a ve Ebû Hanîfe'ye geçti", "ar": "فقيه الكوفة، وعنه انتقل فقه ابن مسعود إلى حماد وأبي حنيفة"}
+   ],
+   "text": {
+    "en": [
+     "Ibrahim learned from his uncle al-Aswad and from 'Alqama, the students of Ibn Mas'ud, and became the jurist of Kufa. The line Ibn Mas'ud – 'Alqama – Ibrahim – Hammad b. Abi Sulayman – Abu Hanifa is the backbone of the Hanafi school.",
+     "He disliked fame and would not sit leaning against a pillar so as not to be sought out. He hid from al-Hajjaj for a time, and when he died al-Sha'bi said he had left no one more learned behind him."
+    ],
+    "tr": [
+     "İbrâhim, İbn Mes'ûd'un talebeleri olan dayısı Esved'den ve Alkame'den öğrendi ve Kûfe'nin fakihi oldu. İbn Mes'ûd – Alkame – İbrâhim – Hammâd b. Ebî Süleyman – Ebû Hanîfe silsilesi Hanefî mezhebinin omurgasıdır.",
+     "Şöhreti sevmezdi; aranıp bulunmasın diye direğe yaslanıp oturmazdı. Bir süre Haccâc'tan saklandı; vefat ettiğinde Şa'bî, arkasında ondan daha bilgilisini bırakmadığını söyledi."
+    ],
+    "ar": [
+     "أخذ إبراهيم عن خاله الأسود وعن علقمة صاحبي ابن مسعود، فصار فقيه الكوفة، وسلسلة ابن مسعود ثم علقمة ثم إبراهيم ثم حماد بن أبي سليمان ثم أبي حنيفة عمود فقه الحنفية.",
+     "وكان يكره الشهرة، ولا يجلس إلى أسطوانة لئلا يُقصد. واختفى من الحجاج زمنًا، ولما مات قال الشعبي: ما ترك بعده أعلم منه."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "shabi", "road": "sunni", "kind": "successor", "persons": ["taqrib:3092"],
+   "name": {"en": "'Amir al-Sha'bi", "tr": "Âmir eş-Şa'bî", "ar": "عامر الشعبي"},
+   "facts": [
+    {"k": "name", "en": "'Amir b. Sharahil, of Hamdan; Abu 'Amr", "tr": "Âmir b. Şerâhîl; Hemdân kabilesinden; künyesi Ebû Amr", "ar": "عامر بن شراحيل الهمداني، أبو عمرو"},
+    {"k": "died", "en": "Kufa, a little after 100 AH (c. 720 CE), about eighty", "tr": "Kûfe, 100'den biraz sonra (720 civarı), seksen yaşlarında", "ar": "الكوفة بعد المائة (نحو 720م) وله نحو ثمانين"},
+    {"k": "known", "en": "Scholar and judge of Kufa, famed for his memory", "tr": "Kûfe'nin âlimi ve kadısı, hafızasıyla meşhur", "ar": "عالم الكوفة وقاضيها، المشهور بالحفظ"}
+   ],
+   "text": {
+    "en": [
+     "Al-Sha'bi said he met five hundred Companions, and that he never wrote black on white, yet never asked anyone to repeat a hadith. He knew law, history, the campaigns and poetry, and Ibn 'Umar, hearing him tell of the battles, said he knew them better than those who had been there.",
+     "He was judge of Kufa under 'Umar b. 'Abd al-'Aziz. He joined the revolt of Ibn al-Ash'ath and was pardoned by al-Hajjaj."
+    ],
+    "tr": [
+     "Şa'bî, beş yüz sahâbîye yetiştiğini, siyah üzerine beyaz hiçbir şey yazmadığını, buna rağmen kimseden bir hadisi tekrar etmesini istemediğini söyler. Fıkıh, tarih, gazveler ve şiir bilirdi; İbn Ömer onun savaşları anlatışını dinleyince, onları orada bulunanlardan daha iyi bildiğini söyledi.",
+     "Ömer b. Abdülaziz döneminde Kûfe kadısıydı. İbn Eş'as isyanına katıldı ve Haccâc tarafından affedildi."
+    ],
+    "ar": [
+     "قال الشعبي: أدركت خمسمائة من الصحابة، وما كتبت سوداء في بيضاء، ولا حدّثني رجل بحديث فأحببت أن يعيده عليّ. وكان عالمًا بالفقه والأخبار والمغازي والشعر، وسمعه ابن عمر يحدّث بالمغازي فقال: لهو أحفظ لها مني وقد شهدتها.",
+     "وولي قضاء الكوفة لعمر بن عبد العزيز، وخرج مع ابن الأشعث ثم عفا عنه الحجاج."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "qatada", "road": "sunni", "kind": "successor", "persons": ["taqrib:5518"],
+   "name": {"en": "Qatada b. Di'ama", "tr": "Katâde b. Diâme", "ar": "قتادة بن دعامة"},
+   "facts": [
+    {"k": "born", "en": "Basra, 61 AH (680 CE), born blind", "tr": "Basra, 61 (680), doğuştan âmâ", "ar": "البصرة سنة 61هـ (680م)، وُلد أكمه"},
+    {"k": "died", "en": "Wasit, 117 or 118 AH (736 CE), of plague", "tr": "Vâsıt, 117 veya 118 (736), vebadan", "ar": "واسط سنة 117 أو 118هـ (736م) في الطاعون"},
+    {"k": "teachers", "en": "Anas b. Malik, Sa'id b. al-Musayyab, al-Hasan, Ibn Sirin …", "tr": "Enes b. Mâlik, Saîd b. Müseyyeb, Hasan-ı Basrî, İbn Sîrîn …", "ar": "أنس بن مالك، وسعيد بن المسيب، والحسن، وابن سيرين"},
+    {"k": "students", "en": "Shu'ba, Sa'id b. Abi 'Aruba, Hammam, Ma'mar …", "tr": "Şu'be, Saîd b. Ebî Arûbe, Hemmâm, Ma'mer …", "ar": "شعبة، وسعيد بن أبي عروبة، وهمام، ومعمر"}
+   ],
+   "text": {
+    "en": [
+     "Qatada was born blind in Basra and became the marvel of his age in memory: he learned what he heard at once, and is said to have memorised a whole notebook read to him a single time. Ahmad b. Hanbal called him the best memoriser of Basra.",
+     "He was a commentator, a genealogist and a jurist. The critics noted that he sometimes narrated with “from” what he had not heard directly (tadlis), so his reports are accepted where he says “he narrated to us.”"
+    ],
+    "tr": [
+     "Katâde Basra'da doğuştan âmâ olarak dünyaya geldi ve hafızada zamanının harikası oldu: işittiğini hemen öğrenir, kendisine bir kez okunan bütün bir defteri ezberlediği söylenir. Ahmed b. Hanbel onu Basra'nın en iyi hâfızı sayar.",
+     "Müfessir, nesep âlimi ve fakihti. Münekkitler onun bazen doğrudan işitmediğini “an” lafzıyla rivayet ettiğini (tedlîs) belirtmiştir; bu yüzden rivayetleri “bize haber verdi” dediği yerde kabul edilir."
+    ],
+    "ar": [
+     "وُلد قتادة أكمه بالبصرة، فكان آية في الحفظ، يحفظ ما يسمع من مرة، وقيل إنه قُرئت عليه صحيفة مرة فحفظها. وقال أحمد بن حنبل: كان قتادة أحفظ أهل البصرة.",
+     "وكان مفسرًا نسّابة فقيهًا، ووصفه النقاد بالتدليس، فيُقبل منه ما صرّح فيه بالسماع."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "tahdhib", "taqrib"]
+  },
+  {
+   "id": "tawus", "road": "sunni", "kind": "successor", "persons": ["taqrib:3009"],
+   "name": {"en": "Tawus b. Kaysan", "tr": "Tâvûs b. Keysân", "ar": "طاوس بن كيسان"},
+   "facts": [
+    {"k": "died", "en": "Mecca, during the pilgrimage of 106 AH (725 CE)", "tr": "Mekke, 106 (725) haccı sırasında", "ar": "مكة في موسم حج سنة 106هـ (725م)"},
+    {"k": "known", "en": "Scholar of Yemen; student of Ibn 'Abbas", "tr": "Yemen'in âlimi; İbn Abbâs'ın talebesi", "ar": "عالم اليمن، وصاحب ابن عباس"}
+   ],
+   "text": {
+    "en": [
+     "Tawus, of Persian origin, was the scholar of Yemen. He said he met fifty Companions and learned above all from Ibn 'Abbas. He was devout and frank before rulers, and refused their gifts.",
+     "He made the pilgrimage some forty times and died in Mecca during one of them; the caliph Hisham b. 'Abd al-Malik prayed over him."
+    ],
+    "tr": [
+     "Fars asıllı Tâvûs, Yemen'in âlimiydi. Elli sahâbîye yetiştiğini söyler; en çok İbn Abbâs'tan öğrendi. Âbid ve yöneticilere karşı açık sözlüydü; hediyelerini kabul etmezdi.",
+     "Kırk kadar hac yaptı ve bunlardan biri sırasında Mekke'de vefat etti; cenaze namazını halife Hişâm b. Abdülmelik kıldırdı."
+    ],
+    "ar": [
+     "طاوس من أبناء الفرس، عالم اليمن، قال: أدركت خمسين من الصحابة، وأكثر أخذه عن ابن عباس. وكان عابدًا صادعًا بالحق عند الأمراء لا يقبل جوائزهم.",
+     "وحج نحوًا من أربعين حجة، ومات بمكة في الموسم، وصلّى عليه هشام بن عبد الملك."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "alqama", "road": "sunni", "kind": "successor", "persons": ["taqrib:4681"],
+   "name": {"en": "'Alqama b. Qays", "tr": "Alkame b. Kays", "ar": "علقمة بن قيس"},
+   "facts": [
+    {"k": "died", "en": "Kufa, about 62 AH (681 CE)", "tr": "Kûfe, 62 civarı (681)", "ar": "الكوفة نحو سنة 62هـ (681م)"},
+    {"k": "known", "en": "The foremost student of Ibn Mas'ud", "tr": "İbn Mes'ûd'un en önde gelen talebesi", "ar": "أجلّ أصحاب ابن مسعود"}
+   ],
+   "text": {
+    "en": [
+     "'Alqama, of Nakha' in Kufa, was born in the Prophet's lifetime and heard 'Umar, 'Uthman, 'Ali, 'A'isha and above all Ibn Mas'ud, whom he resembled in manner and recitation. Ibn Mas'ud said there was nothing he knew that 'Alqama did not know.",
+     "His nephew Ibrahim al-Nakha'i carried his knowledge on, and through him the school of Kufa."
+    ],
+    "tr": [
+     "Kûfe'de Nehâ kabilesinden Alkame, Resûlullah'ın ﷺ sağlığında doğdu; Hz. Ömer, Hz. Osman, Hz. Ali, Hz. Âişe ve en çok da tavırda ve okuyuşta benzediği İbn Mes'ûd'dan dinledi. İbn Mes'ûd, kendi bildiği hiçbir şeyin Alkame'nin bilmediği olmadığını söyler.",
+     "Yeğeni İbrâhim en-Nehaî onun ilmini, onun aracılığıyla da Kûfe ekolünü devam ettirdi."
+    ],
+    "ar": [
+     "علقمة من النخع بالكوفة، وُلد في حياة النبي ﷺ، وسمع عمر وعثمان وعليًّا وعائشة، ولزم ابن مسعود حتى كان يشبهه في هديه وقراءته، وقال ابن مسعود: ما أقرأ شيئًا ولا أعلمه إلا وعلقمة يقرؤه ويعلمه.",
+     "وحمل علمه ابن أخيه إبراهيم النخعي، وبه قامت مدرسة الكوفة."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "masruq", "road": "sunni", "kind": "successor", "persons": ["taqrib:6601"],
+   "name": {"en": "Masruq b. al-Ajda'", "tr": "Mesrûk b. Ecda'", "ar": "مسروق بن الأجدع"},
+   "facts": [
+    {"k": "died", "en": "Kufa, 62 or 63 AH (682 CE)", "tr": "Kûfe, 62 veya 63 (682)", "ar": "الكوفة سنة 62 أو 63هـ (682م)"},
+    {"k": "known", "en": "Student of Ibn Mas'ud and 'A'isha; judge and jurist of Kufa", "tr": "İbn Mes'ûd'un ve Hz. Âişe'nin talebesi; Kûfe'nin kadı ve fakihi", "ar": "صاحب ابن مسعود وعائشة، وقاضي الكوفة وفقيهها"}
+   ],
+   "text": {
+    "en": [
+     "Masruq, of Hamdan, was stolen as a child, and so was called Masruq, “the stolen one.” He became one of the great students of Ibn Mas'ud, and 'A'isha took him as an adopted son; he narrated from her calling her “the truthful daughter of the truthful.”",
+     "He was devout — his wife said his legs swelled from long prayer — and judged in Kufa without taking pay."
+    ],
+    "tr": [
+     "Hemdânlı Mesrûk çocukken kaçırıldığı için “kaçırılan” anlamında Mesrûk diye anıldı. İbn Mes'ûd'un büyük talebelerinden oldu; Hz. Âişe onu evlat edindi; ondan “sıddîkın kızı sıddîka” diyerek rivayet ederdi.",
+     "Âbid biriydi — hanımı uzun namazdan ayaklarının şiştiğini söyler — ve Kûfe'de ücret almadan kadılık yaptı."
+    ],
+    "ar": [
+     "مسروق من همدان، سُرق صغيرًا فسُمّي مسروقًا. وكان من كبار أصحاب ابن مسعود، وتبنّته عائشة، فكان إذا حدّث عنها قال: حدّثتني الصديقة بنت الصديق.",
+     "وكان عابدًا، قالت امرأته: كان يصلي حتى تورّمت قدماه، وولي القضاء بالكوفة لا يأخذ عليه أجرًا."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "abu-salama", "road": "sunni", "kind": "successor", "persons": ["taqrib:8142"],
+   "name": {"en": "Abu Salama b. 'Abd al-Rahman", "tr": "Ebû Seleme b. Abdurrahman", "ar": "أبو سلمة بن عبد الرحمن"},
+   "facts": [
+    {"k": "died", "en": "Medina, 94 or 104 AH, aged 72", "tr": "Medine, 94 veya 104, 72 yaşında", "ar": "المدينة سنة 94 أو 104هـ وله اثنتان وسبعون"},
+    {"k": "family", "en": "Son of 'Abd al-Rahman b. 'Awf", "tr": "Abdurrahman b. Avf'ın oğlu", "ar": "ابن عبد الرحمن بن عوف"}
+   ],
+   "text": {
+    "en": [
+     "Abu Salama, son of 'Abd al-Rahman b. 'Awf, was one of the leading scholars of Medina — counted by some among its seven jurists — and its judge. He learned from Abu Hurayra, 'A'isha and Ibn 'Abbas, with whom he used to debate.",
+     "Al-Zuhri and Yahya b. Abi Kathir narrate much from him; “Abu Salama from Abu Hurayra” is one of the commonest chains in the books."
+    ],
+    "tr": [
+     "Abdurrahman b. Avf'ın oğlu Ebû Seleme, Medine'nin önde gelen âlimlerinden — bazılarına göre yedi fakihinden — ve kadısıydı. Ebû Hüreyre'den, Hz. Âişe'den ve tartışmaya girdiği İbn Abbâs'tan öğrendi.",
+     "Zührî ve Yahyâ b. Ebî Kesîr ondan çok rivayet eder; “Ebû Seleme, Ebû Hüreyre'den” kitaplarda en sık geçen senedlerdendir."
+    ],
+    "ar": [
+     "أبو سلمة بن عبد الرحمن بن عوف من كبار علماء المدينة، وعدّه بعضهم في الفقهاء السبعة، وولي قضاءها. أخذ عن أبي هريرة وعائشة وابن عباس وكان يناظره.",
+     "وأكثر عنه الزهري ويحيى بن أبي كثير، و«أبو سلمة عن أبي هريرة» من أكثر الأسانيد دورانًا في الكتب."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "araj", "road": "sunni", "kind": "successor", "persons": ["taqrib:4033"],
+   "name": {"en": "al-A'raj", "tr": "A'rec", "ar": "الأعرج"},
+   "facts": [
+    {"k": "name", "en": "'Abd al-Rahman b. Hurmuz; Abu Dawud", "tr": "Abdurrahman b. Hürmüz; künyesi Ebû Dâvûd", "ar": "عبد الرحمن بن هرمز، أبو داود"},
+    {"k": "died", "en": "Alexandria, 117 AH (735 CE)", "tr": "İskenderiye, 117 (735)", "ar": "الإسكندرية سنة 117هـ (735م)"}
+   ],
+   "text": {
+    "en": [
+     "Al-A'raj, a freedman in Medina, was a student of Abu Hurayra and a reciter of the Qur'an who taught the reading of Medina. “Abu al-Zinad from al-A'raj from Abu Hurayra” is one of the soundest and commonest chains in Malik and the Sahihs.",
+     "In his last years he moved to Alexandria to guard the frontier, and died there."
+    ],
+    "tr": [
+     "Medine'de bir âzatlı olan A'rec, Ebû Hüreyre'nin talebesi ve Medine kıraatini öğreten bir kârîydi. “Ebü'z-Zinâd, A'rec'den, o Ebû Hüreyre'den” Mâlik'te ve Sahîhlerde en sağlam ve en sık senedlerdendir.",
+     "Son yıllarında sınırda nöbet tutmak için İskenderiye'ye gitti ve orada vefat etti."
+    ],
+    "ar": [
+     "الأعرج مولى بالمدينة، صاحب أبي هريرة، ومقرئ يعلّم قراءة أهل المدينة، و«أبو الزناد عن الأعرج عن أبي هريرة» من أصح الأسانيد وأكثرها في الموطأ والصحيحين.",
+     "وخرج في آخر عمره إلى الإسكندرية مرابطًا فمات بها."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "abu-salih", "road": "sunni", "kind": "successor", "persons": ["taqrib:1841"],
+   "name": {"en": "Abu Salih al-Samman", "tr": "Ebû Sâlih es-Semmân", "ar": "أبو صالح السمان"},
+   "facts": [
+    {"k": "name", "en": "Dhakwan, of Medina", "tr": "Zekvân; Medineli", "ar": "ذكوان المدني"},
+    {"k": "died", "en": "Medina, 101 AH (719 CE)", "tr": "Medine, 101 (719)", "ar": "المدينة سنة 101هـ (719م)"}
+   ],
+   "text": {
+    "en": [
+     "Abu Salih sold clarified butter and oil, carrying it between Medina and Kufa — hence al-Samman, “the butter-seller.” He sat with Abu Hurayra for years and was one of his most trusted students.",
+     "Through his trading journeys his hadith reached Kufa: al-A'mash and his own son Suhayl narrate abundantly from him."
+    ],
+    "tr": [
+     "Ebû Sâlih, Medine ile Kûfe arasında sade yağ ve zeytinyağı taşıyıp satardı; “yağcı” anlamındaki es-Semmân lakabı buradan gelir. Yıllarca Ebû Hüreyre'nin yanında oturdu ve onun en güvenilir talebelerinden oldu.",
+     "Ticaret yolculukları sayesinde hadisleri Kûfe'ye ulaştı: A'meş ve oğlu Süheyl ondan çok rivayet eder."
+    ],
+    "ar": [
+     "كان أبو صالح يجلب السمن والزيت بين المدينة والكوفة فقيل له السمان، ولازم أبا هريرة سنين فكان من أوثق أصحابه.",
+     "وبأسفاره وصل حديثه إلى الكوفة، فأكثر عنه الأعمش وابنه سهيل."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "hisham-b-urwa", "road": "sunni", "kind": "successor", "persons": ["taqrib:7302"],
+   "name": {"en": "Hisham b. 'Urwa", "tr": "Hişâm b. Urve", "ar": "هشام بن عروة"},
+   "facts": [
+    {"k": "born", "en": "Medina, 61 AH (680 CE)", "tr": "Medine, 61 (680)", "ar": "المدينة سنة 61هـ (680م)"},
+    {"k": "died", "en": "Baghdad, 145 or 146 AH (763 CE), aged 87", "tr": "Bağdat, 145 veya 146 (763), 87 yaşında", "ar": "بغداد سنة 145 أو 146هـ (763م) وله سبع وثمانون"}
+   ],
+   "text": {
+    "en": [
+     "Hisham was the son of 'Urwa b. al-Zubayr and narrated his father's great store of hadith from 'A'isha; “Hisham from his father from 'A'isha” runs through every collection.",
+     "In old age he went to Iraq and settled in Baghdad under al-Mansur. Malik and some critics were wary of what the Iraqis heard from him in his last years, when he narrated from his father things he had not heard directly."
+    ],
+    "tr": [
+     "Hişâm, Urve b. Zübeyr'in oğludur ve babasının Hz. Âişe'den aldığı büyük hadis birikimini rivayet etti; “Hişâm, babasından, o Âişe'den” senedi bütün hadis kitaplarında geçer.",
+     "Yaşlılığında Irak'a gitti ve Mansûr döneminde Bağdat'a yerleşti. Mâlik ve bazı münekkitler, son yıllarında doğrudan işitmediklerini babasından rivayet ettiği için Iraklıların ondan dinlediklerine ihtiyatla yaklaştı."
+    ],
+    "ar": [
+     "هشام بن عروة بن الزبير، روى علم أبيه عن عائشة، و«هشام عن أبيه عن عائشة» إسناد يدور في الكتب كلها.",
+     "وقدم العراق في كبره ونزل بغداد زمن المنصور، وتكلّم مالك وبعض النقاد فيما رواه عنه أهل العراق في آخر عمره، إذ صار يرسل عن أبيه ما سمعه من غيره."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "tahdhib", "taqrib"]
+  },
+  {
+   "id": "amash", "road": "sunni", "kind": "successor", "persons": ["taqrib:2615"],
+   "name": {"en": "al-A'mash", "tr": "A'meş", "ar": "الأعمش"},
+   "facts": [
+    {"k": "name", "en": "Sulayman b. Mihran al-Asadi al-Kahili; Abu Muhammad", "tr": "Süleyman b. Mihrân el-Esedî el-Kâhilî; künyesi Ebû Muhammed", "ar": "سليمان بن مهران الأسدي الكاهلي، أبو محمد"},
+    {"k": "born", "en": "61 AH (680 CE)", "tr": "61 (680)", "ar": "سنة 61هـ (680م)"},
+    {"k": "died", "en": "Kufa, 147 or 148 AH (765 CE)", "tr": "Kûfe, 147 veya 148 (765)", "ar": "الكوفة سنة 147 أو 148هـ (765م)"},
+    {"k": "students", "en": "Shu'ba, Sufyan al-Thawri, Waki', Abu Mu'awiya, Hafs b. Ghiyath …", "tr": "Şu'be, Süfyân es-Sevrî, Vekî', Ebû Muâviye, Hafs b. Gıyâs …", "ar": "شعبة، وسفيان الثوري، ووكيع، وأبو معاوية، وحفص بن غياث"}
+   ],
+   "text": {
+    "en": [
+     "Al-A'mash, “the weak-eyed,” was the great narrator and Qur'an reciter of Kufa. He saw Anas b. Malik but narrated from the Successors — Ibrahim, Abu Salih, Abu Wa'il, Zayd b. Wahb. Shu'ba called him “the Qur'an” for the exactness of his memory.",
+     "He was poor, witty and sharp-tongued, and devoted to prayer: for nearly seventy years, it was said, he never missed the opening takbir with the imam. The critics note that he sometimes narrated with “from” what he had not heard directly."
+    ],
+    "tr": [
+     "“Gözleri zayıf” anlamına gelen A'meş, Kûfe'nin büyük râvisi ve Kur'an kârisiydi. Enes b. Mâlik'i gördü ama tâbiîlerden — İbrâhim, Ebû Sâlih, Ebû Vâil, Zeyd b. Vehb — rivayet etti. Şu'be, hafızasının sağlamlığı sebebiyle ona “mushaf” derdi.",
+     "Yoksul, nükteli ve sivri dilliydi; namaza düşkündü: yetmiş yıla yakın imamla birlikte iftitah tekbirini hiç kaçırmadığı söylenir. Münekkitler bazen doğrudan işitmediğini “an” lafzıyla rivayet ettiğini belirtir."
+    ],
+    "ar": [
+     "الأعمش محدّث الكوفة ومقرئها، رأى أنس بن مالك وروى عن التابعين: إبراهيم وأبي صالح وأبي وائل وزيد بن وهب، وكان شعبة يسمّيه المصحف لإتقانه.",
+     "وكان فقيرًا ظريفًا حادّ اللسان، كثير العبادة، قيل: لم تفته التكبيرة الأولى قريبًا من سبعين سنة. ووصفه النقاد بالتدليس."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "tahdhib", "taqrib"]
+  },
+  {
+   "id": "abu-ishaq", "road": "sunni", "kind": "successor", "persons": ["taqrib:5065"],
+   "name": {"en": "Abu Ishaq al-Sabi'i", "tr": "Ebû İshak es-Sebîî", "ar": "أبو إسحاق السبيعي"},
+   "facts": [
+    {"k": "name", "en": "'Amr b. 'Abd Allah b. 'Ubayd, of Hamdan", "tr": "Amr b. Abdullah b. Ubeyd; Hemdân kabilesinden", "ar": "عمرو بن عبد الله بن عبيد الهمداني"},
+    {"k": "died", "en": "Kufa, 129 AH (746 CE) or a little before", "tr": "Kûfe, 129 (746) ya da biraz önce", "ar": "الكوفة سنة 129هـ (746م) أو قبلها"}
+   ],
+   "text": {
+    "en": [
+     "Abu Ishaq was one of the great narrators of Kufa, born late in 'Uthman's caliphate; he heard al-Bara' b. 'Azib, Zayd b. Arqam and many Successors, and narrated an immense number of hadith.",
+     "His memory weakened in very old age, and he sometimes narrated with “from”; so the critics prefer what the early students — Sufyan and Shu'ba — heard from him."
+    ],
+    "tr": [
+     "Ebû İshak, Hz. Osman'ın halifeliğinin sonlarında doğmuş Kûfe'nin büyük râvilerindendir; Berâ b. Âzib'den, Zeyd b. Erkam'dan ve pek çok tâbiîden dinledi ve çok sayıda hadis rivayet etti.",
+     "Çok ilerlemiş yaşında hafızası zayıfladı ve bazen “an” ile rivayet etti; bu yüzden münekkitler ondan erken dönem talebelerinin — Süfyân ve Şu'be'nin — işittiklerini tercih eder."
+    ],
+    "ar": [
+     "أبو إسحاق من كبار محدّثي الكوفة، وُلد في آخر خلافة عثمان، وسمع البراء بن عازب وزيد بن أرقم وخلقًا من التابعين، وكان مكثرًا جدًّا.",
+     "واختلط في كبره ووُصف بالتدليس، فقدّم النقاد رواية قدماء أصحابه كسفيان وشعبة."
+    ]
+   },
+   "sources": ["siyar", "tahdhib_kamal", "tahdhib", "taqrib"]
+  },
+  {
+   "id": "yahya-b-said-ansari", "road": "sunni", "kind": "successor", "persons": ["taqrib:7559"],
+   "name": {"en": "Yahya b. Sa'id al-Ansari", "tr": "Yahyâ b. Saîd el-Ensârî", "ar": "يحيى بن سعيد الأنصاري"},
+   "facts": [
+    {"k": "died", "en": "al-Hashimiyya in Iraq, 143 or 144 AH (761 CE)", "tr": "Irak'ta Hâşimiyye, 143 veya 144 (761)", "ar": "الهاشمية بالعراق سنة 143 أو 144هـ (761م)"},
+    {"k": "known", "en": "Judge of Medina; every chain of “actions are by intentions” passes through him", "tr": "Medine kadısı; “Ameller niyetlere göredir” hadisinin bütün senedleri ondan geçer", "ar": "قاضي المدينة، وعليه مدار حديث «إنما الأعمال بالنيات»"}
+   ],
+   "text": {
+    "en": [
+     "Yahya b. Sa'id, of the Ansar, was a scholar and judge of Medina and one of Malik's teachers. Al-Mansur later made him judge in Iraq, where he died.",
+     "The hadith “Actions are only by intentions,” with which al-Bukhari opens his Sahih, is known from 'Umar only through 'Alqama b. Waqqas, then Muhammad b. Ibrahim al-Taymi, then Yahya b. Sa'id; from him it spread to hundreds of narrators."
+    ],
+    "tr": [
+     "Ensardan Yahyâ b. Saîd, Medine'nin âlimi ve kadısı, Mâlik'in hocalarındandı. Mansûr sonradan onu Irak'ta kadı yaptı; orada vefat etti.",
+     "Buhârî'nin Sahîh'ini açtığı “Ameller ancak niyetlere göredir” hadisi Hz. Ömer'den yalnızca Alkame b. Vakkâs, sonra Muhammed b. İbrâhim et-Teymî, sonra Yahyâ b. Saîd yoluyla bilinir; ondan yüzlerce râviye yayıldı."
+    ],
+    "ar": [
+     "يحيى بن سعيد الأنصاري عالم المدينة وقاضيها، ومن شيوخ مالك، ثم ولّاه المنصور القضاء بالعراق فمات بها.",
+     "وحديث «إنما الأعمال بالنيات» الذي افتتح به البخاري صحيحه لا يُعرف عن عمر إلا من طريق علقمة بن وقاص ثم محمد بن إبراهيم التيمي ثم يحيى بن سعيد، ثم انتشر عنه إلى المئات."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "taqrib"]
+  }
+ ]
+}

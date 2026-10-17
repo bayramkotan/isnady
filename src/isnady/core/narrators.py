@@ -232,6 +232,9 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
     say = progress or (lambda _m: None)
     if conn.execute("SELECT COUNT(*) FROM persons").fetchone()[0] == 0:
         return {"chains": 0, "links": 0, "identified": 0, "note": "no rijal work imported"}
+    from isnady.core import rijal
+
+    rijal.fix_death_years(conn)          # a database read before a better rule for the years of death
     conn.execute("CREATE TABLE IF NOT EXISTS core_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
     persons_now = str(tuple(conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM persons").fetchone()))
     stamp = f"{MATCHER_ID}|{persons_now}"

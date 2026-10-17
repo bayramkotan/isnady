@@ -105,13 +105,7 @@ def parse_entry(number: int, text: str) -> dict:
     if tabaqa is None and re.search(r"(?<!\w)مخضرم(?!\w)", body):
         tabaqa, tabaqa_note = 2, "مخضرم"            # Ibn Hajar: mukhadram belong to the second tabaqa
 
-    year = None
-    if death_phrase:
-        words = re.sub(r"^(?:مات|قتل|استشهد|توفي)(?: سنة| في سنة)? ", "", death_phrase)
-        within = re.match(r"^(?:\S+ ){1,3}?سنة (.+)$", words)       # "قتل ظلما سنة ..."
-        if within and not re.match(r"(?:قبل|بعد|في حدود)", words):
-            words = within.group(1)
-        year = rijal.death_year(words, tabaqa) if not re.match(r"(?:قبل|بعد|في حدود|بضع|سنة بضع)", words) else None
+    year = rijal.year_of_death(death_phrase, tabaqa) if death_phrase else None
 
     kunyas = []
     for k in _KUNYA.finditer(body):

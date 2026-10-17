@@ -244,7 +244,8 @@ def fingerprint(conn: sqlite3.Connection, collection: str | None) -> str:
              one("SELECT COUNT(*), SUM(person_id IS NOT NULL), SUM(COALESCE(person_id, 0)) FROM isnad_links"),
              one("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM verdicts"),
              one("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM grades"),
-             one("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM persons")]
+             # the years of death too: the time gaps of the chains are counted from them (read again in v0.3.0)
+             one("SELECT COUNT(*), COALESCE(MAX(id), 0), COALESCE(SUM(death_year_ah), 0) FROM persons")]
     return json.dumps(parts, default=str)
 
 

@@ -301,8 +301,17 @@ class ScholarsPage(QWidget):
             row.addWidget(go)
             row.addStretch(1)
             box.addLayout(row)
-        box.addWidget(_label(tr("His life in full is planned (TODO H4); what follows is measured from the data imported here."),
-                             "Caption"))
+        # his life (BIO2): written for isnady; else, when he is a narrator here, as his rijal entry and the chains say
+        from isnady.core import lives
+        from isnady.gui.life_card import life_card
+
+        written = lives.of_scholar(scholar_id)
+        if written is not None:
+            self.box.addWidget(life_card(lives.view(written), True))
+        elif pid:
+            info = lives.read(conn, pid)
+            if info is not None and info["paragraphs"]:
+                self.box.addWidget(life_card(info, False))
         for role in roles:
             title, text = (tr(x) for x in core_scholars.ROLE_HELP[role])
             help_box = QFrame()

@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.2.9-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.3.0-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.2.9-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.3.0-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.2.9).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.3.0).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -462,6 +462,16 @@ The **Narrators** page lists every narrator of the imported rijal works — **Al
 
 - the name he is **known by** (al-A'mash, Ibn 'Umar, Zurara), with his full name and every part of
   it laid out — name, lineage, kunya, by-name, nisbas, client of — the part he is known by marked ★;
+- **his life**, in English, Turkish or Arabic: for 152 people — the Companions who narrated most, the
+  ten promised Paradise, the Mothers of the Believers, the great Successors and their followers, the
+  imams of law and of criticism, the compilers of the books, and on road B the companions of the Imams
+  and the Imami scholars — a life written for isnady: full name, birth, death, family, teachers,
+  students, works and what they are known for, told in a few paragraphs and summarised from the
+  classical biographical works named under it (Ibn Sa'd, Ibn 'Abd al-Barr, Ibn Hajar's *al-Isaba*,
+  al-Dhahabi's *Siyar*, al-Mizzi … for the Sunni road; al-Najashi, al-Tusi, al-Kashshi … for the Shia
+  road). For every other narrator, his life as far as the data says it, in plain sentences: his
+  generation, the year of his death with its Common Era year, his rank, the books his hadith are in,
+  how often he is in the chains, his teachers and students most often met there;
 - what his critic says, in the critic's own words: Ibn Hajar's verdict and its rank for a Sunni
   narrator; al-Najashi's words, reliability and creed for a Shia narrator — the entry as written one
   click away;
@@ -521,7 +531,8 @@ The scholars whose work is in the imported data, and what the data measures of i
 (their collection, the teachers their chains begin with, the Companions they end with), **graders**
 (how they grade, and how far they agree with each other on the same hadith — agreement, Cohen's
 kappa, and a strictness index: the classical *mutashaddid* / *mutasahil*, measured), and **critics**
-of narrators — Sunni and Shia on one page (*All / Sunni / Shia*), each by his own road: al-Kulayni,
+of narrators — each with **his life** (the same written lives as on Narrators) — Sunni and Shia on one
+page (*All / Sunni / Shia*), each by his own road: al-Kulayni,
 al-Saduq, al-Mufid and al-Tusi with their chains counted to a Ma'sum; al-Majlisi and al-Behbudi compared
 only with each other on the four Imami grades (sahih, hasan, muwaththaq, da'if); al-Najashi's verdicts in
 the Imami terms. On Sunan Abi Dawud, for example, Zubair 'Ali Za'i grades most strictly (−0.21) and
@@ -767,6 +778,7 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | `iy tahric BOOK NUMBER` | `iy tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |
 | `iy stats [SECTION]` | `iy stats graders --book abudawud` | `corpus`, `narrators`, `chains`, `grades`, `books`, `graders`, `model`, `lab`; `--csv DIR`, `--recompute` |
 | `iy term [NAME]` | `iy term --search tadlis` | The glossary, English, Turkish or Arabic (`--lang tr`, `--lang ar`) |
+| `iy life NAME` | `iy life Abu Hurayra --lang tr` | The life of a Companion, a narrator or a scholar (`--lang en\|tr\|ar`, `--tradition`, `--limit`) |
 | `iy tree WHICH [NAME]` | `iy tree family "Ibn Umar"` | Genealogies: `prophets`, `quraysh`, a narrator's `family`, his line of `learning` (`--depth`, `--width`) |
 | `iy bookmark ACTION` | `iy bookmark add hadith bukhari:1 --folder Prayer` | Bookmarks: `list`, `folders`, `add`, `remove`, `export`, `import` |
 | `iy ai build` | `iy ai status` | Learn the meaning index from the imported texts |

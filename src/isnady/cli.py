@@ -882,6 +882,43 @@ def cmd_ai(args) -> int:
     return 0
 
 
+def cmd_life(args) -> int:
+    """The life of a Companion, a narrator or a scholar (BIO2): written for isnady, or read from the data."""
+    import textwrap
+
+    from isnady.core import i18n, language, lives
+
+    i18n.set_language(args.lang or language.ui_language())
+    text = " ".join(args.name)
+    found = [(lives.view(w), True) for w in lives.find(None, text)]
+    conn = None
+    if not found:
+        conn = _connect()
+        rows, _total = core_narrators.find(conn, text, args.tradition)
+        for r in rows[:args.limit]:
+            info, written = lives.life(conn, r["id"])
+            if info is not None:
+                found.append((info, written))
+    if conn is not None:
+        conn.close()
+    if not found:
+        print(f"No one named '{text}' found.", file=sys.stderr)
+        return 1
+    width = 100
+    for info, written in found[:args.limit]:
+        print(f"\n{info['title']}  —  {info['kind']}" + ("" if written else "  (from the data)"))
+        for label, value in info["facts"]:
+            print(textwrap.fill(value, width, initial_indent=f"  {label}: ", subsequent_indent="    "))
+        for paragraph in info["paragraphs"]:
+            print()
+            print(textwrap.fill(paragraph, width, initial_indent="  ", subsequent_indent="  "))
+        if info["sources"]:
+            print()
+            print(textwrap.fill("; ".join(info["sources"]), width, initial_indent="  " + i18n.t("Sources") + ": ",
+                                subsequent_indent="    "))
+    return 0
+
+
 def cmd_tree(args) -> int:
     """The genealogies (GEN1): the prophets, Quraysh, a narrator's family, a narrator's line of learning."""
     from isnady.core import genealogy
@@ -1422,6 +1459,12 @@ def build_parser() -> argparse.ArgumentParser:
     tm.add_argument("--search", help="words to look for in names and definitions")
     tm.add_argument("--lang", choices=["en", "tr", "ar"], default="en")
     tm.set_defaults(func=cmd_term)
+    lf = sub.add_parser("life", help="the life of a Companion, a narrator or a scholar, in English, Turkish or Arabic")
+    lf.add_argument("name", nargs="+", help="any part of the name, in Arabic or Latin letters")
+    lf.add_argument("--lang", choices=["en", "tr", "ar"], help="the language (default: the interface language)")
+    lf.add_argument("--tradition", choices=["sunni", "shia"], help="look only among the narrators of one tradition")
+    lf.add_argument("--limit", type=int, default=1, help="how many people to show (default 1)")
+    lf.set_defaults(func=cmd_life)
     tr_ = sub.add_parser("tree", help="genealogies: the prophets, Quraysh, a narrator's family, his line of learning")
     tr_.add_argument("which", choices=["prophets", "quraysh", "family", "learning"])
     tr_.add_argument("name", nargs="?", help="a narrator (family, learning) or someone to find in the tree")

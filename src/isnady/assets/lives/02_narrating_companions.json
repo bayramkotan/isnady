@@ -1,0 +1,395 @@
+{
+ "version": 1,
+ "license": "CC BY 4.0 — written for isnady",
+ "about": "The Companions who narrated most (al-mukthirun) and other great narrators among the Companions.",
+ "lives": [
+  {
+   "id": "abu-hurayra", "road": "sunni", "kind": "companion", "persons": ["taqrib:8426"],
+   "name": {"en": "Abu Hurayra", "tr": "Ebû Hüreyre", "ar": "أبو هريرة"},
+   "facts": [
+    {"k": "name", "en": "Disputed; most say 'Abd al-Rahman b. Sakhr al-Dawsi, of the tribe of Daws in Yemen", "tr": "İhtilaflıdır; çoğunluğa göre Abdurrahman b. Sahr ed-Devsî; Yemen'deki Devs kabilesinden", "ar": "مختلف فيه، والأكثر على أنه عبد الرحمن بن صخر الدوسي، من دوس باليمن"},
+    {"k": "islam", "en": "Came to Medina in 7 AH, at the time of Khaybar", "tr": "Hicrî 7'de, Hayber zamanında Medine'ye geldi", "ar": "قدم المدينة سنة 7هـ زمن خيبر"},
+    {"k": "died", "en": "Medina, 57, 58 or 59 AH (c. 678 CE), aged 78; buried in al-Baqi'", "tr": "Medine, 57, 58 veya 59 (m. 678 civarı), 78 yaşında; Bakî'e defnedildi", "ar": "المدينة سنة 57 أو 58 أو 59هـ (نحو 678م) وله ثمان وسبعون سنة، ودفن بالبقيع"},
+    {"k": "hadith", "en": "5,374 in Baqi b. Makhlad's count — more than any other Companion", "tr": "Bakî b. Mahled'in sayımıyla 5.374 — sahâbîlerin en çoğu", "ar": "5374 حديثًا في عدّ بقي بن مخلد، وهو أكثر الصحابة رواية"},
+    {"k": "students", "en": "More than 800 narrated from him (al-Bukhari): Sa'id b. al-Musayyab, Abu Salama, al-A'raj, Abu Salih al-Samman, Hammam b. Munabbih, Ibn Sirin …", "tr": "Buhârî'ye göre ondan 800'den fazla kişi rivayet etti: Saîd b. Müseyyeb, Ebû Seleme, A'rec, Ebû Sâlih es-Semmân, Hemmâm b. Münebbih, İbn Sîrîn …", "ar": "روى عنه أكثر من ثمانمائة رجل كما قال البخاري، منهم سعيد بن المسيب وأبو سلمة والأعرج وأبو صالح السمان وهمام بن منبه وابن سيرين"}
+   ],
+   "text": {
+    "en": [
+     "Abu Hurayra came from the tribe of Daws in Yemen and reached Medina while the Prophet ﷺ was at Khaybar, in 7 AH. His kunya, “father of the kitten”, came from a little cat he kept. He was poor and lived with the people of the Suffa in the mosque, and for the remaining years of the Prophet's life he kept close to him day and night, content with what filled his stomach, while others were busy in the markets and on their farms.",
+     "He told how he complained to the Prophet ﷺ that he forgot what he heard; the Prophet ﷺ had him spread out his cloak, and after that he forgot nothing. So he became the Companion who narrated most. When people wondered at how much he narrated, he said the Muhajirun were busy with trade and the Ansar with their palm groves, and he had stayed with the Prophet ﷺ. Ibn 'Umar and others bore witness that he had heard what they had not.",
+     "'Umar made him governor of Bahrain; later he lived in Medina, at times standing in for its governor, teaching and narrating. Al-Bukhari said that more than eight hundred men of knowledge narrated from him. He died in Medina in 57, 58 or 59 AH and is buried in al-Baqi'."
+    ],
+    "tr": [
+     "Ebû Hüreyre Yemen'deki Devs kabilesindendir; Resûlullah ﷺ Hayber'deyken, hicrî 7'de Medine'ye ulaştı. “Kedicik babası” anlamındaki künyesi beslediği küçük bir kediden gelir. Yoksuldu ve mescitte Suffe ehliyle yaşadı; Resûlullah'ın ﷺ hayatının kalan yıllarında, başkaları çarşıda ve tarlalarında meşgulken, karnını doyuracak kadarına razı olup gece gündüz onun yanından ayrılmadı.",
+     "Anlattığına göre işittiklerini unuttuğundan Resûlullah'a ﷺ yakınmış; Resûlullah ﷺ ona hırkasını yaydırmış ve ondan sonra hiçbir şeyi unutmamış. Böylece en çok hadis rivayet eden sahâbî oldu. Çok rivayet etmesine şaşıranlara, muhacirlerin ticaretle, ensarın hurmalıklarıyla meşgul olduğunu, kendisinin ise Resûlullah'ın ﷺ yanında kaldığını söyledi. İbn Ömer ve başkaları onun kendilerinin işitmediklerini işittiğine şahitlik etti.",
+     "Hz. Ömer onu Bahreyn'e vali yaptı; sonra Medine'de yaşadı, zaman zaman valiye vekâlet ederek ders verdi ve hadis rivayet etti. Buhârî ondan sekiz yüzden fazla ilim ehlinin rivayet ettiğini söyler. Hicrî 57, 58 veya 59'da Medine'de vefat etti ve Bakî'e defnedildi."
+    ],
+    "ar": [
+     "أبو هريرة من دوس باليمن، قدم المدينة والنبي ﷺ بخيبر سنة سبع، وكُني بهرة صغيرة كان يحملها. وكان فقيرًا يأوي مع أهل الصفة في المسجد، فلزم النبي ﷺ بقية حياته على ملء بطنه، والناس مشغولون بأسواقهم وأموالهم.",
+     "وذكر أنه شكا إلى النبي ﷺ النسيان، فأمره أن يبسط رداءه، فما نسي بعد ذلك شيئًا، فصار أكثر الصحابة حديثًا. ولما تعجّب الناس من كثرة حديثه قال: إن المهاجرين كان يشغلهم الصفق بالأسواق، والأنصار عمل أموالهم، وكنت ألزم رسول الله ﷺ. وشهد له ابن عمر وغيره بأنه سمع ما لم يسمعوا.",
+     "استعمله عمر على البحرين، ثم سكن المدينة يحدّث ويعلّم، وكان ينوب عن أميرها أحيانًا. قال البخاري: روى عنه أكثر من ثمانمائة رجل من أهل العلم. ومات بالمدينة سنة سبع أو ثمان أو تسع وخمسين، ودفن بالبقيع."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "talqih", "taqrib"]
+  },
+  {
+   "id": "aisha", "road": "sunni", "kind": "mother", "persons": ["taqrib:8633"],
+   "name": {"en": "'A'isha, Mother of the Believers", "tr": "Hz. Âişe, mü'minlerin annesi", "ar": "عائشة أم المؤمنين"},
+   "facts": [
+    {"k": "name", "en": "'A'isha bint Abi Bakr al-Siddiq; Umm 'Abd Allah; al-Siddiqa", "tr": "Âişe bt. Ebî Bekir es-Sıddîk; künyesi Ümmü Abdullah; lakabı Sıddîka", "ar": "عائشة بنت أبي بكر الصديق، أم عبد الله، الصدّيقة"},
+    {"k": "born", "en": "Mecca, some four years after the prophethood (c. 614 CE)", "tr": "Mekke, peygamberlikten dört yıl kadar sonra (m. 614 civarı)", "ar": "مكة، بعد البعثة بنحو أربع سنين (نحو 614م)"},
+    {"k": "died", "en": "Medina, Ramadan 57 or 58 AH (677–8 CE); Abu Hurayra led her funeral prayer; buried in al-Baqi'", "tr": "Medine, Ramazan 57 veya 58 (677–8); cenaze namazını Ebû Hüreyre kıldırdı; Bakî'e defnedildi", "ar": "المدينة، رمضان سنة 57 أو 58هـ (677م)، وصلّى عليها أبو هريرة، ودفنت بالبقيع"},
+    {"k": "family", "en": "Daughter of Abu Bakr and Umm Ruman; wife of the Prophet ﷺ; maternal aunt of 'Urwa b. al-Zubayr, paternal aunt of al-Qasim b. Muhammad", "tr": "Ebû Bekir ile Ümmü Rûmân'ın kızı; Resûlullah'ın ﷺ eşi; Urve b. Zübeyr'in teyzesi, Kâsım b. Muhammed'in halası", "ar": "بنت أبي بكر وأم رومان، وزوج النبي ﷺ، وخالة عروة بن الزبير وعمة القاسم بن محمد"},
+    {"k": "hadith", "en": "2,210 in Baqi b. Makhlad's count", "tr": "Bakî b. Mahled'in sayımıyla 2.210", "ar": "2210 أحاديث في عدّ بقي بن مخلد"},
+    {"k": "students", "en": "'Urwa b. al-Zubayr, al-Qasim b. Muhammad, 'Amra bint 'Abd al-Rahman, Masruq, Abu Salama, and many Companions", "tr": "Urve b. Zübeyr, Kâsım b. Muhammed, Amre bt. Abdirrahmân, Mesrûk, Ebû Seleme ve pek çok sahâbî", "ar": "عروة بن الزبير، والقاسم بن محمد، وعمرة بنت عبد الرحمن، ومسروق، وأبو سلمة، وخلق من الصحابة"}
+   ],
+   "text": {
+    "en": [
+     "'A'isha was the daughter of Abu Bakr. The Prophet ﷺ married her in Mecca, and her married life began in Medina after the Hijra; she was the only one of his wives he married as a maiden. He died in her room with his head on her breast, and was buried there.",
+     "When the hypocrites slandered her after the campaign of Banu al-Mustaliq, verses of Surat al-Nur (24:11–20) came down declaring her innocence. After the Prophet ﷺ she lived nearly fifty years as the most learned woman of the community and among its greatest jurists: the senior Companions brought their questions to her, and she corrected what others narrated imprecisely — al-Zarkashi gathered these corrections in a book.",
+     "In the civil war she went out to Basra to seek justice for 'Uthman and was present at the Battle of the Camel, which she later regretted. Her nephews 'Urwa and al-Qasim, and 'Amra bint 'Abd al-Rahman, carried her knowledge to the next generation; 'Urwa said he never saw anyone more learned in the Qur'an, the obligations, the lawful and unlawful, poetry, medicine and the history of the Arabs."
+    ],
+    "tr": [
+     "Âişe, Ebû Bekir'in kızıdır. Resûlullah ﷺ onunla Mekke'de evlendi; evlilik hayatı hicretten sonra Medine'de başladı. Resûlullah'ın ﷺ bâkire olarak evlendiği tek eşidir. Resûlullah ﷺ onun odasında, başı onun göğsündeyken vefat etti ve oraya defnedildi.",
+     "Benî Mustalık gazvesinden sonra münafıklar ona iftira atınca Nûr sûresinin âyetleri (24:11–20) onun suçsuzluğunu bildirerek indi. Resûlullah'tan ﷺ sonra elli yıla yakın yaşadı; ümmetin en âlim kadını ve en büyük fakihlerindendi: büyük sahâbîler sorularını ona getirir, o da başkalarının eksik rivayet ettiklerini düzeltirdi — Zerkeşî bu düzeltmeleri bir kitapta topladı.",
+     "İç savaşta Hz. Osman'ın kanını talep etmek için Basra'ya gitti ve Cemel Vak'ası'nda bulundu; sonra buna pişman oldu. Yeğenleri Urve ve Kâsım ile Amre bt. Abdirrahmân onun ilmini sonraki nesle taşıdı. Urve, Kur'an, farzlar, helal-haram, şiir, tıp ve Arap tarihi konusunda ondan daha bilgilisini görmediğini söyler."
+    ],
+    "ar": [
+     "عائشة بنت أبي بكر، تزوجها النبي ﷺ بمكة وبنى بها في المدينة بعد الهجرة، ولم يتزوج بكرًا غيرها. وتوفي ﷺ في بيتها بين سحرها ونحرها، ودفن في حجرتها.",
+     "ولما رماها أهل الإفك بعد غزوة بني المصطلق نزلت براءتها في سورة النور (11–20). وعاشت بعد النبي ﷺ قريبًا من خمسين سنة، فكانت أعلم نساء الأمة ومن كبار فقهائها، يرجع إليها كبار الصحابة، وتستدرك على من روى بغير ضبط، وقد جمع الزركشي استدراكاتها في كتاب.",
+     "وخرجت في الفتنة إلى البصرة تطلب بدم عثمان، فكانت وقعة الجمل، وندمت على ذلك بعد. وحمل علمها ابنا أخويها عروة والقاسم وعمرة بنت عبد الرحمن، وقال عروة: ما رأيت أحدًا أعلم بالقرآن ولا بفريضة ولا بحلال وحرام ولا بشعر ولا بطب ولا بحديث العرب من عائشة."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "talqih"]
+  },
+  {
+   "id": "ibn-umar", "road": "sunni", "kind": "companion", "persons": ["taqrib:3490"],
+   "name": {"en": "'Abd Allah b. 'Umar", "tr": "Abdullah b. Ömer", "ar": "عبد الله بن عمر"},
+   "facts": [
+    {"k": "name", "en": "'Abd Allah b. 'Umar b. al-Khattab, of 'Adi of Quraysh; Abu 'Abd al-Rahman", "tr": "Abdullah b. Ömer b. Hattâb; Kureyş'in Adî kolundan; künyesi Ebû Abdurrahman", "ar": "عبد الله بن عمر بن الخطاب العدوي، أبو عبد الرحمن"},
+    {"k": "born", "en": "Mecca, about three years after the prophethood (c. 613 CE)", "tr": "Mekke, peygamberlikten üç yıl kadar sonra (m. 613 civarı)", "ar": "مكة، بعد البعثة بنحو ثلاث سنين (نحو 613م)"},
+    {"k": "died", "en": "Mecca, 73 or 74 AH (693 CE), aged about 84", "tr": "Mekke, 73 veya 74 (693), 84 yaşlarında", "ar": "مكة، سنة 73 أو 74هـ (693م) وله نحو أربع وثمانين سنة"},
+    {"k": "hadith", "en": "2,630 in Baqi b. Makhlad's count", "tr": "Bakî b. Mahled'in sayımıyla 2.630", "ar": "2630 حديثًا في عدّ بقي بن مخلد"},
+    {"k": "students", "en": "His freedman Nafi', his son Salim, 'Abd Allah b. Dinar, Sa'id b. Jubayr, Mujahid …", "tr": "Âzatlısı Nâfi', oğlu Sâlim, Abdullah b. Dînâr, Saîd b. Cübeyr, Mücâhid …", "ar": "مولاه نافع، وابنه سالم، وعبد الله بن دينار، وسعيد بن جبير، ومجاهد"}
+   ],
+   "text": {
+    "en": [
+     "Ibn 'Umar became Muslim as a boy with his father and emigrated to Medina before him. The Prophet ﷺ turned him back from Badr and Uhud for his youth and allowed him to fight first at the Trench, at fifteen; he was at the pledge of al-Ridwan beneath the tree.",
+     "He was known above all for following the Prophet's practice in everything, even where he had stopped or prayed on a journey, and for his piety and caution in giving fatwas. He kept out of the civil wars and refused the caliphate when it was offered him. He narrated more than any Companion but Abu Hurayra; Malik from Nafi' from Ibn 'Umar is the chain al-Bukhari held the soundest of all.",
+     "He lived for sixty years after the Prophet ﷺ, teaching in Medina and Mecca, and died in Mecca in 73 AH, one of the last of the great Companions."
+    ],
+    "tr": [
+     "İbn Ömer çocukken babasıyla birlikte Müslüman oldu ve Medine'ye ondan önce hicret etti. Resûlullah ﷺ küçük yaşı sebebiyle onu Bedir ve Uhud'dan geri çevirdi; ilk kez on beş yaşında Hendek'te savaşmasına izin verdi. Ağacın altındaki Rıdvan biatında bulundu.",
+     "En çok, her işte Resûlullah'ın ﷺ sünnetine uymasıyla — onun bir yolculukta durduğu, namaz kıldığı yere kadar — ve takvası, fetva vermedeki ihtiyatıyla tanındı. İç savaşlardan uzak durdu; kendisine teklif edilen halifeliği kabul etmedi. Ebû Hüreyre'den sonra en çok hadis rivayet eden sahâbîdir; Mâlik–Nâfi'–İbn Ömer senedi, Buhârî'nin en sahih saydığı seneddir.",
+     "Resûlullah'tan ﷺ sonra altmış yıl yaşadı, Medine ve Mekke'de ders verdi; büyük sahâbîlerin son kalanlarından biri olarak hicrî 73'te Mekke'de vefat etti."
+    ],
+    "ar": [
+     "أسلم ابن عمر صغيرًا مع أبيه، وهاجر قبله، وردّه النبي ﷺ يوم بدر وأحد لصغره، وأجازه يوم الخندق وهو ابن خمس عشرة، وشهد بيعة الرضوان تحت الشجرة.",
+     "عُرف بشدة اتباعه للسنة في كل شيء حتى في مواضع نزول النبي ﷺ وصلاته في أسفاره، وبالورع والتحرّي في الفتيا. واعتزل الفتن، وأبى الخلافة حين عُرضت عليه. وهو أكثر الصحابة حديثًا بعد أبي هريرة، وقال البخاري: أصح الأسانيد مالك عن نافع عن ابن عمر.",
+     "عاش بعد النبي ﷺ ستين سنة يعلّم بالمدينة ومكة، ومات بمكة سنة ثلاث وسبعين، من آخر كبار الصحابة موتًا."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "talqih", "taqrib"]
+  },
+  {
+   "id": "ibn-abbas", "road": "sunni", "kind": "companion", "persons": ["taqrib:3409"],
+   "name": {"en": "'Abd Allah b. 'Abbas", "tr": "Abdullah b. Abbâs", "ar": "عبد الله بن عباس"},
+   "facts": [
+    {"k": "name", "en": "'Abd Allah b. al-'Abbas b. 'Abd al-Muttalib, of Hashim; Abu al-'Abbas; “the interpreter of the Qur'an”", "tr": "Abdullah b. Abbâs b. Abdülmuttalib; Hâşimî; künyesi Ebü'l-Abbâs; “Kur'an'ın tercümanı”", "ar": "عبد الله بن العباس بن عبد المطلب الهاشمي، أبو العباس، ترجمان القرآن"},
+    {"k": "born", "en": "Mecca, three years before the Hijra (c. 619 CE), in the valley of Abu Talib", "tr": "Mekke, hicretten üç yıl önce (m. 619 civarı), Ebû Tâlib mahallesinde", "ar": "مكة، قبل الهجرة بثلاث سنين (نحو 619م) في شِعب أبي طالب"},
+    {"k": "died", "en": "al-Ta'if, 68 AH (687–8 CE), aged about 71; blind in his last years", "tr": "Tâif, 68 (687–8), 71 yaşlarında; son yıllarında görmez olmuştu", "ar": "الطائف سنة 68هـ (687م) وله نحو إحدى وسبعين سنة، وكان قد كُفّ بصره"},
+    {"k": "family", "en": "Cousin of the Prophet ﷺ; son of al-'Abbas; his aunt Maymuna was the Prophet's wife", "tr": "Resûlullah'ın ﷺ amcasının oğlu; teyzesi Meymûne Resûlullah'ın ﷺ eşiydi", "ar": "ابن عم النبي ﷺ، وخالته ميمونة زوج النبي ﷺ"},
+    {"k": "hadith", "en": "1,660 in Baqi b. Makhlad's count", "tr": "Bakî b. Mahled'in sayımıyla 1.660", "ar": "1660 حديثًا في عدّ بقي بن مخلد"},
+    {"k": "students", "en": "'Ikrima, Mujahid, Sa'id b. Jubayr, 'Ata' b. Abi Rabah, Tawus, Abu al-Sha'tha' …", "tr": "İkrime, Mücâhid, Saîd b. Cübeyr, Atâ b. Ebî Rebâh, Tâvûs, Ebü'ş-Şa'sâ …", "ar": "عكرمة، ومجاهد، وسعيد بن جبير، وعطاء بن أبي رباح، وطاوس، وأبو الشعثاء"}
+   ],
+   "text": {
+    "en": [
+     "Ibn 'Abbas was the Prophet's young cousin; he was about thirteen when the Prophet ﷺ died. Once, after he had set out water for the Prophet's ablution, the Prophet ﷺ prayed for him: “O Allah, give him understanding in the religion and teach him the interpretation.”",
+     "After the Prophet ﷺ he went from Companion to Companion gathering what they knew, waiting at their doors rather than calling them out. 'Umar seated him among the elders of Badr for his understanding. He became the great commentator of the Qur'an, the “ocean” of knowledge, and a jurist whose opinions filled volumes; most of what he narrates he heard from other Companions.",
+     "He was 'Ali's governor of Basra and took part in his debates with the Kharijites. He spent his last years in Mecca and al-Ta'if, teaching, and his students — 'Ikrima, Mujahid, Sa'id b. Jubayr, 'Ata', Tawus — became the scholars of Mecca and of Qur'anic commentary in the next generation."
+    ],
+    "tr": [
+     "İbn Abbâs, Resûlullah'ın ﷺ küçük amcaoğluydu; Resûlullah ﷺ vefat ettiğinde on üç yaşlarındaydı. Bir defasında Resûlullah'ın ﷺ abdest suyunu hazırlayınca Resûlullah ﷺ ona “Allah'ım, onu dinde fakih kıl ve ona te'vîli öğret” diye dua etti.",
+     "Resûlullah'tan ﷺ sonra sahâbîleri tek tek dolaşıp bildiklerini topladı; onları çağırtmak yerine kapılarında beklerdi. Hz. Ömer anlayışı sebebiyle onu Bedir ehlinin büyükleri arasına oturturdu. Kur'an'ın büyük müfessiri, ilmin “denizi” ve görüşleri ciltler dolduran bir fakih oldu; rivayet ettiklerinin çoğunu başka sahâbîlerden işitmiştir.",
+     "Hz. Ali'nin Basra valisiydi ve onun adına Hâricîlerle tartıştı. Son yıllarını Mekke ve Tâif'te ders vererek geçirdi; talebeleri İkrime, Mücâhid, Saîd b. Cübeyr, Atâ ve Tâvûs sonraki neslin Mekke ve tefsir âlimleri oldu."
+    ],
+    "ar": [
+     "كان ابن عباس ابن عم النبي ﷺ الصغير، توفي النبي ﷺ وهو ابن ثلاث عشرة سنة أو نحوها. ووضع للنبي ﷺ وضوءه مرة فدعا له: «اللهم فقّهه في الدين وعلّمه التأويل».",
+     "وطلب العلم بعد النبي ﷺ من الصحابة، فكان يأتي باب الرجل منهم فيتوسّد رداءه حتى يخرج إليه. وكان عمر يدخله مع أشياخ بدر لفهمه. فصار حبر الأمة وترجمان القرآن وبحر العلم، وأكثر ما يرويه سمعه من الصحابة.",
+     "ولي البصرة لعلي، وناظر الخوارج. وقضى آخر عمره بمكة والطائف يعلّم، فكان أصحابه عكرمة ومجاهد وسعيد بن جبير وعطاء وطاوس علماء مكة وأئمة التفسير في الجيل التالي."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "talqih", "taqrib"]
+  },
+  {
+   "id": "anas", "road": "sunni", "kind": "companion", "persons": ["taqrib:565"],
+   "name": {"en": "Anas b. Malik", "tr": "Enes b. Mâlik", "ar": "أنس بن مالك"},
+   "facts": [
+    {"k": "name", "en": "Anas b. Malik b. al-Nadr, of al-Najjar of the Khazraj; Abu Hamza; “the servant of the Prophet ﷺ”", "tr": "Enes b. Mâlik b. Nadr; Hazrec'in Neccâr kolundan; künyesi Ebû Hamza; “Resûlullah'ın ﷺ hizmetkârı”", "ar": "أنس بن مالك بن النضر النجاري الخزرجي، أبو حمزة، خادم رسول الله ﷺ"},
+    {"k": "died", "en": "Basra, 92 or 93 AH (711–2 CE), past a hundred years; the last Companion to die in Basra", "tr": "Basra, 92 veya 93 (711–2), yüz yaşını geçmiş olarak; Basra'da vefat eden son sahâbî", "ar": "البصرة سنة 92 أو 93هـ (711م) وقد جاوز المائة، وهو آخر من مات بالبصرة من الصحابة"},
+    {"k": "family", "en": "Son of Umm Sulaym; stepson of Abu Talha al-Ansari", "tr": "Ümmü Süleym'in oğlu; Ebû Talha el-Ensârî'nin üvey oğlu", "ar": "ابن أم سليم، وربيب أبي طلحة الأنصاري"},
+    {"k": "hadith", "en": "2,286 in Baqi b. Makhlad's count", "tr": "Bakî b. Mahled'in sayımıyla 2.286", "ar": "2286 حديثًا في عدّ بقي بن مخلد"},
+    {"k": "students", "en": "Thabit al-Bunani, Qatada, Humayd al-Tawil, al-Zuhri, al-Hasan al-Basri, Ibn Sirin …", "tr": "Sâbit el-Bünânî, Katâde, Humeyd et-Tavîl, Zührî, Hasan-ı Basrî, İbn Sîrîn …", "ar": "ثابت البناني، وقتادة، وحميد الطويل، والزهري، والحسن البصري، وابن سيرين"}
+   ],
+   "text": {
+    "en": [
+     "When the Prophet ﷺ came to Medina, Anas's mother Umm Sulaym brought her ten-year-old son to serve him. Anas served him for ten years and said: “He never once said to me 'uff', nor 'why did you do that?' for something I did.” He saw the Prophet ﷺ at home and abroad, and much of what is known of his daily life comes through him.",
+     "The Prophet ﷺ prayed that Allah increase his wealth and children and bless him in them; Anas lived past a hundred and saw a great number of his children and grandchildren. He went with the armies and settled in Basra, where he taught for decades, and was the last Companion to die there; with his death, it was said, half of knowledge went."
+    ],
+    "tr": [
+     "Resûlullah ﷺ Medine'ye geldiğinde Enes'in annesi Ümmü Süleym on yaşındaki oğlunu ona hizmet etsin diye getirdi. Enes on yıl hizmet etti ve şöyle dedi: “Bana bir kez bile 'öf' demedi; yaptığım bir şey için 'niçin yaptın' demedi.” Resûlullah'ı ﷺ evde ve yolculukta gördü; onun gündelik hayatına dair bilinenlerin çoğu Enes yoluyla gelir.",
+     "Resûlullah ﷺ onun malının ve evladının çoğalması ve bunların bereketli olması için dua etti; Enes yüz yaşını geçti ve çok sayıda çocuk ve torun gördü. Ordularla sefere çıktı, Basra'ya yerleşti ve orada uzun yıllar ders verdi; Basra'da vefat eden son sahâbîdir. Onun ölümüyle ilmin yarısının gittiği söylenmiştir."
+    ],
+    "ar": [
+     "لما قدم النبي ﷺ المدينة جاءت أم سليم بابنها أنس وهو ابن عشر سنين ليخدمه، فخدمه عشر سنين، وقال: ما قال لي أفٍّ قط، ولا قال لشيء صنعته لِمَ صنعته. فرأى النبي ﷺ في بيته وسفره، ومن طريقه جاء كثير من أخبار حياته اليومية.",
+     "ودعا له النبي ﷺ بكثرة المال والولد والبركة فيهما، فعاش أكثر من مائة سنة، ورأى من ولده وولد ولده جمعًا كثيرًا. وغزا وسكن البصرة يعلّم عقودًا، وكان آخر من مات بها من الصحابة، فقيل: ذهب اليوم نصف العلم."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "talqih", "taqrib"]
+  },
+  {
+   "id": "jabir", "road": "sunni", "kind": "companion", "persons": ["taqrib:871"],
+   "name": {"en": "Jabir b. 'Abd Allah", "tr": "Câbir b. Abdullah", "ar": "جابر بن عبد الله"},
+   "facts": [
+    {"k": "name", "en": "Jabir b. 'Abd Allah b. 'Amr b. Haram, of Salima of the Khazraj; Abu 'Abd Allah", "tr": "Câbir b. Abdullah b. Amr b. Harâm; Hazrec'in Selime kolundan; künyesi Ebû Abdullah", "ar": "جابر بن عبد الله بن عمرو بن حرام السلمي الخزرجي، أبو عبد الله"},
+    {"k": "died", "en": "Medina, in the 70s AH (c. 697 CE), past ninety; the last of the men of al-'Aqaba to die", "tr": "Medine, hicrî 70'li yıllarda (m. 697 civarı), doksanını geçmiş olarak; Akabe ehlinin en son vefat edeni", "ar": "المدينة بعد السبعين (نحو 697م) وقد جاوز التسعين، وهو آخر من مات من أهل العقبة"},
+    {"k": "hadith", "en": "1,540 in Baqi b. Makhlad's count", "tr": "Bakî b. Mahled'in sayımıyla 1.540", "ar": "1540 حديثًا في عدّ بقي بن مخلد"},
+    {"k": "students", "en": "'Ata', Abu al-Zubayr, Muhammad b. al-Munkadir, 'Amr b. Dinar, Mujahid, Muhammad al-Baqir …", "tr": "Atâ, Ebü'z-Zübeyr, Muhammed b. Münkedir, Amr b. Dînâr, Mücâhid, Muhammed el-Bâkır …", "ar": "عطاء، وأبو الزبير، ومحمد بن المنكدر، وعمرو بن دينار، ومجاهد، ومحمد الباقر"}
+   ],
+   "text": {
+    "en": [
+     "Jabir came as a boy with his father to the second pledge of al-'Aqaba. His father was killed at Uhud, leaving him with debts and nine sisters; the Prophet ﷺ helped him, bought his tired camel on a journey and then gave it back with its price. Jabir said he took part in nineteen campaigns with the Prophet ﷺ.",
+     "He is the narrator of the long hadith describing the Prophet's farewell pilgrimage step by step (Muslim). He had a circle in the Prophet's mosque, and travelled a month's journey to Syria to hear a single hadith from 'Abd Allah b. Unays. He lost his sight in old age and died in Medina, the last of those who had pledged at al-'Aqaba."
+    ],
+    "tr": [
+     "Câbir çocukken babasıyla birlikte ikinci Akabe biatında bulundu. Babası Uhud'da şehit oldu; ona borçlar ve dokuz kız kardeş bıraktı. Resûlullah ﷺ ona yardım etti; bir yolculukta yorgun devesini satın alıp sonra hem deveyi hem de bedelini ona verdi. Câbir, Resûlullah ﷺ ile on dokuz gazveye katıldığını söyler.",
+     "Resûlullah'ın ﷺ Vedâ haccını adım adım anlatan uzun hadisin (Müslim) râvisidir. Mescid-i Nebevî'de bir halkası vardı; tek bir hadisi Abdullah b. Üneys'ten işitmek için Şam'a bir aylık yolculuk yaptı. Yaşlılığında gözlerini kaybetti ve Medine'de, Akabe'de biat edenlerin son kalanı olarak vefat etti."
+    ],
+    "ar": [
+     "شهد جابر العقبة الثانية صغيرًا مع أبيه، وقُتل أبوه يوم أحد وترك عليه دَينًا وتسع أخوات، فأعانه النبي ﷺ، واشترى منه جمله في سفر ثم ردّه عليه مع ثمنه. وقال جابر: غزوت مع رسول الله ﷺ تسع عشرة غزوة.",
+     "وهو راوي حديث حجة الوداع الطويل في صحيح مسلم. وكانت له حلقة في المسجد النبوي، ورحل مسيرة شهر إلى الشام في حديث واحد سمعه من عبد الله بن أنيس. وكُفّ بصره في آخر عمره، ومات بالمدينة آخر من مات من أهل العقبة."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "talqih"]
+  },
+  {
+   "id": "abu-said", "road": "sunni", "kind": "companion", "persons": ["taqrib:2253"],
+   "name": {"en": "Abu Sa'id al-Khudri", "tr": "Ebû Saîd el-Hudrî", "ar": "أبو سعيد الخدري"},
+   "facts": [
+    {"k": "name", "en": "Sa'd b. Malik b. Sinan, of Khudra of the Khazraj", "tr": "Sa'd b. Mâlik b. Sinân; Hazrec'in Hudre kolundan", "ar": "سعد بن مالك بن سنان الخدري الخزرجي"},
+    {"k": "died", "en": "Medina, 74 AH (693 CE) by the best-known report; some say the 60s", "tr": "Medine, en meşhur rivayete göre 74 (693); 60'lı yıllar da denmiştir", "ar": "المدينة سنة 74هـ (693م) على المشهور، وقيل في الستينات"},
+    {"k": "hadith", "en": "1,170 in Baqi b. Makhlad's count", "tr": "Bakî b. Mahled'in sayımıyla 1.170", "ar": "1170 حديثًا في عدّ بقي بن مخلد"},
+    {"k": "students", "en": "Abu Salama, 'Ata' b. Yasar, Abu Nadra, 'Atiyya al-'Awfi, Abu Salih …", "tr": "Ebû Seleme, Atâ b. Yesâr, Ebû Nadra, Atiyye el-Avfî, Ebû Sâlih …", "ar": "أبو سلمة، وعطاء بن يسار، وأبو نضرة، وعطية العوفي، وأبو صالح"}
+   ],
+   "text": {
+    "en": [
+     "Abu Sa'id was brought to Uhud as a boy of thirteen and turned back for his youth; his father Malik b. Sinan was killed there. He took part in twelve campaigns with the Prophet ﷺ, the first being the Trench. Though poor, he would ask no one for anything after hearing the Prophet ﷺ say that whoever seeks to be self-sufficient, Allah makes him so.",
+     "He was among the jurists of the younger Companions and a great narrator. He spoke frankly to the rulers of his day, and lived in Medina until his death, teaching the next generation."
+    ],
+    "tr": [
+     "Ebû Saîd on üç yaşında bir çocukken Uhud'a getirildi ve küçüklüğü sebebiyle geri çevrildi; babası Mâlik b. Sinân orada şehit oldu. Resûlullah ﷺ ile ilki Hendek olmak üzere on iki gazveye katıldı. Yoksul olduğu hâlde, Resûlullah'ın ﷺ “kim istiğna dilerse Allah onu müstağni kılar” buyurduğunu işittikten sonra kimseden bir şey istemedi.",
+     "Genç sahâbîlerin fakihlerinden ve büyük râvilerdendi. Zamanının yöneticilerine açık sözlüydü; vefatına kadar Medine'de yaşayıp sonraki nesle ders verdi."
+    ],
+    "ar": [
+     "عُرض أبو سعيد يوم أحد وهو ابن ثلاث عشرة فردّه النبي ﷺ لصغره، وقُتل أبوه مالك بن سنان يومئذ. وغزا مع النبي ﷺ اثنتي عشرة غزوة أولها الخندق. وكان فقيرًا فلم يسأل أحدًا بعد أن سمع النبي ﷺ يقول: «من يستغنِ يغنه الله».",
+     "وكان من فقهاء أحداث الصحابة ومن المكثرين، صادعًا بالحق عند الأمراء، وأقام بالمدينة يعلّم حتى مات."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "talqih", "taqrib"]
+  },
+  {
+   "id": "ibn-masud", "road": "sunni", "kind": "companion", "persons": ["taqrib:3613"],
+   "name": {"en": "'Abd Allah b. Mas'ud", "tr": "Abdullah b. Mes'ûd", "ar": "عبد الله بن مسعود"},
+   "facts": [
+    {"k": "name", "en": "'Abd Allah b. Mas'ud b. Ghafil, of Hudhayl; Abu 'Abd al-Rahman; Ibn Umm 'Abd", "tr": "Abdullah b. Mes'ûd b. Gâfil; Hüzeyl kabilesinden; künyesi Ebû Abdurrahman; İbn Ümmü Abd", "ar": "عبد الله بن مسعود بن غافل الهذلي، أبو عبد الرحمن، ابن أم عبد"},
+    {"k": "died", "en": "Medina, 32 or 33 AH (653 CE), aged over sixty", "tr": "Medine, 32 veya 33 (653), altmışını geçmiş olarak", "ar": "المدينة سنة 32 أو 33هـ (653م) وقد جاوز الستين"},
+    {"k": "hadith", "en": "848 in Baqi b. Makhlad's count", "tr": "Bakî b. Mahled'in sayımıyla 848", "ar": "848 حديثًا في عدّ بقي بن مخلد"},
+    {"k": "students", "en": "'Alqama, al-Aswad, Masruq, 'Abida al-Salmani, Abu Wa'il, Zirr b. Hubaysh — the school of Kufa", "tr": "Alkame, Esved, Mesrûk, Abîde es-Selmânî, Ebû Vâil, Zirr b. Hubeyş — Kûfe ekolü", "ar": "علقمة، والأسود، ومسروق، وعبيدة السلماني، وأبو وائل، وزر بن حبيش — مدرسة الكوفة"}
+   ],
+   "text": {
+    "en": [
+     "Ibn Mas'ud was a poor shepherd in Mecca and one of the first six to accept Islam. He was the first to recite the Qur'an aloud at the Ka'ba, and was beaten for it. He emigrated to Abyssinia and to Medina, fought at Badr, where he finished off Abu Jahl, and was so constantly in the Prophet's house — carrying his sandals, his tooth-stick and his water — that strangers took him for one of the family.",
+     "The Prophet ﷺ said: “Whoever would recite the Qur'an fresh as it was sent down, let him recite it as Ibn Umm 'Abd recites.” He said he took seventy suras from the Prophet's own mouth. 'Umar sent him to Kufa as its teacher and treasurer; his students there — 'Alqama, al-Aswad, Masruq — founded the school of Kufa in law and Qur'an reading. He returned to Medina at the end of his life and died there."
+    ],
+    "tr": [
+     "İbn Mes'ûd Mekke'de yoksul bir çobandı ve İslâm'ı kabul eden ilk altı kişidendi. Kâbe'de Kur'an'ı yüksek sesle okuyan ilk kişidir ve bu yüzden dövüldü. Habeşistan'a ve Medine'ye hicret etti; Bedir'de Ebû Cehil'in işini o bitirdi. Resûlullah'ın ﷺ evinden hiç ayrılmaz, ayakkabılarını, misvakini ve suyunu taşırdı; yabancılar onu ev halkından sanırdı.",
+     "Resûlullah ﷺ “Kur'an'ı indirildiği gibi taze okumak isteyen, İbn Ümmü Abd'in okuduğu gibi okusun” buyurdu. Yetmiş sûreyi bizzat Resûlullah'ın ﷺ ağzından aldığını söylerdi. Hz. Ömer onu Kûfe'ye muallim ve hazinedar olarak gönderdi; oradaki talebeleri Alkame, Esved ve Mesrûk, fıkıh ve kıraatte Kûfe ekolünü kurdu. Ömrünün sonunda Medine'ye döndü ve orada vefat etti."
+    ],
+    "ar": [
+     "كان ابن مسعود راعيًا فقيرًا بمكة، وكان سادس ستة في الإسلام، وأول من جهر بالقرآن عند الكعبة فضُرب. هاجر الهجرتين، وشهد بدرًا وأجهز على أبي جهل، ولازم النبي ﷺ يحمل نعليه وسواكه وطهوره حتى ظنّه الغرباء من أهل البيت.",
+     "وقال النبي ﷺ: «من سرّه أن يقرأ القرآن غضًّا كما أنزل فليقرأه على قراءة ابن أم عبد»، وقال: أخذت من فيّ رسول الله ﷺ سبعين سورة. وبعثه عمر إلى الكوفة معلمًا ووزيرًا على بيت المال، فكان أصحابه علقمة والأسود ومسروق أساس مدرسة الكوفة في الفقه والقراءة. ثم رجع إلى المدينة فمات بها."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "talqih"]
+  },
+  {
+   "id": "ibn-amr", "road": "sunni", "kind": "companion", "persons": ["taqrib:3499"],
+   "name": {"en": "'Abd Allah b. 'Amr b. al-'As", "tr": "Abdullah b. Amr b. Âs", "ar": "عبد الله بن عمرو بن العاص"},
+   "facts": [
+    {"k": "name", "en": "'Abd Allah b. 'Amr b. al-'As, of Sahm of Quraysh; Abu Muhammad", "tr": "Abdullah b. Amr b. Âs; Kureyş'in Sehm kolundan; künyesi Ebû Muhammed", "ar": "عبد الله بن عمرو بن العاص السهمي القرشي، أبو محمد"},
+    {"k": "died", "en": "In the 60s AH; Ibn Hajar prefers the days of al-Harra (63 AH, 683 CE), at al-Ta'if", "tr": "Hicrî 60'lı yıllarda; İbn Hacer Harre günlerini (63 h., 683) ve Tâif'i tercih eder", "ar": "في الستينات، ورجّح ابن حجر أنه مات ليالي الحرة (63هـ، 683م) بالطائف"},
+    {"k": "hadith", "en": "700 in Baqi b. Makhlad's count", "tr": "Bakî b. Mahled'in sayımıyla 700", "ar": "700 حديث في عدّ بقي بن مخلد"},
+    {"k": "known", "en": "Wrote down hadith in the Prophet's lifetime: al-Sahifa al-Sadiqa", "tr": "Resûlullah'ın ﷺ sağlığında hadis yazdı: es-Sahîfetü's-Sâdıka", "ar": "كتب الحديث في حياة النبي ﷺ: الصحيفة الصادقة"}
+   ],
+   "text": {
+    "en": [
+     "'Abd Allah became Muslim before his father 'Amr b. al-'As. He was devoted to worship — fasting every day and praying all night — until the Prophet ﷺ told him to fast as Dawud did, one day on and one day off, which he kept to the end of his life.",
+     "He asked the Prophet ﷺ whether he might write down what he heard, and was told: “Write; by Him in whose hand is my soul, nothing comes out of it but the truth.” His written collection, al-Sahifa al-Sadiqa, passed to his great-grandson's line; much of it is narrated as “'Amr b. Shu'ayb from his father from his grandfather.” Abu Hurayra said no one had more hadith than he except 'Abd Allah b. 'Amr, “for he wrote and I did not.”"
+    ],
+    "tr": [
+     "Abdullah, babası Amr b. Âs'tan önce Müslüman oldu. İbadete çok düşkündü — her gün oruç tutar, bütün gece namaz kılardı; Resûlullah ﷺ ona Dâvûd'un orucunu, bir gün tutup bir gün yemeyi tavsiye etti ve o bunu ömrünün sonuna kadar sürdürdü.",
+     "Resûlullah'a ﷺ işittiklerini yazıp yazamayacağını sordu; “Yaz; canım elinde olana yemin ederim ki ondan haktan başka bir şey çıkmaz” cevabını aldı. Yazdığı mecmua es-Sahîfetü's-Sâdıka, torunlarının soyuna geçti; büyük kısmı “Amr b. Şuayb, babasından, o da dedesinden” şeklinde rivayet edilir. Ebû Hüreyre, kendisinden çok hadisi olan yalnız Abdullah b. Amr olduğunu, “çünkü o yazardı, ben yazmazdım” diye söyler."
+    ],
+    "ar": [
+     "أسلم عبد الله قبل أبيه عمرو بن العاص، وكان كثير العبادة، يصوم الدهر ويقوم الليل، حتى أمره النبي ﷺ بصيام داود: يصوم يومًا ويفطر يومًا، فلزمه حتى مات.",
+     "واستأذن النبي ﷺ في كتابة ما يسمع فقال: «اكتب، فوالذي نفسي بيده ما يخرج منه إلا حق»، فكانت له الصحيفة الصادقة، وصارت إلى ذريته، ويُروى كثير منها بإسناد عمرو بن شعيب عن أبيه عن جده. وقال أبو هريرة: ما كان أحد أكثر حديثًا مني إلا عبد الله بن عمرو، فإنه كان يكتب ولا أكتب."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "talqih", "taqrib"]
+  },
+  {
+   "id": "abu-musa", "road": "sunni", "kind": "companion", "persons": ["taqrib:3542"],
+   "name": {"en": "Abu Musa al-Ash'ari", "tr": "Ebû Mûsâ el-Eş'arî", "ar": "أبو موسى الأشعري"},
+   "facts": [
+    {"k": "name", "en": "'Abd Allah b. Qays b. Sulaym, of the Ash'ar of Yemen", "tr": "Abdullah b. Kays b. Süleym; Yemen'in Eş'ar kabilesinden", "ar": "عبد الله بن قيس بن سليم الأشعري اليماني"},
+    {"k": "died", "en": "Kufa or Mecca, 50 AH (670 CE) or a little before", "tr": "Kûfe veya Mekke, 50 (670) ya da biraz önce", "ar": "الكوفة أو مكة سنة 50هـ (670م) أو قبلها بقليل"},
+    {"k": "known", "en": "Governor of Basra and Kufa; famed for his voice in reciting the Qur'an", "tr": "Basra ve Kûfe valisi; Kur'an okuyuşundaki güzel sesiyle meşhur", "ar": "والي البصرة والكوفة، واشتهر بحسن صوته بالقرآن"}
+   ],
+   "text": {
+    "en": [
+     "Abu Musa came with the men of his tribe, the Ash'aris, from Yemen and reached the Prophet ﷺ at Khaybar together with those returning from Abyssinia. The Prophet ﷺ, hearing him recite, said he had been given one of the flutes of the family of Dawud. He sent him with Mu'adh b. Jabal to teach and govern in Yemen.",
+     "'Umar made him governor of Basra, from where he led the opening of al-Ahwaz and parts of Persia; under 'Uthman he governed Kufa. After Siffin he was 'Ali's arbiter. He taught the Qur'an and law in Basra, and the people of Basra learned their reading from him."
+    ],
+    "tr": [
+     "Ebû Mûsâ, kabilesi Eş'arîlerle birlikte Yemen'den geldi ve Habeşistan'dan dönenlerle birlikte Hayber'de Resûlullah'a ﷺ ulaştı. Resûlullah ﷺ onun Kur'an okuyuşunu dinleyince ona Dâvûd ailesinin mizmarlarından birinin verildiğini söyledi. Onu Muâz b. Cebel ile birlikte öğretmek ve idare etmek üzere Yemen'e gönderdi.",
+     "Hz. Ömer onu Basra'ya vali yaptı; oradan Ahvaz'ın ve İran'ın bir kısmının fethine komuta etti; Hz. Osman zamanında Kûfe valisiydi. Sıffîn'den sonra Hz. Ali'nin hakemiydi. Basra'da Kur'an ve fıkıh öğretti; Basralılar kıraati ondan öğrendi."
+    ],
+    "ar": [
+     "قدم أبو موسى مع قومه الأشعريين من اليمن، فوافوا النبي ﷺ بخيبر مع القادمين من الحبشة. وسمع النبي ﷺ قراءته فقال: «لقد أوتيت مزمارًا من مزامير آل داود»، وبعثه مع معاذ بن جبل إلى اليمن معلّمًا وواليًا.",
+     "وولّاه عمر البصرة ففتح الأهواز وبعض بلاد فارس، وولي الكوفة لعثمان، وكان أحد الحكمين بعد صفين عن علي. وعلّم أهل البصرة القرآن والفقه، وعنه أخذوا قراءتهم."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "taqrib"]
+  },
+  {
+   "id": "bara", "road": "sunni", "kind": "companion", "persons": ["taqrib:648"],
+   "name": {"en": "al-Bara' b. 'Azib", "tr": "Berâ b. Âzib", "ar": "البراء بن عازب"},
+   "facts": [
+    {"k": "name", "en": "al-Bara' b. 'Azib b. al-Harith, of the Aws; Abu 'Umara", "tr": "Berâ b. Âzib b. Hâris; Evs kabilesinden; künyesi Ebû Umâre", "ar": "البراء بن عازب بن الحارث الأوسي، أبو عمارة"},
+    {"k": "died", "en": "Kufa, 72 AH (691–2 CE)", "tr": "Kûfe, 72 (691–2)", "ar": "الكوفة سنة 72هـ (691م)"},
+    {"k": "students", "en": "Abu Ishaq al-Sabi'i, 'Adi b. Thabit, al-Sha'bi …", "tr": "Ebû İshak es-Sebîî, Adî b. Sâbit, Şa'bî …", "ar": "أبو إسحاق السبيعي، وعدي بن ثابت، والشعبي"}
+   ],
+   "text": {
+    "en": [
+     "Al-Bara' was one of the boys of the Ansar turned back from Badr for being too young. He went on fifteen campaigns with the Prophet ﷺ, and later took part in the conquests in Persia, where Rayy was opened under him.",
+     "He settled in Kufa and is a main source for the Kufans on the Prophet's prayer, the Hijra (which he heard from Abu Bakr) and the battles. He died there in the governorship of Mus'ab b. al-Zubayr."
+    ],
+    "tr": [
+     "Berâ, küçük yaşları sebebiyle Bedir'den geri çevrilen ensar çocuklarındandı. Resûlullah ﷺ ile on beş gazveye katıldı; sonra İran'daki fetihlerde bulundu, Rey onun komutasında fethedildi.",
+     "Kûfe'ye yerleşti; Kûfelilerin Resûlullah'ın ﷺ namazı, hicret (bunu Ebû Bekir'den işitti) ve savaşlar hakkındaki başlıca kaynaklarındandır. Mus'ab b. Zübeyr'in valiliği sırasında orada vefat etti."
+    ],
+    "ar": [
+     "كان البراء ممن استُصغر يوم بدر من غلمان الأنصار، وغزا مع النبي ﷺ خمس عشرة غزوة، وشهد الفتوح بفارس، وفتح الريّ على يده.",
+     "ونزل الكوفة، فكان من أهم مصادر أهلها في صفة صلاة النبي ﷺ وخبر الهجرة الذي سمعه من أبي بكر والمغازي، ومات بها في إمارة مصعب بن الزبير."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "taqrib"]
+  },
+  {
+   "id": "abu-dharr", "road": "sunni", "kind": "companion", "persons": ["taqrib:8087"],
+   "name": {"en": "Abu Dharr al-Ghifari", "tr": "Ebû Zer el-Gıfârî", "ar": "أبو ذر الغفاري"},
+   "facts": [
+    {"k": "name", "en": "Jundab b. Junada, of Ghifar (the commonest view)", "tr": "Cündeb b. Cünâde; Gıfâr kabilesinden (en yaygın görüş)", "ar": "جندب بن جنادة الغفاري على الأشهر"},
+    {"k": "died", "en": "al-Rabadha, 32 AH (652–3 CE), in the caliphate of 'Uthman", "tr": "Rebeze, 32 (652–3), Hz. Osman'ın halifeliğinde", "ar": "الربذة سنة 32هـ (652م) في خلافة عثمان"},
+    {"k": "known", "en": "Among the first five Muslims; his frankness and his renunciation of wealth", "tr": "İlk beş Müslümandan; açık sözlülüğü ve dünya malından uzak duruşu", "ar": "من أوائل خمسة في الإسلام، واشتهر بالصدع بالحق والزهد في المال"}
+   ],
+   "text": {
+    "en": [
+     "Abu Dharr had turned from idols before Islam. Hearing of the Prophet ﷺ, he came to Mecca, found him through 'Ali, and became Muslim among the first five; he declared his faith aloud at the Ka'ba and was beaten until al-'Abbas rescued him. He went back to his tribe, and half of Ghifar became Muslim through him before the Hijra.",
+     "The Prophet ﷺ said: “The sky has not shaded, nor the earth carried, a man truer of speech than Abu Dharr.” After the Prophet ﷺ he went to Syria, where he reproached the hoarding of wealth and clashed with Mu'awiya; 'Uthman called him back, and he chose to live at al-Rabadha, where he died with only his wife and servant beside him; a passing party of believers that included Ibn Mas'ud buried him."
+    ],
+    "tr": [
+     "Ebû Zer İslâm'dan önce putlardan yüz çevirmişti. Resûlullah'ı ﷺ duyunca Mekke'ye geldi, Hz. Ali aracılığıyla onu buldu ve ilk beş Müslüman arasında İslâm'a girdi. Kâbe'de imanını yüksek sesle ilan etti ve Abbâs kurtarana kadar dövüldü. Kabilesine döndü; hicretten önce Gıfâr'ın yarısı onun vesilesiyle Müslüman oldu.",
+     "Resûlullah ﷺ “Gök, Ebû Zer'den daha doğru sözlü birini gölgelemedi, yer de taşımadı” buyurdu. Resûlullah'tan ﷺ sonra Şam'a gitti; orada mal biriktirmeyi kınadı ve Muâviye ile anlaşmazlığa düştü. Hz. Osman onu geri çağırdı; o da Rebeze'de yaşamayı seçti ve yanında yalnız hanımı ile hizmetçisi varken vefat etti; aralarında İbn Mes'ûd'un da bulunduğu yoldan geçen bir kafile onu defnetti."
+    ],
+    "ar": [
+     "كان أبو ذر قد ترك الأوثان قبل الإسلام، فلما سمع بالنبي ﷺ قدم مكة ولقيه بدلالة علي فأسلم خامس خمسة، وجهر بإسلامه عند الكعبة فضُرب حتى أنقذه العباس. ورجع إلى قومه فأسلم نصف غفار على يديه قبل الهجرة.",
+     "وقال النبي ﷺ: «ما أظلت الخضراء ولا أقلت الغبراء أصدق لهجة من أبي ذر». وخرج بعد النبي ﷺ إلى الشام فأنكر كنز الأموال وخالف معاوية، فاستقدمه عثمان، فاختار النزول بالربذة، ومات بها وليس عنده إلا امرأته وغلامه، فدفنه ركب من المؤمنين فيهم ابن مسعود."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "taqrib"]
+  },
+  {
+   "id": "muadh", "road": "sunni", "kind": "companion", "persons": ["taqrib:6725"],
+   "name": {"en": "Mu'adh b. Jabal", "tr": "Muâz b. Cebel", "ar": "معاذ بن جبل"},
+   "facts": [
+    {"k": "name", "en": "Mu'adh b. Jabal b. 'Amr, of the Khazraj; Abu 'Abd al-Rahman", "tr": "Muâz b. Cebel b. Amr; Hazrec kabilesinden; künyesi Ebû Abdurrahman", "ar": "معاذ بن جبل بن عمرو الخزرجي، أبو عبد الرحمن"},
+    {"k": "died", "en": "In the plague of 'Amwas in Syria, 18 AH (639 CE), in his thirties", "tr": "Şam'da Amvâs vebasında, 18 (639), otuzlu yaşlarında", "ar": "في طاعون عمواس بالشام سنة 18هـ (639م) وهو في الثلاثينات"},
+    {"k": "known", "en": "“The most knowledgeable of my community in the lawful and the unlawful”; the Prophet's envoy to Yemen", "tr": "“Ümmetimin helal ve haramı en iyi bileni”; Resûlullah'ın ﷺ Yemen'e gönderdiği muallim ve kadı", "ar": "«أعلم أمتي بالحلال والحرام»، وبعثه النبي ﷺ إلى اليمن"}
+   ],
+   "text": {
+    "en": [
+     "Mu'adh pledged at al-'Aqaba as a youth and fought at Badr and every battle after. The Prophet ﷺ loved him — “O Mu'adh, by Allah I love you” — and called him the most knowledgeable of the community in the lawful and the unlawful.",
+     "He sent him to Yemen as teacher and judge, asking how he would judge: by the Book of Allah, then the Sunna, then by his own reasoning — the hadith of Mu'adh, a foundation of Islamic law. Under 'Umar he taught in Syria and succeeded Abu 'Ubayda in command, dying in the same plague a little after him."
+    ],
+    "tr": [
+     "Muâz gençken Akabe'de biat etti; Bedir'de ve sonraki bütün savaşlarda bulundu. Resûlullah ﷺ onu severdi — “Ey Muâz, vallahi seni seviyorum” — ve onu ümmetin helal ve haramı en iyi bileni olarak andı.",
+     "Onu Yemen'e muallim ve kadı olarak gönderirken nasıl hüküm vereceğini sordu: Allah'ın Kitabı'yla, sonra sünnetle, sonra kendi içtihadıyla — İslâm hukukunun temellerinden olan Muâz hadisi. Hz. Ömer döneminde Şam'da ders verdi; Ebû Ubeyde'nin yerine komutan oldu ve aynı vebada ondan kısa süre sonra vefat etti."
+    ],
+    "ar": [
+     "شهد معاذ العقبة شابًا، وبدرًا والمشاهد كلها، وكان النبي ﷺ يحبه، وقال له: «يا معاذ، والله إني لأحبك»، وقال: «أعلم أمتي بالحلال والحرام معاذ بن جبل».",
+     "وبعثه إلى اليمن معلمًا وقاضيًا، وسأله: بم تقضي؟ قال: بكتاب الله، ثم بسنة رسوله، ثم أجتهد رأيي، وهو حديث معاذ في أصول الفقه. وعلّم بالشام في خلافة عمر، وخلف أبا عبيدة على الجيش، ومات في الطاعون نفسه بعده بقليل."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "taqrib"]
+  },
+  {
+   "id": "ubayy", "road": "sunni", "kind": "companion", "persons": ["taqrib:283"],
+   "name": {"en": "Ubayy b. Ka'b", "tr": "Übey b. Ka'b", "ar": "أبي بن كعب"},
+   "facts": [
+    {"k": "name", "en": "Ubayy b. Ka'b b. Qays, of al-Najjar of the Khazraj; Abu al-Mundhir; “the master of the reciters”", "tr": "Übey b. Ka'b b. Kays; Hazrec'in Neccâr kolundan; künyesi Ebü'l-Münzir; “kurrâların efendisi”", "ar": "أبي بن كعب بن قيس النجاري الخزرجي، أبو المنذر، سيد القراء"},
+    {"k": "died", "en": "Medina, in the caliphate of 'Umar or 'Uthman; the reports range from 19 to 32 AH", "tr": "Medine, Hz. Ömer veya Hz. Osman'ın halifeliğinde; rivayetler 19 ile 32 arasında değişir", "ar": "المدينة في خلافة عمر أو عثمان، والأقوال بين 19 و32هـ"},
+    {"k": "known", "en": "Scribe of the revelation; 'Umar gathered the people behind him for the night prayers of Ramadan", "tr": "Vahiy kâtibi; Hz. Ömer teravihte cemaati onun arkasında topladı", "ar": "من كتّاب الوحي، وجمع عمر الناس عليه في قيام رمضان"}
+   ],
+   "text": {
+    "en": [
+     "Ubayy had learned to read and write before Islam, rare in Medina, and became one of the scribes of the revelation. He pledged at al-'Aqaba and fought at Badr. The Prophet ﷺ said the best reciter of the community was Ubayy, and once told him that Allah had commanded him to recite Surat al-Bayyina to him by name — and Ubayy wept.",
+     "'Umar gathered the people of Medina behind him for the night prayers of Ramadan. He was among the jurists who gave fatwa in the Prophet's lifetime, and a main source of the readings of the Qur'an and of its commentary."
+    ],
+    "tr": [
+     "Übey, Medine'de nadir olduğu hâlde İslâm'dan önce okuma yazma öğrenmişti; vahiy kâtiplerinden oldu. Akabe'de biat etti ve Bedir'de savaştı. Resûlullah ﷺ ümmetin en iyi Kur'an okuyanının Übey olduğunu söyledi; bir defasında Allah'ın kendisine Beyyine sûresini adını vererek Übey'e okumasını emrettiğini bildirdi, Übey de ağladı.",
+     "Hz. Ömer Medinelileri teravihte onun arkasında topladı. Resûlullah'ın ﷺ sağlığında fetva veren fakihlerdendi; kıraat ve tefsirin başlıca kaynaklarındandır."
+    ],
+    "ar": [
+     "كان أبي يكتب قبل الإسلام، وقليل ما هم بالمدينة، فكان من كتّاب الوحي. شهد العقبة وبدرًا، وقال النبي ﷺ: «أقرؤهم أبي»، وقال له: «إن الله أمرني أن أقرأ عليك: لم يكن الذين كفروا»، قال: وسمّاني؟ قال: نعم، فبكى.",
+     "وجمع عمر الناس عليه في قيام رمضان، وكان ممن يفتي في حياة النبي ﷺ، ومن أصول القراءات والتفسير."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar"]
+  },
+  {
+   "id": "zayd-b-thabit", "road": "sunni", "kind": "companion", "persons": ["taqrib:2120"],
+   "name": {"en": "Zayd b. Thabit", "tr": "Zeyd b. Sâbit", "ar": "زيد بن ثابت"},
+   "facts": [
+    {"k": "name", "en": "Zayd b. Thabit b. al-Dahhak, of al-Najjar of the Khazraj; Abu Sa'id or Abu Kharija", "tr": "Zeyd b. Sâbit b. Dahhâk; Hazrec'in Neccâr kolundan; künyesi Ebû Saîd veya Ebû Hârice", "ar": "زيد بن ثابت بن الضحاك النجاري الخزرجي، أبو سعيد أو أبو خارجة"},
+    {"k": "died", "en": "Medina, 45 AH (665 CE) by the commonest report; 48 and after 50 are also said", "tr": "Medine, en yaygın rivayete göre 45 (665); 48 ve 50'den sonrası da söylenmiştir", "ar": "المدينة سنة 45هـ (665م) على الأشهر، وقيل 48 وقيل بعد الخمسين"},
+    {"k": "known", "en": "Scribe of the revelation; gathered the Qur'an under Abu Bakr and copied it under 'Uthman; master of the law of inheritance", "tr": "Vahiy kâtibi; Hz. Ebû Bekir zamanında Kur'an'ı topladı, Hz. Osman zamanında çoğalttı; ferâiz ilminin üstadı", "ar": "كاتب الوحي، جمع القرآن لأبي بكر ونسخه لعثمان، وإمام الفرائض"}
+   ],
+   "text": {
+    "en": [
+     "Zayd was eleven when the Prophet ﷺ reached Medina, and was turned back from Badr for his age. Quick and learned, he was told by the Prophet ﷺ to learn the script of the Jews for his letters, and learned it in about half a month. He became the chief scribe of the revelation.",
+     "Abu Bakr charged him with gathering the Qur'an into one copy after many reciters fell at al-Yamama; 'Uthman made him head of the committee that copied the standard text. He was the authority of the Companions in the law of inheritance — “the most knowledgeable of you in the shares is Zayd” — and judged in Medina for 'Umar and 'Uthman."
+    ],
+    "tr": [
+     "Resûlullah ﷺ Medine'ye geldiğinde Zeyd on bir yaşındaydı; yaşı sebebiyle Bedir'den geri çevrildi. Zeki ve bilgiliydi; Resûlullah ﷺ mektupları için Yahudilerin yazısını öğrenmesini istedi, o da yarım ay kadarda öğrendi. Vahyin baş kâtibi oldu.",
+     "Yemâme'de pek çok hâfız şehit düşünce Hz. Ebû Bekir onu Kur'an'ı tek mushafta toplamakla görevlendirdi; Hz. Osman resmî metni çoğaltan heyetin başına getirdi. Miras hukukunda sahâbenin otoritesiydi — “ferâizi en iyi bileniniz Zeyd'dir” — Hz. Ömer ve Hz. Osman adına Medine'de kadılık yaptı."
+    ],
+    "ar": [
+     "كان زيد ابن إحدى عشرة سنة مقدم النبي ﷺ المدينة، واستُصغر يوم بدر. وكان ذكيًّا عالمًا، أمره النبي ﷺ أن يتعلّم كتاب يهود لمراسلاته فتعلّمه في نحو نصف شهر، وصار أكبر كتّاب الوحي.",
+     "وكلّفه أبو بكر بجمع القرآن في مصحف بعد مقتل القراء باليمامة، وجعله عثمان على رأس من نسخوا المصاحف. وكان إمام الصحابة في الفرائض: «أفرضكم زيد»، وولي القضاء بالمدينة لعمر وعثمان."
+    ]
+   },
+   "sources": ["ibnsad", "istiab", "isaba", "siyar", "taqrib"]
+  }
+ ]
+}

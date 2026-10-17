@@ -153,18 +153,79 @@ def parse_year_words(words: str) -> tuple[int | None, bool]:
     return (total if seen else None), hundreds
 
 
+_OTHER_YEAR = re.compile(r"(?<!\w)(?:وقيل|ويقال|أو|او|سنة)\s+(?:سنة\s+|في\s+سنة\s+)?(.+)$")
+
+
 def death_year(phrase: str, tabaqa: int | None) -> int | None:
-    """Full hijri year from Ibn Hajar's wording, adding the hundreds his rule leaves out."""
+    """Full hijri year from Ibn Hajar's wording, adding the hundreds his rule leaves out.
+    "خمس وقيل ست وتسعين" (five, or it is said six, and ninety): the tens said once belong to every year named —
+    95 (BIO2, 2026-10-17: Abu Hurayra showed "d. 8" for "سبع وقيل ثمان وقيل تسع وخمسين", 57–59)."""
     number, hundreds_written = parse_year_words(phrase)
     if number is None:
         return None
+    if number < 10 and not hundreds_written:
+        rest = phrase
+        while True:
+            other = _OTHER_YEAR.search(rest)
+            if not other or re.search(r"(?:مولده|ولد|وله|وهو بن|عن)\s", rest[:other.start()]):
+                break                       # "… وكان مولده سنة ستين": the year of his birth, not of his death
+            value, other_hundreds = parse_year_words(other.group(1))
+            if value is not None and (value % 100 >= 20 or value >= 100):
+                # its tens and hundreds: 96 → 90, 226 → 220; "تسع أو عشر ومائتين" → 200 (ten is no tens)
+                number += (value - value % 100) + ((value % 100) - (value % 10) if value % 100 >= 20 else 0)
+                hundreds_written = hundreds_written or other_hundreds
+                break
+            rest = other.group(1)
     if hundreds_written or tabaqa is None:
         return number if hundreds_written else None
+    # Ibn Hajar's rule (his preface to the Taqrib): tabaqa 1–2 died before 100, 3–8 after 100, 9 on after 200.
+    # Where the rule cannot hold, the century is the one the generation lived in: a Successor of tabaqa 3–6 who
+    # "died in ninety-six" died in 96 (Ibrahim al-Nakha'i, Sa'id b. Jubayr), a man of tabaqa 9 who "died in
+    # ninety-eight" in 198 (Yahya al-Qattan, 'Abd al-Rahman b. Mahdi), not a century later
     if tabaqa <= 2:
         return number
     if tabaqa <= 8:
-        return number + 100
-    return number + 200
+        return number if tabaqa <= 6 and number >= 80 else number + 100
+    return number + 100 if tabaqa == 9 and number >= 80 else number + 200
+
+
+def year_of_death(note: str, tabaqa: int | None) -> int | None:
+    """The year of Ibn Hajar's death phrase as the Taqrib gives it ("مات سنة سبع وخمسين", "قتل ظلما سنة …")."""
+    words = re.sub(r"^(?:مات|قتل|استشهد|توفي)(?: سنة| في سنة)? ", "", note)
+    within = re.match(r"^((?:\S+ ){1,3}?)سنة (.+)$", words)       # "قتل ظلما سنة ..."
+    # not "سبع وقيل سنة ثمان …": the words before that "سنة" are already the year
+    if within and not re.match(r"(?:قبل|بعد|في حدود)", words) and parse_year_words(within.group(1))[0] is None:
+        words = within.group(2)
+    if re.match(r"(?:قبل|بعد|في حدود|بضع|سنة بضع)", words):
+        return None
+    return death_year(words, tabaqa)
+
+
+DEATH_RULE = "4"        # the years read again once when the rule changes (2: the tens said once; 3: the century, BIO2)
+
+
+def fix_death_years(conn) -> int:
+    """Read the years of death of the Taqrib's narrators again when the rule changed; returns how many changed."""
+    conn.execute("CREATE TABLE IF NOT EXISTS core_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+    row = conn.execute("SELECT value FROM core_meta WHERE key = 'death_rule'").fetchone()
+    if row is not None and row[0] == DEATH_RULE:
+        return 0
+    changes = []
+    for pid, note, tabaqa, year in conn.execute(
+            "SELECT id, death_year_note, tabaqa, death_year_ah FROM persons "
+            "WHERE key LIKE 'taqrib:%' AND death_year_note IS NOT NULL"):
+        new = year_of_death(note, tabaqa)
+        if new != year:
+            changes.append((new, pid))
+    conn.executemany("UPDATE persons SET death_year_ah = ? WHERE id = ?", changes)
+    conn.execute("INSERT OR REPLACE INTO core_meta (key, value) VALUES ('death_rule', ?)", (DEATH_RULE,))
+    conn.commit()
+    if changes:
+        # the lists kept with the old years (core.cache) are counted again: its stamp does not see updated rows
+        from isnady.core import cache
+
+        cache.clear()
+    return len(changes)
 
 
 # ----------------------------------------------------------- book marks

@@ -501,6 +501,14 @@ class NarratorsPage(QWidget):
         trees.addStretch(1)
         self.detail_box.addLayout(trees)
 
+        # his life (BIO2): written for isnady, or read from the rijal work and the chains
+        from isnady.core import lives
+        from isnady.gui.life_card import life_card
+
+        info, written = lives.life(conn, person_id)
+        if info is not None and (written or info["paragraphs"]):
+            self.detail_box.addWidget(life_card(info, written))
+
         # verdicts, tabaqa, death
         card, box = self._card(tr("What the critics say"))
         tag_row = QHBoxLayout()

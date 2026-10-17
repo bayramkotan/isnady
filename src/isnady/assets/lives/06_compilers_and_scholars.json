@@ -1,0 +1,415 @@
+{
+ "version": 1,
+ "license": "CC BY 4.0 — written for isnady",
+ "about": "The compilers of the books in isnady and the scholars whose grades and verdicts it shows (road A).",
+ "lives": [
+  {
+   "id": "bukhari", "road": "sunni", "kind": "compiler", "persons": ["taqrib:5727"], "scholar": "bukhari",
+   "name": {"en": "al-Bukhari", "tr": "İmam Buhârî", "ar": "الإمام البخاري"},
+   "facts": [
+    {"k": "name", "en": "Muhammad b. Isma'il b. Ibrahim b. al-Mughira al-Ju'fi; Abu 'Abd Allah", "tr": "Muhammed b. İsmâil b. İbrâhim b. Mugîre el-Cu'fî; künyesi Ebû Abdullah", "ar": "محمد بن إسماعيل بن إبراهيم بن المغيرة الجعفي، أبو عبد الله"},
+    {"k": "born", "en": "Bukhara, Shawwal 194 AH (810 CE)", "tr": "Buhara, Şevval 194 (810)", "ar": "بخارى، شوال سنة 194هـ (810م)"},
+    {"k": "died", "en": "Khartank near Samarkand, on the night of 'Id al-Fitr 256 AH (870 CE), aged 62", "tr": "Semerkant yakınında Hartenk, Ramazan Bayramı gecesi 256 (870), 62 yaşında", "ar": "خَرْتَنْك قرب سمرقند ليلة عيد الفطر سنة 256هـ (870م) وله اثنتان وستون"},
+    {"k": "teachers", "en": "More than a thousand: Ahmad b. Hanbal, Ibn al-Madini, Ibn Ma'in, Ishaq b. Rahwayh, Musaddad, al-Humaydi …", "tr": "Binden fazla: Ahmed b. Hanbel, İbnü'l-Medînî, İbn Maîn, İshak b. Râhûye, Müsedded, Humeydî …", "ar": "أكثر من ألف شيخ، منهم أحمد بن حنبل وابن المديني وابن معين وإسحاق بن راهويه ومسدد والحميدي"},
+    {"k": "students", "en": "Muslim, al-Tirmidhi, al-Nasa'i, Ibn Khuzayma, al-Firabri (the transmitter of the Sahih) …", "tr": "Müslim, Tirmizî, Nesâî, İbn Huzeyme, Sahîh'in râvisi Firebrî …", "ar": "مسلم، والترمذي، والنسائي، وابن خزيمة، والفربري راوي الصحيح"},
+    {"k": "works", "en": "al-Jami' al-Sahih, al-Adab al-Mufrad, al-Tarikh al-Kabir, Khalq Af'al al-'Ibad …", "tr": "el-Câmiu's-Sahîh, el-Edebü'l-Müfred, et-Târîhu'l-Kebîr, Halku Ef'âli'l-İbâd …", "ar": "الجامع الصحيح، والأدب المفرد، والتاريخ الكبير، وخلق أفعال العباد"}
+   ],
+   "text": {
+    "en": [
+     "Al-Bukhari lost his father as a child and was raised by his mother in Bukhara. He began memorising hadith at ten; at sixteen he went on pilgrimage with his mother and brother and stayed in the Hijaz to study, and at eighteen began writing his great history of narrators, al-Tarikh al-Kabir. He travelled for decades to Iraq, Syria, Egypt and Khurasan, hearing more than a thousand teachers.",
+     "Encouraged by Ishaq b. Rahwayh, he spent sixteen years choosing the hadith of his Sahih from some 600,000 he knew, praying two rak'as before entering each one. It holds about 7,500 hadith with repetitions, some 2,600 without, arranged in chapters whose titles carry his own understanding of the law. The community came to hold it the soundest book after the Qur'an.",
+     "In Nishapur a dispute with al-Dhuhli over whether one's recitation of the Qur'an is created drove him out; in Bukhara the governor expelled him when he refused to teach at the palace. He died in a village near Samarkand on the night of the 'Id."
+    ],
+    "tr": [
+     "Buhârî çocukken babasını kaybetti ve Buhara'da annesi tarafından büyütüldü. On yaşında hadis ezberlemeye başladı; on altı yaşında annesi ve kardeşiyle hacca gitti ve öğrenmek için Hicaz'da kaldı; on sekizinde râviler tarihi et-Târîhu'l-Kebîr'i yazmaya başladı. On yıllarca Irak, Şam, Mısır ve Horasan'a gidip binden fazla hocadan dinledi.",
+     "İshak b. Râhûye'nin teşvikiyle, bildiği 600.000 kadar hadisten Sahîh'inkileri on altı yılda seçti; her birini yazmadan önce iki rekât namaz kılardı. Tekrarlarla 7.500 kadar, tekrarsız 2.600 kadar hadis içerir; bab başlıkları onun fıkhî anlayışını taşır. Ümmet onu Kur'an'dan sonra en sahih kitap kabul etti.",
+     "Nîşâbur'da Kur'an'ı okumanın mahlûk olup olmadığı konusunda Zühlî ile yaşadığı anlaşmazlık onu şehirden çıkardı; Buhara'da sarayda ders vermeyi reddedince vali onu sürdü. Semerkant yakınındaki bir köyde bayram gecesi vefat etti."
+    ],
+    "ar": [
+     "توفي أبو البخاري وهو صغير فنشأ في حجر أمه ببخارى، وألهم حفظ الحديث وهو ابن عشر، وحج وهو ابن ست عشرة مع أمه وأخيه وأقام بالحجاز يطلب العلم، وصنّف التاريخ الكبير وهو ابن ثماني عشرة. ورحل عقودًا إلى العراق والشام ومصر وخراسان، وكتب عن أكثر من ألف شيخ.",
+     "وبإشارة إسحاق بن راهويه انتقى صحيحه في ست عشرة سنة من نحو ستمائة ألف حديث، وكان يصلي ركعتين قبل أن يضع كل حديث. وفيه نحو سبعة آلاف وخمسمائة حديث بالمكرر، ونحو ألفين وستمائة بغير تكرار، وفقهه في تراجم أبوابه. وتلقّته الأمة بالقبول فكان أصح كتاب بعد كتاب الله.",
+     "وامتُحن بنيسابور في مسألة اللفظ مع الذهلي فخرج منها، ونفاه أمير بخارى لما أبى أن يحدّث في داره، فمات بقرية قرب سمرقند ليلة العيد."
+    ]
+   },
+   "sources": ["tarikh_baghdad", "siyar", "tahdhib_kamal", "tabaqat_shafiiyya", "taqrib"]
+  },
+  {
+   "id": "muslim", "road": "sunni", "kind": "compiler", "persons": ["taqrib:6623"], "scholar": "muslim",
+   "name": {"en": "Muslim b. al-Hajjaj", "tr": "İmam Müslim", "ar": "الإمام مسلم"},
+   "facts": [
+    {"k": "name", "en": "Muslim b. al-Hajjaj b. Muslim al-Qushayri al-Naysaburi; Abu al-Husayn", "tr": "Müslim b. Haccâc b. Müslim el-Kuşeyrî en-Nîsâbûrî; künyesi Ebü'l-Hüseyn", "ar": "مسلم بن الحجاج بن مسلم القشيري النيسابوري، أبو الحسين"},
+    {"k": "born", "en": "Nishapur, 204 or 206 AH (820 CE)", "tr": "Nîşâbur, 204 veya 206 (820)", "ar": "نيسابور سنة 204 أو 206هـ (820م)"},
+    {"k": "died", "en": "Nishapur, Rajab 261 AH (875 CE)", "tr": "Nîşâbur, Receb 261 (875)", "ar": "نيسابور، رجب سنة 261هـ (875م)"},
+    {"k": "teachers", "en": "Ahmad b. Hanbal, Ishaq b. Rahwayh, Ibn Abi Shayba, Qutayba, Yahya b. Yahya, al-Bukhari …", "tr": "Ahmed b. Hanbel, İshak b. Râhûye, İbn Ebî Şeybe, Kuteybe, Yahyâ b. Yahyâ, Buhârî …", "ar": "أحمد بن حنبل، وإسحاق بن راهويه، وابن أبي شيبة، وقتيبة، ويحيى بن يحيى، والبخاري"},
+    {"k": "works", "en": "al-Sahih; al-Kuna, al-Tamyiz, al-Munfaridat …", "tr": "es-Sahîh; el-Künâ, et-Temyîz, el-Münferidât …", "ar": "الصحيح، والكنى، والتمييز، والمنفردات"}
+   ],
+   "text": {
+    "en": [
+     "Muslim, an Arab of the Qushayr living in Nishapur, began hearing hadith as a youth and travelled to the Hijaz, Iraq, Syria and Egypt. He was close to al-Bukhari and stood by him when al-Dhuhli turned against him, returning to al-Dhuhli all he had written from him.",
+     "He composed his Sahih over some fifteen years from 300,000 hadith he had heard. Unlike al-Bukhari he gathers all the chains and wordings of a hadith in one place, so that its variants can be compared, and opens with an introduction on the method of accepting narrators — a founding text of the science. It holds some 3,000 hadith without repetition.",
+     "He lived by trade in cloth and died in Nishapur; it is told that he was so absorbed in searching for a hadith one night that he ate a whole basket of dates without noticing, and fell ill."
+    ],
+    "tr": [
+     "Nîşâbur'da yaşayan Kuşeyr kabilesinden bir Arap olan Müslim gençken hadis dinlemeye başladı; Hicaz, Irak, Şam ve Mısır'a gitti. Buhârî'ye yakındı; Zühlî ona cephe alınca Buhârî'nin yanında durdu ve Zühlî'den yazdığı her şeyi ona geri gönderdi.",
+     "Sahîh'ini dinlediği 300.000 hadisten on beş yıl kadar çalışarak meydana getirdi. Buhârî'den farklı olarak bir hadisin bütün senedlerini ve lafızlarını tek yerde toplar, böylece farklar karşılaştırılabilir; kitabını râvilerin kabulü yöntemine dair, bu ilmin kurucu metinlerinden olan bir mukaddimeyle açar. Tekrarsız 3.000 kadar hadis içerir.",
+     "Kumaş ticaretiyle geçindi ve Nîşâbur'da vefat etti; bir gece bir hadisi aramaya öyle daldığı anlatılır ki farkına varmadan bir sepet hurmayı yemiş ve hastalanmış."
+    ],
+    "ar": [
+     "مسلم عربي من قشير سكن نيسابور، طلب الحديث صغيرًا ورحل إلى الحجاز والعراق والشام ومصر. ولازم البخاري ونصره حين خالفه الذهلي، وردّ على الذهلي كل ما كتبه عنه.",
+     "وصنّف صحيحه في نحو خمس عشرة سنة من ثلاثمائة ألف حديث مسموعة، ويجمع طرق الحديث وألفاظه في موضع واحد فتُقارن رواياته، وقدّم له بمقدمة في شروط قبول الرواة هي من أصول هذا العلم. وفيه نحو ثلاثة آلاف حديث بغير تكرار.",
+     "وكان يتّجر في البزّ، ومات بنيسابور، وقيل إنه اشتغل ليلة بالبحث عن حديث فأكل سلّة تمر وهو لا يشعر فمرض."
+    ]
+   },
+   "sources": ["tarikh_baghdad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "abudawud", "road": "sunni", "kind": "compiler", "persons": ["taqrib:2533"], "scholar": "abudawud",
+   "name": {"en": "Abu Dawud al-Sijistani", "tr": "Ebû Dâvûd es-Sicistânî", "ar": "أبو داود السجستاني"},
+   "facts": [
+    {"k": "name", "en": "Sulayman b. al-Ash'ath b. Ishaq al-Azdi al-Sijistani", "tr": "Süleyman b. Eş'as b. İshak el-Ezdî es-Sicistânî", "ar": "سليمان بن الأشعث بن إسحاق الأزدي السجستاني"},
+    {"k": "born", "en": "Sijistan, 202 AH (817 CE)", "tr": "Sicistan, 202 (817)", "ar": "سجستان سنة 202هـ (817م)"},
+    {"k": "died", "en": "Basra, Shawwal 275 AH (889 CE)", "tr": "Basra, Şevval 275 (889)", "ar": "البصرة، شوال سنة 275هـ (889م)"},
+    {"k": "teachers", "en": "Ahmad b. Hanbal, Musaddad, Qutayba, Ibn Ma'in, al-Qa'nabi …", "tr": "Ahmed b. Hanbel, Müsedded, Kuteybe, İbn Maîn, Ka'nebî …", "ar": "أحمد بن حنبل، ومسدد، وقتيبة، وابن معين، والقعنبي"},
+    {"k": "works", "en": "al-Sunan; al-Marasil; Masa'il Ahmad …", "tr": "es-Sünen; el-Merâsîl; Mesâilü Ahmed …", "ar": "السنن، والمراسيل، ومسائل أحمد"}
+   ],
+   "text": {
+    "en": [
+     "Abu Dawud of Sijistan travelled through Iraq, Syria, Egypt and the Hijaz, and was among the closest students of Ahmad b. Hanbal, whose answers on law he recorded. He settled in Basra at the request of the 'Abbasid prince al-Muwaffaq, to revive it after the Zanj revolt.",
+     "His Sunan gathers some 4,800 hadith chosen from 500,000, centred on the hadith of law that the jurists argue from. In a letter to the people of Mecca he explained his method, and he notes in the book where a hadith has a serious weakness. When he finished it he presented it to Ahmad, who approved it."
+    ],
+    "tr": [
+     "Sicistanlı Ebû Dâvûd Irak, Şam, Mısır ve Hicaz'ı dolaştı; fıkhî cevaplarını kaydettiği Ahmed b. Hanbel'in en yakın talebelerindendi. Zenc isyanından sonra şehri yeniden canlandırmak için Abbâsî emîr Muvaffak'ın isteğiyle Basra'ya yerleşti.",
+     "Sünen'i, 500.000 hadisten seçilmiş 4.800 kadar hadisi toplar; fakihlerin delil getirdiği ahkâm hadislerine odaklanır. Mekkelilere yazdığı mektupta yöntemini açıkladı; kitapta ciddi zaafı olan hadisleri belirtir. Bitirince Ahmed'e sundu, o da beğendi."
+    ],
+    "ar": [
+     "رحل أبو داود من سجستان إلى العراق والشام ومصر والحجاز، وكان من أخص أصحاب أحمد بن حنبل وروى مسائله، ونزل البصرة بطلب الموفّق ليعمرها بعد فتنة الزنج.",
+     "وجمع في سننه نحو أربعة آلاف وثمانمائة حديث انتقاها من خمسمائة ألف، وعني فيها بأحاديث الأحكام التي يحتج بها الفقهاء، وبيّن منهجه في رسالته إلى أهل مكة، ونبّه على ما فيه وهن شديد. وعرضه على أحمد فاستحسنه."
+    ]
+   },
+   "sources": ["tarikh_baghdad", "siyar", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "tirmidhi", "road": "sunni", "kind": "compiler", "persons": ["taqrib:6206"], "scholar": "tirmidhi",
+   "name": {"en": "al-Tirmidhi", "tr": "İmam Tirmizî", "ar": "الإمام الترمذي"},
+   "facts": [
+    {"k": "name", "en": "Muhammad b. 'Isa b. Sawra al-Sulami al-Tirmidhi; Abu 'Isa", "tr": "Muhammed b. Îsâ b. Sevre es-Sülemî et-Tirmizî; künyesi Ebû Îsâ", "ar": "محمد بن عيسى بن سورة السلمي الترمذي، أبو عيسى"},
+    {"k": "born", "en": "Near Tirmidh, about 209 AH (824 CE)", "tr": "Tirmiz yakınları, 209 civarı (824)", "ar": "قرب ترمذ نحو سنة 209هـ (824م)"},
+    {"k": "died", "en": "Bugh near Tirmidh, Rajab 279 AH (892 CE)", "tr": "Tirmiz yakınında Bûğ, Receb 279 (892)", "ar": "بُوغ قرب ترمذ، رجب سنة 279هـ (892م)"},
+    {"k": "works", "en": "al-Jami' (the Sunan), al-Shama'il al-Muhammadiyya, al-'Ilal", "tr": "el-Câmi' (Sünen), eş-Şemâilü'l-Muhammediyye, el-İlel", "ar": "الجامع (السنن)، والشمائل المحمدية، والعلل"}
+   ],
+   "text": {
+    "en": [
+     "Al-Tirmidhi was the foremost student of al-Bukhari, who told him: “I have benefited from you more than you have from me.” He travelled to Iraq and the Hijaz and spent his life between them and his home near Tirmidh.",
+     "His Jami' gives after each hadith its grade — sahih, hasan, gharib, or a combination — and which jurists acted on it, so that it is at once a book of hadith, of criticism and of law; the term hasan as a grade owes its currency to him. His Shama'il describes the Prophet's appearance and manners. He lost his sight in his last years."
+    ],
+    "tr": [
+     "Tirmizî, kendisine “Benim senden faydalandığım, senin benden faydalandığından fazladır” diyen Buhârî'nin önde gelen talebesidir. Irak'a ve Hicaz'a gitti; ömrünü buralar ile Tirmiz yakınındaki memleketi arasında geçirdi.",
+     "Câmi'inde her hadisten sonra derecesini — sahih, hasen, garîb ya da bunların birleşimi — ve onunla hangi fakihlerin amel ettiğini verir; bu yüzden kitap aynı anda hadis, tenkit ve fıkıh kitabıdır; bir derece olarak “hasen” terimi yaygınlığını ona borçludur. Şemâil'i Resûlullah'ın ﷺ görünüşünü ve ahlâkını anlatır. Son yıllarında gözlerini kaybetti."
+    ],
+    "ar": [
+     "الترمذي أجلّ أصحاب البخاري، وقال له البخاري: ما انتفعت بك أكثر مما انتفعت بي. رحل إلى العراق والحجاز، وقضى عمره بينهما وبين بلده قرب ترمذ.",
+     "وجامعه يذكر عقب كل حديث درجته من الصحة والحسن والغرابة ومن عمل به من الفقهاء، فهو كتاب حديث وعلل وفقه معًا، وبه اشتهر اصطلاح الحسن. وشمائله في صفة النبي ﷺ وأخلاقه. وكُفّ بصره في آخر عمره."
+    ]
+   },
+   "sources": ["siyar", "tadhkira", "tahdhib_kamal", "wafayat", "taqrib"]
+  },
+  {
+   "id": "nasai", "road": "sunni", "kind": "compiler", "persons": ["taqrib:47"], "scholar": "nasai",
+   "name": {"en": "al-Nasa'i", "tr": "İmam Nesâî", "ar": "الإمام النسائي"},
+   "facts": [
+    {"k": "name", "en": "Ahmad b. Shu'ayb b. 'Ali al-Nasa'i; Abu 'Abd al-Rahman", "tr": "Ahmed b. Şuayb b. Ali en-Nesâî; künyesi Ebû Abdurrahman", "ar": "أحمد بن شعيب بن علي النسائي، أبو عبد الرحمن"},
+    {"k": "born", "en": "Nasa in Khurasan, 215 AH (830 CE)", "tr": "Horasan'da Nesâ, 215 (830)", "ar": "نسا بخراسان سنة 215هـ (830م)"},
+    {"k": "died", "en": "303 AH (915 CE), aged 88, after he was beaten in Damascus", "tr": "303 (915), 88 yaşında; Dımaşk'ta dövüldükten sonra", "ar": "سنة 303هـ (915م) وله ثمان وثمانون، بعد أن ضُرب بدمشق"},
+    {"k": "works", "en": "al-Sunan al-Kubra and its selection al-Mujtaba (the Sunan in isnady); Khasa'is 'Ali", "tr": "es-Sünenü'l-Kübrâ ve ondan seçilen el-Müctebâ (isnady'deki Sünen); Hasâisü Ali", "ar": "السنن الكبرى ومختصرها المجتبى (السنن في isnady)، وخصائص علي"}
+   ],
+   "text": {
+    "en": [
+     "Al-Nasa'i set out at fifteen to Qutayba b. Sa'id and stayed with him over a year, then travelled widely and settled in Egypt, where he was the leading hadith scholar of his time. His conditions for narrators were strict — stricter, some said, than Muslim's.",
+     "His Sunan al-Kubra was condensed into al-Mujtaba, the Sunan counted among the six books. Late in life he went to Damascus and read his book on the virtues of 'Ali to answer those there who disparaged him; he was beaten in the mosque, and died soon after."
+    ],
+    "tr": [
+     "Nesâî on beş yaşında Kuteybe b. Saîd'e gitti ve bir yıldan fazla yanında kaldı; sonra çok yolculuk yaptı ve zamanının önde gelen muhaddisi olarak Mısır'a yerleşti. Râvi şartları sıkıydı — bazılarına göre Müslim'inkinden de sıkı.",
+     "es-Sünenü'l-Kübrâ'sı, Kütüb-i Sitte'den sayılan el-Müctebâ'ya kısaltıldı. Ömrünün sonunda Dımaşk'a gitti ve Hz. Ali'yi küçümseyenlere cevap olarak onun faziletlerine dair kitabını okudu; mescitte dövüldü ve kısa süre sonra vefat etti."
+    ],
+    "ar": [
+     "رحل النسائي وهو ابن خمس عشرة إلى قتيبة بن سعيد فأقام عنده أكثر من سنة، ثم طوّف في البلاد ونزل مصر فكان إمام أهل الحديث في زمانه، وكانت شروطه في الرجال شديدة، حتى قيل إنها أشد من شرط مسلم.",
+     "واختُصرت سننه الكبرى في المجتبى المعدود في الكتب الستة. وخرج في آخر عمره إلى دمشق فقرأ كتاب خصائص علي ردًّا على من ينال منه، فضُرب في المسجد ومات بعد ذلك بقليل."
+    ]
+   },
+   "sources": ["siyar", "tadhkira", "tahdhib_kamal", "wafayat", "taqrib"]
+  },
+  {
+   "id": "ibnmajah", "road": "sunni", "kind": "compiler", "persons": ["taqrib:6409"], "scholar": "ibnmajah",
+   "name": {"en": "Ibn Maja", "tr": "İbn Mâce", "ar": "ابن ماجه"},
+   "facts": [
+    {"k": "name", "en": "Muhammad b. Yazid al-Rab'i al-Qazwini; Abu 'Abd Allah", "tr": "Muhammed b. Yezîd er-Rabaî el-Kazvînî; künyesi Ebû Abdullah", "ar": "محمد بن يزيد الربعي القزويني، أبو عبد الله"},
+    {"k": "born", "en": "Qazvin, 209 AH (824 CE)", "tr": "Kazvin, 209 (824)", "ar": "قزوين سنة 209هـ (824م)"},
+    {"k": "died", "en": "Qazvin, Ramadan 273 AH (887 CE), aged 64", "tr": "Kazvin, Ramazan 273 (887), 64 yaşında", "ar": "قزوين، رمضان سنة 273هـ (887م) وله أربع وستون"}
+   ],
+   "text": {
+    "en": [
+     "Ibn Maja of Qazvin travelled to Iraq, the Hijaz, Syria and Egypt, hearing Ibn Abi Shayba, Hisham b. 'Ammar and many others; he also wrote a commentary on the Qur'an and a history, now lost.",
+     "His Sunan of some 4,300 hadith contains many not found in the other five, among them weak ones. From the sixth century AH it was counted as the sixth of the six books, for the many hadith it adds."
+    ],
+    "tr": [
+     "Kazvinli İbn Mâce Irak, Hicaz, Şam ve Mısır'a gidip İbn Ebî Şeybe'den, Hişâm b. Ammâr'dan ve pek çok kişiden dinledi; bugün kayıp olan bir tefsir ve bir tarih de yazdı.",
+     "4.300 kadar hadis içeren Sünen'inde diğer beş kitapta bulunmayan pek çok hadis vardır; bunların arasında zayıflar da bulunur. Hicrî altıncı asırdan itibaren eklediği çok sayıda hadis sebebiyle Kütüb-i Sitte'nin altıncısı sayıldı."
+    ],
+    "ar": [
+     "رحل ابن ماجه من قزوين إلى العراق والحجاز والشام ومصر، فسمع ابن أبي شيبة وهشام بن عمار وخلقًا، وصنّف تفسيرًا وتاريخًا لم يصلا إلينا.",
+     "وفي سننه نحو أربعة آلاف وثلاثمائة حديث، فيها كثير من الزوائد على الخمسة، وفيها الضعيف. وعُدّت سادسة الكتب الستة منذ القرن السادس لكثرة زوائدها."
+    ]
+   },
+   "sources": ["siyar", "tadhkira", "tahdhib_kamal", "wafayat", "taqrib"]
+  },
+  {
+   "id": "malik", "road": "sunni", "kind": "imam", "persons": ["taqrib:6425"], "scholar": "malik",
+   "name": {"en": "Malik b. Anas", "tr": "İmam Mâlik", "ar": "الإمام مالك"},
+   "facts": [
+    {"k": "name", "en": "Malik b. Anas b. Malik b. Abi 'Amir al-Asbahi; Abu 'Abd Allah", "tr": "Mâlik b. Enes b. Mâlik b. Ebî Âmir el-Asbahî; künyesi Ebû Abdullah", "ar": "مالك بن أنس بن مالك بن أبي عامر الأصبحي، أبو عبد الله"},
+    {"k": "born", "en": "Medina, 93 AH (712 CE)", "tr": "Medine, 93 (712)", "ar": "المدينة سنة 93هـ (712م)"},
+    {"k": "died", "en": "Medina, Rabi' al-Awwal 179 AH (795 CE), aged 86; buried in al-Baqi'", "tr": "Medine, Rebîülevvel 179 (795), 86 yaşında; Bakî'e defnedildi", "ar": "المدينة، ربيع الأول سنة 179هـ (795م) وله ست وثمانون، ودفن بالبقيع"},
+    {"k": "teachers", "en": "Nafi', al-Zuhri, Rabi'at al-Ra'y, Yahya b. Sa'id, Ibn Hurmuz …", "tr": "Nâfi', Zührî, Rebîatü'r-Re'y, Yahyâ b. Saîd, İbn Hürmüz …", "ar": "نافع، والزهري، وربيعة الرأي، ويحيى بن سعيد، وابن هرمز"},
+    {"k": "students", "en": "al-Shafi'i, Ibn al-Mubarak, Ibn Wahb, Yahya b. Yahya al-Laythi, al-Qa'nabi …", "tr": "Şâfiî, İbnü'l-Mübârek, İbn Vehb, Yahyâ b. Yahyâ el-Leysî, Ka'nebî …", "ar": "الشافعي، وابن المبارك، وابن وهب، ويحيى بن يحيى الليثي، والقعنبي"},
+    {"k": "known", "en": "Imam of Medina; founder of the Maliki school; author of the Muwatta'", "tr": "Medine'nin imamı; Mâlikî mezhebinin kurucusu; Muvatta'ın müellifi", "ar": "إمام دار الهجرة، وإمام المذهب المالكي، وصاحب الموطأ"}
+   ],
+   "text": {
+    "en": [
+     "Malik was born in Medina into a family of scholars and never left it except for the pilgrimage. He sat for years with Nafi', al-Zuhri and Ibn Hurmuz, and taught in the Prophet's mosque for some sixty years with great dignity: he would bathe, perfume himself and sit in state before narrating the Prophet's words.",
+     "His Muwatta', worked on for some forty years, joins the hadith of the Prophet ﷺ, the sayings of the Companions and the practice of Medina; he refused al-Mansur's wish to impose it on all the provinces. When he gave the fatwa that a divorce sworn under compulsion does not bind, the governor of Medina had him flogged.",
+     "His school spread to Egypt, North Africa and al-Andalus. Al-Shafi'i said: “When the scholars are mentioned, Malik is the star.”"
+    ],
+    "tr": [
+     "Mâlik Medine'de âlim bir ailede doğdu ve hac dışında şehirden hiç ayrılmadı. Yıllarca Nâfi', Zührî ve İbn Hürmüz'ün yanında oturdu; Mescid-i Nebevî'de altmış yıla yakın büyük bir vakarla ders verdi: Resûlullah'ın ﷺ sözlerini rivayet etmeden önce gusleder, güzel koku sürünür ve heybetle otururdu.",
+     "Kırk yıl kadar üzerinde çalıştığı Muvatta', Resûlullah'ın ﷺ hadislerini, sahâbenin sözlerini ve Medine amelini birleştirir; Mansûr'un onu bütün eyaletlere uygulatma isteğini kabul etmedi. Zorla yaptırılan boşama yemininin bağlayıcı olmadığına fetva verince Medine valisi onu kırbaçlattı.",
+     "Mezhebi Mısır'a, Kuzey Afrika'ya ve Endülüs'e yayıldı. Şâfiî “âlimler anıldığında yıldız Mâlik'tir” der."
+    ],
+    "ar": [
+     "وُلد مالك بالمدينة في بيت علم، ولم يخرج منها إلا حاجًّا، ولازم نافعًا والزهري وابن هرمز سنين، وجلس للتعليم في المسجد النبوي نحو ستين سنة، وكان يغتسل ويتطيّب ويجلس بوقار إذا حدّث بحديث رسول الله ﷺ.",
+     "وصنّف الموطأ في نحو أربعين سنة، جمع فيه الحديث وأقوال الصحابة وعمل أهل المدينة، وأبى أن يحمل المنصور الناس عليه. وأفتى بأن طلاق المكره لا يلزم فضربه والي المدينة.",
+     "وانتشر مذهبه في مصر والمغرب والأندلس، وقال الشافعي: إذا ذُكر العلماء فمالك النجم."
+    ]
+   },
+   "sources": ["ibnsad", "siyar", "tahdhib_kamal", "wafayat", "taqrib"]
+  },
+  {
+   "id": "darimi", "road": "sunni", "kind": "compiler", "persons": ["taqrib:3434"], "scholar": "darimi",
+   "name": {"en": "al-Darimi", "tr": "Dârimî", "ar": "الدارمي"},
+   "facts": [
+    {"k": "name", "en": "'Abd Allah b. 'Abd al-Rahman b. al-Fadl al-Darimi al-Samarqandi; Abu Muhammad", "tr": "Abdullah b. Abdurrahman b. Fazl ed-Dârimî es-Semerkandî; künyesi Ebû Muhammed", "ar": "عبد الله بن عبد الرحمن بن الفضل الدارمي السمرقندي، أبو محمد"},
+    {"k": "born", "en": "181 AH (797 CE)", "tr": "181 (797)", "ar": "سنة 181هـ (797م)"},
+    {"k": "died", "en": "Samarkand, on the day of 'Arafa 255 AH (869 CE), aged 74", "tr": "Semerkant, Arefe günü 255 (869), 74 yaşında", "ar": "سمرقند يوم عرفة سنة 255هـ (869م) وله أربع وسبعون"},
+    {"k": "works", "en": "al-Sunan (also called al-Musnad)", "tr": "es-Sünen (el-Müsned de denir)", "ar": "السنن (ويسمّى المسند)"}
+   ],
+   "text": {
+    "en": [
+     "Al-Darimi of Samarkand travelled to the Hijaz, Iraq, Syria and Egypt, and was counted among the great memorisers of his time. Muslim, Abu Dawud and al-Tirmidhi narrate from him.",
+     "He was made judge of Samarkand, judged one case and resigned. His Sunan, with many reports from the Companions and Successors and a long opening on knowledge and its people, is placed by some scholars among the main books in place of Ibn Maja."
+    ],
+    "tr": [
+     "Semerkantlı Dârimî Hicaz, Irak, Şam ve Mısır'a gitti; zamanının büyük hâfızlarından sayıldı. Müslim, Ebû Dâvûd ve Tirmizî ondan rivayet eder.",
+     "Semerkant kadılığına getirildi, bir dava gördü ve istifa etti. Sahâbe ve tâbiînden pek çok rivayet ve ilim ile ehli hakkında uzun bir giriş içeren Sünen'ini bazı âlimler İbn Mâce'nin yerine temel kitaplar arasında sayar."
+    ],
+    "ar": [
+     "رحل الدارمي من سمرقند إلى الحجاز والعراق والشام ومصر، وكان من الحفاظ الكبار، وروى عنه مسلم وأبو داود والترمذي.",
+     "ووُلّي قضاء سمرقند فقضى قضية واحدة ثم استعفى. وسننه، وفيها آثار كثيرة عن الصحابة والتابعين ومقدمة طويلة في العلم وأهله، جعلها بعض العلماء من الأصول مكان سنن ابن ماجه."
+    ]
+   },
+   "sources": ["siyar", "tadhkira", "tahdhib_kamal", "taqrib"]
+  },
+  {
+   "id": "nawawi", "road": "sunni", "kind": "scholar", "scholar": "nawawi",
+   "name": {"en": "al-Nawawi", "tr": "İmam Nevevî", "ar": "الإمام النووي"},
+   "facts": [
+    {"k": "name", "en": "Yahya b. Sharaf al-Nawawi; Abu Zakariyya; Muhyi al-Din", "tr": "Yahyâ b. Şeref en-Nevevî; künyesi Ebû Zekeriyyâ; lakabı Muhyiddin", "ar": "يحيى بن شرف النووي، أبو زكريا، محيي الدين"},
+    {"k": "born", "en": "Nawa in the Hawran (Syria), Muharram 631 AH (1233 CE)", "tr": "Havran'da (Suriye) Nevâ, Muharrem 631 (1233)", "ar": "نوى من حوران، المحرم سنة 631هـ (1233م)"},
+    {"k": "died", "en": "Nawa, Rajab 676 AH (1277 CE), aged 45", "tr": "Nevâ, Receb 676 (1277), 45 yaşında", "ar": "نوى، رجب سنة 676هـ (1277م) وله خمس وأربعون"},
+    {"k": "works", "en": "Riyad al-Salihin, al-Arba'un, al-Minhaj (commentary on Muslim), al-Adhkar, al-Majmu', Minhaj al-Talibin …", "tr": "Riyâzü's-Sâlihîn, el-Erbaûn, el-Minhâc (Müslim şerhi), el-Ezkâr, el-Mecmû', Minhâcü't-Tâlibîn …", "ar": "رياض الصالحين، والأربعون، والمنهاج شرح صحيح مسلم، والأذكار، والمجموع، ومنهاج الطالبين"}
+   ],
+   "text": {
+    "en": [
+     "Al-Nawawi came to Damascus at nineteen and studied with such devotion that he took twelve lessons a day and hardly slept. He lived simply in a madrasa room, never married, and ate what his father sent from Nawa.",
+     "In a short life he wrote books that are still read everywhere: the commentary on Sahih Muslim, the great Shafi'i works al-Majmu' and Minhaj al-Talibin, al-Adhkar, Riyad al-Salihin and the Forty Hadith. He headed Dar al-Hadith al-Ashrafiyya in Damascus and admonished the Mamluk sultan Baybars in writing. He died at forty-five in his home town."
+    ],
+    "tr": [
+     "Nevevî on dokuz yaşında Dımaşk'a geldi ve günde on iki ders alıp neredeyse hiç uyumayacak kadar kendini ilme verdi. Bir medrese odasında sade yaşadı, hiç evlenmedi ve babasının Nevâ'dan gönderdiğini yerdi.",
+     "Kısa ömründe bugün de her yerde okunan kitaplar yazdı: Sahîh-i Müslim şerhi, Şâfiî fıkhının büyük eserleri el-Mecmû' ve Minhâcü't-Tâlibîn, el-Ezkâr, Riyâzü's-Sâlihîn ve Kırk Hadis. Dımaşk'taki Dârülhadîsi'l-Eşrefiyye'nin başına geçti; Memlûk sultanı Baybars'a yazılı nasihatte bulundu. Kırk beş yaşında memleketinde vefat etti."
+    ],
+    "ar": [
+     "قدم النووي دمشق وهو ابن تسع عشرة، فأقبل على العلم حتى كان يقرأ في اليوم اثني عشر درسًا ولا يكاد ينام، وعاش زاهدًا في بيت بالمدرسة، ولم يتزوج، وكان يأكل مما يرسله أبوه من نوى.",
+     "وصنّف في عمر قصير كتبًا سارت في الآفاق: شرح صحيح مسلم، والمجموع، ومنهاج الطالبين، والأذكار، ورياض الصالحين، والأربعين. وولي دار الحديث الأشرفية بدمشق، وكتب إلى الظاهر بيبرس ناصحًا. ومات ببلده وله خمس وأربعون."
+    ]
+   },
+   "sources": ["tabaqat_shafiiyya", "tadhkira", "bidaya"]
+  },
+  {
+   "id": "dehlawi", "road": "sunni", "kind": "scholar", "scholar": "dehlawi",
+   "name": {"en": "Shah Waliullah al-Dihlawi", "tr": "Şah Veliyyullah ed-Dihlevî", "ar": "شاه ولي الله الدهلوي"},
+   "facts": [
+    {"k": "name", "en": "Ahmad b. 'Abd al-Rahim al-Dihlawi, known as Shah Waliullah", "tr": "Ahmed b. Abdürrahîm ed-Dihlevî; Şah Veliyyullah diye tanınır", "ar": "أحمد بن عبد الرحيم الدهلوي، المعروف بشاه ولي الله"},
+    {"k": "born", "en": "Near Delhi, 1114 AH (1703 CE)", "tr": "Delhi yakınları, 1114 (1703)", "ar": "قرب دهلي سنة 1114هـ (1703م)"},
+    {"k": "died", "en": "Delhi, 1176 AH (1762 CE)", "tr": "Delhi, 1176 (1762)", "ar": "دهلي سنة 1176هـ (1762م)"},
+    {"k": "works", "en": "Hujjat Allah al-Baligha; Fath al-Rahman (Persian translation of the Qur'an); al-Arba'un", "tr": "Huccetullâhi'l-Bâliğa; Fethu'r-Rahmân (Kur'an'ın Farsça tercümesi); el-Erbaûn", "ar": "حجة الله البالغة، وفتح الرحمن (ترجمة القرآن بالفارسية)، والأربعون"}
+   ],
+   "text": {
+    "en": [
+     "Shah Waliullah studied with his father, head of the Rahimiyya madrasa in Delhi, and succeeded him. In 1143–1145 AH he stayed in the Hijaz and studied hadith with Abu Tahir al-Kurani and others, and returned to make hadith the centre of learning in India.",
+     "In Hujjat Allah al-Baligha he set out the wisdom behind the rulings of the Sunna; he translated the Qur'an into Persian, the language of educated Indian Muslims; and his sons and students carried his school of hadith through the nineteenth century."
+    ],
+    "tr": [
+     "Şah Veliyyullah, Delhi'deki Rahîmiyye medresesinin başında olan babasından okudu ve onun yerine geçti. 1143–1145 yıllarında Hicaz'da kalıp Ebû Tâhir el-Kürânî ve başkalarından hadis okudu; dönünce hadisi Hindistan'daki ilmin merkezine yerleştirdi.",
+     "Huccetullâhi'l-Bâliğa'da sünnetteki hükümlerin hikmetlerini açıkladı; Kur'an'ı Hindistan Müslümanlarının ilim dili olan Farsçaya tercüme etti; oğulları ve talebeleri onun hadis ekolünü on dokuzuncu yüzyıl boyunca sürdürdü."
+    ],
+    "ar": [
+     "تعلّم شاه ولي الله على أبيه شيخ المدرسة الرحيمية بدهلي وخلفه فيها، ثم جاور بالحجاز بين سنتي 1143 و1145 وأخذ الحديث عن أبي طاهر الكوراني وغيره، فرجع وجعل الحديث محور التعليم في الهند.",
+     "وبيّن في حجة الله البالغة أسرار أحكام السنة، وترجم القرآن إلى الفارسية لغة العلم عند مسلمي الهند، وحمل أبناؤه وتلاميذه مدرسته في الحديث طوال القرن الثالث عشر."
+    ]
+   },
+   "sources": ["nuzha"]
+  },
+  {
+   "id": "ibnhajar", "road": "sunni", "kind": "critic", "scholar": "ibnhajar",
+   "name": {"en": "Ibn Hajar al-'Asqalani", "tr": "İbn Hacer el-Askalânî", "ar": "ابن حجر العسقلاني"},
+   "facts": [
+    {"k": "name", "en": "Ahmad b. 'Ali b. Muhammad, known as Ibn Hajar; Abu al-Fadl; Shihab al-Din", "tr": "Ahmed b. Ali b. Muhammed, İbn Hacer diye tanınır; künyesi Ebü'l-Fazl; lakabı Şihâbüddin", "ar": "أحمد بن علي بن محمد، ابن حجر، أبو الفضل، شهاب الدين"},
+    {"k": "born", "en": "Cairo, Sha'ban 773 AH (1372 CE)", "tr": "Kahire, Şaban 773 (1372)", "ar": "القاهرة، شعبان سنة 773هـ (1372م)"},
+    {"k": "died", "en": "Cairo, Dhu al-Hijja 852 AH (1449 CE)", "tr": "Kahire, Zilhicce 852 (1449)", "ar": "القاهرة، ذو الحجة سنة 852هـ (1449م)"},
+    {"k": "works", "en": "Fath al-Bari, al-Isaba, Tahdhib al-Tahdhib, Taqrib al-Tahdhib, Lisan al-Mizan, Bulugh al-Maram, Nukhbat al-Fikar …", "tr": "Fethu'l-Bârî, el-İsâbe, Tehzîbü't-Tehzîb, Takrîbü't-Tehzîb, Lisânü'l-Mîzân, Bülûğu'l-Merâm, Nuhbetü'l-Fiker …", "ar": "فتح الباري، والإصابة، وتهذيب التهذيب، وتقريب التهذيب، ولسان الميزان، وبلوغ المرام، ونخبة الفكر"},
+    {"k": "known", "en": "“The commander of the faithful in hadith” of the later centuries; his Taqrib is the rijal work behind isnady's road A", "tr": "Sonraki asırların “hadiste mü'minlerin emîri”; Takrîb'i isnady'nin A yolundaki ricâl eseridir", "ar": "أمير المؤمنين في الحديث في المتأخرين، وتقريبه هو كتاب الرجال في طريق isnady الأول"}
+   ],
+   "text": {
+    "en": [
+     "Ibn Hajar was orphaned young in Cairo and raised by a guardian; he memorised the Qur'an at nine and turned to hadith under Zayn al-Din al-'Iraqi, who named him his successor. He travelled to the Hijaz, Yemen and Syria and became the greatest hadith scholar of his age.",
+     "His Fath al-Bari, a commentary on al-Bukhari written over some twenty-five years, is the summit of its kind. His books on narrators — Tahdhib al-Tahdhib, al-Isaba on the Companions, Lisan al-Mizan, and the compact Taqrib al-Tahdhib with its twelve ranks and twelve generations — are the standard references still; isnady identifies the narrators of the Sunni books by the Taqrib. He served several times as chief Shafi'i judge of Egypt."
+    ],
+    "tr": [
+     "İbn Hacer Kahire'de küçük yaşta yetim kaldı ve bir vasinin yanında büyüdü; dokuz yaşında Kur'an'ı ezberledi ve kendisini halefi tayin eden Zeynüddin el-Irâkî'nin yanında hadise yöneldi. Hicaz'a, Yemen'e ve Şam'a gitti ve zamanının en büyük muhaddisi oldu.",
+     "Yirmi beş yıl kadar üzerinde çalıştığı Buhârî şerhi Fethu'l-Bârî türünün zirvesidir. Râvilere dair kitapları — Tehzîbü't-Tehzîb, sahâbe hakkında el-İsâbe, Lisânü'l-Mîzân ve on iki mertebesi ve on iki tabakasıyla özlü Takrîbü't-Tehzîb — bugün de temel başvuru eserleridir; isnady Sünnî kitapların râvilerini Takrîb'e göre tanımlar. Birkaç kez Mısır'ın Şâfiî başkadılığını yaptı."
+    ],
+    "ar": [
+     "نشأ ابن حجر يتيمًا بالقاهرة في كفالة وصيّ، وحفظ القرآن وهو ابن تسع، ولازم الزين العراقي في الحديث فلقّبه بالحافظ وجعله خليفته. ورحل إلى الحجاز واليمن والشام، فصار حافظ عصره.",
+     "وفتح الباري شرح البخاري الذي صنّفه في نحو خمس وعشرين سنة غاية في بابه. وكتبه في الرجال — تهذيب التهذيب، والإصابة في الصحابة، ولسان الميزان، وتقريب التهذيب بمراتبه الاثنتي عشرة وطبقاته الاثنتي عشرة — هي المراجع إلى اليوم، وبالتقريب يعرّف isnady رواة الكتب السنية. وولي قضاء الشافعية بمصر مرات."
+    ]
+   },
+   "sources": ["daw", "tabaqat_shafiiyya"]
+  },
+  {
+   "id": "tabrizi", "road": "sunni", "kind": "compiler", "scholar": "tabrizi",
+   "name": {"en": "al-Khatib al-Tabrizi", "tr": "Hatîb et-Tebrîzî", "ar": "الخطيب التبريزي"},
+   "facts": [
+    {"k": "name", "en": "Muhammad b. 'Abd Allah al-Khatib al-'Umari al-Tabrizi; Wali al-Din", "tr": "Muhammed b. Abdullah el-Hatîb el-Ömerî et-Tebrîzî; lakabı Veliyyüddin", "ar": "محمد بن عبد الله الخطيب العمري التبريزي، ولي الدين"},
+    {"k": "died", "en": "After 737 AH (1337 CE)", "tr": "737'den (1337) sonra", "ar": "بعد سنة 737هـ (1337م)"},
+    {"k": "works", "en": "Mishkat al-Masabih (completed 737 AH)", "tr": "Mişkâtü'l-Mesâbîh (737'de tamamlandı)", "ar": "مشكاة المصابيح (أتمّها سنة 737هـ)"}
+   ],
+   "text": {
+    "en": [
+     "Al-Khatib al-Tabrizi was a scholar of the eighth century AH, a student of Sharaf al-Din al-Tibi, at whose request he reworked al-Baghawi's Masabih al-Sunna.",
+     "He named the Companion and the source book of every hadith, which al-Baghawi had left out, and added a third section to each chapter. The result, Mishkat al-Masabih, completed in 737 AH, became one of the most taught hadith books from Anatolia to India, and al-Tibi wrote a commentary on it."
+    ],
+    "tr": [
+     "Hatîb et-Tebrîzî hicrî sekizinci asrın âlimlerinden, Şerefüddin et-Tîbî'nin talebesidir; onun isteğiyle Begavî'nin Mesâbîhu's-Sünne'sini yeniden düzenledi.",
+     "Begavî'nin vermediği sahâbîyi ve kaynak kitabı her hadis için belirtti ve her baba üçüncü bir fasıl ekledi. 737'de tamamlanan Mişkâtü'l-Mesâbîh, Anadolu'dan Hindistan'a en çok okutulan hadis kitaplarından biri oldu; Tîbî onu şerh etti."
+    ],
+    "ar": [
+     "الخطيب التبريزي من علماء القرن الثامن، تلميذ شرف الدين الطيبي، وبإشارته هذّب مصابيح السنة للبغوي.",
+     "فذكر الصحابي ومخرّج كل حديث مما أغفله البغوي، وزاد في كل باب فصلًا ثالثًا، فكانت مشكاة المصابيح التي أتمّها سنة 737 من أكثر كتب الحديث تدريسًا من الأناضول إلى الهند، وشرحها الطيبي."
+    ]
+   },
+   "sources": ["durar", "kashf"]
+  },
+  {
+   "id": "albani", "road": "sunni", "kind": "scholar", "scholar": "albani",
+   "name": {"en": "Muhammad Nasir al-Din al-Albani", "tr": "Muhammed Nâsırüddin el-Elbânî", "ar": "محمد ناصر الدين الألباني"},
+   "facts": [
+    {"k": "born", "en": "Shkodër, Albania, 1333 AH (1914 CE)", "tr": "İşkodra, Arnavutluk, 1333 (1914)", "ar": "أشقودرة بألبانيا سنة 1333هـ (1914م)"},
+    {"k": "died", "en": "Amman, Jumada al-Akhira 1420 AH (October 1999 CE)", "tr": "Amman, Cemâziyelâhir 1420 (Ekim 1999)", "ar": "عمّان، جمادى الآخرة سنة 1420هـ (أكتوبر 1999م)"},
+    {"k": "works", "en": "Silsilat al-Ahadith al-Sahiha and al-Da'ifa; Sahih and Da'if of the four Sunan; Irwa' al-Ghalil …", "tr": "Silsiletü'l-Ehâdîsi's-Sahîha ve ed-Daîfe; dört Sünen'in Sahîh ve Daîf'i; İrvâü'l-Galîl …", "ar": "سلسلة الأحاديث الصحيحة والضعيفة، وصحيح السنن الأربعة وضعيفها، وإرواء الغليل"}
+   ],
+   "text": {
+    "en": [
+     "Al-Albani was born in Albania; his family emigrated to Damascus when he was a child. He learned watch repair from his father and worked at it, while teaching himself hadith in the Zahiriyya library, where he spent long hours with the manuscripts.",
+     "He graded the hadith of the four Sunan and of many other books, gathering sound and weak reports in his two great Series, and his grades are shown in isnady beside those of the other graders. He taught at the Islamic University of Medina, lived his last decades in Amman, and received the King Faisal Prize in 1999. His gradings are widely used and also debated."
+    ],
+    "tr": [
+     "Elbânî Arnavutluk'ta doğdu; ailesi o çocukken Dımaşk'a göç etti. Babasından saat tamirciliğini öğrenip bu işle geçindi; bir yandan da Zâhiriyye kütüphanesinde yazmalarla uzun saatler geçirerek kendi kendine hadis öğrendi.",
+     "Dört Sünen'in ve başka pek çok kitabın hadislerine derece verdi; sahih ve zayıf rivayetleri iki büyük Silsile'sinde topladı; dereceleri isnady'de öteki âlimlerinkiyle yan yana gösterilir. Medine İslâm Üniversitesi'nde ders verdi, son yıllarını Amman'da geçirdi ve 1999'da Kral Faysal Ödülü'nü aldı. Değerlendirmeleri yaygın olarak kullanılır, aynı zamanda tartışılır."
+    ],
+    "ar": [
+     "وُلد الألباني بألبانيا، وهاجرت أسرته إلى دمشق وهو صغير، فتعلّم من أبيه إصلاح الساعات وعمل بها، وأقبل على الحديث بنفسه في المكتبة الظاهرية يقضي الساعات الطوال مع المخطوطات.",
+     "وحكم على أحاديث السنن الأربعة وكتب كثيرة، وجمع الصحيح والضعيف في سلسلتيه، وأحكامه معروضة في isnady مع أحكام غيره. ودرّس في الجامعة الإسلامية بالمدينة، وسكن عمّان في آخر عمره، ونال جائزة الملك فيصل سنة 1999، وأحكامه منتشرة ومحلّ نقاش."
+    ]
+   },
+   "sources": ["modern"]
+  },
+  {
+   "id": "arnaut", "road": "sunni", "kind": "scholar", "scholar": "arnaut",
+   "name": {"en": "Shu'ayb al-Arna'ut", "tr": "Şuayb el-Arnaût", "ar": "شعيب الأرناؤوط"},
+   "facts": [
+    {"k": "born", "en": "Damascus, 1928 CE, to an Albanian family", "tr": "Dımaşk, 1928; Arnavut asıllı bir ailede", "ar": "دمشق سنة 1928م لأسرة ألبانية"},
+    {"k": "died", "en": "Amman, 2016 CE", "tr": "Amman, 2016", "ar": "عمّان سنة 2016م"},
+    {"k": "works", "en": "Edited, with his team, the Musnad of Ahmad, the Sunan, Siyar A'lam al-Nubala', Sharh al-Sunna and many more", "tr": "Ekibiyle Ahmed'in Müsned'ini, Sünenleri, Siyeru a'lâmi'n-nübelâ'yı, Şerhu's-Sünne'yi ve daha pek çoğunu tahkik etti", "ar": "حقق مع فريقه مسند أحمد والسنن وسير أعلام النبلاء وشرح السنة وغيرها"}
+   ],
+   "text": {
+    "en": [
+     "Shu'ayb al-Arna'ut studied Arabic and Hanafi law in the mosques of Damascus, then devoted himself to editing the classical books of hadith.",
+     "Heading the editorial work at al-Risala in Damascus and later Amman, he and his team published critical editions with gradings of the Musnad of Ahmad, the Sunan of Abu Dawud and Ibn Maja and many others; his grades are among those isnady shows."
+    ],
+    "tr": [
+     "Şuayb el-Arnaût Dımaşk camilerinde Arapça ve Hanefî fıkhı okudu, sonra kendini klasik hadis kitaplarının tahkikine verdi.",
+     "Dımaşk'ta, sonra Amman'da er-Risâle yayınevinde tahkik çalışmalarının başında, ekibiyle Ahmed'in Müsned'ini, Ebû Dâvûd ve İbn Mâce'nin Sünen'ini ve daha pek çoğunu derecelendirmeleriyle birlikte yayımladı; dereceleri isnady'de gösterilenler arasındadır."
+    ],
+    "ar": [
+     "درس شعيب الأرناؤوط العربية والفقه الحنفي في مساجد دمشق، ثم انقطع لتحقيق كتب الحديث.",
+     "وأشرف على التحقيق في مؤسسة الرسالة بدمشق ثم بعمّان، فأخرج مع فريقه مسند أحمد وسنن أبي داود وابن ماجه وغيرها محققة محكومًا على أحاديثها، وأحكامه من الأحكام المعروضة في isnady."
+    ]
+   },
+   "sources": ["modern"]
+  },
+  {
+   "id": "zubairalizai", "road": "sunni", "kind": "scholar", "scholar": "zubairalizai",
+   "name": {"en": "Zubair 'Ali Za'i", "tr": "Zübeyr Ali Zaî", "ar": "زبير علي زئي"},
+   "facts": [
+    {"k": "born", "en": "Attock district, Pakistan, 1957 CE", "tr": "Attock bölgesi, Pakistan, 1957", "ar": "منطقة أتك بباكستان سنة 1957م"},
+    {"k": "died", "en": "Pakistan, 2013 CE", "tr": "Pakistan, 2013", "ar": "باكستان سنة 2013م"}
+   ],
+   "text": {
+    "en": [
+     "Hafiz Zubair 'Ali Za'i was a Pakistani hadith scholar of the Ahl-i Hadith, who wrote much in Urdu and edited the journal al-Hadith.",
+     "He graded the hadith of the Sunan in the Urdu-English editions of Dar al-Salam; those grades are the ones isnady shows under his name."
+    ],
+    "tr": [
+     "Hâfız Zübeyr Ali Zaî, Urduca çok eser veren ve el-Hadîs dergisini çıkaran Ehl-i Hadîs çevresinden Pakistanlı bir muhaddisti.",
+     "Dârüsselâm'ın Urduca-İngilizce baskılarında Sünenlerin hadislerine derece verdi; isnady'de onun adıyla gösterilen dereceler bunlardır."
+    ],
+    "ar": [
+     "الحافظ زبير علي زئي محدّث باكستاني من أهل الحديث، كتب كثيرًا بالأردية وأصدر مجلة الحديث.",
+     "وحكم على أحاديث السنن في طبعات دار السلام الأردية والإنجليزية، وهي الأحكام المعروضة باسمه في isnady."
+    ]
+   },
+   "sources": ["modern"]
+  },
+  {
+   "id": "muhyialdin", "road": "sunni", "kind": "scholar", "scholar": "muhyialdin",
+   "name": {"en": "Muhammad Muhyi al-Din 'Abd al-Hamid", "tr": "Muhammed Muhyiddin Abdülhamîd", "ar": "محمد محيي الدين عبد الحميد"},
+   "facts": [
+    {"k": "born", "en": "Egypt, 1318 AH (1900 CE)", "tr": "Mısır, 1318 (1900)", "ar": "مصر سنة 1318هـ (1900م)"},
+    {"k": "died", "en": "Cairo, 1392 AH (1972 CE)", "tr": "Kahire, 1392 (1972)", "ar": "القاهرة سنة 1392هـ (1972م)"}
+   ],
+   "text": {
+    "en": [
+     "Muhammad Muhyi al-Din 'Abd al-Hamid was a scholar of al-Azhar, a teacher of Arabic grammar and member of the Arabic Language Academy in Cairo, who edited and annotated many classical works of grammar, literature and hadith.",
+     "His edition of the Sunan of Abu Dawud, with notes, is the source of the remarks isnady shows under his name."
+    ],
+    "tr": [
+     "Muhammed Muhyiddin Abdülhamîd, Ezher âlimi, Arapça nahiv hocası ve Kahire Arap Dili Akademisi üyesiydi; nahiv, edebiyat ve hadise dair pek çok klasik eseri tahkik edip şerh etti.",
+     "Ebû Dâvûd'un Sünen'inin notlu neşri, isnady'de onun adıyla gösterilen açıklamaların kaynağıdır."
+    ],
+    "ar": [
+     "محمد محيي الدين عبد الحميد من علماء الأزهر، مدرّس النحو وعضو مجمع اللغة العربية بالقاهرة، حقق وشرح كثيرًا من كتب النحو والأدب والحديث.",
+     "وتحقيقه لسنن أبي داود بتعليقاته هو مصدر ما يعرضه isnady باسمه."
+    ]
+   },
+   "sources": ["modern"]
+  }
+ ]
+}
