@@ -1321,5 +1321,7 @@
  "{n} books": "{n} كتب",
  "Search these": "ابحث في هذه",
  "Listing the words of the texts (once)": "تُحصى كلمات النصوص (مرة واحدة)",
- "near spellings: {spellings}": "بكتابة قريبة: {spellings}"
+ "near spellings: {spellings}": "بكتابة قريبة: {spellings}",
+ "Languages not translated yet": "لغات لم تُترجم بعد",
+ "{shown:,} listed; scroll down for the next": "عُرض {shown:,}؛ مرّر إلى الأسفل للمزيد"
 }

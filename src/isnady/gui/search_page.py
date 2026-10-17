@@ -266,6 +266,7 @@ class SearchPage(QWidget):
         self._results: list[core.SearchResult] = []
         self._found: list[dict] | None = None      # narrators or scholars found (S3); None: a hadith search
         self._people_total = 0
+        self._people_read = 0
         self._people_shown = 0
 
         # what is searched (S3): hadith by default, every time isnady starts
@@ -660,6 +661,8 @@ class SearchPage(QWidget):
 
     def load_more(self) -> None:
         if self._found is not None:
+            if self._people_shown >= len(self._found) and self._people_total > len(self._found):
+                self._read_more_people()
             self._show_people(more=True)
             return
         if not self._page:
@@ -828,6 +831,7 @@ class SearchPage(QWidget):
             if self.kind() == "narrators":
                 self._found, self._people_total = core_narrators.find(
                     self._conn, text, self.tradition_combo.currentData() or None)
+                self._people_read = core_narrators.SEARCH_RERANK   # the matches find() read; the next from here
             else:
                 self._found = core_scholars.search(self._conn, text)
                 self._people_total = len(self._found)
@@ -835,6 +839,21 @@ class SearchPage(QWidget):
         finally:
             QGuiApplication.restoreOverrideCursor()
         self._show_people()
+
+    def _read_more_people(self) -> None:
+        """The next narrators found, after the first SEARCH_RERANK (NR-B1)."""
+        QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            have = {r["id"] for r in self._found}
+            rows = core_narrators.find_more(self._conn, self.query_edit.text().strip(),
+                                            self.tradition_combo.currentData() or None, self._people_read, PAGE_SIZE * 4)
+            self._people_read += len(rows)
+            new = [r for r in rows if r["id"] not in have]
+            self._found.extend(new)
+            if not rows:                          # nothing more to read: the total said more than there is
+                self._people_total = len(self._found)
+        finally:
+            QGuiApplication.restoreOverrideCursor()
 
     def _show_people(self, more: bool = False) -> None:
         from isnady.gui import people_results
@@ -890,14 +909,11 @@ class SearchPage(QWidget):
                 card = people_results.scholar_card(row, self.open_scholar.emit)
             self.body_layout.addWidget(card)
         self._people_shown += len(batch)
-        remaining = len(self._found) - self._people_shown
+        # every match can be reached: after the ones read, the next are read when asked for (NR-B1)
+        remaining = max(len(self._found), self._people_total) - self._people_shown
         if remaining > 0:
             self.more_button.setText(tr("Show {page_size} more ({remaining:,} left)", page_size=min(PAGE_SIZE, remaining), remaining=remaining))
             self.body_layout.addWidget(self.more_button, 0, Qt.AlignmentFlag.AlignHCenter)
-        elif self._people_total > len(self._found):
-            note = _label(tr("The {found:,} closest of {people_total:,} are shown: add a word to find the others.", found=len(self._found), people_total=self._people_total), "Caption")
-            note.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-            self.body_layout.addWidget(note)
         self.body_layout.addStretch(1)
         total = self._people_total
         close = sum(1 for r in self._found if r.get("close"))

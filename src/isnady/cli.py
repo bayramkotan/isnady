@@ -750,9 +750,16 @@ def _search_people(conn, args) -> int:
     from isnady.core.rijal import RANK_LABELS
 
     rows, total = core_narrators.find(conn, text, args.tradition)
+    if args.offset + args.limit > len(rows) and total > len(rows):
+        # the matches after the ranked ones, as far as --offset/--limit reach (NR-B1)
+        have = {r["id"] for r in rows}
+        wanted = args.offset + args.limit - len(rows)
+        rows += [r for r in core_narrators.find_more(conn, text, args.tradition, core_narrators.SEARCH_RERANK,
+                                                     wanted) if r["id"] not in have]
     conn.close()
     shown = rows[args.offset:args.offset + args.limit]
-    more = f" (the closest {len(rows)} are ranked)" if total > len(rows) else ""
+    more = (f" (the closest {core_narrators.SEARCH_RERANK} are ranked first; --offset and --limit reach the others)"
+            if total > core_narrators.SEARCH_RERANK else "")
     print(f"{total} narrator{'s' if total != 1 else ''} found{more}")
     for r in shown:
         view = r["view"]

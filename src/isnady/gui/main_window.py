@@ -598,22 +598,38 @@ class MainWindow(QMainWindow):
             "language; each book in Books can still choose its own.", languages=content))
 
     def _fill_ui_language_menu(self, menu) -> None:
+        """English and the translated languages first; the languages not translated yet in a submenu of their own.
+        UI-B1 (Bayram, 2026-10-17: "Arayüz dilinden English kayboldu!"): one menu of all 58 languages was taller
+        than the screen; opened upward from the sidebar it lost its first rows — English first of all — where the
+        window system cannot move a menu (Wayland)."""
         from isnady.core import language
 
         from isnady.core import i18n
 
         menu.clear()
         group = QActionGroup(menu)
-        for code, (own, _english, _rtl) in i18n.LANGUAGES.items():
+        current = language.ui_language()
+        later = None
+
+        def add(target, code, own):
             share = i18n.coverage(code)
             # its own name, its name in the interface language beside it, and how much of the interface is translated
             other = i18n.name_of(code)
             label = (own if other == own else f"{own}  ·  {other}") + ("" if share >= 0.995 else f"  ({share:.0%})")
-            action = menu.addAction(label)
+            action = target.addAction(label)
             action.setCheckable(True)
-            action.setChecked(code == language.ui_language())
+            action.setChecked(code == current)
             group.addAction(action)
             action.triggered.connect(lambda _c=False, c=code: self._set_ui_language(c))
+
+        for code, (own, _english, _rtl) in i18n.LANGUAGES.items():
+            if code == "en" or i18n.coverage(code) > 0:
+                add(menu, code, own)
+                continue
+            if later is None:
+                menu.addSeparator()
+                later = menu.addMenu(tr("Languages not translated yet"))
+            add(later, code, own)
         menu.addSeparator()
         note = menu.addAction(tr("A text not yet translated is shown in English"))
         note.setEnabled(False)

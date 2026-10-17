@@ -148,6 +148,8 @@ class NarratorsPage(QWidget):
         self.list.setObjectName("NarratorList")
         self.list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.list.currentItemChanged.connect(lambda item, _p: item and self.show_person(item.data(Qt.ItemDataRole.UserRole)))
+        # the next narrators when the list is scrolled to its end (NR-B1)
+        self.list.verticalScrollBar().valueChanged.connect(self._near_end)
         self.count = _label("", "Caption")
         lbox.addWidget(title)
         lbox.addLayout(seg_row)
@@ -307,9 +309,12 @@ class NarratorsPage(QWidget):
         conn = self.conn
         if conn is None:
             return
+        self._list_args = (self.query.text(), self.tabaqa.currentData(), self.rank.currentData(),
+                           self.book.currentData(), self.tradition)
         rows, total = core_narrators.browse(conn, self.query.text(), self.tabaqa.currentData(),
                                             self.rank.currentData(), self.book.currentData(), limit=LIST_LIMIT,
                                             tradition=self.tradition)
+        self._list_read, self._list_total = len(rows), total
         self.list.blockSignals(True)
         self.list.clear()
         self.list.blockSignals(False)
@@ -318,10 +323,31 @@ class NarratorsPage(QWidget):
         self._row_token = getattr(self, "_row_token", 0) + 1
         self._rows_left = list(rows)
         self._add_rows(self._row_token, ROWS_FIRST)
-        more = " — " + tr("the first {limit}; narrow the search to see others", limit=LIST_LIMIT) if total > LIST_LIMIT else ""
-        self.count.setText(n_("{n:,} narrator", "{n:,} narrators", total) + more)
+        self._show_count()
         if self._current is None and rows:
             self.show_person(rows[0]["id"])
+
+    def _show_count(self) -> None:
+        total, read = self._list_total, self._list_read
+        more = " — " + tr("{shown:,} listed; scroll down for the next", shown=read) if total > read else ""
+        self.count.setText(n_("{n:,} narrator", "{n:,} narrators", total) + more)
+
+    def _near_end(self, value: int) -> None:
+        """NR-B1 (Bayram, 2026-10-13: "daha var diyor ama bir sonraki sayfaya geç yok! Sadece çok azını
+        gösteriyor"): the list stopped at its first LIST_LIMIT; now the next ones are read at its end."""
+        bar = self.list.verticalScrollBar()
+        if (self.conn is None or getattr(self, "_rows_left", None) or value < bar.maximum() - bar.pageStep() // 2
+                or getattr(self, "_list_read", 0) >= getattr(self, "_list_total", 0)):
+            return
+        text, tabaqa, rank, book, tradition = self._list_args
+        rows, _total = core_narrators.browse(self.conn, text, tabaqa, rank, book, limit=LIST_LIMIT,
+                                             tradition=tradition, offset=self._list_read)
+        if not rows:
+            self._list_total = self._list_read
+        self._list_read += len(rows)
+        self._rows_left = list(rows)
+        self._add_rows(self._row_token, ROWS_FIRST)
+        self._show_count()
 
     def _add_rows(self, token: int, count: int = 0) -> None:
         """Build the next rows of the list (all that are left when count is 0)."""

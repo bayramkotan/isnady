@@ -1321,5 +1321,7 @@
  "{n} books": "{n} kitap",
  "Search these": "Bunlarda ara",
  "Listing the words of the texts (once)": "Metinlerin kelimeleri listeleniyor (bir kez)",
- "near spellings: {spellings}": "yakın yazımlarla: {spellings}"
+ "near spellings: {spellings}": "yakın yazımlarla: {spellings}",
+ "Languages not translated yet": "Henüz çevrilmemiş diller",
+ "{shown:,} listed; scroll down for the next": "{shown:,} tanesi listelendi; devamı için aşağı kaydırın"
 }

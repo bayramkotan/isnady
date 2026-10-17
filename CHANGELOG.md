@@ -3,6 +3,16 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Every narrator found can be reached.** The Search page ranked the closest 400 narrators and then said "add a word
+  to find the others"; now "Show more" goes on past them, through every match ("محمد": 1,775). The Narrators page
+  stopped at its first 200 ("narrow the search to see others"); now the next 200 are read when the list is scrolled
+  to its end. `iy search --in narrators` reaches them with `--offset` and `--limit`.
+- **English is back in the interface language menu.** The menu listed all 58 languages and was taller than the
+  screen: opened upward from the sidebar it lost its first rows — English first. Now English, Türkçe and العربية
+  (the translated ones) are in the menu, the languages not translated yet in a submenu of their own.
+
 ## [0.2.9] — 2026-10-14
 
 - **A word with a letter you do not know, or a letter wrong, is found.** `?` stands for one unknown letter and `*` for

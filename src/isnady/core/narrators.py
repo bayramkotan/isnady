@@ -658,29 +658,33 @@ def _overview_counted(conn: sqlite3.Connection, tradition: str = "sunni") -> dic
 
 def browse(conn: sqlite3.Connection, text: str = "", tabaqa: int | None = None, rank: int | None = None,
            book: str | None = None, limit: int = 300, tradition: str | None = "sunni",
-           only: list[int] | None = None, close: set | None = None) -> tuple[list[dict], int]:
-    """Narrators for the list: (rows, total before the limit), most often in the chains first.
+           only: list[int] | None = None, close: set | None = None, offset: int = 0) -> tuple[list[dict], int]:
+    """Narrators for the list: (rows, total before the limit), most often in the chains first; offset: the rows
+    after the first `offset` (the next page, NR-B1).
     tradition None: both traditions (the Search page), each row saying which it belongs to.
     The same list asked again is not read again while the database is unchanged (core.cache)."""
     from isnady.core import cache, i18n
 
     if close is not None:                       # the caller wants the close spellings filled in: always read
-        return _browse_counted(conn, text, tabaqa, rank, book, limit, tradition, only, close)
-    key = (text, tabaqa, rank, book, limit, tradition, tuple(only) if only is not None else None, i18n.language())
-    if not text.strip() and only is None:
+        return _browse_counted(conn, text, tabaqa, rank, book, limit, tradition, only, close, offset)
+    key = (text, tabaqa, rank, book, limit, tradition, tuple(only) if only is not None else None, i18n.language(),
+           offset)
+    if not text.strip() and only is None and not offset:
         # the lists the page opens with (a tradition, a tabaqa, a rank, a book): kept on disk too, so a new start
         # shows them without reading every narrator's name again
         name = f"narrators-{tradition}-{tabaqa}-{rank}-{book}-{limit}-{i18n.language()}"
         rows, total = cache.kept(conn, name, lambda c: _browse_counted(c, "", tabaqa, rank, book, limit, tradition))
     else:
         rows, total = cache.memo(conn, "browse", key,
-                                 lambda: _browse_counted(conn, text, tabaqa, rank, book, limit, tradition, only, None))
+                                 lambda: _browse_counted(conn, text, tabaqa, rank, book, limit, tradition, only, None,
+                                                         offset))
     return [dict(r) for r in rows], total
 
 
 def _browse_counted(conn: sqlite3.Connection, text: str = "", tabaqa: int | None = None, rank: int | None = None,
                     book: str | None = None, limit: int = 300, tradition: str | None = "sunni",
-                    only: list[int] | None = None, close: set | None = None) -> tuple[list[dict], int]:
+                    only: list[int] | None = None, close: set | None = None,
+                    offset: int = 0) -> tuple[list[dict], int]:
     from isnady.core.rijal import COLLECTION_MARKS, display_name
 
     where, args = [], []
@@ -721,7 +725,7 @@ def _browse_counted(conn: sqlite3.Connection, text: str = "", tabaqa: int | None
     from isnady.core import name_parts
 
     out = []
-    for r in rows[:limit]:
+    for r in rows[offset:offset + limit]:
         shown = display_name(r[1])
         kunya, = conn.execute("SELECT kunya FROM persons WHERE id = ?", (r[0],)).fetchone()
         view = name_parts.present(name_parts.parse(shown, kunya, known_aliases(conn, r[0]), r[1]))
@@ -901,6 +905,25 @@ def find(conn: sqlite3.Connection, text: str, tradition: str | None = None) -> t
     order = {id(r): i for i, r in enumerate(rows)}
     rows.sort(key=lambda r: (r["weak"], r["tier"], -round(r["closeness"], 1), order[id(r)]))
     return rows, total
+
+
+def find_more(conn: sqlite3.Connection, text: str, tradition: str | None = None, offset: int = SEARCH_RERANK,
+              limit: int = 100) -> list[dict]:
+    """The matches after the first ones find() returned (NR-B1, Bayram 2026-10-13: "Ravi aramada sonuçlarda daha
+    var diyor ama bir sonraki sayfaya geç yok!"): find() puts the closest of its first SEARCH_RERANK matches first;
+    the others follow in search_persons' own order (how well the words fit, then how often in the chains)."""
+    close: set = set()
+    text = split_abd(text)
+    rows, _total = browse(conn, text, limit=limit, tradition=tradition, close=close, offset=offset)
+    _wanted, latin_query = _query_words(text)
+    for row in rows:
+        row["close"] = row["id"] in close
+        row["weak"] = False
+        row["tier"] = 20
+        row["closeness"] = 1.0
+        if row["close"]:
+            row["matched"] = _matched_words(text, row["name"], latin_query)
+    return rows
 
 
 def relations(conn: sqlite3.Connection, person_id: int, limit: int = 12) -> dict:
