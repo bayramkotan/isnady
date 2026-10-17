@@ -10,6 +10,7 @@ The reader, the CLI and isnady's own exchange format all speak this one shape.
 import re
 import sqlite3
 
+from isnady.core import chapters as core_chapters
 from isnady.core.i18n import N_, t
 
 CONTAINERS = ("volume", "kitab", "bab", "section")
@@ -17,6 +18,29 @@ LEAVES = ("hadith", "entry", "reference", "paragraph")
 _WRITTEN_HERE = (N_("Chapter {n}"), N_("Without a chapter in the source"))    # titles isnady writes, shown translated
 KIND_LABELS = {"hadith": N_("Hadith collection"), "rijal": N_("Narrators (rijal)"), "fiqh": N_("Fiqh"),
                "commentary": N_("Commentary"), "other": N_("Book")}
+
+
+def _build_from_table(conn: sqlite3.Connection, wid: int, key: str, cid: int) -> bool:
+    """The tree of a book whose data carry no chapters, from the table isnady keeps (core.chapters):
+    part → chapter → hadith. False when isnady keeps no table for it."""
+    hadith = conn.execute("SELECT id, number, number_sort FROM hadiths WHERE collection_id = ? ORDER BY number_sort",
+                          (cid,)).fetchall()
+    layout = core_chapters.plan(key, hadith)
+    if not layout:
+        return False
+    rows = []
+    for p_ordinal, (part, chapters) in enumerate(layout):
+        part_id = conn.execute(
+            "INSERT INTO work_nodes (work_id, parent_id, ordinal, kind, title) VALUES (?, NULL, ?, 'kitab', ?)",
+            (wid, p_ordinal, part["en"])).lastrowid
+        for c_ordinal, (number, title, items) in enumerate(chapters):
+            chapter_id = conn.execute(
+                "INSERT INTO work_nodes (work_id, parent_id, ordinal, kind, label, title) VALUES (?, ?, ?, 'bab', ?, ?)",
+                (wid, part_id, c_ordinal, str(number), title)).lastrowid
+            rows.extend((wid, chapter_id, i, num, hid) for i, (hid, num) in enumerate(items, 1))
+    conn.executemany("INSERT INTO work_nodes (work_id, parent_id, ordinal, kind, label, hadith_id) "
+                     "VALUES (?, ?, ?, 'hadith', ?, ?)", rows)
+    return True
 
 
 def _author_of(collection_key: str) -> str | None:
@@ -32,7 +56,7 @@ def ensure_collection_works(conn: sqlite3.Connection) -> int:
     for cid, key, name in conn.execute("SELECT id, key, name FROM collections").fetchall():
         n, top = conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM hadiths WHERE collection_id = ?", (cid,)).fetchone()
         chapters = conn.execute("SELECT COUNT(*) FROM sections WHERE collection_id = ?", (cid,)).fetchone()[0]
-        stamp = f"collection|{n}|{top}|{chapters}|{name}"
+        stamp = f"collection|{n}|{top}|{chapters}|{name}" + (f"|{core_chapters.stamp(key)}" if core_chapters.stamp(key) else "")
         row = conn.execute("SELECT id, stamp FROM works WHERE key = ?", (key,)).fetchone()
         if row and row[1] == stamp:
             continue
@@ -47,6 +71,9 @@ def ensure_collection_works(conn: sqlite3.Connection) -> int:
                        WHERE s.collection_id = ? ORDER BY s.number, t.edition_id""", (cid,)):
                 if title and title.strip() and number not in titles:
                     titles[number] = title.strip()
+            if not titles and _build_from_table(conn, wid, key, cid):
+                rebuilt += 1
+                continue
             node_of = {}
             # chapter 0 without a title is how the source marks "no chapter": not a first chapter, but the last
             numbers = sorted({r[0] for r in conn.execute(
@@ -136,6 +163,10 @@ def _shown(conn: sqlite3.Connection, work_id: int, kind: str, label, title):
             return own
     if title == "Without a chapter in the source":
         return t(title)
+    if kind == "kitab" and label is None:
+        part = core_chapters.part_title(title)          # a part of a table isnady keeps (Musnad Ahmad, al-Darimi)
+        if part:
+            return part
     m = re.fullmatch(r"Chapter (\d+)", title or "")
     return t("Chapter {n}", n=m.group(1)) if m else title
 

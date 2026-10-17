@@ -3,8 +3,18 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.3.1] — 2026-10-17
 
+- **Musnad Ahmad and Sunan al-Darimi read by their chapters.** The two books come as numbered texts only, and the
+  Books page showed each as one chapter, "Without a chapter in the source" (26,363 and 3,367 hadith). isnady now
+  keeps their tables of contents, two levels deep: the Musnad in its 13 parts — the Ten promised Paradise, the
+  Companions after the Ten, the Household of the Prophet ﷺ, Banu Hashim, the Companions who narrated most, of Mecca,
+  of Medina, of Syria, of Kufa, the Ansar, the Tribes — and under them the musnad of each Companion (1,252: Abu Bakr
+  al-Siddiq 1–77, 'Umar 78–375, 'Uthman, 'Ali …, Abu Hurayra from 6,822); al-Darimi in its 24 books and 1,382
+  chapters. The headings are those of the Maymaniyya edition of the Musnad and the Dar al-Kitab al-'Arabi edition
+  of al-Darimi in OpenITI, placed at their hadith by matching the texts (25,571 of 26,363 and 3,332 of 3,367
+  directly, the rest by their neighbours). The parts and books are named in English, Turkish and Arabic; the
+  Companions and the chapters keep the Arabic of the book. `iy book ahmad` lists them.
 - **The lives written with reverence.** All 152 lives, in English, Turkish and Arabic, now name the Companions
   with "(may Allah be pleased with him/her)" — Hz. … (r.a.), رضي الله عنه — the Mothers of the Believers by their
   title, and the imams and scholars with "Imam" and "(may Allah have mercy on him)" — İmam … (rahimehullah),

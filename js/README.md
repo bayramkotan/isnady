@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.3.0-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.3.1-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.3.0-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.3.1-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.3.0).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.3.1).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -505,6 +505,13 @@ isnady carries its own — all 642 chapter titles of the 33 books in Turkish and
 "كتاب بدء الوحي" for "Revelation"), and the Arabic titles a source gives itself where it has them (al-Adab
 al-Mufrad, Bulugh al-Maram, Mishkat, Riyad al-Salihin, al-Shama'il). The book titles too: *Sahîh-i Buhârî*,
 *صحيح البخاري*.
+
+Musnad Ahmad and Sunan al-Darimi come as numbered texts without chapters; isnady keeps their tables of contents
+itself, two levels deep, from the editions in OpenITI: the Musnad in its 13 parts (the Ten promised Paradise, the
+Household of the Prophet ﷺ, the Companions who narrated most, the Companions of Mecca, Medina, Syria and Kufa, the
+Ansar, the Tribes) and under them the musnad of each Companion — 1,252 in all, Abu Bakr al-Siddiq's first —; al-Darimi
+in its 24 books (Introduction, Purification, Prayer …) and 1,382 chapters (bab). The parts and books are named in
+the interface language, the Companions and the chapters in the Arabic of the book.
 
 The shelf holds the Sunni and the Shia books together, each under its own heading — *All*, *Sunni*
 or *Shia* at the top shows one of them alone — and every Shia book carries a gold *Shia* tag. Books
