@@ -3,6 +3,15 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **The lives written with reverence.** All 152 lives, in English, Turkish and Arabic, now name the Companions
+  with "(may Allah be pleased with him/her)" — Hz. … (r.a.), رضي الله عنه — the Mothers of the Believers by their
+  title, and the imams and scholars with "Imam" and "(may Allah have mercy on him)" — İmam … (rahimehullah),
+  الإمام … رحمه الله; the martyrs are "martyred". On road B the Imami narrators and scholars are named with the
+  same respect, and the Imams of the Prophet's family as Imam al-Baqir, Imam al-Sadiq, Imam al-Kazim, Imam al-Rida.
+  The account of Imam Muslim's last night is told as the sources tell it.
+
 ## [0.3.0] — 2026-10-17
 
 - **The lives of the Companions, the Successors, the narrators and the scholars.** A card *Life* on the Narrators
