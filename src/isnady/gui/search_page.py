@@ -103,7 +103,8 @@ def _more_languages(conn, imported: list[str]) -> list[str]:
 class ResultCard(QFrame):
     def __init__(self, result: core.SearchResult, chain: dict | None = None, open_chain=None,
                  people: dict | None = None, score: float | None = None, related: list | None = None,
-                 open_book=None, folded: list | None = None, chains: list | None = None) -> None:
+                 open_book=None, folded: list | None = None, chains: list | None = None,
+                 on_person=None, on_name=None, on_end=None) -> None:
         super().__init__()
         self.setObjectName("Card")
         t = theme.current()
@@ -178,7 +179,7 @@ class ResultCard(QFrame):
             for i, c in enumerate(drawn, 1):
                 if len(drawn) > 1:
                     box.addWidget(_label(tr("Chain {i}", i=i), "Caption"))
-                box.addWidget(ChainStrip(c, people))
+                box.addWidget(ChainStrip(c, people, on_person=on_person, on_name=on_name, on_end=on_end))
             box.addSpacing(6)
 
         if result.grades:
@@ -252,6 +253,9 @@ class SearchPage(QWidget):
     open_book = Signal(int)           # hadith id; the main window opens its book at its chapter (Books)
     open_person = Signal(int, str)    # person id, tradition; Narrators shows him
     open_scholar = Signal(str)        # scholar id; Hadith Scholars shows him
+    open_narrator = Signal(int)       # a narrator of a chain on a card (Search, Books) → Narrators
+    open_tree = Signal(str, object)   # the Prophet ﷺ or an Imam a chain reaches → his life in the Genealogies
+    find_narrator = Signal(str)       # a name of a chain not identified → looked for among the narrators
     data_changed = Signal()
     wants_sources = Signal()          # "more languages": the main window opens File → Data Sources
     retry_requested = Signal()        # "Try again" after a locked database: the window is built again
@@ -1047,7 +1051,9 @@ class SearchPage(QWidget):
         for c in chains:
             people.update(self._people(c))
         card = ResultCard(result, chain, self.open_chain.emit, people, score, self._related(result.hadith_id),
-                          None if in_book else self.open_book.emit, folded, chains)
+                          None if in_book else self.open_book.emit, folded, chains,
+                          on_person=self.open_narrator.emit, on_name=self.find_narrator.emit,
+                          on_end=lambda node: self.open_tree.emit("quraysh", node))
         card.setProperty("hadith_id", result.hadith_id)
         return card
 

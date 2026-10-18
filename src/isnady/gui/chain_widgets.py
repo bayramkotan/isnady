@@ -32,10 +32,29 @@ def end_chip(chain: dict) -> str:
     return m.name_ar if m else "الإمام عليه السلام"
 
 
-def _chip(text: str, name: str, tip: str = "") -> QLabel:
+def end_node(key: str) -> str | None:
+    """The box in the tree of Quraysh of whom a chain reaches: the Prophet ﷺ, or on road B the Imam; None for an
+    end that names no one (an Imam not named, "one of the two")."""
+    from isnady.core import genealogy
+
+    node = "muhammad" if key == "prophet" else key
+    return node if node in genealogy.written("quraysh").nodes else None
+
+
+def _chip(text: str, name: str, tip: str = "", on_click=None, click_tip: str = "") -> QLabel:
     chip = QLabel(text)
     chip.setObjectName(name)
     chip.setFont(theme.script_font("arabic", factor=0.625))
+    if on_click is not None:
+        # every chip of a chain opens what it names (2026-10-18: "hâlâ tıklanmayan yerler var")
+        chip.setCursor(Qt.CursorShape.PointingHandCursor)
+        tip = (tip + "\n\n" if tip else "") + click_tip
+
+        def _release(e, _go=on_click) -> None:
+            if e.button() == Qt.MouseButton.LeftButton:
+                _go()
+
+        chip.mouseReleaseEvent = _release
     if tip:
         chip.setToolTip(tip)
     return chip
@@ -90,9 +109,12 @@ class ChainStrip(QWidget):
     """Narrator names in reading order (right to left), ending at the Prophet when the chain does.
     Identified narrators are filled chips; names not yet identified have a dashed outline."""
 
-    def __init__(self, chain: dict, people: dict | None = None, parent: QWidget | None = None) -> None:
+    def __init__(self, chain: dict, people: dict | None = None, parent: QWidget | None = None,
+                 on_person=None, on_name=None, on_end=None) -> None:
         super().__init__(parent)
         people = people or {}
+        open_name = (lambda raw: (lambda: on_name(core_isnad.short_name(raw)))) if on_name else (lambda raw: None)
+        name_tip = tr("Click to look for this name among the narrators") if on_name else ""
         flow = FlowLayout(self, spacing=4, rtl=True)
         for i, link in enumerate(chain["links"]):
             arabic, meaning, _why = core_isnad.term_label(link["transmission"])
@@ -102,26 +124,36 @@ class ChainStrip(QWidget):
             if not person and link.get("candidates") is None:
                 # no rijal work imported (or not matched yet): a plain chip, not a "not identified" one
                 flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChip",
-                                     f"{link['raw_name']}\n{arabic}: {meaning}"))
+                                     f"{link['raw_name']}\n{arabic}: {meaning}", open_name(link["raw_name"]), name_tip))
                 continue
             if person:
                 tip = f"{person['display_name']}\n{person_summary(person)}\n{arabic}: {meaning}"
-                flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChip", tip))
+                flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChip", tip,
+                                     (lambda pid=person["id"]: on_person(pid)) if on_person else None,
+                                     tr("Click to open this narrator.")))
             else:
                 n = link.get("candidates")
                 why = core_isnad.link_note(link["raw_name"]) or (tr("not identified yet") if n is None else
                        tr("not identified: {n} narrators could have this name", n=n) if n else
                        tr("not identified: no narrator of this name in the rijal work"))
+                note = core_isnad.link_note(link["raw_name"])
                 flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChipUnknown",
-                                     f"{link['raw_name']}\n{why}\n{arabic}: {meaning}"))
+                                     f"{link['raw_name']}\n{why}\n{arabic}: {meaning}",
+                                     None if note else open_name(link["raw_name"]), name_tip))
         if chain.get("problem") and not (chain["reaches_prophet"] or chain.get("ends_with")):
             # read as far as here: the rest of the chain runs on in the text (shown below the chain)
             flow.addWidget(_arrow())
             flow.addWidget(_chip("…", "ChainChipUnknown", stop_note(chain)))
         if chain["reaches_prophet"] or chain.get("ends_with"):
             flow.addWidget(_arrow())
+            key = chain.get("ends_with") or "prophet"
+            node = end_node(key)
             flow.addWidget(_chip(end_chip(chain), "ChainChipProphet",
-                                 tr("The chain reaches {whom}", whom=core_isnad.end_label(chain))))
+                                 tr("The chain reaches {whom}", whom=core_isnad.end_label(chain)),
+                                 (lambda n=node: on_end(n)) if on_end and node else None,
+                                 tr("Click to read his life ﷺ and his place in the family of the Prophet ﷺ")
+                                 if key == "prophet" else
+                                 tr("Click to read his life and his place in the family of the Prophet ﷺ")))
         self.setSizePolicy(expanding_width_policy())
 
     def hasHeightForWidth(self) -> bool:  # noqa: N802

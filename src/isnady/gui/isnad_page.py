@@ -65,6 +65,7 @@ class IsnadPage(QWidget):
     open_narrator = Signal(int)      # person id → Narrators page
     open_in_book = Signal(int)       # the compiler's book at the top of a chain → this hadith in Books
     open_tree = Signal(str, object)  # the Prophet ﷺ or an Imam at its end → his life in the Genealogies
+    find_narrator = Signal(str)      # a name not identified → the narrators of that name, on Search
 
     def __init__(self, connection_getter, parent=None) -> None:
         super().__init__(parent)
@@ -208,6 +209,16 @@ class IsnadPage(QWidget):
             self.number_edit.setText(number)
             self._go()
 
+    def _open_first(self, book: str) -> None:
+        index = self.book_combo.findData(book)
+        if index < 0 or self.conn is None:
+            return
+        self.book_combo.setCurrentIndex(index)
+        rng = core_isnad.number_range(self.conn, book)
+        if rng:
+            self.number_edit.setText(rng["first"])
+            self._go()
+
     def _random(self) -> None:
         book = self._book()
         if book and self.conn is not None:
@@ -286,6 +297,12 @@ class IsnadPage(QWidget):
         box.setContentsMargins(24, 18, 24, 18)
         box.setSpacing(8)
         shia = b.get("tradition") == "shia"
+        if b.get("key"):
+            # a book of the overview opens its first chain (2026-10-18: everything named on a page opens)
+            card.setCursor(Qt.CursorShape.PointingHandCursor)
+            card.setToolTip(tr("Click to read the chains of this book, from its first hadith"))
+            card.mouseReleaseEvent = (lambda e, k=b["key"]: e.button() == Qt.MouseButton.LeftButton
+                                      and self._open_first(k))
         top = QHBoxLayout()
         name = _label(b["name"], "CardTitle")
         name.setFont(theme.reading_font(16, bold=True))
@@ -406,19 +423,24 @@ class IsnadPage(QWidget):
             for i, link in enumerate(links):
                 person = core_narrators.describe(self.conn, link["person_id"]) if link.get("person_id") else None
                 nxt = links[i + 1]["raw_name"] if i + 1 < len(links) else ""
+                note = core_isnad.link_note(link["raw_name"], nxt)
+                look = None
+                if person is None and not note and link.get("candidates"):
+                    look = (lambda n=core_isnad.short_name(link["raw_name"]): self.find_narrator.emit(n))
                 self.body_layout.addWidget(ChainNode(core_isnad.short_name(link["raw_name"]), "",
                                                      link["transmission"], full_name=link["raw_name"],
                                                      person=person, candidates=link.get("candidates"),
                                                      on_person=self.open_narrator.emit,
-                                                     note=core_isnad.link_note(link["raw_name"], nxt),
-                                                     confidence=link.get("match_confidence")))
+                                                     note=note,
+                                                     confidence=link.get("match_confidence"), on_click=look,
+                                                     click_tip=tr("Click to look for this name among the narrators")))
             if chain["reaches_prophet"] or chain.get("ends_with"):
                 key = chain.get("ends_with") or "prophet"
                 subtitle = tr("The Messenger of God") if key == "prophet" else core_isnad.end_label(chain)
-                from isnady.core import genealogy
+                from isnady.gui.chain_widgets import end_node
 
-                node = "muhammad" if key == "prophet" else key
-                life = node in genealogy.written("quraysh").nodes
+                node = end_node(key)
+                life = node is not None
                 self.body_layout.addWidget(ChainNode(
                     end_chip(chain), subtitle, None, last=True, prophet=True,
                     on_click=(lambda n=node: self.open_tree.emit("quraysh", n)) if life else None,

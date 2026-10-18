@@ -7,6 +7,8 @@ what the rijal work and the imported chains say of him.
 
 from __future__ import annotations
 
+import re
+
 import html
 
 from PySide6.QtCore import Qt
@@ -26,7 +28,17 @@ def _label(text: str, name: str = "", rich: bool = False) -> QLabel:
     return label
 
 
-def life_card(life: dict, written: bool, open_book=None) -> QFrame:
+def _names(text: str) -> list[str]:
+    """The names of a "Teachers" or "Students" fact, as written: split at the commas, without "more than a thousand:"
+    or the closing "…"."""
+    import re
+
+    body = text.split(":", 1)[1] if ":" in text[:40] else text
+    parts = [p.strip(" .…") for p in re.split(r"[,،;؛]", body.replace("...", "…"))]
+    return [p for p in parts if p and len(p) > 2]
+
+
+def life_card(life: dict, written: bool, open_book=None, open_name=None) -> QFrame:
     """life: core.lives.view() or core.lives.read(); written: a life written for isnady. open_book(key), when given,
     opens a book of isnady named under "Read more" (al-Shama'il under the Prophet's life ﷺ)."""
     t = theme.current()
@@ -58,11 +70,30 @@ def life_card(life: dict, written: bool, open_book=None) -> QFrame:
         grid = QGridLayout()
         grid.setHorizontalSpacing(16)
         grid.setVerticalSpacing(6)
+        keys = life.get("fact_keys") or []
         for row, (label, value) in enumerate(life["facts"]):
             key = QLabel(label)
             key.setStyleSheet(f"color: {t.gold}; font-weight: 600;")
             key.setAlignment(Qt.AlignmentFlag.AlignTop)
             grid.addWidget(key, row, 0, Qt.AlignmentFlag.AlignTop)
+            fact = keys[row] if row < len(keys) else ""
+            if open_name is not None and fact in ("teachers", "students") and _names(value):
+                # each teacher and student opens among the narrators (2026-10-18: "hâlâ tıklanmayan yerler var")
+                import html as _html
+
+                linked = value
+                for name in sorted(_names(value), key=len, reverse=True):
+                    linked = linked.replace(name, f"\x00{name}\x01", 1)
+                linked = _html.escape(linked)
+                linked = re.sub("\x00(.*?)\x01", lambda m: f"<a href='{_html.escape(m.group(1), quote=True)}' "
+                                f"style='color:{t.lapis}; text-decoration:none'>{m.group(1)}</a>", linked)
+                text = _label(linked)
+                text.setTextFormat(Qt.TextFormat.RichText)
+                text.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
+                text.setToolTip(tr("Click a name to look for him among the narrators"))
+                text.linkActivated.connect(lambda name, go=open_name: go(name))
+                grid.addWidget(text, row, 1)
+                continue
             text = _label(value)
             grid.addWidget(text, row, 1)
         grid.setColumnStretch(1, 1)

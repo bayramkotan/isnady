@@ -216,6 +216,7 @@ class GenealogyPage(QWidget):
     open_narrator = Signal(int)
     open_hadith = Signal(int)          # a hadith that names a prophet, opened in its book (GEN1-H)
     open_book = Signal(str)            # a book named under the Prophet's life ﷺ (al-Shama'il, GEN1-P)
+    find_name = Signal(str)            # a teacher or student named in a life → looked for among the narrators
 
     def __init__(self, connection, parent=None) -> None:
         super().__init__(parent)
@@ -551,7 +552,7 @@ class GenealogyPage(QWidget):
             b.setCursor(Qt.CursorShape.PointingHandCursor)
             b.clicked.connect(lambda: self.open_narrator.emit(pid))
             out.append(b)
-        out.append(life_card(lives.view(life), True, open_book=self.open_book.emit))
+        out.append(life_card(lives.view(life), True, open_book=self.open_book.emit, open_name=self.find_name.emit))
         return out
 
     def show_node_of_life(self, life_id: str) -> bool:

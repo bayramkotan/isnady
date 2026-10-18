@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.3.3-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.3.4-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.3.3-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.3.4-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.3.3).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.3.4).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -361,8 +361,12 @@ Sahih al-Bukhari 1
 In the window, each result shows its chain as a row of names ending at whom it reaches, and
 **View chain** opens it as a timeline from the book to the Prophet ﷺ — or, in a Shia book, to the
 Imam — with the Arabic text below: the chain in lighter ink, the text of the hadith in full ink.
-Every link says who the narrator is and what his critic says of him; a click opens him, and pointing at him says
-how he was identified (by his name, by the narrators around him, or as the famous one of that name).
+Every link says who the narrator is and what his critic says of him; a click anywhere on him opens him, and pointing
+at him says how he was identified (by his name, by the narrators around him, or as the famous one of that name). A
+name not identified looks for its narrators on Search; the book at the top opens the hadith in its book; the
+Prophet ﷺ at the end opens his life in the Genealogies (on road B, the Imam the chain reaches). The chains drawn
+on the cards of Search and Books open the same way, name by name, and every teacher and student named in a life
+looks for himself among the narrators.
 
 Choose a book and a number, or let isnady choose: the number field shows the book's range ("1 – 7563 · 7,583
 hadith"), the arrow keys and the mouse wheel go to the next or the previous hadith, typing lists the numbers that
@@ -488,7 +492,11 @@ circle (Ibrahim from 'Alqama is al-Nakha'i, Abu Ishaq from al-Bara' is al-Sabi'i
 'Uyayna, Abu Nu'aym's al-Thawri, "Hisham from his father" Hisham b. 'Urwa); and last, a bare name still open is the
 famous man of that name when nothing else excludes him ("Anas" Anas b. Malik, "Malik" Malik b. Anas, "Ibn 'Umar"
 'Abd Allah b. 'Umar). The unnamed men of the Taqrib ("'Ata' b. Yasar from one of the Companions") are never matched
-to a name. About 262,000 links are identified this way — two of every three in the Sunni chains.
+to a name. On road B the same help reads al-Kulayni's chains: his teachers named short ("'Ali b. Ibrahim" b. Hashim
+al-Qummi, "Muhammad b. Yahya" al-'Attar), the nisbas and kunyas the chains use alone (al-Sakuni, al-Nawfali, Abu
+Basir, al-Halabi, Ibn Faddal) and "from his father" read from the son's full name ("'Ali b. Ibrahim from his father"
+is Ibrahim b. Hashim). About 273,000 links are identified this way — two of every three in the Sunni chains, one in
+two in the Shia ones.
 
 Sunni narrators filter by tabaqa, rank and book; Shia narrators by the Imami assessment.
 

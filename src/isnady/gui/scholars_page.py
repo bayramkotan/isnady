@@ -86,6 +86,8 @@ SHIA_RANK_COLORS = {1: 2, 2: 4, 3: 5, 4: 9}
 class ScholarsPage(QWidget):
     open_chain = Signal(int)
     open_narrator = Signal(int)
+    open_book = Signal(str)          # his book, as imported (2026-10-18: the books he compiled open)
+    find_name = Signal(str)          # a teacher or student named in his life → looked for among the narrators
 
     def __init__(self, connection_getter, parent=None) -> None:
         super().__init__(parent)
@@ -297,7 +299,21 @@ class ScholarsPage(QWidget):
         box.addLayout(trow)
         if scholar["works"]:
             box.addWidget(_label(tr("Works: ") + "; ".join(scholar["works"]), "Caption"))
+        from isnady.core import titles
+
+        have = {r[0]: r[1] for r in conn.execute("SELECT key, name FROM collections")}
+        mine = [k for k in scholar.get("compiler_of", []) if k in have]
         pid = core_scholars.as_narrator(conn, scholar)
+        if mine or pid:
+            row = QHBoxLayout()
+            for k in mine:
+                b = QPushButton(tr("Open {book}", book=titles.book(k, have[k])))
+                b.setObjectName("Quiet")
+                b.setCursor(Qt.CursorShape.PointingHandCursor)
+                b.clicked.connect(lambda _c=False, key=k: self.open_book.emit(key))
+                row.addWidget(b)
+            row.addStretch(1)
+            box.addLayout(row)
         if pid:
             row = QHBoxLayout()
             go = QPushButton(tr("Open him as a narrator"))
@@ -312,7 +328,7 @@ class ScholarsPage(QWidget):
 
         written = lives.of_scholar(scholar_id)
         if written is not None:
-            self.box.addWidget(life_card(lives.view(written), True))
+            self.box.addWidget(life_card(lives.view(written), True, open_name=self.find_name.emit))
         elif pid:
             info = lives.read(conn, pid)
             if info is not None and info["paragraphs"]:

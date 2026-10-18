@@ -257,14 +257,19 @@ class MainWindow(QMainWindow):
         self.isnad_page.open_narrator.connect(self._open_narrator)
         self.isnad_page.open_in_book.connect(self._open_in_book)
         self.isnad_page.open_tree.connect(self._open_tree)
+        self.isnad_page.find_narrator.connect(self._find_narrator)
         self.scholars_page.open_narrator.connect(self._open_narrator)
         self.scholars_page.open_chain.connect(self._open_chain)
+        self.scholars_page.open_book.connect(self._open_book)
         self.search_page.data_changed.connect(lambda: self._refresh_or_later("scholars"))
         self.books_page.open_chain.connect(self._open_chain)
         self.books_page.open_narrator.connect(self._open_narrator)
         self.search_page.open_book.connect(self._open_in_book)
         self.search_page.open_person.connect(self._open_person)
         self.search_page.open_scholar.connect(self._open_scholar)
+        self.search_page.open_narrator.connect(self._open_narrator)
+        self.search_page.open_tree.connect(self._open_tree)
+        self.search_page.find_narrator.connect(self._find_narrator)
         self.search_page.wants_sources.connect(lambda: self._preferences("sources"))
         self.search_page.retry_requested.connect(self.language_switched)   # main.py builds the window again
         self.search_page.data_changed.connect(lambda: setattr(self, "_books_loaded", False))
@@ -281,6 +286,11 @@ class MainWindow(QMainWindow):
         self.genealogy_page.open_hadith.connect(self._open_in_book)
         self.genealogy_page.open_book.connect(self._open_book)
         self.narrators_page.open_genealogy.connect(self._open_genealogy)
+        self.narrators_page.open_narrator.connect(self._open_narrator)
+        self.narrators_page.open_book.connect(self._open_book)
+        self.narrators_page.find_name.connect(self._find_narrator)
+        self.scholars_page.find_name.connect(self._find_narrator)
+        self.genealogy_page.find_name.connect(self._find_narrator)
         self.bookmarks_page.open_hadith.connect(self._open_in_book)
         self.bookmarks_page.open_narrator.connect(self._open_narrator)
         self.bookmarks_page.open_scholar.connect(self._open_scholar)
@@ -713,7 +723,7 @@ class MainWindow(QMainWindow):
     # --------------------------------------------------------------- back and forward (NAV2)
     _PLACE_SECTION = {"person_in_book": "books", "book": "books", "in_book": "books", "chapter": "books",
                       "narrator": "narrators", "scholar": "scholars", "term": "learn", "chain": "chains",
-                      "tree": "genealogy", "genealogy": "genealogy"}
+                      "tree": "genealogy", "genealogy": "genealogy", "find": "search"}
 
     @contextmanager
     def _place(self, entry: tuple):
@@ -773,7 +783,7 @@ class MainWindow(QMainWindow):
                            "in_book": self._open_in_book, "narrator": self._open_narrator,
                            "scholar": self._open_scholar, "term": self._open_term, "chapter": self._open_chapter,
                            "chain": self._open_chain, "tree": self._open_tree,
-                           "genealogy": self._open_genealogy}[entry[0]]
+                           "genealogy": self._open_genealogy, "find": self._find_narrator}[entry[0]]
                 handler(*entry[1:])
         except Exception:                 # a place that is gone (a book removed): stay where we are
             pass
@@ -823,6 +833,12 @@ class MainWindow(QMainWindow):
         with self._place(('scholar', scholar_id)):
             self.nav.setCurrentRow(self._row("scholars"))
             self.scholars_page.select(scholar_id)
+
+    def _find_narrator(self, name: str) -> None:
+        """A name of a chain isnady could not tell (several narrators bear it): the narrators of that name, on Search."""
+        with self._place(("find", name)):
+            self.nav.setCurrentRow(self._row("search"))
+            self.search_page.search_for(name, "narrators")
 
     def _open_tree(self, which: str, target) -> None:
         with self._place(('tree', which, target)):

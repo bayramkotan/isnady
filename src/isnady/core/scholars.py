@@ -182,10 +182,12 @@ def name_view(scholar: dict) -> dict:
 
     view = name_parts.present(name_parts.parse(scholar["arabic"], known_as=scholar.get("known_ar") or None))
     # where isnady cannot read the name he is known by yet (al-Majlisi, al-Saduq …), the name it gives him
+    from isnady.core import i18n
+
     if not view.get("reading"):
-        view["reading"] = scholar["name"]
+        view["reading"] = short_name(scholar)                 # in the interface language (2026-10-18)
     if len((view.get("full_reading") or "").split()) < 2:
-        view["full_reading"] = scholar["full"]
+        view["full_reading"] = scholar.get("tr") if i18n.language() == "tr" and scholar.get("tr") else scholar["full"]
     return view
 
 

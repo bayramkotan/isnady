@@ -165,6 +165,8 @@ def view(life: dict, lang: str | None = None) -> dict:
         "kind": t(KINDS.get(life.get("kind", ""), "")),
         "road": life.get("road", "sunni"),
         "facts": [(t(FACTS.get(f["k"], f["k"])), _in(f, lang)) for f in life.get("facts", []) if _in(f, lang)],
+        # which fact each is, for the names in "Teachers" and "Students" to open (2026-10-18)
+        "fact_keys": [f["k"] for f in life.get("facts", []) if _in(f, lang)],
         "paragraphs": list(_in(life.get("text"), lang) or []),
         "sources": [_in(SOURCES.get(s, {"en": s}), lang) for s in life.get("sources", [])],
         # where to read more: a book in isnady ({"book": key}) or a free text on the web ({"url": …}) (GEN1-P)

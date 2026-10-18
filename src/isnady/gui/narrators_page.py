@@ -78,6 +78,9 @@ class NarratorsPage(QWidget):
     open_sources = Signal()         # no rijal work yet → Data Sources
     open_in_book = Signal(int)      # person id → the rijal work, at his entry (Books)
     open_genealogy = Signal(int, str)   # person id, "family" | "learning" → Genealogies (GEN1)
+    open_narrator = Signal(int)     # a teacher or student → shown here through the window, so Back returns (NAV2)
+    open_book = Signal(str)         # a book his hadith are in (Ibn Hajar's mark) → Books
+    find_name = Signal(str)         # a teacher or student named in his life → looked for among the narrators
 
     def __init__(self, connection_getter, parent=None, tradition: str | None = None) -> None:
         """tradition: the narrators shown first — "sunni", "shia", or None for both. The reader switches between
@@ -517,7 +520,7 @@ class NarratorsPage(QWidget):
 
         info, written = lives.life(conn, person_id)
         if info is not None and (written or info["paragraphs"]):
-            self.detail_box.addWidget(life_card(info, written))
+            self.detail_box.addWidget(life_card(info, written, open_name=self.find_name.emit))
 
         # verdicts, tabaqa, death
         card, box = self._card(tr("What the critics say"))
@@ -612,10 +615,21 @@ class NarratorsPage(QWidget):
         if who["marks"]:
             marks = QWidget()
             flow = FlowLayout(marks, spacing=6)
+            from isnady.core.rijal import COLLECTION_MARKS
+
+            have = {r[0] for r in conn.execute("SELECT key FROM collections")}
             for mark, meaning in who["marks"]:
                 chip = QLabel(f"{mark}  {meaning}")
                 chip.setObjectName("ChainChip")
-                chip.setToolTip(tr("Ibn Hajar's mark {mark}: {meaning}", mark=mark, meaning=meaning))
+                tip = tr("Ibn Hajar's mark {mark}: {meaning}", mark=mark, meaning=meaning)
+                # a mark of one book opens that book (2026-10-18: every name and book on the page opens)
+                books = [k for k, marks in COLLECTION_MARKS.items() if mark in marks and mark not in ("ع", "4")]
+                if len(books) == 1 and books[0] in have:
+                    chip.setCursor(Qt.CursorShape.PointingHandCursor)
+                    tip += "\n\n" + tr("Click to open this book.")
+                    chip.mouseReleaseEvent = (lambda e, k=books[0]: e.button() == Qt.MouseButton.LeftButton
+                                              and self.open_book.emit(k))
+                chip.setToolTip(tip)
                 flow.addWidget(chip)
             box.addWidget(_label(tr("Where his hadith appear (Ibn Hajar's marks)"), "Caption"))
             box.addWidget(marks)
@@ -636,7 +650,7 @@ class NarratorsPage(QWidget):
                 # read in the interface language (L1); the Arabic (ism and the first of the lineage) when unread
                 reading, _unused = core_narrators.reading(conn, r["id"], r["name"])
                 short = reading or short_name(r["name"], 5)
-                link = _link(f"{short}  ({r['count']})", lambda _c=False, pid=r["id"]: self.select(pid),
+                link = _link(f"{short}  ({r['count']})", lambda _c=False, pid=r["id"]: self.open_narrator.emit(pid),
                              f"{r['name']}\n" + tr("Open this narrator"))
                 col.addWidget(link)
             if not items:

@@ -3,6 +3,28 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.3.4] — 2026-10-18
+
+- **Everything named opens (2026-10-18: "hâlâ tıklanmayan yerler var").** On Isnad Chains a narrator's whole card
+  opens him (before, only the small Arabic line did); the book at the top opens the hadith in its book; the Prophet ﷺ
+  at the end opens his life in the Genealogies, in the tree of Quraysh, with al-Shama'il and Ibn Hisham's Sira to
+  read (on road B, the Imam the chain reaches); a name not identified looks for its narrators on Search. The chains
+  on the cards of Search and Books open the same way, chip by chip. The books of the overview open their first
+  chain; a narrator's teachers and students open through the window, so Back returns; a mark of one book (خ, م …)
+  opens that book; a scholar's own books open from his page; every teacher and student named in a life looks for
+  himself among the narrators.
+- **One in two of the Shia chains' narrators identified (NR-ID2 on road B).** al-Kulayni's teachers named short
+  ("'Ali b. Ibrahim" b. Hashim al-Qummi, "Muhammad b. Yahya" al-'Attar), the nisbas and kunyas the chains use alone
+  (al-Sakuni, al-Nawfali, Abu Basir, al-Halabi, Ibn Faddal, Ibn Muskan, Safwan) and the bare names their neighbours
+  tell apart ("Muhammad b. Yahya from Ahmad b. Muhammad" is Ibn 'Isa, "Hammad from al-Halabi" Hammad b. 'Uthman,
+  "Hammad from Hariz" Hammad b. 'Isa). "From his father" is read from the son's full name once he is known ("'Ali b.
+  Ibrahim from his father" is Ibrahim b. Hashim), never from a father named by his kunya or his ism alone, which had
+  matched the wrong man. Shia links identified 42.4% → 51.1%, Sunni 66.0% → 66.7%; matcher isnady-narrators-11, the
+  chains are read again once.
+- **Scholars named in the interface language.** The Hadith Scholars list and the scholar cards of Search show the
+  name in the interface language on top ("Buhârî", under it "Buhârî (Muhammed b. İsmâil)"); before, the English name
+  stood above the Turkish one.
+
 ## [0.3.3] — 2026-10-18
 
 - **Two of every three narrators of the Sunni chains identified (NR-ID2).** The Taqrib's unnamed men ("'Ata' b. Yasar

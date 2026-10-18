@@ -64,7 +64,7 @@ from isnady.core.i18n import t, tr
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
-MATCHER_ID = "isnady-narrators-10"
+MATCHER_ID = "isnady-narrators-11"
 _TEACHER_MIN_TABAQA = 9           # the compilers' own teachers (Ibn Hajar's tabaqat 9-12)
 _HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم).*$")
 _CLARIFY = re.compile(r"[،,]?\s*-?\s*(?:يعني|هو)\s+([^-]+?)\s*-?\s*$")
@@ -153,6 +153,32 @@ _FAMOUS = {
     "بن جريج": "taqrib:4193", "بن وهب": "taqrib:3694", "انس بن مالك": "taqrib:565",
 }
 _FAMOUS_CONFIDENCE = 0.5
+# Road B (al-Najashi's keys), the same three helps, from the Imami scholars' own tamyiz (2026-10-18): the nisbas and
+# kunyas the chains of al-Kafi use alone ("السكوني" Isma'il b. Abi Ziyad, "النوفلي" al-Husayn b. Yazid, "أبو بصير"
+# al-Asadi or al-Muradi, "الحلبي" 'Ubayd Allah or Muhammad), al-Kulayni's own teachers named short ("علي بن إبراهيم"
+# b. Hashim al-Qummi, "محمد بن يحيى" al-'Attar), and the bare names their neighbours tell apart.
+_KNOWN_AS_SHIA = {
+    "السكوني": ("najashi:47",), "النوفلي": ("najashi:77",), "بن فضال": ("najashi:72", "najashi:676"),
+    "ابو بصير": ("najashi:1187", "najashi:876"), "الحلبي": ("najashi:612", "najashi:885"),
+}
+_FAMOUS_SHIA = {
+    "علي بن ابراهيم": "najashi:680", "محمد بن يحيي": "najashi:946", "صفوان": "najashi:524",
+    "بن مسكان": "najashi:559", "السكوني": "najashi:47", "النوفلي": "najashi:77",
+}
+_MUHMAL_SHIA = [
+    ("najashi:198", ("أحمد بن محمد",),                                  # Ahmad b. Muhammad b. 'Isa al-Ash'ari
+     ("الحسين بن سعيد", "ابن محبوب", "الحسن بن محبوب", "ابن فضال", "علي بن الحكم"),
+     ("محمد بن يحيى", "عدة من أصحابنا", "سعد بن عبد الله")),
+    ("najashi:896", ("محمد بن عيسى",), ("يونس", "يونس بن عبد الرحمن"),   # Muhammad b. 'Isa b. 'Ubayd al-Yaqtini
+     ("علي بن إبراهيم",)),
+    ("najashi:1208", ("يونس",), (), ("محمد بن عيسى", "إسماعيل بن مرار")),   # Yunus b. 'Abd al-Rahman
+    ("najashi:371", ("حماد",), ("الحلبي",), ()),                          # Hammad b. 'Uthman
+    ("najashi:370", ("حماد",), ("حريز",), ()),                            # Hammad b. 'Isa
+    ("najashi:612", ("الحلبي",), (), ("حماد", "حماد بن عثمان")),          # 'Ubayd Allah b. 'Ali al-Halabi
+    ("najashi:1187", ("أبو بصير", "أبي بصير"), (), ("علي بن أبي حمزة",)),  # Abu Basir Yahya b. al-Qasim al-Asadi
+    ("najashi:72", ("ابن فضال",), ("ابن بكير",), ("أحمد بن محمد",)),       # al-Hasan b. 'Ali b. Faddal
+]
+
 # books whose chains begin with the compiler himself, as the book is transmitted ("مالك عن نافع" in Yahya's Muwatta)
 _AUTHORS = {"malik": "taqrib:6425"}
 
@@ -193,9 +219,9 @@ class Index:
             if key and key.startswith("taqrib:") and key[7:].isdigit() and any(
                     lo <= int(key[7:]) <= hi for lo, hi in _MUBHAMAT):
                 unnamed.add(pid)
-        if tradition == "sunni":
-            keys = dict(conn.execute("SELECT key, id FROM persons WHERE key LIKE 'taqrib:%'"))
-            for key, names, teachers, students in _MUHMAL:
+        keys = dict(conn.execute("SELECT key, id FROM persons WHERE COALESCE(tradition, 'sunni') = ?", (tradition,)))
+        if True:
+            for key, names, teachers, students in (_MUHMAL if tradition == "sunni" else _MUHMAL_SHIA):
                 if key in keys:
                     for name in names:
                         self.muhmal[tuple(tokens(name))].append(
@@ -218,14 +244,14 @@ class Index:
                     self.names["بن"].append((pid, toks[i:], True))
         self.famous: dict[str, int] = {}
         self.authors: dict[str, int] = {}
-        if tradition == "sunni":
-            keys = dict(conn.execute("SELECT key, id FROM persons WHERE key LIKE 'taqrib:%'"))
-            for written, owners in _KNOWN_AS.items():
-                for key in owners:
-                    if key in keys:
-                        self.exact[written].add(keys[key])
-            self.famous = {written: keys[key] for written, key in _FAMOUS.items() if key in keys}
-            self.authors = {book: keys[key] for book, key in _AUTHORS.items() if key in keys}
+        sunni = tradition == "sunni"
+        for written, owners in (_KNOWN_AS if sunni else _KNOWN_AS_SHIA).items():
+            for key in owners:
+                if key in keys:
+                    self.exact[written].add(keys[key])
+        self.famous = {written: keys[key] for written, key in (_FAMOUS if sunni else _FAMOUS_SHIA).items()
+                       if key in keys}
+        self.authors = {book: keys[key] for book, key in _AUTHORS.items() if key in keys} if sunni else {}
 
     def candidates(self, toks: list[str]) -> set[int]:
         """Persons whose name can be the one written in the chain.
@@ -295,6 +321,14 @@ def name_tokens(raw_name: str, previous: list[str] | None) -> tuple[list[str], s
         if relation == "father" and "بن" in previous:
             i = previous.index("بن")
             toks, how = previous[i + 1:], "father of the previous narrator"
+            if len(toks) == 1:
+                # "أحمد بن محمد عن أبيه": a father with his ism alone ("محمد") is any Muhammad — the neighbours would
+                # pick a teacher, not the father; read later from the son's full name (by_relatives)
+                return [], "relative that cannot be read"
+            if toks[:1] == ["ابو"]:
+                # "أحمد بن أبي عبد الله": the father named by his kunya alone — any Abu 'Abd Allah would do (al-Barqi's
+                # father is Muhammad b. Khalid, not Ibn Batta); read later from the son's full name (by_relatives)
+                return [], "relative that cannot be read"
         elif relation == "grandfather" and previous.count("بن") >= 2:
             i = previous.index("بن")
             j = previous.index("بن", i + 1)
@@ -407,7 +441,10 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
     if left is not None:
         left.extend(cands)
     if names is not None:
-        names.extend(" ".join(w) for w in written)
+        for link, w in zip(links, written):
+            plain = tokens(_HONORIFIC.sub("", normalize(link["raw_name"])))
+            # a relative ("عن أبيه") is kept as written, for by_relatives to read once the son is known
+            names.append(plain[0] if plain and plain[0] in _RELATIVE else " ".join(w))
     out = []
     for i, c in enumerate(cands):
         if len(c) == 1:
@@ -492,6 +529,12 @@ def by_relatives(chains: list[tuple[list, list, list]], index: "Index") -> int:
             if not toks or how == "relative that cannot be read":
                 continue
             found_here = set(index.candidates(toks))
+            if not found_here and "بن" in toks:
+                # "علي بن إبراهيم بن هاشم أبو الحسن القمي": the father is "إبراهيم بن هاشم" — the son's kunya and
+                # nisba are not his
+                last = len(toks) - 1 - toks[::-1].index("بن")
+                cut = last + 3 if last + 1 < len(toks) and toks[last + 1] in ("عبد", "عبيد", "ابو") else last + 2
+                found_here = set(index.candidates(toks[:cut]))
             low = t(student)
             if low is not None:
                 found_here = {p for p in found_here if t(p) is None or t(p) <= low}
@@ -500,7 +543,7 @@ def by_relatives(chains: list[tuple[list, list, list]], index: "Index") -> int:
                 found_here = {p for p in found_here if t(p) is None or t(p) >= t(teacher)}
             if len(found_here) == 1:
                 who = next(iter(found_here))
-                results[i] = (who, _EDGE_CONFIDENCE, count or 1)
+                results[i] = (who, 0.8, count or 1)       # his name, read from the son's: as evidence 4
                 cands[i] = {who}
                 found += 1
     return found
