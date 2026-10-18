@@ -177,7 +177,7 @@ class ChainNode(QWidget):
     def __init__(self, title: str, subtitle: str = "", term: str | None = None, *, first: bool = False,
                  last: bool = False, prophet: bool = False, full_name: str = "", latin: bool = False,
                  person: dict | None = None, candidates: int | None = None, on_person=None, note: str = "",
-                 confidence: float | None = None) -> None:
+                 confidence: float | None = None, on_click=None, click_tip: str = "") -> None:
         super().__init__()
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
@@ -318,12 +318,15 @@ class ChainNode(QWidget):
             # the whole card opens the narrator — his name, its Latin reading, his facts (Bayram, 2026-10-18:
             # "ravilerin tam üstüne basılmıyor"); a click that selects text does not
             pid = person["id"]
+            on_click, click_tip = (lambda _pid=pid: on_person(_pid)), tr("Click to open this narrator.")
+        if on_click is not None:
+            # the book at the top opens in Books, the Prophet ﷺ (or the Imam) at the end opens his life (2026-10-18)
             card.setCursor(Qt.CursorShape.PointingHandCursor)
-            card.setToolTip(tr("Click to open this narrator."))
+            card.setToolTip(click_tip)
 
-            def _open(e, _pid=pid) -> None:
+            def _open(e, _go=on_click) -> None:
                 if e.button() == Qt.MouseButton.LeftButton:
-                    on_person(_pid)
+                    _go()
 
             card.mouseReleaseEvent = _open
             for label in card.findChildren(QLabel):

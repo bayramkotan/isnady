@@ -519,6 +519,7 @@ class GenealogyPage(QWidget):
             if self.tree is not None and target in self.tree.nodes:
                 self.view.centre(target)
                 self._clicked(self.tree.nodes[target])
+                QTimer.singleShot(120, lambda t=target: self.view.centre(t))     # once the page is laid out
             return
         self.show_view(which, int(target))
 

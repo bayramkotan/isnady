@@ -63,6 +63,8 @@ class _NumberField(QLineEdit):
 
 class IsnadPage(QWidget):
     open_narrator = Signal(int)      # person id → Narrators page
+    open_in_book = Signal(int)       # the compiler's book at the top of a chain → this hadith in Books
+    open_tree = Signal(str, object)  # the Prophet ﷺ or an Imam at its end → his life in the Genealogies
 
     def __init__(self, connection_getter, parent=None) -> None:
         super().__init__(parent)
@@ -396,7 +398,10 @@ class IsnadPage(QWidget):
         """One chain from the compiler's book to whom it reaches, node by node."""
         if chain and chain["links"]:
             self.body_layout.addWidget(ChainNode(info["book_name"], tr("The compiler's book, where the chain begins"),
-                                                 first=True, latin=True))
+                                                 first=True, latin=True,
+                                                 on_click=lambda h=info["id"]: self.open_in_book.emit(h),
+                                                 click_tip=tr("Click to read this hadith in its book, among the "
+                                                              "hadith of its chapter")))
             links = chain["links"]
             for i, link in enumerate(links):
                 person = core_narrators.describe(self.conn, link["person_id"]) if link.get("person_id") else None
@@ -410,7 +415,15 @@ class IsnadPage(QWidget):
             if chain["reaches_prophet"] or chain.get("ends_with"):
                 key = chain.get("ends_with") or "prophet"
                 subtitle = tr("The Messenger of God") if key == "prophet" else core_isnad.end_label(chain)
-                self.body_layout.addWidget(ChainNode(end_chip(chain), subtitle, None, last=True, prophet=True))
+                from isnady.core import genealogy
+
+                node = "muhammad" if key == "prophet" else key
+                life = node in genealogy.written("quraysh").nodes
+                self.body_layout.addWidget(ChainNode(
+                    end_chip(chain), subtitle, None, last=True, prophet=True,
+                    on_click=(lambda n=node: self.open_tree.emit("quraysh", n)) if life else None,
+                    click_tip=tr("Click to read his life ﷺ and his place in the family of the Prophet ﷺ")
+                    if key == "prophet" else tr("Click to read his life and his place in the family of the Prophet ﷺ")))
             elif chain.get("raised"):
                 # "رفعه": the narrator raises it to the Ma'sum without the links between — a gap, shown as one
                 self.body_layout.addWidget(ChainNode("رفعه", tr("Raised (marfu'): the rest of the chain is left out — "

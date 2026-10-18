@@ -255,6 +255,8 @@ class MainWindow(QMainWindow):
         self.narrators_page.open_chain.connect(self._open_chain)
         self.narrators_page.open_sources.connect(lambda: self._preferences("sources"))
         self.isnad_page.open_narrator.connect(self._open_narrator)
+        self.isnad_page.open_in_book.connect(self._open_in_book)
+        self.isnad_page.open_tree.connect(self._open_tree)
         self.scholars_page.open_narrator.connect(self._open_narrator)
         self.scholars_page.open_chain.connect(self._open_chain)
         self.search_page.data_changed.connect(lambda: self._refresh_or_later("scholars"))
