@@ -168,15 +168,18 @@ def scholar_card(scholar: dict, open_scholar) -> QFrame:
     """A scholar found by Search (core.scholars.search): who he is and what of his work is in this database."""
     from isnady.core import scholars as core_scholars
 
+    from isnady.core import i18n
+
+    shown = core_scholars.short_name(scholar)          # in the interface language, as on the Hadith Scholars page
     card = _ClickCard(lambda: open_scholar(scholar["id"]),
-                      tr("Open {name} on the Hadith Scholars page", name=scholar["name"]))
+                      tr("Open {name} on the Hadith Scholars page", name=shown))
     box = QVBoxLayout(card)
     box.setContentsMargins(22, 14, 22, 12)
     box.setSpacing(4)
     view = core_scholars.name_view(scholar)
-    sub = " · ".join(x for x in (scholar["full"] if scholar["full"] != scholar["name"] else "", scholar["tr"],
-                                 scholar["dates"]) if x)
-    _head(box, scholar["name"], scholar.get("known_ar") or view["arabic"], sub)
+    fuller = scholar.get("tr") if i18n.language() == "tr" else scholar["full"]
+    sub = " · ".join(x for x in (fuller if fuller != shown else "", scholar["dates"]) if x)
+    _head(box, shown, scholar.get("known_ar") or view["arabic"], sub)
     works = _label(tr("Works: ") + ", ".join(scholar["works"]), "Caption", wrap=True)
     box.addWidget(works)
     tags, parts = [], []

@@ -185,10 +185,15 @@ class ScholarsPage(QWidget):
                 rbox.setContentsMargins(10, 8, 10, 8)
                 rbox.setSpacing(1)
                 row.setMaximumWidth(340)            # the list is 364 wide: a long name must not push the rest out of view
-                name = _label(s["name"], "RowTitle", wrap=False)
+                # the name in the interface language first (Bayram, 2026-10-18: the English name stood on top in the
+                # Turkish interface); under it his fuller name in the same language
+                lang = i18n.language()
+                name = _label(core_scholars.short_name(s, lang), "RowTitle", wrap=False)
                 name.setFont(theme.reading_font(15, bold=True))
                 rbox.addWidget(name)
-                rbox.addWidget(_label(s.get("tr", ""), "RowLatin", wrap=False))
+                fuller = (s.get("tr") if lang == "tr" else "" if i18n.rtl() else s.get("full")) or ""
+                if fuller and fuller != name.text():
+                    rbox.addWidget(_label(fuller, "RowLatin", wrap=False))
                 arabic = QLabel(s["arabic"])         # its own line: beside a long Turkish name it was clipped
                 arabic.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
                 arabic.setStyleSheet(f"color: {theme.script_color('arabic')}; "

@@ -246,7 +246,6 @@ class ChainNode(QWidget):
             who = QLabel(_shorten(person["display_name"], 90))
             if on_person is not None:
                 who.setCursor(Qt.CursorShape.PointingHandCursor)
-                who.mousePressEvent = lambda _e, pid=person["id"]: on_person(pid)
             who.setObjectName("NodeFacts")
             who.setWordWrap(True)
             who.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
@@ -315,6 +314,24 @@ class ChainNode(QWidget):
             unknown.setObjectName("NodeUnknown")
             unknown.setWordWrap(True)
             box.addWidget(unknown)
+        if person and on_person is not None:
+            # the whole card opens the narrator — his name, its Latin reading, his facts (Bayram, 2026-10-18:
+            # "ravilerin tam üstüne basılmıyor"); a click that selects text does not
+            pid = person["id"]
+            card.setCursor(Qt.CursorShape.PointingHandCursor)
+            card.setToolTip(tr("Click to open this narrator."))
+
+            def _open(e, _pid=pid) -> None:
+                if e.button() == Qt.MouseButton.LeftButton:
+                    on_person(_pid)
+
+            card.mouseReleaseEvent = _open
+            for label in card.findChildren(QLabel):
+                if label.objectName() != "NodeTerm":
+                    label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+                    label.setCursor(Qt.CursorShape.PointingHandCursor)
+                    label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
+                    label.mouseReleaseEvent = _open
         card.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
         holder = QWidget()
         holder_box = QVBoxLayout(holder)
