@@ -37,7 +37,7 @@ WORDS = {
     # first names, fathers, kunyas
     "عبد": ("Abd", "Abd"), "الله": ("Allah", "Allah"), "محمد": ("Muhammed", "Muhammad"), "سعيد": ("Saîd", "Sa'id"),
     "عمرو": ("Amr", "Amr"), "عمر": ("Ömer", "Umar"), "سليمان": ("Süleyman", "Sulayman"), "إبراهيم": ("İbrâhim", "Ibrahim"),
-    "عبيد": ("Ubeyd", "Ubayd"), "يحيى": ("Yahyâ", "Yahya"), "يزيد": ("Yezîd", "Yazid"), "بكر": ("Bekr", "Bakr"),
+    "عبيد": ("Ubeyd", "Ubayd"), "أبيّ": ("Übey", "Ubayy"), "يحيى": ("Yahyâ", "Yahya"), "يزيد": ("Yezîd", "Yazid"), "بكر": ("Bekr", "Bakr"),
     "عثمان": ("Osman", "Uthman"), "موسى": ("Mûsâ", "Musa"), "إسماعيل": ("İsmâil", "Isma'il"), "هريرة": ("Hüreyre", "Hurayra"),
     "خالد": ("Hâlid", "Khalid"), "مالك": ("Mâlik", "Malik"), "علي": ("Ali", "Ali"), "الحجاج": ("el-Haccâc", "al-Hajjaj"),
     "سعد": ("Sa'd", "Sa'd"), "مسلم": ("Müslim", "Muslim"), "شعبة": ("Şu'be", "Shu'ba"), "زيد": ("Zeyd", "Zayd"),

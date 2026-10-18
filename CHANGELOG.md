@@ -3,6 +3,30 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.3.5] — 2026-10-18
+
+- **No one made a teacher he was not (2026-10-18: Abu Hurayra's line of learning).** Read anew, the chains no longer
+  put on a narrator's line of learning men who never taught him:
+  - the Prophet ﷺ named by his kunya — "سمعت أبا القاسم ﷺ", "حدثني خليلي", "حدثنا الصادق المصدوق", "سمعت محمداً ﷺ" — ends
+    the chain (29 links of Abu Hurayra had been given to Muhammad b. Abi Bakr al-Siddiq, also "Abu al-Qasim");
+  - the man a Companion tells a story about is not his teacher: "عن أبي هريرة أنّ سعد بن عبادة قال لرسول الله", "عن عائشة
+    أن حمزة بن عمرو قال يا رسول الله", "أن فاطمة بنت أبي حبيش سألت", "أن جبريل أتى النبي ﷺ", "سمعت هشام بن حكيم يقرأ" end at
+    the Companion who tells it (core/companions.py: the Companions as the chains name them);
+  - a second road after a link is its own chain: "… عن عروة، عن عائشة، وعن هشام بن عروة، عن أبيه، عن عائشة" had made
+    Hisham a teacher of A'isha; "وحدثنا فلان", "قال وأخبرني فلان", "، وأبي الزناد، عن الأعرج" after a Companion and Muslim's
+    "ح وحدثنا … قالا" (which had met the first road at the wrong man) are read the same way; a road begun again without a
+    sign is cut where the narrator is named the second time;
+  - "عائشة، زوج النبي ﷺ قالت" is A'isha (the title had swallowed her name), "أن ابن عباس أخبره أن النبي ﷺ" keeps
+    Ibn 'Abbas, "وابن، عباس" (a comma some editions put in a name) is one name, "سمع من أبي هريرة" is Abu Hurayra.
+  Sunni links identified 66.7% → 67.8%, Shia 51.1% → 51.6%; parser isnady-isnad-9, matcher isnady-narrators-12 — the
+  chains are read again once (about a minute and a half).
+- **Two neighbours that cannot both be right are not left so.** A narrator his own teacher, a teacher four tabaqat
+  after his student or six before him, or one who died eighty years after him: the less certain identification is
+  left open ("أبو عمران الجوني" had been the later Baghdadi of that name, "حماد عن ثابت" Thabit b. al-Dahhak, "حدثني
+  عمي" al-'Ammi). "عن جده عبد الله بن الزبير" is the man the chain names, "عن أبيه، عن جده" the father's father; on road B
+  the narrator al-Kulayni's roads meet at after "جميعاً" is no longer named twice.
+- **Ubayy b. Ka'b** is read as Ubayy, not "Ka'b b. Qays" known by a kunya "أبي".
+
 ## [0.3.4] — 2026-10-18
 
 - **Everything named opens (2026-10-18: "hâlâ tıklanmayan yerler var").** On Isnad Chains a narrator's whole card

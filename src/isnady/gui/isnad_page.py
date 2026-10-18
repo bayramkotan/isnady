@@ -394,8 +394,9 @@ class IsnadPage(QWidget):
         drawn = [c for c in chains if c["links"]]
         if len(drawn) > 1:
             self.body_layout.addWidget(_label(
-                n_("{n} chain", "{n} chains of this hadith: the compiler joined roads (tahwil, ح) or two narrators "
-                   "stand at one link; each is drawn whole, the links they share included.", len(drawn)),
+                n_("{n} chain", "{n} chains of this hadith: the compiler joined roads (tahwil, ح), a second road "
+                   "follows a link (\"وعن\", \"وحدثنا\") or two narrators stand at one link; each is drawn whole, the "
+                   "links they share included.", len(drawn)),
                 "ChainCount", wrap=True))
             self.body_layout.addSpacing(8)
         for i, c in enumerate(drawn, 1):

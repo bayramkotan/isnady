@@ -1450,7 +1450,7 @@ def cmd_chain(args) -> int:
         print("  no chain stored (no Arabic text for this hadith)")
     for k, ch in enumerate(chains, 1):
         if len(chains) > 1:
-            print(f"  Chain {k} of {len(chains)}" + (" (roads joined by tahwil, or two narrators at one link)" if k == 1 else ""))
+            print(f"  Chain {k} of {len(chains)}" + (" (roads joined by tahwil, a second road after a link — \"وعن\" / \"وحدثنا\" — or two narrators at one link)" if k == 1 else ""))
         if ch["problem"]:
             print(f"  not split: {ch['problem']}")
         for i, link in enumerate(ch["links"]):

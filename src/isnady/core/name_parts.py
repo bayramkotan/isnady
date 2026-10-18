@@ -71,7 +71,9 @@ def parse(name: str, kunya: str | None = None, aliases: list[str] | None = None,
             break
     out = {"ism": None, "nasab": [], "kunya": None, "laqab": [], "nisba": [], "wala": [], "also": [], "known": None}
     i = 0
-    if words and words[0] in _KUNYA:                       # an entry that begins with the kunya: known by it
+    # "أبي بن كعب" is Ubayy, a given name — a kunya is never followed by "بن" (2026-10-18: Ubayy b. Ka'b read
+    # "Ka'b b. Qays", known by a kunya "أبي بن")
+    if words and words[0] in _KUNYA and not (words[0] == "أبي" and len(words) > 1 and words[1] in ("بن", "ابن")):
         n = _take_name(words, 0)
         out["kunya"] = words[:n]
         i = n
@@ -80,6 +82,9 @@ def parse(name: str, kunya: str | None = None, aliases: list[str] | None = None,
             m = _take_name(words, i)
             out["ism"] = words[i:i + m]
             i += m
+    elif words and words[0] == "أبي" and len(words) > 1 and words[1] in ("بن", "ابن"):
+        out["ism"] = ["أبيّ"]                             # Ubayy (the shadda keeps him apart from the kunya "Abi")
+        i = 1
     elif words:
         n = _take_name(words, 0)
         out["ism"] = words[:n]
@@ -167,7 +172,7 @@ def parse(name: str, kunya: str | None = None, aliases: list[str] | None = None,
             ranked.append((2, ("nisba", aw)) if aw[0].endswith("ي") else (0, ("laqab", aw)))
     if not known and ranked:
         known = min(ranked, key=lambda r: r[0])[1]
-    if not known and words and words[0] in _KUNYA:
+    if not known and words and words[0] in _KUNYA and out["kunya"] and out["ism"] != ["أبيّ"]:
         known = ("kunya", out["kunya"])
     # a by-name only when the entry SAYS it is his: an "al-…" word inside a name may belong to his father
     # ("عائشة بنت أبي بكر الصديق": al-Siddiq is Abu Bakr's)

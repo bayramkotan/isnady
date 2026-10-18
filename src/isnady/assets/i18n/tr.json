@@ -61,8 +61,8 @@
  "AH": "H.",
  "CE": "M",
  "tahwil (a second chain joins); not split in version 1": "tahvîl (ikinci bir sened katılıyor); 1. sürümde bölünmüyor",
- "does not start with a transmission term": "bir rivayet lafzıyla başlamıyor",
  "a second chain follows the first; not split in version 1": "ilk senedin ardından ikinci bir sened geliyor; 1. sürümde bölünmüyor",
+ "does not start with a transmission term": "bir rivayet lafzıyla başlamıyor",
  "two narrators at one link (qiran); not split in version 1": "bir halkada iki râvî (kırân); 1. sürümde bölünmüyor",
  "chain continues after words that were not understood": "sened anlaşılamayan kelimelerden sonra devam ediyor",
  "no narrator found after the transmission term": "rivayet lafzından sonra râvî bulunamadı",
@@ -588,7 +588,7 @@
  "Shia — read the Shia way": "Şiî — Şiî usulüyle okunur",
  "Road B: the teacher named without a term, al-Kulayni's groups, the chain ending at a Ma'sum; the narrators identified only in the Shia rijal works and judged in the Imami terms.": "B yolu: lafızsız anılan şeyh, Küleynî'nin grupları, bir Masum'da biten sened; râvîler yalnız Şiî ricâl eserlerinde tanımlanır ve İmâmî terimlerle değerlendirilir.",
  "{n} chain": "{n} sened",
- "{n} chains of this hadith: the compiler joined roads (tahwil, ح) or two narrators stand at one link; each is drawn whole, the links they share included.": "Bu hadisin {n} senedi var: müellif yolları birleştirmiş (tahvîl, ح) ya da bir halkada iki râvi var; her biri, ortak halkalarıyla birlikte, bütün olarak çizildi.",
+ "{n} chains of this hadith: the compiler joined roads (tahwil, ح), a second road follows a link (\"وعن\", \"وحدثنا\") or two narrators stand at one link; each is drawn whole, the links they share included.": "Bu hadisin {n} senedi var: müellif yolları birleştirmiş (tahvîl, ح), bir halkadan sonra ikinci bir yol başlamış (\"وعن\", \"وحدثنا\") ya da bir halkada iki râvi var; her biri, ortak halkalarıyla birlikte, bütün olarak çizildi.",
  "Chain {i}": "{i}. sened",
  "The compiler's book, where the chain begins": "Musannifin kitabı; senedin başladığı yer",
  "Click to read this hadith in its book, among the hadith of its chapter": "Bu hadisi kitabında, bölümünün hadisleri arasında okumak için tıklayın",
@@ -1472,10 +1472,5 @@
  "Search every language, or tick the ones to search": "Bütün dillerde arayın ya da aranacak dilleri işaretleyin",
  "{n} languages": "{n} dil",
  "More languages: {names} — import": "Başka diller: {names} — içe aktar",
- "These books are in the data repository in more languages: {names}. File → Data Sources imports them (tick the languages beside a book); they then appear in this list.": "Bu kitaplar veri deposunda başka dillerde de var: {names}. Dosya → Veri Kaynakları bunları içe aktarır (kitabın yanındaki dilleri işaretleyin); sonra bu listede görünürler.",
- "Add to your bookmarks (Bookmarks in the sidebar keeps them, in folders of your own)": "Yer imlerinize ekleyin (kenar çubuğundaki Yer İmleri onları kendi klasörlerinizde saklar)",
- "The database is empty. Import a source from a terminal, for example:<br><code>iy import fawazahmed0 https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json --book bukhari --language tur --language ara --license Unlicense</code><br>Importing from inside the app arrives with User Resources.": "Veritabanı boş. Bir terminalden bir kaynak içe aktarın, örneğin:<br><code>iy import fawazahmed0 https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json --book bukhari --language tur --language ara --license Unlicense</code><br>Uygulama içinden içe aktarma Kullanıcı Kaynakları ile gelir.",
- "the first {limit}; narrow the search to see others": "ilk {limit}; diğerlerini görmek için aramayı daraltın",
- "His life in full is planned (TODO H4); what follows is measured from the data imported here.": "Hayatının tamamı planlandı (TODO H4); aşağıdakiler burada içe aktarılan verilerden ölçüldü.",
- "The {found:,} closest of {people_total:,} are shown: add a word to find the others.": "{people_total:,} sonuçtan en yakın {found:,} tanesi gösteriliyor: diğerlerini bulmak için bir kelime ekleyin."
+ "These books are in the data repository in more languages: {names}. File → Data Sources imports them (tick the languages beside a book); they then appear in this list.": "Bu kitaplar veri deposunda başka dillerde de var: {names}. Dosya → Veri Kaynakları bunları içe aktarır (kitabın yanındaki dilleri işaretleyin); sonra bu listede görünürler."
 }

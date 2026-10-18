@@ -50,6 +50,13 @@ words (صحابي, له صحبة, خادم رسول الله, بدري …). A n
 "X عن أمه" (how a woman is named in some chains) is not a name of hers by
 itself: "أنس بن مالك عن أمه" made Umm Sulaym a candidate for every "أنس بن مالك".
 
+Last of all (isnady-narrators-12), two neighbours that cannot both be right
+are not left so: a narrator his own teacher, a teacher four tabaqat after his
+student or six before him, or who died eighty years after him — the less
+certain of the two is left unidentified (drop_impossible). The Prophet ﷺ named
+by his kunya is never looked up; "عائشة، زوج النبي ﷺ" is read as "عائشة";
+"حدثني عمي" is no al-'Ammi; "عن جده عبد الله بن الزبير" is the man named.
+
 When more than one person remains, the link stays unidentified and the number
 of candidates is stored, so the interface can say so. MATCHER_ID changes when
 these rules change; links are then matched again.
@@ -64,12 +71,20 @@ from isnady.core.i18n import t, tr
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
-MATCHER_ID = "isnady-narrators-11"
+MATCHER_ID = "isnady-narrators-12"
 _TEACHER_MIN_TABAQA = 9           # the compilers' own teachers (Ibn Hajar's tabaqat 9-12)
 _HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم).*$")
+# "عائشة، زوج النبي ﷺ", "ثوبان مولى رسول الله ﷺ", "عائشة أم المؤمنين": who she is, not her name (2026-10-18: the
+# chains read since name her so, and her links had stayed unknown)
+_OF_PROPHET = re.compile(r"[،,]?\s*(?:(?:زوج|زوجه|مولي|مولاه|صاحب|خادم|ابنه|بنت|ابن عم|ربيب|ربيبه|حب|كاتب|موذن)\s+"
+                         r"(?:النبي|رسول الله|نبي الله)|ام المومنين)(?!\w).*$")
+# what the narrator does after his name: "عائشة أنها قالت", "ابن عمر حدثه", "أبا هريرة يحدث"
+_SAYS = re.compile(r"(?:\s+(?:انه|انها|انهما|انهم|اخبر\w*|حدث\w*|يحدث\w*|يخبر\w*|قال|قالت|تقول|يقول|سمع|سمعه|سمعها|سمعته|يرفعه|رفعه|"
+                   r"يزعم|زعم))+\s*$")
 _CLARIFY = re.compile(r"[،,]?\s*-?\s*(?:يعني|هو)\s+([^-]+?)\s*-?\s*$")
 _RELATIVE = {"ابيه": "father", "ابوه": "father", "جده": "grandfather", "امه": "mother", "عمه": "uncle"}
 _RELATIVE_WORDS = {"ابيه", "ابوه", "جده"}
+_KIN_FIRST_PERSON = {"عمي", "خالي", "اخي", "امي", "جدتي", "عمتي", "خالتي", "اختي", "مولاي", "ابوي", "عماي", "ابني"}
 # a Taqrib entry without "من الثالثة" … that still says its man is a Companion (normalized spelling)
 _COMPANION = re.compile(r"صحابي|له صحبه|لها صحبه|من الصحابه|خادم رسول الله|مولي رسول الله|مولي النبي|بدري|"
                         r"شهد بدرا|ام المومنين|زوج النبي|بنت رسول الله|بنت النبي|من كبار الصحابه")
@@ -137,6 +152,8 @@ _KNOWN_AS = {
     "بن بريده": ("taqrib:3227", "taqrib:2538"), "بن ابو مريم": ("taqrib:2286",),
     "بن ابو زايده": ("taqrib:7548", "taqrib:2022"), "بن مبارك": ("taqrib:3570",), "بن المبارك": ("taqrib:3570",),
     "بن بشار": ("taqrib:5754",), "بن المثني": ("taqrib:6264",),
+    # 'Abd al-Malik b. Habib, known by his kunya — not the later Baghdadi of that name (Taqrib 8277, "متأخر")
+    "ابو عمران الجوني": ("taqrib:4172",),
 }
 # NR-ID2, the famous one: a bare name the scholars read as the famous narrator of that name unless something says
 # otherwise ("أنس" is Anas b. Malik al-Ansari, "مالك" Malik b. Anas, "ابن عمر" 'Abd Allah b. 'Umar). Applied last,
@@ -184,7 +201,8 @@ _AUTHORS = {"malik": "taqrib:6425"}
 
 
 def tokens(name: str) -> list[str]:
-    words = normalize(name).replace("ابن ", "بن ").split()
+    # (a comma some editions put inside a name — "ابن، جريج", "زهير، بن حرب" — is no part of it)
+    words = normalize(name).replace("،", " ").replace(",", " ").replace("ابن ", "بن ").split()
     return [re.sub(r"^(ابا|ابي)$", "ابو", w) for w in words]
 
 
@@ -208,8 +226,12 @@ class Index:
         # Sunni rijal works, a Shia book's in the Shia ones — a narrator of the other tradition with the same name
         # is another source's judgment, never a candidate for these links
         unnamed: set[int] = set()
-        for pid, tabaqa, name, key in conn.execute("SELECT id, tabaqa, name_ar, key FROM persons WHERE COALESCE(tradition, 'sunni') = ?",
-                                              (tradition,)):
+        self.death: dict[int, int] = {}
+        for pid, tabaqa, name, key, died in conn.execute(
+                "SELECT id, tabaqa, name_ar, key, death_year_ah FROM persons WHERE COALESCE(tradition, 'sunni') = ?",
+                (tradition,)):
+            if died:
+                self.death[pid] = died
             if tabaqa is None and tradition == "sunni" and name:
                 plain = normalize(name)
                 if _COMPANION.search(plain) and not _UNSURE.search(plain):
@@ -305,9 +327,11 @@ def _article_variants(toks: list[str]) -> list[list[str]]:
     return out
 
 
-def name_tokens(raw_name: str, previous: list[str] | None) -> tuple[list[str], str]:
-    """Tokens to look up for one link, and how they were formed."""
-    text = _HONORIFIC.sub("", normalize(raw_name)).strip(" ،,-")
+def name_tokens(raw_name: str, previous: list[str] | None, after_father: bool = False) -> tuple[list[str], str]:
+    """Tokens to look up for one link, and how they were formed. after_father: the link before was "عن أبيه" read as
+    the father of the one before it — then "عن جده" is that narrator's grandfather, the father's father."""
+    text = _HONORIFIC.sub("", _OF_PROPHET.sub("", normalize(raw_name))).strip(" ،,-")
+    text = _SAYS.sub("", text).strip(" ،,-")
     clarification = _CLARIFY.search(text)
     base = text[: clarification.start()].strip(" ،,-") if clarification else text
     toks = tokens(base)
@@ -316,6 +340,18 @@ def name_tokens(raw_name: str, previous: list[str] | None) -> tuple[list[str], s
         extra = tokens(clarification.group(1))
         toks = toks + extra if extra[:1] == ["بن"] else (extra if len(extra) >= 2 else toks + extra)
         how = "name + clarification"
+    if toks == ["ابي"]:
+        toks = ["ابيه"]                               # "حدثنا عبد الله، حدثني أبي": the father of the one before
+    elif toks == ["جدي"]:
+        toks = ["جده"]
+    elif len(toks) == 1 and toks[0] in _KIN_FIRST_PERSON:
+        return [], "relative that cannot be read"     # "حدثني عمي" is not al-'Ammi (2026-10-18: it had become 'Uqba b. Mukram)
+    if toks and toks[0] in _RELATIVE and len(toks) >= 3:
+        # "عن جده عبد الله بن الزبير", "عن أمه فاطمة بنت حسين": the chain names him — read the name, not the nasab
+        # (2026-10-18: "جده" had been taken from the nasab before and given al-Zubayr himself)
+        return toks[1:], "relative named in the chain"
+    if toks == ["جده"] and after_father:
+        toks = ["ابيه"]                               # "عن أبيه، عن جده": the father's father
     if toks and toks[0] in _RELATIVE and previous:
         relation = _RELATIVE[toks[0]]
         if relation == "father" and "بن" in previous:
@@ -338,6 +374,15 @@ def name_tokens(raw_name: str, previous: list[str] | None) -> tuple[list[str], s
     return toks, how
 
 
+def _is_prophet(raw: str) -> bool:
+    """A link that names the Prophet ﷺ ("أبا القاسم ﷺ", "الصادق المصدوق", "خليلي"): a chain read before 2026-10-18 could
+    hold one, and Abu al-Qasim had been taken for Muhammad b. Abi Bakr al-Siddiq."""
+    from isnady.core import isnad as core_isnad
+
+    name = normalize(raw or "").strip(" ،,")
+    return bool(core_isnad._PROPHET_NAME_RE.fullmatch(name) or core_isnad._PROPHET_RE.fullmatch(name))
+
+
 def match_chain(index: Index, links: list[dict], collection: str, reaches_prophet: bool,
                 left: list | None = None, names: list | None = None) -> list[tuple]:
     """For each link: (person_id or None, confidence or None, number of candidates). left, when given, receives
@@ -348,13 +393,22 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
     cands: list[set[int]] = []
     written: list[list[str]] = []
     previous: list[str] | None = None
+    after_father = False
     for link in links:
         if index.tradition == "shia" and traditions.link_kind(link["raw_name"]) != "person":
             cands.append(set())                    # a group, "عنه", "عن رجل": no one to look up
             written.append([])
             previous = None
+            after_father = False
             continue
-        toks, _how = name_tokens(link["raw_name"], previous)
+        if index.tradition != "shia" and _is_prophet(link["raw_name"]):
+            cands.append(set())                    # the Prophet ﷺ by his kunya or an epithet is no narrator
+            written.append([])
+            previous = None
+            after_father = False
+            continue
+        toks, _how = name_tokens(link["raw_name"], previous, after_father)
+        after_father = _how == "father of the previous narrator"
         if index.tradition == "shia" and link["position"] == 1:
             fuller = traditions.teacher_name(collection, link["raw_name"])
             if fuller:
@@ -549,6 +603,40 @@ def by_relatives(chains: list[tuple[list, list, list]], index: "Index") -> int:
     return found
 
 
+_GAP_TABAQA = 4          # a teacher four tabaqat after his student
+_GAP_OLDER = 6           # a teacher six tabaqat before him (five happens: Makki b. Ibrahim from Yazid b. Abi 'Ubayd)
+_GAP_DEATH = 80          # a teacher who died eighty years after his student
+
+
+def drop_impossible(results: list, index: "Index") -> int:
+    """Identifications that make a narrator his own teacher, the student of a man of four generations after him (or
+    who died eighty years after him), or of a man six generations before him, cannot all be right: the less certain of the two is left unidentified — on
+    a tie the teacher, except at the first link (the compiler's own teacher, taken for an early namesake). Takrib's
+    tabaqat are approximate, so a gap of three is let stand. Returns how many were dropped (2026-10-18: "أبو عمران
+    الجوني" had been the later Baghdadi of that name, "حيوة" the Himsi, "حدثني عمي" al-'Ammi)."""
+    dropped = 0
+    for _ in range(len(results)):
+        bad = None
+        for i in range(len(results) - 1):
+            s, t = results[i][0], results[i + 1][0]
+            if s is None or t is None:
+                continue
+            ts, tt = index.tabaqa.get(s), index.tabaqa.get(t)
+            ds, dt = index.death.get(s), index.death.get(t)
+            older = ts is not None and tt is not None and ts - tt >= _GAP_OLDER
+            if s == t or older or (ts is not None and tt is not None and tt - ts >= _GAP_TABAQA) \
+                    or (ds and dt and dt - ds >= _GAP_DEATH):
+                cs, ct = results[i][1] or 0, results[i + 1][1] or 0
+                # (a teacher far too old is the namesake of an earlier generation: "حماد عن ثابت" is al-Bunani)
+                bad = i if cs < ct or (cs == ct and i == 0 and s != t and not older) else i + 1
+                break
+        if bad is None:
+            break
+        results[bad] = (None, None, results[bad][2])
+        dropped += 1
+    return dropped
+
+
 def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | None = None,
                    rebuild: bool = False) -> dict:
     """Identify the narrators of every chain read from the texts."""
@@ -599,7 +687,7 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
         written: list = []
         results = match_chain(indexes[road], links, collection, bool(reaches), kept, written)
         done[road].append((results, kept, written))
-        order.append((isnad_id, links, results))
+        order.append((isnad_id, links, results, road))
     if not only_new:
         for road, pairs in done.items():
             by_neighbours(pairs)                    # the lists of results are changed in place
@@ -607,7 +695,8 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
                 by_neighbours(pairs)                # the famous ones now known, their neighbours may decide more
             if by_relatives(pairs, indexes[road]):
                 by_neighbours(pairs)
-    for isnad_id, links, results in order:
+    for isnad_id, links, results, road in order:
+        drop_impossible(results, indexes[road])
         for link, (pid, confidence, count) in zip(links, results):
             updates.append((pid, confidence, count, isnad_id, link["position"]))
             total += 1

@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.3.4-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.3.5-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.3.4-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.3.5-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.3.4).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.3.5).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -495,8 +495,17 @@ famous man of that name when nothing else excludes him ("Anas" Anas b. Malik, "M
 to a name. On road B the same help reads al-Kulayni's chains: his teachers named short ("'Ali b. Ibrahim" b. Hashim
 al-Qummi, "Muhammad b. Yahya" al-'Attar), the nisbas and kunyas the chains use alone (al-Sakuni, al-Nawfali, Abu
 Basir, al-Halabi, Ibn Faddal) and "from his father" read from the son's full name ("'Ali b. Ibrahim from his father"
-is Ibrahim b. Hashim). About 273,000 links are identified this way — two of every three in the Sunni chains, one in
+is Ibrahim b. Hashim). About 280,000 links are identified this way — two of every three in the Sunni chains, one in
 two in the Shia ones.
+
+**Who is not a narrator.** The Prophet ﷺ named by his kunya or an epithet ("سمعت أبا القاسم ﷺ", "حدثني خليلي",
+"الصادق المصدوق") ends the chain; he is never matched to a narrator of that kunya. The man a Companion tells a story
+about is not his teacher: "عن أبي هريرة أنّ سعد بن عبادة قال لرسول الله" ends at Abu Hurayra, and so does "عمر،
+سمعت هشام بن حكيم يقرأ". A second road written after a link — "… عن عروة، عن عائشة، وعن هشام بن عروة، عن أبيه، عن
+عائشة", "وحدثنا …", "قال وأخبرني …", "، وأبي الزناد، عن الأعرج" after a Companion — is drawn as its own chain, joined to
+the first where they meet, never read on as one; a road begun again without a sign (a narrator named twice) is cut
+there. And two neighbours that cannot both be right — a narrator his own teacher, a teacher four generations after
+his student or six before him — are not left so: the less certain of the two is left unidentified.
 
 Sunni narrators filter by tabaqa, rank and book; Shia narrators by the Imami assessment.
 
