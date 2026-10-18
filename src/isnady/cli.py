@@ -233,7 +233,29 @@ def cmd_update(args) -> int:
     """Update every copy of isnady where it is installed. Nothing is removed or moved, except an old version's record
     pip left beside a newer one (doctor.Leftover)."""
     from isnady import doctor
+    from isnady.core import updates
 
+    if args.check or args.npm or updates.npm_installed():      # UPD4: PyPI and npm, whichever are installed
+        found = updates.check()
+        p, n = found["pypi"], found["npm"]
+        print(f"PyPI: isnady {p['installed']}"
+              + (f" → {p['latest']} available" if p["behind"] else
+                 (" (up to date)" if p["latest"] else " (PyPI could not be reached)")))
+        if n["installed"]:
+            print(f"npm:  isnady {n['installed']}"
+                  + (f" → {n['latest']} available" if n["behind"] else
+                     (" (up to date)" if n["latest"] else " (npm's registry could not be reached)")))
+        else:
+            print("npm:  isnady is not installed with npm (npm install -g isnady)")
+        for version, text in found["news"]:
+            print(f"\nWhat is new in {version}:\n{text}")
+        if args.check:
+            return 0
+        if n["behind"] and (args.npm or not args.pypi):
+            print("\nUpdating isnady from npm:")
+            _run_plan([updates.npm_update_argv()], args.yes)
+        if args.npm and not args.pypi:
+            return 0
     report = doctor.diagnose(check_pypi=True)
     if not report.fixes:
         print(f"isnady {report.running_version} is up to date"
@@ -384,6 +406,36 @@ def cmd_catalog(args) -> int:
     from isnady.core import catalog
     from isnady.core import repositories as R
 
+    if args.action == "languages":                  # LANG2: one language for every book
+        conn = _connect()
+        try:
+            what = (args.id or "").lower()
+            codes = [catalog.code_for(x) for x in ([args.format, args.location] if args.format else []) + (args.language or [])
+                     if x]
+            if what in ("", "list"):
+                for row in catalog.language_overview(conn):
+                    print(f"  {row['code']}  {row['label']:12} imported in {row['imported']:>2} of the {row['offered']} "
+                          f"books that offer it")
+                print("Add one to every book: iy catalog languages add tr en   ·   remove: iy catalog languages remove ur")
+                return 0
+            if not codes:
+                print("Name the languages: iy catalog languages add tr en", file=sys.stderr)
+                return 2
+            if what == "add":
+                imported, failed, _n = catalog.add_languages(conn, codes, progress=lambda m: print(f"  {m}"))
+                print(f"Added to {len(imported)} book(s)" + (f"; failed: {'; '.join(f'{a} ({b})' for a, b in failed)}"
+                                                              if failed else "."))
+                return 1 if failed else 0
+            if what == "remove":
+                if "ara" in codes:
+                    print("Arabic stays: the chains and the narrators are read from it.", file=sys.stderr)
+                n = catalog.remove_languages(conn, codes)
+                print(f"Removed {n} edition(s).")
+                return 0
+            print("iy catalog languages [list | add CODES | remove CODES]", file=sys.stderr)
+            return 2
+        finally:
+            conn.close()
     if args.action == "list":
         conn = _connect()
         repo = R.find(args.repo) if args.repo else R.selected()
@@ -849,6 +901,20 @@ def _search_people(conn, args) -> int:
 
 
 def cmd_search(args) -> int:
+    from isnady.core import recent
+
+    if args.clear_recent:
+        print(f"Forgot {recent.clear()} recent searches.")
+        return 0
+    if args.recent or not args.words:
+        rows = recent.items()
+        if not rows:
+            print("No recent searches." if args.recent else "Give the words to search: iy search niyet")
+            return 0 if args.recent else 2
+        for i, r in enumerate(rows, 1):
+            print(f"{i:>3}. {r['text']}" + ("" if r["kind"] == "hadith" else f"   (in {r['kind']})"))
+        return 0
+    recent.add(" ".join(args.words), args.kind)
     conn = _connect()
     if args.kind != "hadith":
         return _search_people(conn, args)
@@ -1087,9 +1153,17 @@ def cmd_bookmark(args) -> int:
             print(f"No folder '{args.folder}'.", file=sys.stderr)
             return 1
         items = store.in_folder(folder.id) if folder else store.items
+        if args.kind:
+            items = [i for i in items if i.kind == args.kind]
+        try:
+            conn = _connect() if any(i.kind == "narrator" for i in items) else None
+        except SystemExit:
+            conn = None
         for i in items:
             where = ", ".join(store.path_of(f) for f in i.folders)
-            print(f"  {i.id}  [{i.kind}] {i.title}" + (f"   — {where}" if where else "") + (f"\n      ✎ {i.note}" if i.note else ""))
+            more = bookmarks.detail(conn, i)
+            print(f"  {i.id}  [{bookmarks.KINDS[i.kind]}] {i.title}" + (f"  · {more}" if more else "")
+                  + (f"   — {where}" if where else "") + (f"\n      ✎ {i.note}" if i.note else ""))
         print(f"{len(items)} bookmark(s)")
         return 0
     if args.action == "folders":
@@ -1101,7 +1175,8 @@ def cmd_bookmark(args) -> int:
         return 0
     if args.action == "add":
         if not args.kind or not args.ref:
-            print("iy bookmark add KIND REF — kinds: hadith (bukhari:1), narrator (his key), scholar, term, chapter",
+            print("iy bookmark add KIND REF — kinds: hadith (bukhari:1), narrator (his key), scholar, term, chapter, "
+                  "tree (prophets:musa, quraysh:ali, family:<narrator's key>, learning:<narrator's key>)",
                   file=sys.stderr)
             return 2
         title, subtitle, ref = args.title or args.ref, "", args.ref
@@ -1117,6 +1192,20 @@ def cmd_bookmark(args) -> int:
                 make = {"hadith": bookmarks.hadith_ref, "narrator": bookmarks.narrator_ref,
                         "chapter": bookmarks.chapter_ref}[args.kind]
                 ref, title, subtitle = make(conn, target)
+            finally:
+                conn.close()
+        if args.kind == "tree":
+            conn = _connect()
+            try:
+                where = bookmarks.resolve_tree(conn, args.ref)
+                if where is None:
+                    print(f"No place '{args.ref}' in the genealogies (e.g. prophets:musa, family:taqrib:6340).",
+                          file=sys.stderr)
+                    return 1
+                which, target = where
+                made = bookmarks.tree_ref(conn, which, node_id=target if isinstance(target, str) else None,
+                                          person_id=target if isinstance(target, int) else None)
+                ref, title, subtitle = made
             finally:
                 conn.close()
         folder = store.ensure_path(args.folder).id if args.folder else None
@@ -1284,7 +1373,7 @@ def cmd_tahric(args) -> int:
     conn = _connect()
     hid = core_isnad.hadith_id(conn, args.book, args.number)
     if hid is None:
-        print(f"No hadith {args.number} in '{args.book}'. See: iy stats", file=sys.stderr)
+        _no_number(conn, args.book, args.number)
         conn.close()
         return 1
     found = takhrij.related(conn, hid)
@@ -1326,15 +1415,32 @@ def cmd_isnads(args) -> int:
     return 0
 
 
+def _no_number(conn, book: str, number: str) -> None:
+    """A number the book does not have (CH2): its range and the nearest number."""
+    rng = core_isnad.number_range(conn, book)
+    near = core_isnad.nearest_number(conn, book, number) if rng else None
+    print(f"No hadith {number} in '{book}'."
+          + (f" Its numbers run from {rng['first']} to {rng['last']}; the nearest is {near}." if rng else
+             " See: iy book"), file=sys.stderr)
+
+
 def cmd_chain(args) -> int:
     conn = _connect()
+    if not args.number:                     # CH2: the book's numbers, to choose from
+        rng = core_isnad.number_range(conn, args.book)
+        if rng is None:
+            print(f"No book '{args.book}'. See: iy book", file=sys.stderr)
+            return 1
+        print(f"{args.book}: hadith {rng['first']} – {rng['last']} ({rng['count']:,} hadith). "
+              f"Example: iy chain {args.book} {core_isnad.random_number(conn, args.book)}")
+        return 0
     core_isnad.ensure_isnads(conn)
     row = conn.execute(
         """SELECT h.id, c.name FROM hadiths h JOIN collections c ON c.id = h.collection_id
            WHERE c.key = ? AND h.number = ?""", (args.book, args.number)
     ).fetchone()
     if row is None:
-        print(f"No hadith {args.number} in '{args.book}'. See: iy stats", file=sys.stderr)
+        _no_number(conn, args.book, args.number)
         conn.close()
         return 1
     core_narrators.link_narrators(conn)
@@ -1362,7 +1468,10 @@ def cmd_chain(args) -> int:
                          f"d. {who['death_year_ah']} AH" if who["death_year_ah"] else "",
                          f"{v['critic_name']}: {v['phrase'][:160] + (' …' if len(v['phrase']) > 160 else '')}" + (f" ({v['rank_label']})" if v and v["rank"] and v["rank_scheme"] == "shia"
                                                           else f" (rank {v['rank']})" if v and v["rank"] else "") if v else ""]
-                print(f"      = {who['display_name']}")
+                conf = link.get("match_confidence")
+                how = ("" if conf is None or conf >= 0.8 else
+                       "  [by the narrators around him]" if conf >= 0.6 else "  [the famous one of this name]")
+                print(f"      = {who['display_name']}{how}")
                 print(f"        {'; '.join(f for f in facts if f)}")
             elif link.get("candidates") is not None and core_narrators_loaded(conn):
                 n = link["candidates"]
@@ -1451,6 +1560,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("version", help="show the version").set_defaults(func=cmd_version)
     up = sub.add_parser("update", help="update every copy of isnady where it is installed (system, user, venv, pipx, clone)")
     up.add_argument("--yes", action="store_true", help="do not ask before using sudo / the administrator prompt")
+    up.add_argument("--check", action="store_true", help="only look: the installed and the latest version on PyPI and "
+                                                          "npm, and what is new (nothing is changed)")
+    up.add_argument("--pypi", action="store_true", help="update the Python package (every copy); the default")
+    up.add_argument("--npm", action="store_true", help="update the npm package too (npm install -g isnady@latest); "
+                                                        "with --npm alone: only npm")
     up.set_defaults(func=cmd_update)
     doc = sub.add_parser("doctor", help="every isnady installation, which one each command starts, and what is out of date")
     doc.add_argument("--fix", action="store_true", help="update the copies that are behind, where they are")
@@ -1478,7 +1592,8 @@ def build_parser() -> argparse.ArgumentParser:
     prf.set_defaults(func=cmd_profile)
     sub.add_parser("formats", help="list supported data formats").set_defaults(func=cmd_formats)
     cat = sub.add_parser("catalog", help="built-in sources and your own: list, import, remove, add, delete")
-    cat.add_argument("action", choices=["list", "import", "remove", "add", "delete"])
+    cat.add_argument("action", choices=["list", "import", "remove", "add", "delete", "languages"],
+                     help="languages: one language for every book — iy catalog languages [add|remove] tr en (LANG2)")
     cat.add_argument("id", nargs="?", help="source id (see list); for add: a title")
     cat.add_argument("format", nargs="?", help="add: data format, see 'iy formats'")
     cat.add_argument("location", nargs="?", help="add: file path or URL")
@@ -1534,7 +1649,9 @@ def build_parser() -> argparse.ArgumentParser:
     imp.set_defaults(func=cmd_import)
 
     se = sub.add_parser("search", help="search hadith text, narrators or scholars (same engine as the app)")
-    se.add_argument("words", nargs="+", help="words to search; Arabic diacritics and letter forms are ignored")
+    se.add_argument("words", nargs="*", help="words to search; Arabic diacritics and letter forms are ignored")
+    se.add_argument("--recent", action="store_true", help="the last 20 searches, the newest first (the same list as the app)")
+    se.add_argument("--clear-recent", action="store_true", help="forget the recent searches")
     se.add_argument("--in", dest="kind", choices=["hadith", "narrators", "scholars"], default="hadith",
                     help="what to search: hadith text (default), narrators of both traditions by name, or scholars")
     se.add_argument("--tradition", choices=["sunni", "shia"],
@@ -1583,9 +1700,9 @@ def build_parser() -> argparse.ArgumentParser:
     ca.set_defaults(func=cmd_cache)
     bm = sub.add_parser("bookmark", help="bookmarks in folders: list, folders, add, remove, export, import")
     bm.add_argument("action", choices=["list", "folders", "add", "remove", "export", "import"])
-    bm.add_argument("kind", nargs="?", help="add: hadith | narrator | scholar | term | chapter; remove: the id; "
-                                            "export/import: the file")
-    bm.add_argument("ref", nargs="?", help="add: bukhari:1, a narrator's key, a scholar's or term's id, bukhari:3")
+    bm.add_argument("kind", nargs="?", help="add: hadith | narrator | scholar | term | chapter | tree; list: only "
+                                            "that kind; remove: the id; export/import: the file")
+    bm.add_argument("ref", nargs="?", help="add: bukhari:1, a narrator's key, a scholar's or term's id, bukhari:3, prophets:musa")
     bm.add_argument("--folder", help="a folder, Prayer or Prayer/Friday (made if missing)")
     bm.add_argument("--title", help="the title to keep (default: isnady's)")
     bm.add_argument("--note", help="a note of your own")
@@ -1614,7 +1731,7 @@ def build_parser() -> argparse.ArgumentParser:
     nr.set_defaults(func=cmd_narrator)
     ch = sub.add_parser("chain", help="show the chain of one hadith")
     ch.add_argument("book", help="collection key, e.g. bukhari")
-    ch.add_argument("number", help="hadith number, e.g. 1")
+    ch.add_argument("number", nargs="?", help="hadith number, e.g. 1; none = the book's numbers, first to last")
     ch.add_argument("--raw", action="store_true", help="also print the chain as written")
     ch.set_defaults(func=cmd_chain)
 
@@ -1654,6 +1771,20 @@ def _utf8_output() -> None:
 def main(argv: list[str] | None = None) -> int:
     _utf8_output()
     args = build_parser().parse_args(argv)
+    try:                                            # a new version starts clean, keeping the user's own (CFG1)
+        from isnady.core import upgrade
+
+        changed = upgrade.check()
+        if changed:
+            print(upgrade.message(changed), file=sys.stderr)
+        from isnady.core import imports as core_imports
+
+        cut = core_imports.interrupted() if getattr(args, "func", None) is not cmd_catalog else None
+        if cut:
+            print(f"Note: an import did not finish ({cut['started'].replace('T', ' ')}): {', '.join(cut['titles'][:6])}. "
+                  "Import it again: iy catalog import ID (iy catalog list shows what is imported).", file=sys.stderr)
+    except Exception:
+        pass
     # a book may be named by its full name (musnad_ahmad_ibn_hanbal), its key (ahmad) or an earlier id
     if getattr(args, "book", None) and getattr(args, "func", None) not in (cmd_catalog,):
         from isnady.core import books as core_books

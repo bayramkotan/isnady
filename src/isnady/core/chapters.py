@@ -12,7 +12,8 @@ A chapter is [the number of its first hadith, its part, its Arabic title, (its T
 runs to the hadith before the next chapter's first. The parts (the Musnad's thirteen parts, al-Darimi's books) are
 written in English, Turkish and Arabic. The Musnad's chapters — each Companion's musnad — carry the Companion's name
 in Turkish and English too (BK2b, written by hand and checked; "(r.a.)", "(RA)" as the heading has it, or for a
-named Companion where it has none); al-Darimi's 1,382 chapter titles keep the Arabic of the edition. The headings were placed at their hadith by matching the texts with an edition in OpenITI
+named Companion where it has none); al-Darimi's 1,382 chapters likewise (BK2c, 2026-10-18: "ﷺ" for the Prophet,
+"(r.a.)" / "(RA)" for the Companions named). The headings were placed at their hadith by matching the texts with an edition in OpenITI
 (tools: Handoff "BK2").
 
 core.works builds the reader's tree from this table — part → chapter → hadith — only while the imported data

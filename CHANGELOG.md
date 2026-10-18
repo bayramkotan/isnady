@@ -3,6 +3,48 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.3.3] — 2026-10-18
+
+- **Two of every three narrators of the Sunni chains identified (NR-ID2).** The Taqrib's unnamed men ("'Ata' b. Yasar
+  from one of the Companions … he is Abu Hurayra") are no longer matched to a name — they had taken Abu Hurayra,
+  Malik and others out of thousands of chains. Names the chains use that the Taqrib does not list are added ("Ibn
+  Shihab" al-Zuhri, "Ibn Mas'ud", "Ibn Numayr" father and son); the Muwatta's chains begin with Malik himself; a chain
+  of one link in Mishkat, Riyad al-Salihin or Bulugh al-Maram is the Companion; the two Sufyans, the two Hammads and
+  the three Hishams are told apart by the students and teachers that show each ("al-Humaydi from Sufyan" is Ibn
+  'Uyayna, "Abu Nu'aym from Sufyan" al-Thawri, "Hisham from his father" Ibn 'Urwa); "from his father" is read again
+  once the narrator before it is known; and last, a bare name still open is the famous man of that name when nothing
+  else excludes him ("Anas", "Malik", "Shu'ba", "Ibn 'Umar"; confidence 0.5). 66.0% of the Sunni links are identified
+  (52.6% before), about 262,000 in all; pointing at a narrator in a chain says how he was identified, and `iy chain`
+  marks the ones read from their neighbours or as the famous one. The chains are read again once (about half a
+  minute).
+- **Recent searches (S4).** The last twenty searches on the Search page, a click to search again and one to forget
+  them; kept with the profile. `iy search --recent`, `iy search --clear-recent`.
+- **Home on the Search page (NAV1).** ⌂ (Alt+Home) brings the page back to how it opens; Esc empties the box.
+- **Back and forward (NAV2).** ◀ ▶ in the sidebar, Alt+Left / Alt+Right and the mouse's back and forward buttons
+  go through what was opened — narrators, chains, books, scholars, terms, trees — each button saying where it goes.
+- **The range of a book's numbers (CH2).** On Isnad Chains the number field shows the book's first and last number
+  and how many hadith it has; the arrow keys and the mouse wheel step through them, typing lists the numbers that
+  begin so, a number the book lacks offers the nearest one, and **Random hadith** picks one. `iy chain kafi` prints
+  the range; a missing number names the nearest.
+- **What a bookmark is (BM2).** Every bookmark says its kind and a line on what it is (a narrator's road, tabaqa, death
+  and verdict; which tree); places in the Genealogies can be bookmarked too ("Genealogy": a box of the tree of the
+  prophets or of Quraysh, a narrator's family or line of learning) and open there. The ☆ says what it adds.
+  `iy bookmark add tree prophets:musa`, `iy bookmark list tree`.
+- **A new version starts clean (CFG1).** What the earlier version computed (`cache/`, `derived/`) is deleted once and
+  computed again; settings, bookmarks, profiles, recent searches, the database and the downloaded works are kept. The
+  footer (and the command line) says so once.
+- **A page that fails does not stop isnady (ROB1).** It shows a plain card with **Check Installation** and **Data
+  Sources**; the details go to `isnady.log` in the data folder. An import cut short (the window killed, the computer
+  off) is named on the Search page at the next start, and on the command line.
+- **Help → Check for Updates (UPD4).** PyPI and npm, whichever isnady is installed from — both offered, ticked, when
+  both are behind — with what is new from the CHANGELOG. `iy update --check`, `iy update --npm`.
+- **One language for every book (LANG2).** **File → Data Sources → Languages for every book**: a language added to
+  every imported book that has it, or taken out of all of them, in one step (Arabic stays). `iy catalog languages`,
+  `iy catalog languages add tr en`, `iy catalog languages remove ur`.
+- **The first start (FR1).** With no books yet, isnady offers once to import isnady-data, in the background — the
+  window usable meanwhile, the progress in the bar at the bottom.
+- **Sunan al-Darimi's chapters in Turkish and English (BK2c).** All 1,382, written from the Arabic of the edition.
+
 ## [0.3.2] — 2026-10-18
 
 - **More narrators identified in the chains (NR-ID1).** A name in a chain is now read by its neighbours too: whom the

@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.3.2-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.3.3-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.3.2-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.3.3-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.3.2).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.3.3).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -204,9 +204,11 @@ administrator prompt on Windows). If an old copy starts even for `iy update`, ru
 
 ## 🚀 Quick Start
 
-1. **Open isnady** — `iy`, or the desktop application.
+1. **Open isnady** — `iy`, or the desktop application. The first time, with no books yet, it offers to import
+   isnady-data at once, in the background.
 2. **File → Data Sources.** The repository is already chosen: **isnady-data**. Tick the books and
-   the languages you want and press **Import** — or **Import all**.
+   the languages you want and press **Import** — or **Import all**. **Languages for every book** adds a language to
+   all the books that have it (or takes it out of all of them) in one step.
 3. **Import the narrators too** — Ibn Hajar's *Taqrib* for the Sunni books, al-Najashi's *Rijal*
    for the Shia books — and every name in every chain is matched to its narrator.
 4. **Search**, open a chain, open a narrator, read a book.
@@ -340,6 +342,8 @@ without authentication (credentials are never stored), are read as well.
 | **Active books** | A book can be switched off in **Settings → Books and languages**: it stays imported but is left out of searches, book lists and statistics until switched on |
 | **Grades** | Shown under each hadith with the scholar's name, exactly as given, and explained when you point at them |
 | **Highlighting** | On the original, diacritised text, diacritics included |
+| **Recent searches** | The last twenty, under the examples on the start page — a click searches again, one link forgets them all; kept with your profile. `iy search --recent`, `iy search --clear-recent` |
+| **Home** | ⌂ beside the box (Alt+Home) brings the page back to how it opens: no words, every filter at its default. Esc empties the box |
 | **Narrators and scholars** | The same box finds narrators — Sunni and Shia, each marked — and scholars, by Arabic or Latin name |
 
 Results appear at once and fill in as you read; the window never waits for them.
@@ -371,7 +375,13 @@ Sahih al-Bukhari 1
 In the window, each result shows its chain as a row of names ending at whom it reaches, and
 **View chain** opens it as a timeline from the book to the Prophet ﷺ — or, in a Shia book, to the
 Imam — with the Arabic text below: the chain in lighter ink, the text of the hadith in full ink.
-Every link says who the narrator is and what his critic says of him; a click opens him.
+Every link says who the narrator is and what his critic says of him; a click opens him, and pointing at him says
+how he was identified (by his name, by the narrators around him, or as the famous one of that name).
+
+Choose a book and a number, or let isnady choose: the number field shows the book's range ("1 – 7563 · 7,583
+hadith"), the arrow keys and the mouse wheel go to the next or the previous hadith, typing lists the numbers that
+begin so, a number the book does not have offers the nearest, and **Random hadith** picks one. `iy chain kafi`
+prints the range.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/chain.png" alt="Isnad Chains — the chain of Sahih al-Bukhari 1 as a timeline from the book to the Prophet" width="850">
@@ -488,8 +498,11 @@ The **Narrators** page lists every narrator of the imported rijal works — **Al
 "al-Hasan" — and isnady reads each name against the Taqrib (or al-Najashi on road B) by the name itself, the
 generation, the books, and then by its neighbours: whom the same pair of teacher and student is in the chains where
 they are named in full; a client named "mawla of X" by his patron; the well-known men a bare name means in a given
-circle (Ibrahim from 'Alqama is al-Nakha'i, Abu Ishaq from al-Bara' is al-Sabi'i). About 218,000 links are
-identified this way, more than half of every Sunni chain.
+circle (Ibrahim from 'Alqama is al-Nakha'i, Abu Ishaq from al-Bara' is al-Sabi'i, al-Humaydi's Sufyan is Ibn
+'Uyayna, Abu Nu'aym's al-Thawri, "Hisham from his father" Hisham b. 'Urwa); and last, a bare name still open is the
+famous man of that name when nothing else excludes him ("Anas" Anas b. Malik, "Malik" Malik b. Anas, "Ibn 'Umar"
+'Abd Allah b. 'Umar). The unnamed men of the Taqrib ("'Ata' b. Yasar from one of the Companions") are never matched
+to a name. About 262,000 links are identified this way — two of every three in the Sunni chains.
 
 Sunni narrators filter by tabaqa, rank and book; Shia narrators by the Imami assessment.
 
@@ -523,7 +536,8 @@ Household of the Prophet ﷺ, the Companions who narrated most, the Companions o
 Ansar, the Tribes) and under them the musnad of each Companion — 1,252 in all, Abu Bakr al-Siddiq's first —; al-Darimi
 in its 24 books (Introduction, Purification, Prayer …) and 1,382 chapters (bab). The parts and books are named in
 the interface language; the musnad of every Companion in Turkish and English too ("Hz. Ebû Bekir es-Sıddîk (r.a.)
-müsnedi", "Musnad of Abu Bakr al-Siddiq (RA)"), al-Darimi's chapters in the Arabic of the book.
+müsnedi", "Musnad of Abu Bakr al-Siddiq (RA)"), and al-Darimi's 1,382 chapters as well ("Temizlik", "Purification"…
+"Abdestin fazileti", "The virtue of ablution").
 
 The shelf holds the Sunni and the Shia books together, each under its own heading — *All*, *Sunni*
 or *Shia* at the top shows one of them alone — and every Shia book carries a gold *Shia* tag. Books
@@ -667,13 +681,17 @@ Umar"`, `iy tree learning al-Zuhri --depth 2 --width 4`.
 
 ## ⭐ Bookmarks
 
-Every hadith card, narrator, scholar, term of Learn and chapter of Books has a ☆: one click keeps it among
-your **Bookmarks**. There they live in folders of your own — nested as deep as you like, one bookmark in as
+Every hadith card, narrator, scholar, term of Learn, chapter of Books and place in the Genealogies has a ☆: one
+click keeps it among your **Bookmarks**, and the star says what it keeps ("Add this narrator to your bookmarks").
+Each bookmark shows its kind — Hadith, Narrator, Scholar, Term, Chapter, Genealogy — and a line on what it is (a
+narrator's road, tabaqa, death and verdict; which tree); the list filters by kind, and a narrator kept as a
+narrator and the same man kept as a place in his family tree are two bookmarks. There they live in folders of your own — nested as deep as you like, one bookmark in as
 many folders as you want, dragged onto a folder to file it — each with a note of your own, found by words or by
 kind, opened with a click where it belongs. They are kept in `bookmarks.json` in isnady's data folder (yours
 alone, never published) and can be exported and imported as a file; a hadith is kept by its book and number, so a
 bookmark survives a new import. `iy bookmark add hadith bukhari:1 --folder "Intention/Deeds" --note "…"`,
-`iy bookmark list`, `iy bookmark folders`, `iy bookmark export file.json`.
+`iy bookmark list`, `iy bookmark list tree`, `iy bookmark add tree prophets:musa`, `iy bookmark folders`,
+`iy bookmark export file.json`.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/bookmarks.png" alt="Bookmarks — folders on the left, a hadith, a narrator, a scholar and a term with their folders and a note" width="850">
@@ -754,6 +772,18 @@ nothing to restart. `iy config set view.ui_language tr`. The hadith texts keep t
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/preferences.png" alt="Preferences — font, size, line spacing and colour for each script" width="760">
 </p>
 
+**Back and forward**, as in a browser: ◀ ▶ under the name in the sidebar, Alt+Left / Alt+Right, the mouse's back
+and forward buttons — every narrator, chain, book, scholar, term and tree opened is a step, and pointing at the
+button says where it goes.
+
+**A new version starts clean:** what the earlier version computed (`cache/`, `derived/`) is deleted once and computed
+again, and the footer says so; the settings, bookmarks, profiles, recent searches, the database and the downloaded
+works are kept. **Help → Check for Updates** asks PyPI and npm (whichever isnady is installed from — both, ticked,
+when both are behind) and shows what is new; `iy update --check`, `iy update --npm`. A page that cannot be built
+shows a plain card instead of stopping isnady, the details go to `isnady.log` in the data folder, and an import that
+was cut short is named on the Search page at the next start. On the very first start, with no books yet, isnady
+offers to import isnady-data in the background, the progress in the bar at the bottom.
+
 **Settings → Books and languages** switches imported books on and off (Sunni and Shia apart) and
 chooses the languages the texts are shown in; the others are folded behind an arrow on each hadith.
 
@@ -798,8 +828,8 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | Short | Example | What it does |
 |:------|:-----|:-------------|
 | `iy` | `isnady` | Open the window |
-| `iy search WORDS` | `iy search niyet --book abudawud` | Search; `--mode all\|any\|phrase\|meaning`, `--whole-words`, `--book`, `--language`, `--limit`; `--in narrators\|scholars`, `--tradition sunni\|shia` |
-| `iy chain BOOK NUMBER` | `iy chain kafi 5:1740` | One chain, narrator by narrator, with who each one is and whom it reaches; `--raw` adds the wording |
+| `iy search WORDS` | `iy search niyet --book abudawud` | Search; `--mode all\|any\|phrase\|meaning`, `--whole-words`, `--book`, `--language`, `--limit`; `--in narrators\|scholars`, `--tradition sunni\|shia`; `--recent`, `--clear-recent` |
+| `iy chain BOOK NUMBER` | `iy chain kafi 5:1740` | One chain, narrator by narrator, with who each one is and whom it reaches; `--raw` adds the wording; without a number, the book's range |
 | `iy isnads` | `iy isnads --rebuild` | Read every chain and report per book: split, reaching the Prophet or a Ma'sum, identified |
 | `iy narrator NAME` | `iy narrator "Ibn Umar"` | A narrator: his critic's verdict (Ibn Hajar's rank, or the Imami terms), tabaqa, death year, books; `--limit 1` adds teachers, students and hadith |
 | `iy book [KEY [CHAPTER]]` | `iy book bukhari 2` | The books; a book's chapters; a chapter read in order |
@@ -814,6 +844,7 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | `iy ai build` | `iy ai status` | Learn the meaning index from the imported texts |
 | `iy catalog list` | `iy catalog list --repo lk-hadith-corpus` | The books of the repository in use, and your own, with what is imported |
 | `iy catalog import ID` | `iy catalog import sahih_muslim --language tur` | Import a book; `--all` imports every one; `remove`, `add`, `delete` manage the list |
+| `iy catalog languages` | `iy catalog languages add tr en` | One language for every book: the list, `add`, `remove` (Arabic stays) |
 | `iy repo [list\|use\|show\|add\|remove]` | `iy repo add ~/isnady-data` | The data repositories: isnady-data (default), the optional ones, yours — a GitHub or Hugging Face address, a URL, or a folder |
 | `iy database [use FILE]` | `iy database use isnady-db-<date>.zip` | A ready database from a file; your own is kept beside it |
 | `iy import FORMAT FILE-OR-URL` | `iy import isnady ~/my_book/book.json` | Import a file of your own; `--book`, `--language`, `--license`, `--user`, `--token-env`, `--api-key-env` |
@@ -823,7 +854,7 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | `iy datadir [FOLDER]` | `iy datadir /data/isnady` | Show or move the data folder; `--as-is`, `--default` |
 | `iy config list\|get\|set\|reset` | | Settings — the same as Edit → Preferences |
 | `iy shortcut` | `iy shortcut --no-desktop` | A desktop and applications-menu shortcut |
-| `iy update` | | Update every copy of isnady where it is installed |
+| `iy update` | `iy update --check` | Update every copy of isnady where it is installed; `--check` only looks (PyPI and npm, what is new); `--npm` the npm package |
 | `iy doctor` | | Every copy of isnady on this computer and which one each command starts |
 | `iy -V` / `iy -h` | | Version / help |
 

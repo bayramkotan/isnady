@@ -5,7 +5,12 @@ brought up to date in the same order every time: orphan rows are removed, the
 search index is extended, chains are read, and narrators are identified.
 """
 
+import json
+import os
 import sqlite3
+import sys
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Callable
 
@@ -29,6 +34,68 @@ class ImportRequest:
     options: dict = field(default_factory=dict)
 
 
+# ---------------------------------------------------------------------- an import cut short (ROB1)
+RUNNING_FILE = "import-running.json"
+
+
+def _running_path():
+    from isnady.data.paths import data_dir
+
+    return data_dir() / RUNNING_FILE
+
+
+@contextmanager
+def _running(titles: list[str]):
+    """A note in the data folder while an import runs, removed when it ends (well or not). Found at the next start,
+    it says the import was cut short — the window was killed, the computer went off — and which books to import
+    again (SQLite took back the book being written; the books before it stay)."""
+    path = _running_path()
+    try:
+        path.write_text(json.dumps({"titles": titles, "pid": os.getpid(), "started": time.strftime("%Y-%m-%dT%H:%M:%S")},
+                                   ensure_ascii=False), encoding="utf-8")
+    except OSError:
+        pass
+    try:
+        yield
+    finally:
+        try:
+            path.unlink()
+        except OSError:
+            pass
+
+
+def _alive(pid: int) -> bool:
+    if pid == os.getpid():
+        return True
+    try:
+        os.kill(pid, 0)
+    except (OSError, ValueError, SystemError):
+        return False
+    return True
+
+
+def interrupted() -> dict | None:
+    """{"titles", "started"} of an import that did not finish, or None (none, or one still running elsewhere)."""
+    path = _running_path()
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    pid = data.get("pid")
+    if isinstance(pid, int) and pid != os.getpid() and sys.platform != "win32" and _alive(pid):
+        return None                      # another isnady is importing right now
+    return {"titles": data.get("titles") or [], "started": data.get("started") or ""}
+
+
+def forget_interrupted() -> None:
+    try:
+        _running_path().unlink()
+    except OSError:
+        pass
+
+
 def run_import(conn: sqlite3.Connection, request: ImportRequest,
                progress: Callable[[str], None] | None = None) -> tuple[ImportReport, dict]:
     """Import and bring every derived table up to date. Raises ResourceError / KeyError on failure."""
@@ -36,7 +103,8 @@ def run_import(conn: sqlite3.Connection, request: ImportRequest,
     importer = get_importer(request.format_id)
     source = SourceInfo(location=request.location, name=request.name, license=request.license,
                         origin=request.origin, tier=request.tier, auth=request.auth)
-    report = importer.run(conn, source, request.options, progress=say)
+    with _running([request.name or request.location]):
+        report = importer.run(conn, source, request.options, progress=say)
     db.cleanup(conn)
     core_search.ensure_index(conn, progress=say)
     core_isnad.ensure_isnads(conn, progress=say)
@@ -60,7 +128,8 @@ def run_many(conn: sqlite3.Connection, requests: list[tuple[str, ImportRequest]]
     say = progress or (lambda _m: None)
     imported, failed = [], []
     try:
-        _import_each(conn, requests, say, imported, failed)
+        with _running([label for label, _r in requests]):
+            _import_each(conn, requests, say, imported, failed)
     finally:
         from isnady.data import fetch
 

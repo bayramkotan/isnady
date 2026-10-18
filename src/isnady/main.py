@@ -68,6 +68,12 @@ def gui_main() -> int:
         app.setLayoutDirection(Qt.LayoutDirection.RightToLeft if i18n.rtl() else Qt.LayoutDirection.LeftToRight)
 
     _speak()
+    try:                                            # a new version starts clean, keeping the user's own (CFG1)
+        from isnady.core import upgrade
+
+        changed = upgrade.check()
+    except Exception:
+        changed = None
     windows: list = []
 
     def _open(old=None) -> None:
@@ -100,6 +106,22 @@ def gui_main() -> int:
                 windows[-1].retheme()
         hints.colorSchemeChanged.connect(_follow_scheme)
 
+    if changed:
+        windows[-1]._set_footer(upgrade.message(changed, i18n.tr))
+    windows[-1].check_interrupted_import()
+    from PySide6.QtCore import QTimer
+
+    QTimer.singleShot(400, windows[-1].offer_first_import)      # FR1: an empty database, asked once
+
+    def _hook(kind, exc, tb):
+        """An error inside a click (ROB1): written to isnady.log and shown on the console; the window goes on."""
+        from isnady.core import errlog
+
+        exc.__traceback__ = tb
+        errlog.write("an error in the window", exc)
+        sys.__excepthook__(kind, exc, tb)
+
+    sys.excepthook = _hook
     windows[-1].check_installation_later()
     code = app.exec()
     # a statistics computation still running in its own process ends with the window (core.stats_jobs, PERF2)

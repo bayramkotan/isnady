@@ -157,12 +157,27 @@ class _Gutter(QWidget):
         p.end()
 
 
+def identified_how(confidence: float | None) -> str:
+    """How a narrator of a chain was identified, from the matcher's confidence (core.narrators)."""
+    if confidence is None:
+        return ""
+    if confidence >= 1.0:
+        return tr("Identified by his name as the rijal work gives it.")
+    if confidence >= 0.8:
+        return tr("Identified by his name and the chain around him (his patron, the bare name's teacher or student).")
+    if confidence >= 0.6:
+        return tr("Identified by the narrators around him: this teacher and student are seen with him in the chains "
+                  "that name him in full.")
+    return tr("Taken as the famous narrator of this name: nothing else decided between those who bear it.")
+
+
 class ChainNode(QWidget):
     """One step of the vertical chain: the term that links it to the previous step, then the name."""
 
     def __init__(self, title: str, subtitle: str = "", term: str | None = None, *, first: bool = False,
                  last: bool = False, prophet: bool = False, full_name: str = "", latin: bool = False,
-                 person: dict | None = None, candidates: int | None = None, on_person=None, note: str = "") -> None:
+                 person: dict | None = None, candidates: int | None = None, on_person=None, note: str = "",
+                 confidence: float | None = None) -> None:
         super().__init__()
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
@@ -235,7 +250,9 @@ class ChainNode(QWidget):
             who.setObjectName("NodeFacts")
             who.setWordWrap(True)
             who.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
+            how = identified_how(confidence)
             who.setToolTip(person["name_ar"] + (("\n" + "، ".join(person["other_names"][:8])) if person.get("other_names") else "")
+                           + (f"\n\n{how}" if how else "")
                            + (tr("\n\nClick to open this narrator.") if on_person is not None else ""))
             who.setStyleSheet(f"color: {theme.current().muted}; "
                               f"{theme.font_css(theme.script_font('arabic', factor=0.62))}")

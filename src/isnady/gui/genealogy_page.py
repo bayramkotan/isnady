@@ -479,7 +479,48 @@ class GenealogyPage(QWidget):
                     widgets.append(star_holder)
             except Exception:          # bookmarks are a convenience: never stop the tree
                 pass
+        star = self._tree_star(node)
+        if star is not None:
+            widgets.append(star)
         self._side(widgets)
+
+    def _tree_star(self, node: core.Node):
+        """☆ for this place in the genealogy (BM2): a box of a written tree, or the narrator's family / line of
+        learning shown now — kept apart from the narrator himself."""
+        try:
+            from isnady.core import bookmarks
+            from isnady.gui.bookmarks_page import BookmarkButton
+
+            if self.view_key in core.WRITTEN:
+                ref = bookmarks.tree_ref(self.conn, self.view_key, node_id=node.id)
+                text = tr("Bookmark this place in the tree")
+            elif node.person_id is not None and node.person_id == self.person_id:
+                ref = bookmarks.tree_ref(self.conn, self.view_key, person_id=node.person_id)
+                text = tr("Bookmark his family tree") if self.view_key == "family" else tr(
+                    "Bookmark his line of learning")
+            else:
+                return None
+            if not ref:
+                return None
+            row = QHBoxLayout()
+            holder = QWidget()
+            holder.setLayout(row)
+            row.addWidget(BookmarkButton("tree", *ref))
+            row.addWidget(_label(text, "Caption"))
+            row.addStretch(1)
+            return holder
+        except Exception:
+            return None
+
+    def open_place(self, which: str, target) -> None:
+        """A genealogy bookmark opened (BM2): the tree, at the box or with the narrator it was kept with."""
+        if which in core.WRITTEN:
+            self.show_view(which)
+            if self.tree is not None and target in self.tree.nodes:
+                self.view.centre(target)
+                self._clicked(self.tree.nodes[target])
+            return
+        self.show_view(which, int(target))
 
     # ------------------------------------------------------------------ the prophets (GEN1-P, GEN1-H)
     def _prophet_life(self) -> list:

@@ -37,8 +37,14 @@ from isnady.gui import theme
 MIME = "application/x-isnady-bookmarks"
 ALL, UNFILED = "__all__", "__unfiled__"
 # a colour per kind, the same in every theme (drawn on the theme's own pill background)
-KIND_COLOURS = {"hadith": "#2E7D5B", "narrator": "#1D63A8", "scholar": "#8A5A1E", "term": "#7B3FA0", "chapter": "#A23B54"}
-KIND_ICONS = {"hadith": "❝", "narrator": "👤", "scholar": "🎓", "term": "📖", "chapter": "📚"}
+KIND_COLOURS = {"hadith": "#2E7D5B", "narrator": "#1D63A8", "scholar": "#8A5A1E", "term": "#7B3FA0", "chapter": "#A23B54",
+                "tree": "#5B7A1E"}
+KIND_ICONS = {"hadith": "❝", "narrator": "👤", "scholar": "🎓", "term": "📖", "chapter": "📚", "tree": "🌳"}
+# what the ☆ of each kind adds, said on the star itself (BM2: "neyi eklediği yazsın")
+KIND_ADD = {"hadith": N_("Add this hadith to your bookmarks"), "narrator": N_("Add this narrator to your bookmarks"),
+            "scholar": N_("Add this scholar to your bookmarks"), "term": N_("Add this term to your bookmarks"),
+            "chapter": N_("Add this chapter to your bookmarks"),
+            "tree": N_("Add this place in the genealogy to your bookmarks")}
 
 
 class _Hub(QObject):
@@ -79,8 +85,10 @@ class BookmarkButton(QToolButton):
         self.setText("★" if marked else "☆")
         self.setStyleSheet(f"QToolButton#Star {{ color: {t.gold if marked else t.muted}; font-size: 20px; border: none;"
                            f" padding: 0 4px; background: transparent; }}")
-        self.setToolTip(tr("In your bookmarks — click to take it out") if marked else
-                        tr("Add to your bookmarks (Bookmarks in the sidebar keeps them, in folders of your own)"))
+        what = f"{tr(core.KINDS.get(self.kind, ''))}: {self.title}"
+        self.setToolTip(tr("In your bookmarks — click to take it out") + f"\n{what}" if marked else
+                        tr(KIND_ADD.get(self.kind, "Add to your bookmarks")) + f"\n{what}\n"
+                        + tr("Bookmarks in the sidebar keeps them, in folders of your own."))
 
     def _toggle(self) -> None:
         s = store()
@@ -158,6 +166,7 @@ class BookmarksPage(QWidget):
     open_scholar = Signal(str)
     open_term = Signal(str)
     open_chapter = Signal(int)
+    open_tree = Signal(str, object)      # which tree, the box's id or the narrator's id (BM2)
 
     def __init__(self, connection, parent=None) -> None:
         super().__init__(parent)
@@ -338,6 +347,10 @@ class BookmarksPage(QWidget):
                 b.clicked.connect(slot)
             top.addWidget(b)
         box.addLayout(top)
+        conn = self._connection() if callable(self._connection) else self._connection
+        more = core.detail(conn, item)
+        if more:
+            box.addWidget(_label(html.escape(more), "Caption", rich=True))
         if item.subtitle:
             arabic = any("؀" <= ch <= "ۿ" for ch in item.subtitle[:40])
             sub = _label(html.escape(item.subtitle), "Caption", rich=True)
@@ -483,6 +496,14 @@ class BookmarksPage(QWidget):
             self.open_term.emit(item.ref)
             return
         if conn is None:
+            return
+        if item.kind == "tree":
+            where = core.resolve_tree(conn, item.ref)
+            if where is None:
+                QMessageBox.information(self, tr("Bookmarks"), tr("{title} is not in the database now (was its book "
+                                                                  "removed?). The bookmark stays.", title=item.title))
+                return
+            self.open_tree.emit(*where)
             return
         target = {"hadith": core.resolve_hadith, "narrator": core.resolve_narrator,
                   "chapter": core.resolve_chapter}[item.kind](conn, item.ref)

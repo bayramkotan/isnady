@@ -9,7 +9,7 @@ import html
 import sqlite3
 
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
 from isnady import config
 from isnady.core import isnad as core_isnad
 from isnady.core import narrators as core_narrators
+from isnady.core import recent as core_recent
 from isnady.core import search as core
 from isnady.data import db
 from isnady.gui import theme
@@ -279,7 +280,15 @@ class SearchPage(QWidget):
                                      "of hadith"))
         self.kind_combo.currentIndexChanged.connect(self._kind_changed)
 
-        # search bar
+        # search bar; 🏠 brings the page back to how it opens (NAV1)
+        self.home_button = QPushButton("⌂")
+        self.home_button.setObjectName("Quiet")
+        self.home_button.setStyleSheet("font-size: 17pt; padding: 0 10px;")
+        self.home_button.setFixedHeight(40)
+        self.home_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.home_button.setToolTip(tr("Back to the start: clear the search, the filters and the results (Alt+Home)"))
+        self.home_button.clicked.connect(self.go_home)
+        QShortcut(QKeySequence("Alt+Home"), self, activated=self.go_home)
         self.query_edit = QLineEdit()
         self.query_edit.setObjectName("SearchField")
         self.query_edit.setPlaceholderText(tr("Search the hadith: a word or phrase in Arabic, Turkish or English (? an unknown letter, * any letters)"))
@@ -338,6 +347,7 @@ class SearchPage(QWidget):
 
         top = QHBoxLayout()
         top.setSpacing(10)
+        top.addWidget(self.home_button)
         top.addWidget(self.kind_combo)
         top.addWidget(self.query_edit, 1)
         top.addWidget(self.search_button)
@@ -602,9 +612,49 @@ class SearchPage(QWidget):
             self._show_start()
         self.query_edit.setFocus()
 
-    def search_for(self, text: str) -> None:
+    def search_for(self, text: str, kind: str | None = None) -> None:
+        if kind and kind != self.kind():
+            index = self.kind_combo.findData(kind)
+            if index >= 0:
+                self.kind_combo.blockSignals(True)
+                self.kind_combo.setCurrentIndex(index)
+                self.kind_combo.blockSignals(False)
+                self.hadith_filters.setVisible(kind == "hadith")
+                self.people_filters.setVisible(kind == "narrators")
+                self.query_edit.setPlaceholderText(tr(KIND_TEXT[kind][0]))
         self.query_edit.setText(text)
         self.run_search()
+
+    def go_home(self) -> None:
+        """The page as it opens (NAV1): no words, every filter at its default, the welcome with the recent searches."""
+        for combo in (self.mode_combo, self.tradition_combo):
+            combo.blockSignals(True)
+            combo.setCurrentIndex(0)
+            combo.blockSignals(False)
+        self.whole_words.blockSignals(True)
+        self.whole_words.setChecked(False)
+        self.whole_words.setEnabled(True)
+        self.whole_words.blockSignals(False)
+        self.book_combo.reset()
+        if self.kind() != "hadith":
+            self.kind_combo.blockSignals(True)
+            self.kind_combo.setCurrentIndex(0)
+            self.kind_combo.blockSignals(False)
+            self.hadith_filters.show()
+            self.people_filters.hide()
+            self.query_edit.setPlaceholderText(tr(KIND_TEXT[self.kind()][0]))
+        self.query_edit.clear()
+        self._page, self._found = None, None
+        self._show_start()
+        self.scroll.verticalScrollBar().setValue(0)
+        self.query_edit.setFocus()
+
+    def keyPressEvent(self, event) -> None:  # noqa: N802 (Qt name)
+        if event.key() == Qt.Key.Key_Escape and self.query_edit.text():
+            self.query_edit.clear()          # Esc empties the search box (NAV1)
+            self.query_edit.setFocus()
+            return
+        super().keyPressEvent(event)
 
     def run_search(self) -> None:
         if self._conn is None:
@@ -614,6 +664,7 @@ class SearchPage(QWidget):
             self._page, self._found = None, None
             self._show_start()
             return
+        core_recent.add(self.query_edit.text(), self.kind())      # S4
         if self.kind() != "hadith":
             self._search_people()
             return
@@ -688,10 +739,8 @@ class SearchPage(QWidget):
             box.addWidget(_label(html.escape(self._notice), "Lead", wrap=True))
         if hadith == 0 and kind == "hadith":
             lead = _label(
-                tr("The database is empty. Import a source from a terminal, for example:<br><code>iy import "
-                  "fawazahmed0 https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions.json --book bukhari "
-                  "--language tur --language ara --license Unlicense</code><br>Importing from inside the app arrives "
-                  "with User Resources."),
+                tr("No books yet. Import them in <b>File → Data Sources</b> (Ctrl+Shift+I) — every book of isnady-data "
+                  "with one click — or from a terminal: <code>iy catalog import --all</code>"),
                 "Lead", wrap=True, selectable=True)
             lead.setTextFormat(Qt.TextFormat.RichText)
             box.addWidget(lead)
@@ -718,8 +767,43 @@ class SearchPage(QWidget):
             examples.addStretch(1)
             box.addSpacing(4)
             box.addLayout(examples)
+            self._add_recent(box)
         self.body_layout.addWidget(hero)
         self.body_layout.addStretch(1)
+
+    def _add_recent(self, box: QVBoxLayout) -> None:
+        """The recent searches under the examples (S4): a click searches again; one link forgets them all."""
+        rows = core_recent.items()
+        if not rows:
+            return
+        box.addSpacing(18)
+        head = QHBoxLayout()
+        head.addWidget(_label(tr("Recent searches"), "FilterTitle"))
+        clear = QPushButton(tr("Clear recent searches"))
+        clear.setObjectName("Quiet")
+        clear.setCursor(Qt.CursorShape.PointingHandCursor)
+        clear.clicked.connect(self._clear_recent)
+        head.addSpacing(12)
+        head.addWidget(clear)
+        head.addStretch(1)
+        box.addLayout(head)
+        holder = QWidget()
+        flow = FlowLayout(holder, spacing=6)
+        names = dict(KINDS)
+        for r in rows:
+            label = r["text"] if r["kind"] == "hadith" else f"{r['text']}  · {tr(names.get(r['kind'], r['kind']))}"
+            button = QPushButton(label)
+            button.setObjectName("Example")
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+            button.setFont(theme.reading_font(12))
+            button.clicked.connect(lambda _c=False, t=r["text"], k=r["kind"]: self.search_for(t, k))
+            flow.addWidget(button)
+        holder.setMaximumWidth(900)
+        box.addWidget(holder)
+
+    def _clear_recent(self) -> None:
+        core_recent.clear()
+        self._show_start()
 
     def _render(self) -> None:
         self._clear_body()

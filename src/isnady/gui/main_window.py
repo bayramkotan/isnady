@@ -3,7 +3,9 @@
 Sections without their own page yet show a short description.
 """
 
-from PySide6.QtCore import QSize, Qt, QUrl, Signal
+from contextlib import contextmanager
+
+from PySide6.QtCore import QEvent, QSize, Qt, QUrl, Signal
 from PySide6.QtGui import QAction, QActionGroup, QDesktopServices, QGuiApplication, QKeySequence
 from PySide6.QtWidgets import (
     QMenu,
@@ -70,6 +72,60 @@ def _placeholder(title: str, text: str) -> QWidget:
     return page
 
 
+class _Nothing:
+    """Stands for anything a page that could not be built would have had (signals, methods): does nothing."""
+
+    def __getattr__(self, _name):
+        return self
+
+    def __call__(self, *_a, **_k):
+        return self
+
+    def __bool__(self) -> bool:
+        return False
+
+    def __iter__(self):
+        return iter(())
+
+
+class _BrokenPage(QWidget):
+    """A page that could not be built (ROB1): a plain card in its place, the window goes on."""
+
+    def __init__(self, key: str, exc: BaseException, check, sources) -> None:
+        super().__init__()
+        self.setObjectName("Page")
+        from isnady.core import errlog
+
+        errlog.write(f"the page '{key}' could not be built", exc)
+        box = QVBoxLayout(self)
+        box.setContentsMargins(48, 44, 48, 44)
+        box.setAlignment(Qt.AlignmentFlag.AlignTop)
+        title = QLabel(tr("This page could not be opened"))
+        title.setObjectName("PageTitle")
+        title.setFont(theme.reading_font(22, bold=True))
+        box.addWidget(title)
+        text = QLabel(tr("{error}\n\nThe rest of isnady works. Often the data is incomplete — an import that did not "
+                         "finish — or two copies of isnady are installed. The details are written to {log}.",
+                         error=f"{type(exc).__name__}: {exc}", log=str(errlog.path())))
+        text.setObjectName("Lead")
+        text.setWordWrap(True)
+        text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        box.addWidget(text)
+        row = QHBoxLayout()
+        for label, slot in ((tr("Check Installation…"), check), (tr("Data Sources…"), sources)):
+            b = QPushButton(label)
+            b.setObjectName("Quiet")
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            b.clicked.connect(slot)
+            row.addWidget(b)
+        row.addStretch(1)
+        box.addSpacing(10)
+        box.addLayout(row)
+
+    def __getattr__(self, name):
+        return _Nothing()
+
+
 class MainWindow(QMainWindow):
     language_switched = Signal()          # another interface language chosen: main.py builds the window again
 
@@ -101,7 +157,26 @@ class MainWindow(QMainWindow):
                             | Qt.AlignmentFlag.AlignVCenter)
         side.addWidget(wordmark)
         side.addWidget(arabic)
-        side.addSpacing(26)
+        side.addSpacing(14)
+        # ◀ ▶ back and forward through what was opened (NAV2), like a browser
+        self._history: list[tuple] = []
+        self._at = -1
+        self._replaying = False
+        self._opening = False
+        self.back_button = QPushButton("◀")
+        self.forward_button = QPushButton("▶")
+        history_row = QHBoxLayout()
+        history_row.setContentsMargins(22, 0, 22, 0)
+        history_row.setSpacing(6)
+        for b, step in ((self.back_button, -1), (self.forward_button, +1)):
+            b.setObjectName("SidebarLang")
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            b.setFixedWidth(44)
+            b.clicked.connect(lambda _c=False, d=step: self._go_history(d))
+            history_row.addWidget(b)
+        history_row.addStretch(1)
+        side.addLayout(history_row)
+        side.addSpacing(12)
 
         self.nav = QListWidget()
         self.nav.setObjectName("Nav")
@@ -142,28 +217,28 @@ class MainWindow(QMainWindow):
 
         self.pages = QStackedWidget()
         self.search_page = SearchPage(status_message=self._set_footer)
-        self.isnad_page = IsnadPage(self.search_page.connection)
+        self.isnad_page = self._build('chains', lambda: IsnadPage(self.search_page.connection))
         from isnady.gui.narrators_page import NarratorsPage
 
-        self.narrators_page = NarratorsPage(self.search_page.connection)
+        self.narrators_page = self._build('narrators', lambda: NarratorsPage(self.search_page.connection))
         from isnady.gui.statistics_page import StatisticsPage
 
-        self.statistics_page = StatisticsPage(self.search_page.connection)
+        self.statistics_page = self._build('statistics', lambda: StatisticsPage(self.search_page.connection))
         from isnady.gui.learn_page import LearnPage
 
-        self.learn_page = LearnPage()
+        self.learn_page = self._build('learn', lambda: LearnPage())
         from isnady.gui.books_page import BooksPage
         from isnady.gui.scholars_page import ScholarsPage
 
-        self.books_page = BooksPage(self.search_page.connection, self.search_page.make_card)
+        self.books_page = self._build('books', lambda: BooksPage(self.search_page.connection, self.search_page.make_card))
         self._books_loaded = False
 
-        self.scholars_page = ScholarsPage(self.search_page.connection)
+        self.scholars_page = self._build('scholars', lambda: ScholarsPage(self.search_page.connection))
         from isnady.gui.bookmarks_page import BookmarksPage
         from isnady.gui.genealogy_page import GenealogyPage
 
-        self.genealogy_page = GenealogyPage(self.search_page.connection)
-        self.bookmarks_page = BookmarksPage(self.search_page.connection)
+        self.genealogy_page = self._build('genealogy', lambda: GenealogyPage(self.search_page.connection))
+        self.bookmarks_page = self._build('bookmarks', lambda: BookmarksPage(self.search_page.connection))
         self._page_of = {"search": self.search_page, "chains": self.isnad_page, "narrators": self.narrators_page,
                          "scholars": self.scholars_page, "books": self.books_page, "statistics": self.statistics_page,
                          "learn": self.learn_page, "genealogy": self.genealogy_page, "bookmarks": self.bookmarks_page}
@@ -209,9 +284,12 @@ class MainWindow(QMainWindow):
         self.bookmarks_page.open_scholar.connect(self._open_scholar)
         self.bookmarks_page.open_term.connect(self._open_term)
         self.bookmarks_page.open_chapter.connect(self._open_chapter)
+        self.bookmarks_page.open_tree.connect(self._open_tree)
         self.nav.currentRowChanged.connect(self.pages.setCurrentIndex)
         self.nav.currentRowChanged.connect(self._retheme_when_shown)
+        self.nav.currentRowChanged.connect(self._section_shown)
         self.nav.setCurrentRow(0)
+        QApplication.instance().installEventFilter(self)       # the mouse's back and forward buttons
 
         central = QWidget()
         row = QHBoxLayout(central)
@@ -492,6 +570,13 @@ class MainWindow(QMainWindow):
         self._action(edit_menu, tr("Find"), self._find, QKeySequence.StandardKey.Find)
         self._action(edit_menu, tr("Copy"), self._copy, QKeySequence.StandardKey.Copy)
         edit_menu.addSeparator()
+        for text, step, key, standard in ((tr("Back"), -1, "Alt+Left", QKeySequence.StandardKey.Back),
+                                          (tr("Forward"), +1, "Alt+Right", QKeySequence.StandardKey.Forward)):
+            action = self._action(edit_menu, text, lambda _c=False, d=step: self._go_history(d))
+            keys = [QKeySequence(key)]                 # and the platform's own (Cmd+[ on a Mac), once each
+            keys += [k for k in QKeySequence.keyBindings(standard) if k.toString() != keys[0].toString()]
+            action.setShortcuts(keys)
+        edit_menu.addSeparator()
         self._action(edit_menu, tr("Preferences…"), lambda: self._preferences(), "Ctrl+,",
                      tip=tr("Fonts, sizes and colours for each script, theme colours, interface font"))
 
@@ -551,6 +636,8 @@ class MainWindow(QMainWindow):
         self._action(help_menu, tr("Search Tips"), lambda: dialogs.search_tips(self).exec())
         self._action(help_menu, tr("Keyboard Shortcuts"), lambda: dialogs.shortcuts(self).exec())
         help_menu.addSeparator()
+        self._action(help_menu, tr("Check for Updates…"), self._check_updates,
+                     tip=tr("The latest isnady on PyPI and npm, what is new, and the update"))
         self._action(help_menu, tr("Check Installation…"), self._check_installation,
                      tip=tr("Every copy of isnady on this computer, and which one really runs"))
         self._action(help_menu, tr("Licences"), lambda: dialogs.licenses(self, search.connection()).exec())
@@ -597,50 +684,169 @@ class MainWindow(QMainWindow):
             self._books_loaded = True
             self.books_page.refresh()
 
+    def _build(self, key: str, make):
+        """A page, or a plain error card in its place when it cannot be built (ROB1: one page never stops isnady)."""
+        try:
+            return make()
+        except Exception as exc:
+            return _BrokenPage(key, exc, lambda: self._check_installation(), lambda: self._preferences("sources"))
+
+    def check_interrupted_import(self) -> None:
+        """An import cut short the last time (ROB1): said on the Search page, with where to import again."""
+        try:
+            from isnady.core import imports
+
+            cut = imports.interrupted()
+        except Exception:
+            cut = None
+        if not cut:
+            return
+        names = ", ".join(cut["titles"][:6]) + (" …" if len(cut["titles"]) > 6 else "")
+        self.search_page._notice = tr("An import did not finish ({when}): {names}. The books imported before it are "
+                                      "kept; import the rest again in File → Data Sources.",
+                                      when=cut["started"].replace("T", " "), names=names)
+        if not self.search_page.query_edit.text().strip():
+            self.search_page._show_start()
+
+    # --------------------------------------------------------------- back and forward (NAV2)
+    _PLACE_SECTION = {"person_in_book": "books", "book": "books", "in_book": "books", "chapter": "books",
+                      "narrator": "narrators", "scholar": "scholars", "term": "learn", "chain": "chains",
+                      "tree": "genealogy", "genealogy": "genealogy"}
+
+    @contextmanager
+    def _place(self, entry: tuple):
+        """Open something and leave it in the history; the section switch it makes is not a place of its own."""
+        before, self._opening = self._opening, True
+        try:
+            yield
+        finally:
+            self._opening = before
+        self._record(entry)
+
+    def _section_shown(self, row: int) -> None:
+        if not self._opening and 0 <= row < len(self._order):
+            self._record(("section", self._order[row]))
+
+    def _record(self, entry: tuple) -> None:
+        if self._replaying:
+            return
+        if 0 <= self._at < len(self._history) and self._history[self._at] == entry:
+            return
+        del self._history[self._at + 1:]
+        self._history.append(entry)
+        if len(self._history) > 100:
+            del self._history[0]
+        self._at = len(self._history) - 1
+        self._update_history_buttons()
+
+    def _where(self, entry: tuple) -> str:
+        labels = {k: l for k, l, _t in SECTIONS}
+        key = entry[1] if entry[0] == "section" else self._PLACE_SECTION.get(entry[0], "search")
+        return tr(labels.get(key, key))
+
+    def _update_history_buttons(self) -> None:
+        back = self._at > 0
+        forward = self._at + 1 < len(self._history)
+        self.back_button.setEnabled(back)
+        self.forward_button.setEnabled(forward)
+        self.back_button.setToolTip(tr("Back to {place} (Alt+Left)", place=self._where(self._history[self._at - 1]))
+                                    if back else tr("Back (Alt+Left)"))
+        self.forward_button.setToolTip(tr("Forward to {place} (Alt+Right)",
+                                          place=self._where(self._history[self._at + 1]))
+                                       if forward else tr("Forward (Alt+Right)"))
+
+    def _go_history(self, step: int) -> None:
+        target = self._at + step
+        if not 0 <= target < len(self._history):
+            return
+        self._at = target
+        entry = self._history[target]
+        self._replaying = True
+        try:
+            if entry[0] == "section":
+                if entry[1] in self._order:
+                    self.nav.setCurrentRow(self._row(entry[1]))
+            else:
+                handler = {"person_in_book": self._open_person_in_book, "book": self._open_book,
+                           "in_book": self._open_in_book, "narrator": self._open_narrator,
+                           "scholar": self._open_scholar, "term": self._open_term, "chapter": self._open_chapter,
+                           "chain": self._open_chain, "tree": self._open_tree,
+                           "genealogy": self._open_genealogy}[entry[0]]
+                handler(*entry[1:])
+        except Exception:                 # a place that is gone (a book removed): stay where we are
+            pass
+        finally:
+            self._replaying = False
+        self._update_history_buttons()
+
+    def eventFilter(self, obj, event) -> bool:  # noqa: N802 (Qt name)
+        if event.type() == QEvent.Type.MouseButtonPress and self.isActiveWindow():
+            if event.button() == Qt.MouseButton.BackButton:
+                self._go_history(-1)
+                return True
+            if event.button() == Qt.MouseButton.ForwardButton:
+                self._go_history(+1)
+                return True
+        return super().eventFilter(obj, event)
+
     def _open_person_in_book(self, person_id: int) -> None:
-        self._books_loaded = True
-        self.nav.setCurrentRow(self._row("books"))
-        self.books_page.show_person(person_id)
+        with self._place(('person_in_book', person_id)):
+            self._books_loaded = True
+            self.nav.setCurrentRow(self._row("books"))
+            self.books_page.show_person(person_id)
 
     def _open_book(self, key: str) -> None:
-        self._books_loaded = True
-        self.nav.setCurrentRow(self._row("books"))
-        self.books_page.refresh()
-        self.books_page.select_work(key)
+        with self._place(('book', key)):
+            self._books_loaded = True
+            self.nav.setCurrentRow(self._row("books"))
+            self.books_page.refresh()
+            self.books_page.select_work(key)
 
     def _open_in_book(self, hadith_id: int) -> None:
-        self._books_loaded = True
-        self.nav.setCurrentRow(self._row("books"))
-        self.books_page.show_hadith(hadith_id)
+        with self._place(('in_book', hadith_id)):
+            self._books_loaded = True
+            self.nav.setCurrentRow(self._row("books"))
+            self.books_page.show_hadith(hadith_id)
 
     def _open_narrator(self, person_id: int) -> None:
-        self.nav.setCurrentRow(self._row("narrators"))
-        self.narrators_page.select(person_id)
+        with self._place(('narrator', person_id)):
+            self.nav.setCurrentRow(self._row("narrators"))
+            self.narrators_page.select(person_id)
 
     def _open_person(self, person_id: int, tradition: str) -> None:
         """A narrator found by Search, Sunni or Shia: on Narrators, which shows each by his tradition's measure."""
         self._open_narrator(person_id)
 
     def _open_scholar(self, scholar_id: str) -> None:
-        self.nav.setCurrentRow(self._row("scholars"))
-        self.scholars_page.select(scholar_id)
+        with self._place(('scholar', scholar_id)):
+            self.nav.setCurrentRow(self._row("scholars"))
+            self.scholars_page.select(scholar_id)
+
+    def _open_tree(self, which: str, target) -> None:
+        with self._place(('tree', which, target)):
+            self.nav.setCurrentRow(self._row("genealogy"))
+            self.genealogy_page.open_place(which, target)
 
     def _open_genealogy(self, person_id: int, which: str) -> None:
-        self.nav.setCurrentRow(self._row("genealogy"))
-        self.genealogy_page.show_person(person_id, which)
+        with self._place(('genealogy', person_id, which)):
+            self.nav.setCurrentRow(self._row("genealogy"))
+            self.genealogy_page.show_person(person_id, which)
 
     def _open_term(self, term_id: str) -> None:
-        self.nav.setCurrentRow(self._row("learn"))
-        self.learn_page.show_term(term_id)
+        with self._place(('term', term_id)):
+            self.nav.setCurrentRow(self._row("learn"))
+            self.learn_page.show_term(term_id)
 
     def _open_chapter(self, chapter_id: int) -> None:
-        self._books_loaded = True
-        self.nav.setCurrentRow(self._row("books"))
-        self.books_page.show_chapter(chapter_id)
+        with self._place(('chapter', chapter_id)):
+            self._books_loaded = True
+            self.nav.setCurrentRow(self._row("books"))
+            self.books_page.show_chapter(chapter_id)
 
     def _open_chain(self, hadith_id: int) -> None:
-        self.nav.setCurrentRow(self._row("chains"))
-        self.isnad_page.show_hadith(hadith_id)
+        with self._place(('chain', hadith_id)):
+            self.nav.setCurrentRow(self._row("chains"))
+            self.isnad_page.show_hadith(hadith_id)
 
     def _open_data_folder(self) -> None:
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(data_dir())))
@@ -689,6 +895,11 @@ class MainWindow(QMainWindow):
         else:
             self.install_notice.hide()
 
+    def _check_updates(self) -> None:
+        from isnady.gui.update_dialog import UpdateDialog
+
+        UpdateDialog(self).exec()
+
     def _check_installation(self) -> None:
         from isnady.gui.install_dialog import InstallDialog
 
@@ -706,6 +917,78 @@ class MainWindow(QMainWindow):
         dialog.languages_changed.connect(self._languages_changed)
         dialog.sidebar_changed.connect(self.apply_sidebar_order)
         dialog.exec()
+
+    # --------------------------------------------------------------- the first start (FR1)
+    def offer_first_import(self) -> None:
+        """An empty database at the start: ask once whether to bring in isnady-data's books, then import them in the
+        background — the window stays usable, the progress shows in the bar at the bottom."""
+        from PySide6.QtWidgets import QMessageBox
+
+        from isnady import config
+        from isnady.core import catalog
+
+        conn = self.search_page.connection()
+        try:
+            empty = conn is None or conn.execute("SELECT 1 FROM hadiths LIMIT 1").fetchone() is None
+        except Exception:
+            empty = False
+        if not empty or config.state_get("first_import.asked"):
+            return
+        config.state_set("first_import.asked", True)
+        try:
+            entries = catalog.builtin_entries()
+        except Exception:
+            entries = []
+        books = sum(1 for e in entries if e.kind == "hadith")
+        rijal = sum(1 for e in entries if e.kind == "rijal")
+        if not entries:
+            return
+        langs = ", ".join(tr(catalog.language_label(c)) for c in catalog.DEFAULT_LANGUAGES)
+        answer = QMessageBox.question(
+            self, tr("Import the books?"),
+            tr("isnady has no books yet. Import the {books} hadith books and the {rijal} rijal works of isnady-data now? "
+               "Languages: {langs} (others can be added in File → Data Sources).\n\nThe import runs in the background "
+               "and the window can be used meanwhile; the progress is shown at the bottom.",
+               books=books, rijal=rijal, langs=langs),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes)
+        if answer == QMessageBox.StandardButton.Yes:
+            self.import_in_background()
+
+    def import_in_background(self, languages=None) -> None:
+        """Every source of the repository, imported by the Data Sources worker; the bottom bar shows where it is."""
+        from PySide6.QtWidgets import QLabel as _Label, QProgressBar
+
+        from isnady.gui import sources_page
+
+        if any(w.isRunning() for w in sources_page._LIVE_WORKERS):
+            return
+        bar = self.statusBar()
+        if not hasattr(self, "_import_label"):
+            self._import_label = _Label()
+            self._import_bar = QProgressBar()
+            self._import_bar.setRange(0, 0)
+            self._import_bar.setMaximumWidth(220)
+            self._import_bar.setMaximumHeight(10)
+            self._import_bar.setTextVisible(False)
+            bar.addWidget(self._import_label, 1)
+            bar.addPermanentWidget(self._import_bar)
+        self._import_label.setText(tr("Importing the books of isnady-data…"))
+        self._import_bar.show()
+        bar.show()
+        worker = sources_page.Worker("import_all", None, languages)
+        sources_page._LIVE_WORKERS.add(worker)
+        worker.finished.connect(lambda w=worker: (sources_page._LIVE_WORKERS.discard(w), w.deleteLater()))
+        worker.progress.connect(lambda m: self._import_label.setText(m))
+        worker.done.connect(self._background_import_done)
+        worker.start()
+
+    def _background_import_done(self, ok: bool, message: str) -> None:
+        from PySide6.QtCore import QTimer
+
+        self._import_bar.hide()
+        self._import_label.setText(("" if ok else tr("Failed: ")) + message)
+        self._data_imported()
+        QTimer.singleShot(15000, self.statusBar().hide)
 
     def _data_imported(self) -> None:
         """A source was imported or removed from Data sources: bring every page up to date."""

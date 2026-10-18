@@ -296,6 +296,69 @@ def language_label(code: str) -> str:
     return LANGUAGE_NAMES.get(code, code)
 
 
+_TWO_LETTERS = {"ar": "ara", "tr": "tur", "en": "eng", "ur": "urd", "id": "ind", "bn": "ben", "fr": "fra", "ru": "rus",
+                "ta": "tam"}
+
+
 def code_for(language_name_or_code: str) -> str:
     v = language_name_or_code.strip().lower()
+    if v in _TWO_LETTERS:
+        return _TWO_LETTERS[v]
     return next((c for c, n in LANGUAGE_NAMES.items() if n.lower() == v), v if re.fullmatch(r"[a-z]{3}", v) else v)
+
+
+# ---------------------------------------------------------------------- one language for every book (LANG2)
+def language_overview(conn: sqlite3.Connection) -> list[dict]:
+    """Every language the repository's books offer: {"code", "label", "offered", "imported"} — in how many books it
+    is offered, and in how many of the imported books it is imported now (LANG2, 2026-10-18)."""
+    books = [e for e in builtin_entries() if e.kind == "hadith" and e.book and e.languages]
+    offered: dict[str, int] = {}
+    for e in books:
+        for code in e.languages:
+            offered[code] = offered.get(code, 0) + 1
+    have: dict[str, int] = {}
+    for e in books:
+        st = status(conn, e)
+        for label in st["languages"]:
+            code = code_for(label)
+            have[code] = have.get(code, 0) + 1
+    order = list(LANGUAGE_NAMES) + sorted(set(offered) - set(LANGUAGE_NAMES))
+    return [{"code": c, "label": language_label(c), "offered": offered[c], "imported": have.get(c, 0)}
+            for c in order if c in offered]
+
+
+def add_languages(conn: sqlite3.Connection, codes: list[str], progress=None):
+    """Import these languages in every imported book of the repository that offers them; the languages a book has
+    stay. Returns run_many's (imported, failed, narrators)."""
+    requests = []
+    for e in builtin_entries():
+        if e.kind != "hadith" or not e.book or not e.languages or not status(conn, e)["imported"]:
+            continue
+        wanted = [c for c in codes if c in e.languages]
+        if wanted:
+            requests.append((e.title, request_for(e, wanted)))
+    if not requests:
+        return [], [], {}
+    result = run_many(conn, requests, progress)
+    for e in builtin_entries():
+        _set_tradition(conn, e)
+    return result
+
+
+def remove_languages(conn: sqlite3.Connection, codes: list[str]) -> int:
+    """Take these languages out of every book of the repository (Arabic stays: the chains are read from it).
+    Returns how many editions were removed."""
+    codes = [c for c in codes if c != "ara"]
+    if not codes:
+        return 0
+    labels = [LANGUAGE_NAMES.get(c, c) for c in codes]
+    keys = [e.source_key for e in builtin_entries() if e.kind == "hadith"]
+    if not keys:
+        return 0
+    with conn:
+        removed = conn.execute(
+            f"""DELETE FROM editions WHERE language IN ({','.join('?' * len(labels))})
+                AND source_id IN (SELECT id FROM sources WHERE key IN ({','.join('?' * len(keys))}))""",
+            labels + keys).rowcount
+    db.cleanup(conn)
+    return removed

@@ -23,7 +23,10 @@ from pathlib import Path
 from isnady.core.i18n import N_
 
 KINDS = {"hadith": N_("Hadith"), "narrator": N_("Narrator"), "scholar": N_("Scholar"), "term": N_("Term"),
-         "chapter": N_("Chapter")}
+         "chapter": N_("Chapter"), "tree": N_("Genealogy")}
+# the trees a "tree" bookmark points into (BM2): a box of a written tree, or a narrator's family or line of learning
+TREES = {"prophets": N_("The prophets"), "quraysh": N_("Quraysh and the Prophet's family"),
+         "family": N_("A narrator's family"), "learning": N_("A narrator's line of learning")}
 VERSION = 1
 
 
@@ -299,3 +302,64 @@ def resolve_chapter(conn, ref: str) -> int | None:
                           WHERE w.key = ? AND n.label = ? AND n.kind IN ('volume', 'kitab', 'bab', 'section')""",
                        (key, label)).fetchone()
     return row[0] if row else None
+
+
+# ---------------------------------------------------------------------- genealogies (BM2)
+def tree_ref(conn, which: str, node_id: str | None = None, person_id: int | None = None) -> tuple[str, str, str] | None:
+    """(reference, title, subtitle) of a place in a genealogy: "prophets:musa" (a box of a written tree), or
+    "family:<narrator's key>" / "learning:<narrator's key>" (a narrator's family or line of learning)."""
+    from isnady.core import genealogy
+
+    if which in genealogy.WRITTEN:
+        tree = genealogy.written(which)
+        node = tree.nodes.get(node_id or "")
+        if node is None:
+            return None
+        return f"{which}:{node.id}", node.name(), node.names.get("ar", "")
+    if which in ("family", "learning") and conn is not None and person_id is not None:
+        ref = narrator_ref(conn, person_id)
+        if ref is None:
+            return None
+        return f"{which}:{ref[0]}", ref[1], ref[2]
+    return None
+
+
+def resolve_tree(conn, ref: str) -> tuple[str, str | int] | None:
+    """(which tree, the box's id or the narrator's id) of a "tree" bookmark, or None."""
+    from isnady.core import genealogy
+
+    which, _, rest = ref.partition(":")
+    if which in genealogy.WRITTEN:
+        return (which, rest) if rest in genealogy.written(which).nodes else None
+    if which in ("family", "learning") and conn is not None:
+        pid = resolve_narrator(conn, rest)
+        return (which, pid) if pid is not None else None
+    return None
+
+
+def detail(conn, item: "Item") -> str:
+    """One line on what a bookmark is, beyond its title (BM2): a narrator's road, generation, death and verdict;
+    which tree a genealogy bookmark is in; the book of a hadith or a chapter. In the interface language."""
+    from isnady.core.i18n import tr
+
+    try:
+        if item.kind == "tree":
+            which = item.ref.partition(":")[0]
+            return tr(TREES.get(which, which)) if which in TREES else ""
+        if item.kind == "narrator" and conn is not None:
+            row = conn.execute("SELECT id, tradition, tabaqa, death_year_ah FROM persons WHERE key = ?",
+                               (item.ref,)).fetchone()
+            if row is None:
+                return ""
+            parts = [tr("Shia narrator") if row[1] == "shia" else tr("Sunni narrator")]
+            if row[2] is not None:
+                parts.append(tr("tabaqa {n}", n=row[2]))
+            if row[3]:
+                parts.append(tr("died {year} AH", year=row[3]))
+            v = conn.execute("SELECT phrase FROM verdicts WHERE person_id = ? ORDER BY id LIMIT 1", (row[0],)).fetchone()
+            if v and v[0]:
+                parts.append(v[0])
+            return " · ".join(parts)
+    except Exception:                 # a detail line never stops the page
+        return ""
+    return ""

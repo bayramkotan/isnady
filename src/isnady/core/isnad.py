@@ -889,6 +889,88 @@ def hadith_id(conn: sqlite3.Connection, book: str, number: str) -> int | None:
     return row[0] if row else None
 
 
+def number_range(conn: sqlite3.Connection, book: str) -> dict | None:
+    """The numbers of a book (CH2): {"first", "last", "count"} in the book's own order (number_sort), or None."""
+    row = conn.execute(
+        """SELECT COUNT(*), MIN(h.number_sort), MAX(h.number_sort) FROM hadiths h
+           JOIN collections c ON c.id = h.collection_id WHERE c.key = ?""", (book,)).fetchone()
+    if not row or not row[0]:
+        return None
+    first = conn.execute("""SELECT h.number FROM hadiths h JOIN collections c ON c.id = h.collection_id
+                            WHERE c.key = ? ORDER BY h.number_sort, h.id LIMIT 1""", (book,)).fetchone()[0]
+    last = conn.execute("""SELECT h.number FROM hadiths h JOIN collections c ON c.id = h.collection_id
+                           WHERE c.key = ? ORDER BY h.number_sort DESC, h.id DESC LIMIT 1""", (book,)).fetchone()[0]
+    return {"first": first, "last": last, "count": row[0]}
+
+
+def _sort_key(number: str) -> float | None:
+    """The place of a number written by the user in a book's order: "12a" after 12, "5:1740" as volume and hadith."""
+    try:
+        return float((number or "").strip())            # 7563, 402.2
+    except ValueError:
+        pass
+    m = re.match(r"\s*(\d+)(?::(\d+))?", number or "")
+    if not m:
+        return None
+    return float(m.group(1)) * 100000 + float(m.group(2)) if m.group(2) else float(m.group(1))
+
+
+def numbers_starting(conn: sqlite3.Connection, book: str, prefix: str, limit: int = 12) -> list[str]:
+    """The book's numbers that begin with what is typed, in the book's order (the completer of the number field)."""
+    prefix = (prefix or "").strip()
+    if not prefix:
+        return []
+    return [r[0] for r in conn.execute(
+        """SELECT h.number FROM hadiths h JOIN collections c ON c.id = h.collection_id
+           WHERE c.key = ? AND h.number LIKE ? ESCAPE '\\' ORDER BY h.number_sort, h.id LIMIT ?""",
+        (book, prefix.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%", limit))]
+
+
+def step_number(conn: sqlite3.Connection, book: str, number: str, delta: int) -> str | None:
+    """The number before (delta -1) or after (+1) a number in the book's order; for a number the book does not have,
+    the nearest one on that side. The first number when nothing is written yet."""
+    rng = number_range(conn, book)
+    if rng is None:
+        return None
+    number = (number or "").strip()
+    if not number:
+        return rng["first"] if delta > 0 else rng["last"]
+    here = conn.execute("""SELECT h.number_sort, h.id FROM hadiths h JOIN collections c ON c.id = h.collection_id
+                           WHERE c.key = ? AND h.number = ?""", (book, number)).fetchone()
+    if here is None:
+        key = _sort_key(number)
+        if key is None:
+            return rng["first"]
+        here = (key, -1 if delta > 0 else 1 << 62)
+    if delta > 0:
+        row = conn.execute("""SELECT h.number FROM hadiths h JOIN collections c ON c.id = h.collection_id
+                              WHERE c.key = ? AND (h.number_sort > ? OR (h.number_sort = ? AND h.id > ?))
+                              ORDER BY h.number_sort, h.id LIMIT 1""", (book, here[0], here[0], here[1])).fetchone()
+    else:
+        row = conn.execute("""SELECT h.number FROM hadiths h JOIN collections c ON c.id = h.collection_id
+                              WHERE c.key = ? AND (h.number_sort < ? OR (h.number_sort = ? AND h.id < ?))
+                              ORDER BY h.number_sort DESC, h.id DESC LIMIT 1""",
+                          (book, here[0], here[0], here[1])).fetchone()
+    return row[0] if row else number
+
+
+def nearest_number(conn: sqlite3.Connection, book: str, number: str) -> str | None:
+    """The book's number closest to one it does not have ("7600" → the last, 7563)."""
+    key = _sort_key(number)
+    if key is None:
+        return None
+    row = conn.execute("""SELECT h.number FROM hadiths h JOIN collections c ON c.id = h.collection_id
+                          WHERE c.key = ? ORDER BY ABS(h.number_sort - ?), h.number_sort LIMIT 1""",
+                       (book, key)).fetchone()
+    return row[0] if row else None
+
+
+def random_number(conn: sqlite3.Connection, book: str) -> str | None:
+    row = conn.execute("""SELECT h.number FROM hadiths h JOIN collections c ON c.id = h.collection_id
+                          WHERE c.key = ? ORDER BY RANDOM() LIMIT 1""", (book,)).fetchone()
+    return row[0] if row else None
+
+
 def describe(conn: sqlite3.Connection, hid: int) -> dict | None:
     """Book, number and neighbours of a hadith, for navigation."""
     row = conn.execute(

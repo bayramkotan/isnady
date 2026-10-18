@@ -67,6 +67,19 @@ class Worker(QThread):
                     message += ". " + tr("Failed:") + " " + "; ".join(f"{label} ({why})" for label, why in failed)
                 self.done.emit(not failed, message + ".")
                 return
+            if self.action == "add_languages":            # LANG2: one language for every book
+                imported, failed, _n = catalog.add_languages(conn, self.languages, self.progress.emit)
+                message = tr("{names} added to {n} book(s)", names=", ".join(
+                    tr(catalog.language_label(c)) for c in self.languages), n=len(imported))
+                if failed:
+                    message += ". " + tr("Failed:") + " " + "; ".join(f"{label} ({why})" for label, why in failed)
+                self.done.emit(not failed, message + ".")
+                return
+            if self.action == "remove_languages":
+                n = catalog.remove_languages(conn, self.languages)
+                self.done.emit(True, tr("{names} removed from every book ({n} edition(s)).", names=", ".join(
+                    tr(catalog.language_label(c)) for c in self.languages), n=n))
+                return
             if self.action == "remove":
                 catalog.remove_entry(conn, self.entry)
                 self.done.emit(True, tr("Removed {title}.", title=self.entry.title))
@@ -202,6 +215,8 @@ class SourcesPage(QWidget):
             except Exception as exc:          # a broken user repository must not empty the page
                 entries = []
                 self.status.setText(tr("The repository cannot be read: {exc}", exc=exc))
+            if entries:
+                self.box.addWidget(self._languages_card(conn))
             head = QHBoxLayout()
             title = QLabel(tr("Sources of {name}", name=repositories.selected().name))
             title.setObjectName("CardTitle")
@@ -253,6 +268,70 @@ class SourcesPage(QWidget):
         finally:
             conn.close()
         self._set_busy(self._worker is not None)
+
+    def _languages_card(self, conn) -> QFrame:
+        """One language for every book at once (LANG2): added to or taken out of all the imported books that offer
+        it; a book's own languages can still be chosen on its card."""
+        card = QFrame()
+        card.setObjectName("Card")
+        box = QVBoxLayout(card)
+        box.setContentsMargins(18, 12, 18, 12)
+        box.setSpacing(6)
+        title = QLabel(tr("Languages for every book"))
+        title.setObjectName("CardTitle")
+        title.setFont(theme.reading_font(13.5, bold=True))
+        box.addWidget(title)
+        lead = QLabel(tr("Add a language to every imported book that has it, or take it out of all of them, in one step. "
+                         "Arabic stays: the chains are read from it. Each book's card below can still differ."))
+        lead.setObjectName("Caption")
+        lead.setWordWrap(True)
+        box.addWidget(lead)
+        try:
+            rows = catalog.language_overview(conn)
+        except Exception:
+            rows = []
+        from PySide6.QtWidgets import QGridLayout
+
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(12)
+        grid.setVerticalSpacing(4)
+        for r, row in enumerate(rows):
+            name = QLabel(tr(row["label"]))
+            name.setFont(theme.reading_font(12, bold=True))
+            grid.addWidget(name, r, 0)
+            count = QLabel(tr("in {have} of the {offered} books that have it", have=row["imported"], offered=row["offered"]))
+            count.setObjectName("Caption")
+            grid.addWidget(count, r, 1)
+            add = QPushButton(tr("Add to every book"))
+            add.setObjectName("Quiet")
+            add.setCursor(Qt.CursorShape.PointingHandCursor)
+            add.setProperty("allowed", row["imported"] < row["offered"])
+            add.clicked.connect(lambda _c=False, c=row["code"]: self._every_book("add_languages", c))
+            grid.addWidget(add, r, 2)
+            self._buttons.append(add)
+            rem = QPushButton(tr("Remove from every book"))
+            rem.setObjectName("Quiet")
+            rem.setCursor(Qt.CursorShape.PointingHandCursor)
+            rem.setProperty("allowed", row["code"] != "ara" and row["imported"] > 0)
+            if row["code"] == "ara":
+                rem.setToolTip(tr("Arabic stays: the chains and the narrators are read from it."))
+            rem.clicked.connect(lambda _c=False, c=row["code"]: self._every_book("remove_languages", c))
+            grid.addWidget(rem, r, 3)
+            self._buttons.append(rem)
+        grid.setColumnStretch(4, 1)
+        box.addLayout(grid)
+        return card
+
+    def _every_book(self, action: str, code: str) -> None:
+        label = tr(catalog.language_label(code))
+        if action == "remove_languages":
+            answer = QMessageBox.question(self, tr("Remove a language"),
+                                          tr("Take {language} out of every book?", language=label))
+            if answer != QMessageBox.StandardButton.Yes:
+                return
+            self._start(Worker(action, None, [code]), tr("Removing {language} from every book…", language=label))
+        else:
+            self._start(Worker(action, None, [code]), tr("Adding {language} to every book that has it…", language=label))
 
     def _repo_card(self) -> QFrame:
         """The repository: chosen from the list (the default first), with where its catalog came from."""

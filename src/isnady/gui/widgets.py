@@ -275,6 +275,11 @@ class BookPicker(QWidget):
     def selected(self) -> list[str] | None:
         return None if self._chosen is None else sorted(self._chosen)
 
+    def reset(self) -> None:
+        """Every book again (the Home button of the Search page, NAV1); no changed signal: nothing is searched."""
+        self._chosen = None
+        self._label()
+
     def _label(self) -> None:
         if self._chosen is None:
             text = tr("All books")
