@@ -507,6 +507,15 @@ the first where they meet, never read on as one; a road begun again without a si
 there. And two neighbours that cannot both be right — a narrator his own teacher, a teacher four generations after
 his student or six before him — are not left so: the less certain of the two is left unidentified.
 
+**The famous ones, however they are written.** ★ **Famous Companions** on the Narrators page and in the Genealogies
+lists them group by group — the four Caliphs, the ten promised Paradise, the Mothers of the Believers, the Prophet's
+household, those who narrated most and some forty more (`iy narrator --famous`); on road B, the Imami scholars' own
+Ashab al-Ijma'. Typed, a famous Companion comes first whichever way he is written — "Ebubekir", "Ebû Bekr",
+"Abu Bakr", "Hz. Ömer", "Omer ibn Hattap", "Umar bin Khattab", "Osman", "Uthman", "Ayşe", "Aisha", أبو بكر الصديق —
+shown by the name people know him by ("Hz. Ebû Bekir es-Sıddîk (r.a.)": his entry begins with 'Abd Allah b.
+'Uthman), and every name found carries its tabaqa and death year, so 'Umar b. al-Khattab the Caliph is not mistaken
+for the two later men of that name.
+
 Sunni narrators filter by tabaqa, rank and book; Shia narrators by the Imami assessment.
 
 <p align="center">
@@ -834,7 +843,7 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | `iy search WORDS` | `iy search niyet --book abudawud` | Search; `--mode all\|any\|phrase\|meaning`, `--whole-words`, `--book`, `--language`, `--limit`; `--in narrators\|scholars`, `--tradition sunni\|shia`; `--recent`, `--clear-recent` |
 | `iy chain BOOK NUMBER` | `iy chain kafi 5:1740` | One chain, narrator by narrator, with who each one is and whom it reaches; `--raw` adds the wording; without a number, the book's range |
 | `iy isnads` | `iy isnads --rebuild` | Read every chain and report per book: split, reaching the Prophet or a Ma'sum, identified |
-| `iy narrator NAME` | `iy narrator "Ibn Umar"` | A narrator: his critic's verdict (Ibn Hajar's rank, or the Imami terms), tabaqa, death year, books; `--limit 1` adds teachers, students and hadith |
+| `iy narrator NAME` | `iy narrator "Ibn Umar"` | A narrator: his critic's verdict (Ibn Hajar's rank, or the Imami terms), tabaqa, death year, books; `--limit 1` adds teachers, students and hadith; `--famous` lists the famous Companions by group (`--tradition shia`: Ashab al-Ijma') |
 | `iy book [KEY [CHAPTER]]` | `iy book bukhari 2` | The books; a book's chapters; a chapter read in order |
 | `iy scholar [NAME]` | `iy scholar albani` | The scholars in the data, or one of them with his measured statistics |
 | `iy tahric BOOK NUMBER` | `iy tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |

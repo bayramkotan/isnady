@@ -9,6 +9,7 @@ Examples
   iy isnads
   iy import taqrib https://raw.githubusercontent.com/OpenITI/0875AH/master/data/0852IbnHajarCasqalani/0852IbnHajarCasqalani.TaqribTahdhib/0852IbnHajarCasqalani.TaqribTahdhib.JK000121-ara1.completed
   iy narrator الزهري
+  iy narrator --famous
   iy ai build
   iy search --mode meaning "komşu hakları"
   iy tahric bukhari 1
@@ -878,7 +879,7 @@ def _search_people(conn, args) -> int:
     print(f"{total} narrator{'s' if total != 1 else ''} found{more}")
     for r in shown:
         view = r["view"]
-        known = view["reading"] or view["full_reading"]
+        known = r.get("famous") or view["reading"] or view["full_reading"]
         print(f"\n{known + '  ' if known else ''}{view['arabic'] or r['name']}  (id {r['id']}, {r['tradition']})"
               + ("  ≈ same consonants, other vowels" if r.get("weak") else "  ≈ close spelling" if r.get("close")
                  else "  ≈ same consonants, reading unknown" if r.get("unread") else ""))
@@ -1490,16 +1491,57 @@ def core_narrators_loaded(conn) -> bool:
     return conn.execute("SELECT 1 FROM persons LIMIT 1").fetchone() is not None
 
 
+def _famous_list(conn, tradition: str | None) -> int:
+    """iy narrator --famous: the famous Companions group by group (FS1), and road B's own famous narrators."""
+    from isnady.core import famous
+
+    for group in famous.groups(tradition):
+        ids = famous.ids(conn, [p[0] for p in group["people"]])
+        if not ids:
+            continue
+        print(f"\n{group['title']}" + ("  (Shia, al-Najashi)" if group["tradition"] == "shia" else ""))
+        rows = dict(((pid, (tab, death, n)) for pid, tab, death, n in conn.execute(
+            f"SELECT p.id, p.tabaqa, p.death_year_ah, (SELECT COUNT(*) FROM isnad_links l WHERE l.person_id = p.id) "
+            f"FROM persons p WHERE p.id IN ({','.join(str(i) for i in ids)})")))
+        by_key = dict(conn.execute(f"SELECT key, id FROM persons WHERE id IN ({','.join(str(i) for i in ids)})")
+                      .fetchall())
+        for person in group["people"]:
+            pid = by_key.get(person[0])
+            if pid is None:
+                continue
+            tab, death, n = rows[pid]
+            facts = ([f"tabaqa {tab}"] if tab else []) + ([f"d. {death} AH"] if death else []) + [f"{n} in chains"]
+            print(f"  {famous.title(person, 'en'):<46} {person[3]}  (id {pid}) · " + " · ".join(facts))
+    conn.close()
+    return 0
+
+
 def cmd_narrator(args) -> int:
     conn = _connect()
-    found = core_narrators.search_persons(conn, " ".join(args.words), limit=args.limit)
+    if args.famous:
+        return _famous_list(conn, args.tradition)
+    if not args.words:
+        print("Name a narrator, e.g. iy narrator 'Ebu Bekir', or list the famous ones: iy narrator --famous",
+              file=sys.stderr)
+        conn.close()
+        return 2
+    text = " ".join(args.words)
+    found = core_narrators.search_persons(conn, text, limit=args.limit)
+    # a famous Companion named any way people write him ("Ebubekir", "Omer ibn Hattap", "Hz. Ali") first (FS1)
+    from isnady.core import famous
+
+    first = famous.ids(conn, famous.named(text, args.tradition))
+    if first:
+        found = [(pid, "") for pid in first] + [f for f in found if f[0] not in first]
+        found = found[:max(args.limit, len(first))]
+    titles = famous.titles(conn, "en")
     if not found:
         print("No narrator found. Import a rijal work first, for example: iy import taqrib <file-or-url>")
         conn.close()
         return 1
     for pid, _name in found:
         who = core_narrators.describe(conn, pid)
-        print(f"\n{who['display_name']}")
+        print(f"\n{titles[pid]}  —  {who['display_name']}" if pid in titles else f"\n{who['display_name']}")
         if who["other_names"]:
             print(f"  also: {', '.join(who['other_names'][:6])}")
         if who["tabaqa"]:
@@ -1726,8 +1768,14 @@ def build_parser() -> argparse.ArgumentParser:
     tk.add_argument("number")
     tk.set_defaults(func=cmd_tahric)
     nr = sub.add_parser("narrator", help="look up a narrator: verdict, rank, tabaqa, death, books")
-    nr.add_argument("words", nargs="+", help="part of the name, e.g. الزهري, 'سفيان بن عيينة', 'ابو هريرة'")
+    nr.add_argument("words", nargs="*", help="part of the name, e.g. الزهري, 'سفيان بن عيينة', 'ابو هريرة', "
+                                             "'Ebu Bekir', 'Omer ibn Hattap'")
     nr.add_argument("--limit", type=int, default=5)
+    nr.add_argument("--famous", action="store_true",
+                    help="list the famous Companions by group: the four Caliphs, the Ten, the Mothers of the "
+                         "Believers, the Prophet's household, those who narrated most (and road B's Ashab al-Ijma')")
+    nr.add_argument("--tradition", choices=("sunni", "shia"), default=None,
+                    help="only this road's famous ones (with --famous) or matches")
     nr.set_defaults(func=cmd_narrator)
     ch = sub.add_parser("chain", help="show the chain of one hadith")
     ch.add_argument("book", help="collection key, e.g. bukhari")

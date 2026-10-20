@@ -3,6 +3,26 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **The famous Companions, however they are written (2026-10-20: "Ebubekir'in diğer isimlerini bilmeyen nasıl
+  bulacak? … Omer ibn Hattap ya Umar bin Hattab da yazmış olabilirdim").** ★ Famous Companions on the Narrators page
+  and in the Genealogies, and `iy narrator --famous`: the four Caliphs, the ten promised Paradise, the Mothers of the
+  Believers, the Prophet's household, those who narrated most and some forty more, group by group, each by the name
+  people know him by ("Hz. Ebû Bekir es-Sıddîk (r.a.)", "Abu Bakr al-Siddiq (RA)", أبو بكر الصديق رضي الله عنه); on
+  road B, Ashab al-Ijma' from al-Najashi, never in one list with the Companions (core/famous.py). Typed in any
+  search of narrators, a famous Companion comes first whichever way he is written — "Ebubekir", "Ebubekr", "Ebû Bekr
+  es-Sıddîk", "Abu Bakr", "Hz. Ömer (r.a.)", "Omer ibn Hattap", "Umar bin Hattab", "Osman", "Uthman", "Hz. Ali",
+  "Ayşe", "Aisha", "Aysha", "Ümmü Seleme", أبو بكر الصديق; "Hattab" alone is 'Umar.
+- **Namesakes told apart.** The names the Genealogies find carry their tabaqa, death year and how often they are in
+  the chains: 'Umar b. al-Khattab the Caliph (tabaqa 1, d. 23) is no longer one of three alike.
+- **Umm Salama and Abu Umama found in the chains.** "أم سلمة" is the Mother of the Believers (Asma' bt. Yazid, also
+  called so, is named Asma' in the chains), "أبو أمامة" al-Bahili, "أبو بكر الصديق" Abu Bakr (his entry begins with
+  'Abd Allah b. 'Uthman): 839 links more, none changed; Sunni links identified 67.8% → 68.1% (matcher
+  isnady-narrators-13 — the narrators are matched again once, under a minute).
+- **"Abi" is Abi again.** Since 0.3.5 every "أبي" not known as part of a name pair was read "Übey" (Ubayy): Hind bt.
+  Abi Umayya was "Hind bint Ubayy Umayya". Ubayy b. Ka'b stays Ubayy.
+
 ## [0.3.5] — 2026-10-18
 
 - **No one made a teacher he was not (2026-10-18: Abu Hurayra's line of learning).** Read anew, the chains no longer

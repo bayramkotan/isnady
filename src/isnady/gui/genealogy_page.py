@@ -249,6 +249,14 @@ class GenealogyPage(QWidget):
         self.find.returnPressed.connect(self._find)
         self.find.textChanged.connect(lambda _t: self._find_live())
         find_row.addWidget(self.find, 1)
+        # FS1: the famous Companions in their groups, one click to his family or his line of learning
+        self.famous_button = QPushButton("★ " + tr("Famous Companions"))
+        self.famous_button.setObjectName("Quiet")
+        self.famous_button.setToolTip(tr("The four Caliphs, the ten promised Paradise, the Mothers of the Believers, "
+                                         "the Prophet's household, those who narrated most …"))
+        self.famous_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.famous_button.clicked.connect(self._show_famous)
+        find_row.addWidget(self.famous_button)
         for text, tip, slot in (("−", tr("Smaller"), lambda: self.view.zoom(1 / 1.25)),
                                 ("+", tr("Larger"), lambda: self.view.zoom(1.25)),
                                 (tr("Whole tree"), tr("Fit the whole tree in the window"), lambda: self.view.fit())):
@@ -328,6 +336,7 @@ class GenealogyPage(QWidget):
                   f"▭ {tr('dashed box: the reports differ')}")
         if key in core.WRITTEN:
             self.find.setPlaceholderText(tr("Find in this tree: Ibrahim, Musa, Hashim, Ali …"))
+            self.famous_button.hide()
             self.tree = core.written(key)
             self.view.show_tree(self.tree)
             if key == "prophets":
@@ -346,6 +355,7 @@ class GenealogyPage(QWidget):
             self._show_node(self.tree.nodes[self.tree.root])
             return
         self.find.setPlaceholderText(tr("A narrator: name, kunya or nisba — Arabic or Latin letters"))
+        self.famous_button.show()
         conn = self.conn
         if conn is None:
             return
@@ -632,17 +642,67 @@ class GenealogyPage(QWidget):
 
         rows, _total = narrators.find(conn, text)
         self.results.clear()
+        self.results.setMaximumHeight(170)
         for r in rows[:30]:
-            view = r.get("view") or {}
-            label = (view.get("reading") or view.get("full_reading") or "") + "   " + (view.get("arabic") or r["name"])
-            item = QListWidgetItem(label.strip())
-            item.setData(Qt.ItemDataRole.UserRole, r["id"])
-            self.results.addItem(item)
+            self.results.addItem(self._result_item(r))
         self.results.setVisible(bool(rows))
 
+    def _result_item(self, r: dict) -> QListWidgetItem:
+        """A narrator found: the name people know him by, when, and his Arabic name — "Hz. Ömer b. el-Hattâb (r.a.)
+        · tabaqa 1 · d. 23" is not his namesake of the fourth generation (FS1)."""
+        view = r.get("view") or {}
+        known = r.get("famous") or view.get("reading") or view.get("full_reading") or ""
+        facts = []
+        if r.get("tradition") == "shia":
+            facts.append(tr("Shia"))
+        if r.get("tabaqa"):
+            facts.append(tr("tabaqa {tabaqa}", tabaqa=r["tabaqa"]))
+        if r.get("death"):
+            facts.append(tr("d. {year}", year=r["death"]))
+        if r.get("in_chains"):
+            facts.append(tr("{n:,} in chains", n=r["in_chains"]))
+        label = " · ".join([known] + facts if known else facts) + "   " + (view.get("arabic") or r["name"])
+        item = QListWidgetItem(label.strip())
+        item.setData(Qt.ItemDataRole.UserRole, r["id"])
+        if r.get("famous") and view.get("reading"):
+            item.setToolTip(view.get("full_reading") or view["reading"])
+        return item
+
+    def _show_famous(self) -> None:
+        """The famous Companions group by group (the four Caliphs, the Ten …), each a click from his tree."""
+        conn = self.conn
+        if conn is None:
+            return
+        from isnady.core import famous, narrators
+
+        shown = famous.titles(conn, i18n.language())
+        self.results.clear()
+        self.results.setMaximumHeight(360)
+        for group in famous.groups():
+            ids = famous.ids(conn, [p[0] for p in group["people"]])
+            if not ids:
+                continue
+            rows, _n = narrators.browse(conn, limit=len(ids), tradition=group["tradition"], only=ids)
+            place = {pid: i for i, pid in enumerate(ids)}
+            rows.sort(key=lambda r: place.get(r["id"], len(ids)))
+            head = QListWidgetItem(tr(group["title"]))
+            head.setFlags(Qt.ItemFlag.NoItemFlags)
+            font = self.results.font()
+            font.setBold(True)
+            head.setFont(font)
+            head.setForeground(QColor(theme.current().gold))
+            self.results.addItem(head)
+            for r in rows:
+                r["famous"] = shown.get(r["id"])
+                self.results.addItem(self._result_item(r))
+        self.results.setVisible(self.results.count() > 0)
+
     def _picked(self, item: QListWidgetItem) -> None:
+        pid = item.data(Qt.ItemDataRole.UserRole)
+        if pid is None:
+            return                                   # a group's title
         self.results.hide()
-        self.show_view(self.view_key, item.data(Qt.ItemDataRole.UserRole))
+        self.show_view(self.view_key, pid)
 
     def show_person(self, person_id: int, which: str = "family") -> None:
         if which in core.WRITTEN:                    # his box in a written tree (GEN1-L)

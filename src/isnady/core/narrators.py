@@ -71,7 +71,7 @@ from isnady.core.i18n import t, tr
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
-MATCHER_ID = "isnady-narrators-12"
+MATCHER_ID = "isnady-narrators-13"
 _TEACHER_MIN_TABAQA = 9           # the compilers' own teachers (Ibn Hajar's tabaqat 9-12)
 _HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم).*$")
 # "عائشة، زوج النبي ﷺ", "ثوبان مولى رسول الله ﷺ", "عائشة أم المؤمنين": who she is, not her name (2026-10-18: the
@@ -154,6 +154,10 @@ _KNOWN_AS = {
     "بن بشار": ("taqrib:5754",), "بن المثني": ("taqrib:6264",),
     # 'Abd al-Malik b. Habib, known by his kunya — not the later Baghdadi of that name (Taqrib 8277, "متأخر")
     "ابو عمران الجوني": ("taqrib:4172",),
+    # FS1: famous Companions whose entry does not begin with the name the chains give them — Abu Bakr's begins with
+    # 'Abd Allah b. 'Uthman, Abu Umama's with Sudayy b. 'Ajlan
+    "ابو بكر الصديق": ("taqrib:3467",), "ابو امامه الباهلي": ("taqrib:2923",),
+    "ابو امامه صدي بن عجلان": ("taqrib:2923",), "ابو امامه صدي بن عجلان الباهلي": ("taqrib:2923",),
 }
 # NR-ID2, the famous one: a bare name the scholars read as the famous narrator of that name unless something says
 # otherwise ("أنس" is Anas b. Malik al-Ansari, "مالك" Malik b. Anas, "ابن عمر" 'Abd Allah b. 'Umar). Applied last,
@@ -168,6 +172,9 @@ _FAMOUS = {
     "منصور": "taqrib:6908", "وكيع": "taqrib:7414", "عروه": "taqrib:4561", "ثابت": "taqrib:810",
     "نافع": "taqrib:7086", "اسراييل": "taqrib:401", "عبد الرزاق": "taqrib:4064", "الاوزاعي": "taqrib:3967",
     "بن جريج": "taqrib:4193", "بن وهب": "taqrib:3694", "انس بن مالك": "taqrib:565",
+    # FS1: the Mother of the Believers (Asma' bt. Yazid is called Umm Salama too, but the chains name her Asma'),
+    # and Abu Umama al-Bahili (Abu Umama b. Sahl is named with his father)
+    "ام سلمه": "taqrib:8694", "ابو امامه": "taqrib:2923",
 }
 _FAMOUS_CONFIDENCE = 0.5
 # Road B (al-Najashi's keys), the same three helps, from the Imami scholars' own tamyiz (2026-10-18): the nisbas and
@@ -1329,8 +1336,27 @@ def find(conn: sqlite3.Connection, text: str, tradition: str | None = None) -> t
         more, _n = browse(conn, limit=len(missing), tradition=tradition, only=sorted(missing))
         rows.extend({**row, "tier": -1, "closeness": 1.0, "close": False} for row in more)
         total += len(more)
+    # a famous Companion named any way people write him ("Ebubekir", "Omer ibn Hattap", "Hz. Ali", FS1) comes before
+    # everyone: Abu Bakr's entry begins with 'Abd Allah b. 'Uthman, and three men are called 'Umar b. al-Khattab
+    from isnady.core import famous as famous_ones
+
+    first = famous_ones.ids(conn, famous_ones.named(text, tradition))
+    place = {pid: i for i, pid in enumerate(first)}
+    for row in rows:
+        if row["id"] in place:
+            row.update(tier=-100 + place[row["id"]], weak=False, closeness=1.0, close=False, unread=False)
+    missing = [pid for pid in first if pid not in {r["id"] for r in rows}]
+    if missing:
+        more, _n = browse(conn, limit=len(missing), tradition=tradition, only=missing)
+        rows.extend({**row, "tier": -100 + place[row["id"]], "closeness": 1.0, "close": False} for row in more)
+        total += len(more)
+    from isnady.core import i18n
+
+    shown = famous_ones.titles(conn, i18n.language())
     for r in rows:
         r.setdefault("weak", False)
+        if r["id"] in shown:
+            r["famous"] = shown[r["id"]]          # "Hz. Ebû Bekir es-Sıddîk (r.a.)", above his entry's own name
     order = {id(r): i for i, r in enumerate(rows)}
     rows.sort(key=lambda r: (r["weak"], r["tier"], -round(r["closeness"], 1), order[id(r)]))
     return rows, total

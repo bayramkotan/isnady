@@ -10,12 +10,22 @@ from isnady.core.names_lexicon import COMPOUNDS, STOPS, WORDS
 from isnady.core.normalize import normalize
 
 
+_SHADDA = "\u0651"
+
+
 @lru_cache(maxsize=1)
 def _tables():
-    words = {normalize(k): v for k, v in WORDS.items()}
+    # a word told apart only by its shadda keeps it: "أبيّ" (Ubayy, a given name) is not "أبي" (Abi, "the father
+    # of" — Hind bt. Abi Umayya, 2026-10-20: read "Übey Ümeyye" since 0.3.5)
+    words = {normalize(k) + (_SHADDA if _SHADDA in k else ""): v for k, v in WORDS.items()}
     compounds = {tuple(normalize(w) for w in k.split()): v for k, v in COMPOUNDS.items()}
     stops = {normalize(w) for w in STOPS}
     return words, compounds, stops
+
+
+def _key(word: str, words: dict) -> str:
+    key = normalize(word)
+    return key + _SHADDA if _SHADDA in word and key + _SHADDA in words else key
 
 
 def reading(name: str, language: str = "tr", max_words: int = 8) -> tuple[str, bool]:
@@ -29,7 +39,7 @@ def reading(name: str, language: str = "tr", max_words: int = 8) -> tuple[str, b
     index = 0 if language == "tr" else 1
     out, spelled, i = [], False, 0
     while i < len(parts) and len(out) < max_words:
-        key = normalize(parts[i])
+        key = _key(parts[i], words)
         if key in stops:
             break
         pair = tuple(normalize(w) for w in parts[i:i + 2])
@@ -113,7 +123,7 @@ def latin(name: str, language: str = "tr", max_words: int = 8) -> str | None:
     parts = [w for w in name.split() if w]
     out, i, read = [], 0, 0
     while i < len(parts) and read < max_words:
-        key = normalize(parts[i])
+        key = _key(parts[i], words)
         if key in stops:
             break
         pair = tuple(normalize(w) for w in parts[i:i + 2])

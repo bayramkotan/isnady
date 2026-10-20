@@ -9,7 +9,7 @@ the chains of his own tradition's books (road A / road B, core.traditions)."""
 import html
 
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtGui import QFontMetrics
+from PySide6.QtGui import QColor, QFontMetrics
 from PySide6.QtWidgets import (
     QComboBox,
     QFrame,
@@ -127,6 +127,13 @@ class NarratorsPage(QWidget):
         self.query = QLineEdit()
         self.query.setPlaceholderText(tr("Name, kunya or nisba — Arabic or Latin letters"))
         self.query.setClearButtonEnabled(True)
+        # FS1: the famous Companions in their groups — the four Caliphs, the Ten, the Mothers of the Believers …
+        self._famous_mode = False
+        self.famous_button = QPushButton()
+        self.famous_button.setObjectName("Link")
+        self.famous_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.famous_button.clicked.connect(self._toggle_famous)
+        self._famous_text()
         self.tabaqa = QComboBox()
         self.tabaqa.addItem(tr("All generations"), None)
         for t, text in TABAQA_LABELS.items():
@@ -158,6 +165,10 @@ class NarratorsPage(QWidget):
         lbox.addLayout(seg_row)
         lbox.addWidget(self.overview)
         lbox.addWidget(self.query)
+        famous_row = QHBoxLayout()
+        famous_row.addWidget(self.famous_button)
+        famous_row.addStretch(1)
+        lbox.addLayout(famous_row)
         # each filter under its own title, so it is clear what it narrows (UI6)
         self._filter_boxes = {}
         self._filter_titles = {}
@@ -186,7 +197,7 @@ class NarratorsPage(QWidget):
         self._debounce.setSingleShot(True)
         self._debounce.setInterval(250)
         self._debounce.timeout.connect(self._populate)
-        self.query.textChanged.connect(lambda _t: self._debounce.start())
+        self.query.textChanged.connect(self._typed)
 
         # ---------------------------------------------------------------- right: the narrator
         self.detail = QWidget()
@@ -206,6 +217,70 @@ class NarratorsPage(QWidget):
         root.setSpacing(18)
         root.addWidget(left)
         root.addWidget(scroll, 1)
+
+    # ------------------------------------------------------------------ the famous ones (FS1)
+    def _famous_text(self) -> None:
+        if self._famous_mode:
+            self.famous_button.setText("← " + tr("All narrators"))
+        elif self.tradition == "shia":
+            self.famous_button.setText("★ " + tr("Famous narrators"))
+        else:
+            self.famous_button.setText("★ " + tr("Famous Companions"))
+        self.famous_button.setToolTip(tr("The four Caliphs, the ten promised Paradise, the Mothers of the Believers, "
+                                         "the Prophet's household, those who narrated most …")
+                                      if self.tradition != "shia" else tr("Ashab al-Ijma'"))
+
+    def _typed(self, _text: str) -> None:
+        if self._famous_mode:
+            self._famous_mode = False
+            self._famous_text()
+        self._debounce.start()
+
+    def _toggle_famous(self) -> None:
+        self._famous_mode = not self._famous_mode
+        self._famous_text()
+        if self._famous_mode:
+            self._show_famous()
+        else:
+            self._populate()
+
+    def _show_famous(self) -> None:
+        """The famous ones of the tradition shown, group by group, each name as people know it."""
+        conn = self.conn
+        if conn is None:
+            return
+        from isnady.core import famous
+
+        self._famous_titles = famous.titles(conn, i18n.language())
+        self._row_token = getattr(self, "_row_token", 0) + 1
+        self._rows_left, self._shown_ids = [], set()
+        self._list_read = self._list_total = 0
+        self.list.blockSignals(True)
+        self.list.clear()
+        first = None
+        shown = 0
+        for group in famous.groups(self.tradition):
+            ids = famous.ids(conn, [p[0] for p in group["people"]])
+            if not ids:
+                continue
+            rows, _n = core_narrators.browse(conn, limit=len(ids), tradition=group["tradition"], only=ids)
+            place = {pid: i for i, pid in enumerate(ids)}
+            rows.sort(key=lambda r: place.get(r["id"], len(ids)))
+            head = QListWidgetItem(tr(group["title"]))
+            head.setFlags(Qt.ItemFlag.NoItemFlags)
+            font = self.list.font()
+            font.setBold(True)
+            head.setFont(font)
+            head.setForeground(QColor(theme.current().gold))
+            self.list.addItem(head)
+            for r in rows:
+                self._add_row(r)
+                shown += 1
+                first = first or r["id"]
+        self.list.blockSignals(False)
+        self.count.setText(n_("{n:,} famous one", "{n:,} famous ones", shown))
+        if first and self._current is None:
+            self.show_person(first)
 
     # ------------------------------------------------------------------ data
     def _filters_changed(self, *_args) -> None:
@@ -266,6 +341,8 @@ class NarratorsPage(QWidget):
         self._fill_ranks()
         self._show_filters()
         self._current = None
+        self._famous_mode = False
+        self._famous_text()
         self.refresh()
         self._filters_changed()
 
@@ -304,7 +381,10 @@ class NarratorsPage(QWidget):
             self._show_empty()
             return
         self.overview.setText("<br>".join(lines))
-        self._populate()
+        if self._famous_mode:
+            self._show_famous()
+        else:
+            self._populate()
         if self._current:
             self.show_person(self._current)
 
@@ -312,11 +392,29 @@ class NarratorsPage(QWidget):
         conn = self.conn
         if conn is None:
             return
+        if self._famous_mode:
+            self._show_famous()
+            return
+        from isnady.core import famous
+
+        self._famous_titles = famous.titles(conn, i18n.language())
+        self._shown_ids = set()
         self._list_args = (self.query.text(), self.tabaqa.currentData(), self.rank.currentData(),
                            self.book.currentData(), self.tradition)
         rows, total = core_narrators.browse(conn, self.query.text(), self.tabaqa.currentData(),
                                             self.rank.currentData(), self.book.currentData(), limit=LIST_LIMIT,
                                             tradition=self.tradition)
+        # a famous Companion named any way people write him ("Ebubekir", "Omer ibn Hattap", "Hz. Ali") first (FS1)
+        first = famous.ids(conn, famous.named(self.query.text(), self.tradition)) if self.query.text().strip() else []
+        if first:
+            ahead, _n = core_narrators.browse(conn, "", self.tabaqa.currentData(), self.rank.currentData(),
+                                              self.book.currentData(), limit=len(first), tradition=self.tradition,
+                                              only=first)
+            place = {pid: i for i, pid in enumerate(first)}
+            ahead.sort(key=lambda r: place.get(r["id"], len(first)))
+            known = {r["id"] for r in ahead}
+            total += len([pid for pid in known if pid not in {r["id"] for r in rows}])
+            rows = ahead + [r for r in rows if r["id"] not in known]
         self._list_read, self._list_total = len(rows), total
         self.list.blockSignals(True)
         self.list.clear()
@@ -359,7 +457,10 @@ class NarratorsPage(QWidget):
         left = self._rows_left
         take, self._rows_left = (left[:count], left[count:]) if count else (left, [])
         self.list.blockSignals(True)
+        shown = getattr(self, "_shown_ids", set())
         for r in take:
+            if r["id"] in shown:
+                continue                             # a famous one put first, met again on a later page
             self._add_row(r)
         self.list.blockSignals(False)
         if self._rows_left:
@@ -378,10 +479,13 @@ class NarratorsPage(QWidget):
         box.setContentsMargins(8, 6, 8, 6)
         box.setSpacing(1)
         view = r["view"]
+        getattr(self, "_shown_ids", set()).add(r["id"])
         top = QHBoxLayout()
         top.setSpacing(10)
         fm_ui = QFontMetrics(self.list.font())
-        known = view["reading"] or view["full_reading"]
+        famous_title = getattr(self, "_famous_titles", {}).get(r["id"])
+        # a famous one by the name people know him by — Abu Bakr's entry begins with 'Abd Allah b. 'Uthman (FS1)
+        known = famous_title or view["reading"] or view["full_reading"]
         if known:
             title = _label(fm_ui.elidedText(known, Qt.TextElideMode.ElideRight, 190), "RowTitle", wrap=False)
             tip = (tr("{full_reading}\nknown by {how}", full_reading=view['full_reading'], how=tr(view['how']))
@@ -395,7 +499,10 @@ class NarratorsPage(QWidget):
                                               ROW_TEXT_WIDTH - (200 if known else 0)))
         top.addWidget(arabic_known, 0 if known else 1)
         box.addLayout(top)
-        if known and view["full_reading"] and view["full_reading"] != known:
+        if famous_title and (view["reading"] or view["full_reading"]):
+            box.addWidget(_label(fm_ui.elidedText(view["full_reading"] or view["reading"], Qt.TextElideMode.ElideRight,
+                                                  ROW_TEXT_WIDTH), "Caption", wrap=False))
+        elif known and view["full_reading"] and view["full_reading"] != known:
             box.addWidget(_label(fm_ui.elidedText(view["full_reading"], Qt.TextElideMode.ElideRight, ROW_TEXT_WIDTH),
                                  "Caption", wrap=False))
         shia = r.get("tradition") == "shia"
