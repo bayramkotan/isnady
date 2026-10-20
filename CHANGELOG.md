@@ -3,7 +3,7 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.3.6] — 2026-10-20
 
 - **The famous Companions, however they are written (2026-10-20: "Ebubekir'in diğer isimlerini bilmeyen nasıl
   bulacak? … Omer ibn Hattap ya Umar bin Hattab da yazmış olabilirdim").** ★ Famous Companions on the Narrators page
@@ -21,7 +21,8 @@ is taken from its section here.
   'Abd Allah b. 'Uthman): 839 links more, none changed; Sunni links identified 67.8% → 68.1% (matcher
   isnady-narrators-13 — the narrators are matched again once, under a minute).
 - **"Abi" is Abi again.** Since 0.3.5 every "أبي" not known as part of a name pair was read "Übey" (Ubayy): Hind bt.
-  Abi Umayya was "Hind bint Ubayy Umayya". Ubayy b. Ka'b stays Ubayy.
+  Abi Umayya was "Hind bint Ubayy Umayya" — 971 names read right again. "أبي" before "بن" stays Ubayy (Ubayy b.
+  Ka'b, his son 'Abd Allah b. Ubayy b. Ka'b), and so after a kunya's "Abu" (Abu Ubayy b. Umm Haram).
 
 ## [0.3.5] — 2026-10-18
 

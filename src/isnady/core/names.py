@@ -23,9 +23,14 @@ def _tables():
     return words, compounds, stops
 
 
-def _key(word: str, words: dict) -> str:
+def _key(word: str, words: dict, after: str = "", before: str = "") -> str:
+    """The word list's key for a word. "أبي" followed by "بن" is Ubayy, the given name ('Abd Allah b. Ubayy b.
+    Ka'b): a kunya's "Abi" is never followed by "b."; nor does a kunya ("أبو أبي", Abu Ubayy) begin with it."""
     key = normalize(word)
-    return key + _SHADDA if _SHADDA in word and key + _SHADDA in words else key
+    if key + _SHADDA in words and (_SHADDA in word or normalize(after) in ("بن", "ابن")
+                                   or normalize(before) in ("ابو", "ابا", "ام")):
+        return key + _SHADDA
+    return key
 
 
 def reading(name: str, language: str = "tr", max_words: int = 8) -> tuple[str, bool]:
@@ -39,7 +44,7 @@ def reading(name: str, language: str = "tr", max_words: int = 8) -> tuple[str, b
     index = 0 if language == "tr" else 1
     out, spelled, i = [], False, 0
     while i < len(parts) and len(out) < max_words:
-        key = _key(parts[i], words)
+        key = _key(parts[i], words, parts[i + 1] if i + 1 < len(parts) else "", parts[i - 1] if i else "")
         if key in stops:
             break
         pair = tuple(normalize(w) for w in parts[i:i + 2])
@@ -123,7 +128,7 @@ def latin(name: str, language: str = "tr", max_words: int = 8) -> str | None:
     parts = [w for w in name.split() if w]
     out, i, read = [], 0, 0
     while i < len(parts) and read < max_words:
-        key = _key(parts[i], words)
+        key = _key(parts[i], words, parts[i + 1] if i + 1 < len(parts) else "", parts[i - 1] if i else "")
         if key in stops:
             break
         pair = tuple(normalize(w) for w in parts[i:i + 2])

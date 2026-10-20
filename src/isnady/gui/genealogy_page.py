@@ -661,7 +661,9 @@ class GenealogyPage(QWidget):
             facts.append(tr("d. {year}", year=r["death"]))
         if r.get("in_chains"):
             facts.append(tr("{n:,} in chains", n=r["in_chains"]))
-        label = " · ".join([known] + facts if known else facts) + "   " + (view.get("arabic") or r["name"])
+        label = " · ".join([known] + facts if known else facts)
+        if not (r.get("famous") and i18n.language() == "ar"):     # in Arabic his famous name is already Arabic
+            label += "   " + (view.get("arabic") or r["name"])
         item = QListWidgetItem(label.strip())
         item.setData(Qt.ItemDataRole.UserRole, r["id"])
         if r.get("famous") and view.get("reading"):
