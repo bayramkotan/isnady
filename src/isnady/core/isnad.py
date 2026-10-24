@@ -41,8 +41,9 @@ from isnady.core.normalize import normalize_with_map
 from isnady.core.i18n import N_, t, tr
 from isnady.core.companions import is_companion_name
 
-PARSER_ID = "isnady-isnad-9"   # bump when rules change (7: tahwil split; 8: two narrators at a link, a chain kept as far as read;
+PARSER_ID = "isnady-isnad-10"  # bump when rules change (7: tahwil split; 8: two narrators at a link, a chain kept as far as read;
 #                                9: the Prophet by his kunya, the subject of a story, second roads after "وعن" / "وحدثنا")
+#                               10: one man named twice with a comma between, "أبو خيثمة، زهير بن حرب")
 
 # normalised form -> term id; longer forms first so "حدثني" is not read as "حدث"
 TERMS = [
@@ -588,6 +589,20 @@ def _parse_sunni(text: str) -> ParsedIsnad:
         honor = _HONORIFIC_RE.search(norm, name_start, name_end)
         if honor:
             name_end = honor.start()
+        elif next_term and name_end == next_comma < next_term.start() and _TERM_ID[next_term.group(1)] != "anna":
+            # one man named twice, a comma between: "حدثني أبو خيثمة، زهير بن حرب حدثنا وكيع", "حدثنا محمد بن العلاء،
+            # أبو كريب، حدثنا …" — his kunya and his name are one link (Bayram, 2026-10-24, Muslim 93: the chain
+            # stopped at Abu Khaythama, "words not understood")
+            seg = norm[next_comma + 1:next_term.start()].strip(" ،,")
+            first_words = norm[name_start:name_end].split()
+            kunya_first = bool(first_words) and first_words[0] in ("ابو", "ابا", "ابي", "ام", "ابن")
+            if seg and not seg.startswith("و") and len(seg.split()) <= 5 and not re.search(r"[،,.]", seg) \
+                    and not re.search(r"(?<!\w)(?:قال|قالت|قالا|قالوا|يقول|يعني|هو|ح|حدث\w*|اخبر\w*|سمع\w*|يسال|يسل|"
+                                      r"سال\w*|يقرا|يذكر|يخطب|يفتي|ام المومنين|زوج|يحدث\w*|يخبر\w*|انه|انها|انهم|انهما)(?!\w)", seg) \
+                    and ((kunya_first and " بن " in f" {seg} ") or re.match(r"(?:ابو|ابا|ابي|ام) \S", seg)):
+                name_end = next_term.start()
+                while name_end > name_start and norm[name_end - 1] in " ،,":
+                    name_end -= 1
         # a clarification in dashes right after the comma belongs to the name: "- يعني ابن محمد -"
         after = name_end
         desc = _DESCRIPTOR_RE.match(norm, name_end)

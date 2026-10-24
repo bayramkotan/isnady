@@ -36,6 +36,7 @@ def _key(word: str, words: dict, after: str = "", before: str = "") -> str:
 def reading(name: str, language: str = "tr", max_words: int = 8) -> tuple[str, bool]:
     """(Latin form, spelled): the name word by word from the word list, any word it does not know spelled
     letter by letter; spelled is True when a word was. ("", False) for a name with nothing to read."""
+    name = re.sub(r"[،,؛;]", " ", name)                 # "أبو خيثمة، زهير بن حرب": the comma is not part of the word
     known = latin(name, language, max_words)
     parts = [w for w in name.split() if w]
     if known and len(known.split()) >= len(parts):
@@ -131,7 +132,7 @@ def latin(name: str, language: str = "tr", max_words: int = 8) -> str | None:
     At least the first name and, if the Arabic has one, the father ("X b. Y") must be readable."""
     words, compounds, stops = _tables()
     index = 0 if language == "tr" else 1
-    parts = [w for w in name.split() if w]
+    parts = [w for w in re.sub(r"[،,؛;]", " ", name).split() if w]
     out, i, read = [], 0, 0
     while i < len(parts) and read < max_words:
         key = _key(parts[i], words, parts[i + 1] if i + 1 < len(parts) else "", parts[i - 1] if i else "")

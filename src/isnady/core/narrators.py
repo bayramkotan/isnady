@@ -71,7 +71,7 @@ from isnady.core.i18n import t, tr
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
-MATCHER_ID = "isnady-narrators-13"
+MATCHER_ID = "isnady-narrators-14"
 _TEACHER_MIN_TABAQA = 9           # the compilers' own teachers (Ibn Hajar's tabaqat 9-12)
 _HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم).*$")
 # "عائشة، زوج النبي ﷺ", "ثوبان مولى رسول الله ﷺ", "عائشة أم المؤمنين": who she is, not her name (2026-10-18: the
@@ -158,6 +158,10 @@ _KNOWN_AS = {
     # 'Abd Allah b. 'Uthman, Abu Umama's with Sudayy b. 'Ajlan
     "ابو بكر الصديق": ("taqrib:3467",), "ابو امامه الباهلي": ("taqrib:2923",),
     "ابو امامه صدي بن عجلان": ("taqrib:2923",), "ابو امامه صدي بن عجلان الباهلي": ("taqrib:2923",),
+    # Zuhayr b. Harb, Muslim's teacher: the Taqrib's text spells his kunya "أبو خثيمة" (2026-10-24, Muslim 93); the
+    # other Abu Khaythama is Zuhayr b. Mu'awiya, their generations tell them apart
+    "ابو خيثمه": ("taqrib:2042", "taqrib:2051"), "ابو خيثمه زهير بن حرب": ("taqrib:2042",),
+    "زهير ابو خيثمه": ("taqrib:2042", "taqrib:2051"),
 }
 # NR-ID2, the famous one: a bare name the scholars read as the famous narrator of that name unless something says
 # otherwise ("أنس" is Anas b. Malik al-Ansari, "مالك" Malik b. Anas, "ابن عمر" 'Abd Allah b. 'Umar). Applied last,
@@ -655,7 +659,12 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
     rijal.fix_death_years(conn)          # a database read before a better rule for the years of death
     conn.execute("CREATE TABLE IF NOT EXISTS core_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
     persons_now = str(tuple(conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM persons").fetchone()))
-    stamp = f"{MATCHER_ID}|{persons_now}"
+    from isnady.core.isnad import PARSER_ID
+
+    # the chains read again by a new parser are matched again whole, with the evidence of all of them (2026-10-24:
+    # matched only as "new", without the neighbours' evidence, a database read anew by isnady-isnad-9 had 54.7% of
+    # its Sunni links identified instead of 68%)
+    stamp = f"{MATCHER_ID}|{persons_now}|{PARSER_ID}"
     row = conn.execute("SELECT value FROM core_meta WHERE key = 'narrator_matcher'").fetchone()
     pending = conn.execute(
         """SELECT COUNT(*) FROM isnad_links l WHERE l.candidates IS NULL"""
@@ -665,9 +674,15 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
 
     say(tr("Identifying narrators"))
     indexes: dict[str, Index] = {}
-    # the same matcher and the same narrators: only the chains with links not looked up yet (new books, chains read
-    # again) — each chain is matched on its own, so the others would come out the same
+    # the same matcher and the same narrators, and only a few chains not looked up yet (a small book added): those
+    # alone. Many — a large book, chains read again — and every chain is matched again: the evidence of the
+    # neighbours, the famous ones and the relatives is drawn from all the chains together
     only_new = not rebuild and row is not None and row[0] == stamp
+    if only_new:
+        all_chains = conn.execute("SELECT COUNT(DISTINCT isnad_id) FROM isnad_links").fetchone()[0]
+        new_chains = conn.execute("SELECT COUNT(DISTINCT isnad_id) FROM isnad_links WHERE candidates IS NULL") \
+            .fetchone()[0]
+        only_new = new_chains * 50 < all_chains
     chains = conn.execute(
         """SELECT i.id, i.reaches_prophet AND COALESCE(i.ends_with, 'prophet') = 'prophet', c.key,
                   COALESCE(c.tradition, 'sunni') FROM isnads i
@@ -695,13 +710,12 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
         results = match_chain(indexes[road], links, collection, bool(reaches), kept, written)
         done[road].append((results, kept, written))
         order.append((isnad_id, links, results, road))
-    if not only_new:
-        for road, pairs in done.items():
-            by_neighbours(pairs)                    # the lists of results are changed in place
-            if indexes[road].famous and by_famous(pairs, indexes[road].famous):
-                by_neighbours(pairs)                # the famous ones now known, their neighbours may decide more
-            if by_relatives(pairs, indexes[road]):
-                by_neighbours(pairs)
+    for road, pairs in done.items():
+        by_neighbours(pairs)                        # the lists of results are changed in place
+        if indexes[road].famous and by_famous(pairs, indexes[road].famous):
+            by_neighbours(pairs)                    # the famous ones now known, their neighbours may decide more
+        if by_relatives(pairs, indexes[road]):
+            by_neighbours(pairs)
     for isnad_id, links, results, road in order:
         drop_impossible(results, indexes[road])
         for link, (pid, confidence, count) in zip(links, results):

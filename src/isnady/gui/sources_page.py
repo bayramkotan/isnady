@@ -378,8 +378,9 @@ class SourcesPage(QWidget):
         note.setTextFormat(Qt.TextFormat.RichText)
         note.setOpenExternalLinks(True)
         box.addWidget(note)
-        row = QHBoxLayout()
-        row.addStretch(1)
+        # the buttons wrap onto a second line when the window is narrow, rather than pushing a horizontal scrollbar
+        bar = QWidget()
+        row = FlowLayout(bar, spacing=8)
         for label, slot, ok in ((tr("Refresh"), self._refresh_repo, True),
                                 (tr("A folder on this computer…"), self._add_folder_repo, True),
                                 (tr("Add a repository…"), self._add_repo, True),
@@ -392,7 +393,7 @@ class SourcesPage(QWidget):
             b.setProperty("allowed", ok)
             row.addWidget(b)
             self._buttons.append(b)
-        box.addLayout(row)
+        box.addWidget(bar)
         return card
 
     def _card(self, conn, entry: catalog.Entry) -> QFrame:
@@ -406,20 +407,23 @@ class SourcesPage(QWidget):
         name = QLabel(entry.title)
         name.setObjectName("CardTitle")
         name.setFont(theme.reading_font(13.5, bold=True))
-        head.addWidget(name)
+        name.setWordWrap(True)                           # a long title wraps rather than widening the whole page
+        head.addWidget(name, 3)
         if entry.title_ar:
             ar = QLabel(entry.title_ar)
             ar.setStyleSheet(f"color: {theme.script_color('arabic')}; "
                              f"{theme.font_css(theme.script_font('arabic', factor=0.85))}")
-            head.addWidget(ar)
-        head.addStretch(1)
+            ar.setWordWrap(True)
+            head.addWidget(ar, 2)
         state = QLabel(self._state_text(entry, st))
         state.setObjectName("Caption")
-        head.addWidget(state)
+        state.setWordWrap(True)
+        state.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        head.addWidget(state, 2)
         box.addLayout(head)
         if entry.builtin:
-            tags = QHBoxLayout()
-            tags.setSpacing(8)
+            tag_bar = QWidget()
+            tags = FlowLayout(tag_bar, spacing=8)        # wraps on a narrow window instead of widening the page
             ours = entry.repo == repositories.DEFAULT_ID
             items = [(tr("Shia") if entry.tradition == "shia" else tr("Sunni"),
                       "TagGold" if entry.tradition == "shia" else "Tag",
@@ -440,14 +444,13 @@ class SourcesPage(QWidget):
                 count = QLabel(tr("{n:,} hadith", n=entry.hadith))
                 count.setObjectName("Caption")
                 tags.addWidget(count)
-            tags.addStretch(1)
             if entry.origin_url:
                 link = QLabel(f"<a href='{entry.origin_url}'>{entry.origin_name or entry.origin_url}</a>")
                 link.setObjectName("Caption")
                 link.setTextFormat(Qt.TextFormat.RichText)
                 link.setOpenExternalLinks(True)
                 tags.addWidget(link)
-            box.addLayout(tags)
+            box.addWidget(tag_bar)
         desc = QLabel(entry.description + (f"  ·  {entry.location}" if not entry.builtin else ""))
         desc.setObjectName("Caption")
         desc.setWordWrap(True)
@@ -567,8 +570,8 @@ class SourcesPage(QWidget):
         note.setObjectName("Caption")
         note.setWordWrap(True)
         box.addWidget(note)
-        row = QHBoxLayout()
-        row.addStretch(1)
+        bar = QWidget()
+        row = FlowLayout(bar, spacing=8)
         for key, label, slot in (("open", tr("Open"), self._open_folder), ("change", tr("Change…"), self._change_folder),
                                  ("default", tr("Use default"), self._default_folder),
                                  ("ready", tr("Use a ready database…"), self._use_ready_database)):
@@ -582,7 +585,7 @@ class SourcesPage(QWidget):
             row.addWidget(b)
             if key != "open":
                 self._buttons.append(b)
-        box.addLayout(row)
+        box.addWidget(bar)
         return card
 
     def _open_folder(self) -> None:

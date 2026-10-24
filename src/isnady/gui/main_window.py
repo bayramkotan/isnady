@@ -600,8 +600,6 @@ class MainWindow(QMainWindow):
         edit_menu.addSeparator()
         self._action(edit_menu, tr("Preferences…"), lambda: self._preferences(), "Ctrl+,",
                      tip=tr("Fonts, sizes and colours for each script, theme colours, interface font"))
-        self._action(edit_menu, tr("Reset…"), lambda: self._preferences("reset"),
-                     tip=tr("Delete all settings, all books, or everything: back to zero"))
 
         view_menu = bar.addMenu(tr("&View"))
         self._section_actions = {}

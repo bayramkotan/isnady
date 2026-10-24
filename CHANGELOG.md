@@ -3,6 +3,29 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.4.3] — 2026-10-24
+
+- **The chain of more hadiths is read to the end (2026-10-24, Muslim 93: "hala senedlerini neden goremiyoruz bazi
+  hadislerin").** When one man is named twice with a comma between — "حدثني أبو خيثمة، زهير بن حرب" (his kunya, then
+  his name) — the reader took the second half for a new, nameless link and stopped there with "…". It is now one
+  man. 2,111 more links in the chains of the six books are read and given to a narrator; the "words not understood"
+  fell from 7,861 to 7,385.
+  - Abu Khaythama Zuhayr b. Harb, Muslim's teacher, is found: Ibn Hajar's Taqrib spells his kunya "أبو خثيمة", so
+    he was never matched and 11 of his chains were given to Ahmad b. Abi Bakr. A bare "Abu Khaythama" is left open
+    when two men carry it.
+  - "Ebû Hîsme" → "Ebû Hayseme": a comma stuck to a name no longer stops it from being read from the word list.
+  - When the chains are read again (once, on the first start: about a minute and a half), every narrator is found
+    again with all the evidence; before, only the new chains were looked at and many narrators were lost.
+  - A chain still stops where the book joins a second chain to the first ("ح", tahwil): the first road is shown,
+    the second is not yet split (ISN-TAH).
+- **Reset is clear (2026-10-24: "hicbirsey anlamadim reset kisminda, sanki birbirinin ayni").** Settings → Reset now
+  shows three cards — 1. Only the settings, 2. Only the books, 3. Everything — each listing what is deleted and what
+  is kept, with its own coloured button and its own question before anything is deleted. Reset is no longer in the
+  Edit menu (2026-10-24: "tools altinda direkt reset olmasin"); `iy reset` is unchanged.
+- **The Settings window opens large (2026-10-24: "veri kaynaklari kismina girdigimde pencereyi genisletmemiz
+  gerekiyor").** Most of the screen, and its pages never scroll sideways: on Data sources the book titles, tags and
+  buttons wrap onto a new line when the window is narrow.
+
 ## [0.4.2] — 2026-10-24
 
 - **Export and import of everything, each in many formats (2026-10-24: "herseyin ayri ayri farkli formatlarda

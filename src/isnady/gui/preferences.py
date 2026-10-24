@@ -8,6 +8,7 @@ button and the dialog can reset everything.
 from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
+    QApplication,
     QColorDialog,
     QComboBox,
     QDialog,
@@ -180,7 +181,12 @@ class PreferencesDialog(QDialog):
     def __init__(self, parent=None, start_tab: str = "") -> None:
         super().__init__(parent)
         self.setWindowTitle(tr("Preferences"))
-        self.resize(900, 700)
+        # room for the Data sources page (Bayram, 2026-10-24: "pencereyi genisletmemiz gerekiyor"): most of the screen
+        screen = QApplication.primaryScreen().availableGeometry() if QApplication.primaryScreen() else None
+        if screen is not None:
+            self.resize(min(1400, int(screen.width() * 0.85)), min(950, int(screen.height() * 0.88)))
+        else:
+            self.resize(1300, 880)
         self._rows = []           # callables that refresh a row from the settings
 
         from isnady.gui.sources_page import SourcesPage
@@ -241,30 +247,46 @@ class PreferencesDialog(QDialog):
         intro.setObjectName("Lead")
         intro.setWordWrap(True)
         box.addWidget(intro)
-        for kind, title, text in (
-                ("settings", tr("Delete all settings"),
-                 tr("Every setting and every remembered place (theme, fonts, languages, the sidebar, where the reader "
-                    "was, recent searches) as at the first start. The books and bookmarks stay.")),
-                ("books", tr("Delete all books"),
-                 tr("Every imported hadith book, rijal work and source of your own leaves the database, with all that "
-                    "was computed from them. The settings and bookmarks stay; the books can be imported again.")),
-                ("everything", tr("Reset everything"),
-                 tr("The books, the settings, the bookmarks and the downloaded copies of the data: this profile as it "
-                    "was before isnady first ran."))):
+        # each card says plainly what goes and what stays, so that the three are not alike (Bayram, 2026-10-24:
+        # "hicbirsey anlamadim reset kisminda, sanki birbirinin ayni")
+        t = theme.current()
+        cards = (
+            ("settings", tr("1. Only the settings"), tr("Delete the settings"), t.lapis,
+             [tr("theme, fonts and colours"), tr("interface and content languages"), tr("the order of the sidebar"),
+              tr("where you were in each book"), tr("recent searches")],
+             [tr("the books"), tr("the bookmarks"), tr("the profiles")]),
+            ("books", tr("2. Only the books"), tr("Delete the books"), t.gold,
+             [tr("every hadith book"), tr("the rijal works and their narrators"), tr("your own sources"),
+              tr("the search index and everything computed from them")],
+             [tr("the settings"), tr("the bookmarks"), tr("the profiles")]),
+            ("everything", tr("3. Everything"), tr("Delete everything"), "#B3261E",
+             [tr("the books"), tr("the settings"), tr("the bookmarks"), tr("the downloaded copies of the data")],
+             [tr("the other profiles")]))
+        for kind, heading, title, color, goes, stays in cards:
             card = QFrame()
             card.setObjectName("Card")
             inner = QVBoxLayout(card)
             inner.setContentsMargins(18, 14, 18, 14)
-            label = QLabel(text)
-            label.setWordWrap(True)
+            inner.setSpacing(8)
+            head = QLabel(f"<span style='color:{color}; font-size:13pt; font-weight:700'>{heading}</span>")
+            head.setTextFormat(Qt.TextFormat.RichText)
+            inner.addWidget(head)
+            cols = QHBoxLayout()
+            for caption, items, mark in ((tr("Deleted"), goes, "✕"), (tr("Kept"), stays, "✓")):
+                lines = "<br>".join(f"{mark}&nbsp; {i}" for i in items)
+                block = QLabel(f"<b>{caption}</b><br>{lines}")
+                block.setTextFormat(Qt.TextFormat.RichText)
+                block.setAlignment(Qt.AlignmentFlag.AlignTop)
+                cols.addWidget(block, 1)
+            inner.addLayout(cols)
             button = QPushButton(title)
-            button.setObjectName("Quiet")
             button.setCursor(Qt.CursorShape.PointingHandCursor)
-            button.clicked.connect(lambda _c=False, k=kind, t=title: self._reset(k, t))
+            button.setStyleSheet(f"QPushButton {{ color: white; background: {color}; border: none; border-radius: 6px; "
+                                 f"padding: 6px 16px; font-weight: 600; }}")
+            button.clicked.connect(lambda _c=False, k=kind, ti=title: self._reset(k, ti))
             row = QHBoxLayout()
             row.addWidget(button)
             row.addStretch(1)
-            inner.addWidget(label)
             inner.addLayout(row)
             box.addWidget(card)
         box.addStretch(1)
@@ -275,7 +297,10 @@ class PreferencesDialog(QDialog):
 
         from isnady.core import reset
 
-        sure = QMessageBox.warning(self, title, tr("This cannot be undone. Go on?"),
+        what = {"settings": tr("All settings will be deleted; the books and bookmarks stay."),
+                "books": tr("All books will be deleted; the settings and bookmarks stay."),
+                "everything": tr("The books, the settings and the bookmarks will all be deleted.")}[kind]
+        sure = QMessageBox.warning(self, title, what + "\n\n" + tr("This cannot be undone. Go on?"),
                                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                    QMessageBox.StandardButton.No)
         if sure != QMessageBox.StandardButton.Yes:
@@ -309,6 +334,7 @@ class PreferencesDialog(QDialog):
         area.setWidgetResizable(True)
         area.setFrameShape(QFrame.Shape.NoFrame)
         area.setWidget(widget)
+        area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)   # the pages wrap; never scroll sideways
         return area
 
     def _set(self, key: str, value) -> None:

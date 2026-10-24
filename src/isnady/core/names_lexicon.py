@@ -228,7 +228,7 @@ WORDS = {
     "وليد": ("Velîd", "Walid"), "الحر": ("el-Hurr", "al-Hurr"), "خزيمة": ("Huzeyme", "Khuzayma"),
     "نضلة": ("Nadle", "Nadla"), "الشخير": ("eş-Şıhhîr", "al-Shikhkhir"), "سرحان": ("Serhân", "Sarhan"),
     "حجية": ("Hucayye", "Hujayya"), "الأسقع": ("el-Eska'", "al-Asqa'"), "أفلح": ("Eflah", "Aflah"),
-    "النصري": ("en-Nasrî", "al-Nasri"), "شجاع": ("Şucâ'", "Shuja'"), "خيثمة": ("Hayseme", "Khaythama"),
+    "النصري": ("en-Nasrî", "al-Nasri"), "شجاع": ("Şucâ'", "Shuja'"), "خيثمة": ("Hayseme", "Khaythama"), "خثيمة": ("Hayseme", "Khaythama"),  # the Taqrib's spelling for Zuhayr b. Harb
     "الحصين": ("el-Husayn", "al-Husayn"), "العالية": ("el-Âliye", "al-'Aliya"), "الرياحي": ("er-Riyâhî", "al-Riyahi"),
     "واثلة": ("Vâsile", "Wathila"), "ماهك": ("Mâhek", "Mahak"), "بهزاد": ("Behzâd", "Bahzad"),
     "بكار": ("Bekkâr", "Bakkar"), "ميمونة": ("Meymûne", "Maymuna"), "نجيح": ("Necîh", "Najih"),
