@@ -31,6 +31,7 @@ named twice) is cut there. core/companions.py tells the Companions by name.
 PARSER_ID changes whenever the rules change; derived chains are then rebuilt.
 """
 
+import functools
 import re
 import sqlite3
 from dataclasses import dataclass, field
@@ -1274,6 +1275,11 @@ def name_reading(raw_name: str, language: str = "tr") -> tuple[str, bool]:
     return outs[0], spelled
 
 
+# read once per name and language: the same names come back in thousands of chains (a whole-library export, EX3)
+name_reading = functools.lru_cache(maxsize=1 << 16)(name_reading)
+short_name = functools.lru_cache(maxsize=1 << 16)(short_name)
+
+
 # ----------------------------------------------------------------- the chain in words (ISN-TR1)
 # Bayram (2026-10-20): "Senedlerin hepsi arapça ---> altina gosterilen dillerde de gosterilsin arapcasinin altina!"
 # The chain as the Arabic says it, link by link, in a shown language: each name read from the chain's own wording
@@ -1338,6 +1344,9 @@ def _tr_case(name: str, case: str) -> str:
         suffix = ("n" if possessive else "y" if ends_vowel else "") + ("a" if back else "e")
     out = word + ("" if common else "'") + suffix
     return out + (" (" + tail if tail else "")
+
+
+_tr_case = functools.lru_cache(maxsize=1 << 16)(_tr_case)       # the same names, thousands of times
 
 
 def _said(text: str, code: str, **values) -> str:

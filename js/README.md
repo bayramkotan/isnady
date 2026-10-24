@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.4.4-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.4.5-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.4.4-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.4.5-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.4.4).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.4.5).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -786,6 +786,12 @@ the screen; Excel, Word and EPUB files are written without any extra package.
 **Several at once, or all:** books are ticked in a list (All, None, Sunni, Shia) and go into one file, or each into
 its own file in a folder; the isnad network is drawn from the books ticked; several profiles each into their own
 file; and Import takes several files at once.
+
+**Big exports beside the window:** every export runs in a thread of its own, with a progress bar, the time gone and
+the time left, and a Stop button — in the dialog and in the bar at the bottom of the window, so the dialog can be
+closed and isnady used meanwhile. Hadith are read and written one after another: every book in every language, with
+the chains, as one EPUB (99,567 hadith, 51 MB) takes about a minute and little memory; a stopped export leaves no
+half-written file. `iy export` shows the same bar on the terminal.
 
 ```bash
 iy export --list                                     # what, and in which formats

@@ -313,6 +313,10 @@ class MainWindow(QMainWindow):
         row.addWidget(self.pages, 1)
         self.setCentralWidget(central)
         self.statusBar().hide()
+        from isnady.gui.jobs import Jobs
+
+        self.jobs = Jobs(self)               # long exports beside the window, in the bottom bar (EX3)
+        self._open_dialogs: list = []
         self._build_menus()
         self._update_language_buttons()
 
@@ -323,6 +327,17 @@ class MainWindow(QMainWindow):
 
         from isnady.gui import sources_page
 
+        exporting = self.jobs.running() if hasattr(self, "jobs") else []
+        if exporting:
+            answer = QMessageBox.question(
+                self, tr("An export is running"),
+                tr("An export is still being written. If isnady closes now, it is stopped and its unfinished file "
+                   "removed.\n\nClose isnady?"),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+            if answer != QMessageBox.StandardButton.Yes:
+                event.ignore()
+                return
+            self.jobs.stop_all()
         running = [w for w in sources_page._LIVE_WORKERS if w.isRunning()]
         if running:
             answer = QMessageBox.question(
@@ -949,7 +964,14 @@ class MainWindow(QMainWindow):
     def export_dialog(self, kind: str = "hadith", **preset) -> None:
         from isnady.gui.transfer_dialog import ExportDialog
 
-        ExportDialog(self.search_page.connection, self, kind, preset).exec()
+        # not modal: the window can be used while the dialog is open, and while an export runs (EX3)
+        dialog = ExportDialog(self.search_page.connection, self, kind, preset)
+        dialog.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self._open_dialogs.append(dialog)
+        dialog.destroyed.connect(lambda _o=None, d=dialog: d in self._open_dialogs and self._open_dialogs.remove(d))
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
 
     def import_dialog(self, kind: str = "book") -> None:
         from isnady.gui.transfer_dialog import ImportDialog

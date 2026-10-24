@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QMessageBox,
     QPlainTextEdit,
+    QProgressBar,
     QPushButton,
     QStackedWidget,
     QVBoxLayout,
@@ -236,9 +237,17 @@ class ExportDialog(QDialog):
         self.preview.setReadOnly(True)
         self.preview.setPlaceholderText(tr("Preview: what the file will hold"))
         box.addWidget(self.preview, 1)
+        self.progress = QProgressBar()
+        self.progress.setFormat("%p%")
+        self.progress.hide()
+        box.addWidget(self.progress)
         self.status = _label("", "Caption")
         box.addWidget(self.status)
         row = QHBoxLayout()
+        self.stop = QPushButton(tr("Stop"))
+        self.stop.setObjectName("Quiet")
+        self.stop.clicked.connect(self._stop_job)
+        self.stop.hide()
         look = QPushButton(tr("Preview"))
         look.setObjectName("Quiet")
         look.clicked.connect(self._preview)
@@ -250,6 +259,7 @@ class ExportDialog(QDialog):
         close.clicked.connect(self.reject)
         row.addWidget(look)
         row.addStretch(1)
+        row.addWidget(self.stop)
         row.addWidget(close)
         row.addWidget(self.go)
         box.addLayout(row)
@@ -423,30 +433,71 @@ class ExportDialog(QDialog):
                 return
             if not name.endswith(T.suffix(fmt)) and not name.endswith(Path(T.suffix(fmt)).suffix):
                 name += T.suffix(fmt)
-        if fmt == "pdf":                     # Qt draws a PDF in the window's own thread
-            QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-            try:
-                path = T.export(self._conn_of(), kind, fmt, name, pdf=self._pdf(),
-                                progress=lambda m: self.status.setText(m), **args)
-                self._done(True, str(path))
-            except (T.TransferError, OSError) as exc:
-                self._done(False, str(exc))
-            finally:
-                QGuiApplication.restoreOverrideCursor()
-            return
+        # every export in a thread of its own, with a progress bar and Stop, here and in the window's bottom bar
+        # (EX3, Bayram 2026-10-24: "en azindan ayri bir threat olabilir, bunun disinda progress bar da olabilir"):
+        # this dialog can be closed while it runs, and the window stays usable
+        pdf = self._pdf() if fmt == "pdf" else None
+        title = tr("Export") + f" · {Path(name).name}"
+
+        def work(conn, say, tick):
+            return T.export(conn, kind, fmt, name, pdf=pdf, progress=say, tick=tick, **args)
+
+        jobs = getattr(self.parent(), "jobs", None)
+        if jobs is not None:
+            job = jobs.start(work, title)
+        else:                                            # no window (a test): a job of the dialog's own
+            from isnady.gui.jobs import Job
+
+            job = Job(work, title)
+            job.start()
+        self._job = job
+        job.progress.connect(self._said)
+        job.ticked.connect(self._ticked)
+        job.done.connect(self._done)
+        self.progress.setRange(0, 0)
+        self.progress.show()
+        self.stop.show()
+        self.stop.setEnabled(True)
         self.go.setEnabled(False)
-        self.status.setText(tr("Exporting…"))
-        self._job = _Job(lambda conn, say: T.export(conn, kind, fmt, name, progress=say, **args))
-        self._job.progress.connect(self.status.setText)
-        self._job.done.connect(self._done)
-        self._job.start()
+        self.status.setText(tr("Exporting… This window can be closed: the export goes on, its progress is shown at "
+                               "the bottom of the main window."))
+
+    def _said(self, message: str) -> None:
+        self._last_said = message
+        if self.progress.maximum() == 0:
+            self.status.setText(message)
+
+    def _ticked(self, done: int, total: int) -> None:
+        from isnady.gui.jobs import describe
+
+        if total <= 0 or self._job is None:
+            return
+        if self.progress.maximum() != total:
+            self.progress.setRange(0, total)
+        self.progress.setValue(done)
+        _p, text = describe(self._job, done, total)
+        book = (getattr(self, "_last_said", "") or "").split(" · ")[0]
+        self.status.setText((book + " · " if book else "") + text)
+
+    def _stop_job(self) -> None:
+        if self._job is not None:
+            self._job.stop()
+            self.stop.setEnabled(False)
+            self.status.setText(tr("Stopping…"))
 
     def _done(self, ok: bool, message: str) -> None:
         self.go.setEnabled(True)
+        self.progress.hide()
+        self.stop.hide()
+        cancelled = bool(self._job is not None and getattr(self._job, "cancelled", False))
+        self._job = None
         if not ok:
-            self.status.setText(tr("Failed: ") + message)
+            self.status.setText(tr("Stopped; the unfinished file was removed.") if cancelled
+                                else tr("Failed: ") + message)
             return
         self.status.setText(tr("Written: {path}", path=message))
+        if not self.isVisible():
+            return                                     # closed meanwhile: the bottom bar says it
         box = QMessageBox(QMessageBox.Icon.Information, tr("Export"), tr("Written: {path}", path=message), parent=self)
         show = box.addButton(tr("Show in folder"), QMessageBox.ButtonRole.ActionRole)
         box.addButton(QMessageBox.StandardButton.Ok)

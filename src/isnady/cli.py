@@ -57,6 +57,7 @@ import os.path
 import getpass
 import os
 import sys
+import time
 
 from isnady import APP_NAME, __version__
 from isnady.core import isnad as core_isnad
@@ -1612,6 +1613,16 @@ def cmd_export(args) -> int:
     if fmt == "pdf":
         from isnady.gui.pdf import html_to_pdf as pdf
     road = None if args.tradition == "all" else args.tradition
+    # a bar on the terminal for the long ones (EX3): "  37%  36,912 / 99,567 hadith  1 min 2 s"
+    interactive = sys.stderr.isatty()
+    started = time.monotonic()
+
+    def bar(done: int, total: int) -> None:
+        if total:
+            gone = int(time.monotonic() - started)
+            print(f"\r  {done * 100 // total:3d}%  {done:,} / {total:,} hadith  {gone // 60} min {gone % 60} s ",
+                  end="", file=sys.stderr, flush=True)
+
     try:
         several = kind in ("book", "network", "profile") and len(args.target) > 1 or \
             (kind in ("book", "network") and args.target[:1] in (["all"], ["sunni"], ["shia"]))
@@ -1628,13 +1639,19 @@ def cmd_export(args) -> int:
                                languages=args.language, chains=not args.no_chains,
                                tradition=road if kind != "narrators" else (road if args.tradition else "sunni"),
                                profile=args.target[0] if kind == "profile" and args.target else None, pdf=pdf,
-                               progress=lambda m: print(f"  {m}", file=sys.stderr))
+                               progress=lambda m: None if interactive else print(f"  {m}", file=sys.stderr),
+                               tick=bar if interactive else None)
     except transfer.TransferError as exc:
-        print(exc, file=sys.stderr)
+        print(("\n" if interactive else "") + str(exc), file=sys.stderr)
         return 1
+    except KeyboardInterrupt:
+        print("\nStopped.", file=sys.stderr)
+        return 130
     finally:
         if conn is not None:
             conn.close()
+    if interactive:
+        print(file=sys.stderr)
     print(f"Written ({formats.LABELS.get(fmt, fmt)}): {path}")
     return 0
 

@@ -42,10 +42,16 @@ LABELS = {"json": N_("JSON"), "jsonl": N_("JSON Lines"), "csv": N_("CSV"), "tsv"
 _ARABIC = re.compile(r"[\u0600-\u06ff]")
 
 
+_ARABIC_LETTERS = re.compile(r"[\u0600-\u06ff]")
+_OTHER_LETTERS = re.compile(r"[^\W\d_\u0600-\u06ff]")
+
+
 def rtl(text: str) -> bool:
-    """Mostly Arabic script: written right to left."""
-    letters = [c for c in text[:400] if c.isalpha()]
-    return bool(letters) and sum(1 for c in letters if _ARABIC.match(c)) > len(letters) / 2
+    """Mostly Arabic script: written right to left. (Counted with two patterns over the first 400 characters: asked
+    for every paragraph of every hadith, it was a third of the time of a whole-book EPUB.)"""
+    head = text[:400]
+    arabic = len(_ARABIC_LETTERS.findall(head))
+    return arabic > 0 and arabic > len(_OTHER_LETTERS.findall(head))
 
 
 # ------------------------------------------------------------------ the two shapes
@@ -223,75 +229,227 @@ def _xlsx(table: Table, path: Path) -> None:
 
 
 # ------------------------------------------------------------------ documents
+# ------------------------------------------------------------------ documents, written as they come (EX3)
+# A document is written section by section: the whole of every book (99,567 hadith in every language — Bayram,
+# 2026-10-24: "epub olarak hepsini tum dilleri ile … cok cok uzuyor") is never held in memory at once, and the file
+# grows while the hadith are read. write_document is the same writer given every section at once.
+
+def _section_html(section: Section) -> str:
+    out = []
+    if section.heading:
+        out.append(f"<h2>{html.escape(section.heading)}</h2>")
+    for e in section.entries:
+        out.append(f"<h3>{html.escape(e.heading)}</h3>")
+        for label, text in e.paragraphs:
+            if not text:
+                continue
+            cls = "ar" if rtl(text) else ""
+            lab = f"<span class='label'>{html.escape(label)}:</span> " if label and not cls else ""
+            out.append(f"<p class='{cls}' dir='{'rtl' if cls else 'ltr'}'>{lab}{html.escape(text)}</p>")
+        if e.note:
+            out.append(f"<p class='note'>{html.escape(e.note)}</p>")
+    return "\n".join(out)
+
+
+def _section_markdown(section: Section) -> str:
+    out = [f"## {section.heading}", ""] if section.heading else []
+    for e in section.entries:
+        out += [f"### {e.heading}", ""]
+        for label, text in e.paragraphs:
+            if text:
+                out += [(f"**{label}:** " if label and not rtl(text) else "") + text, ""]
+        if e.note:
+            out += [f"_{e.note}_", ""]
+    return "\n".join(out)
+
+
+def _section_text(section: Section) -> str:
+    out = [section.heading, "-" * min(len(section.heading), 70), ""] if section.heading else []
+    for e in section.entries:
+        out.append(e.heading)
+        for label, text in e.paragraphs:
+            if text:
+                out.append((f"{label}: " if label and not rtl(text) else "") + text)
+        if e.note:
+            out.append(e.note)
+        out.append("")
+    return "\n".join(out)
+
+
+def _section_xhtml(section: Section, title: str) -> str:
+    parts = [f"<h2>{_xml(section.heading or title)}</h2>"]
+    for e in section.entries:
+        parts.append(f"<h3>{_xml(e.heading)}</h3>")
+        for label, text in e.paragraphs:
+            if text:
+                if rtl(text):
+                    parts.append(f'<p class="ar" dir="rtl">{_xml(text)}</p>')
+                else:
+                    lead = f'<span class="label">{_xml(label)}:</span> ' if label else ""
+                    parts.append(f"<p>{lead}{_xml(text)}</p>")
+        if e.note:
+            parts.append(f'<p class="note">{_xml(e.note)}</p>')
+    return "".join(parts)
+
+
+def _docx_para(text: str, style: str = "", bold: bool = False) -> str:
+    right = rtl(text)
+    ppr = (f'<w:pStyle w:val="{style}"/>' if style else "") + ('<w:bidi/><w:jc w:val="right"/>' if right else "")
+    rpr = ("<w:b/>" if bold else "") + ('<w:rtl/><w:rFonts w:cs="Amiri"/><w:szCs w:val="32"/>' if right else "")
+    return (f'<w:p><w:pPr>{ppr}</w:pPr><w:r><w:rPr>{rpr}</w:rPr><w:t xml:space="preserve">{_xml(text)}</w:t>'
+            '</w:r></w:p>')
+
+
+def _section_docx(section: Section) -> str:
+    body = [_docx_para(section.heading, "Heading1")] if section.heading else []
+    for e in section.entries:
+        body.append(_docx_para(e.heading, "Heading2"))
+        for label, text in e.paragraphs:
+            if text:
+                body.append(_docx_para(text if rtl(text) or not label else f"{label}: {text}"))
+        if e.note:
+            body.append(_docx_para(e.note))
+    return "".join(body)
+
+
+class DocumentWriter:
+    """with DocumentWriter(fmt, path, title, subtitle) as w: w.section(s) … — html, md, txt, epub and docx, each
+    section written as it comes. Leaving the block by an error (or a stop) removes the half-written file."""
+
+    def __init__(self, fmt: str, path: Path, title: str, subtitle: str = "") -> None:
+        if fmt not in ("html", "md", "txt", "epub", "docx"):
+            raise ValueError(f"A document is not written as {fmt}.")
+        self.fmt, self.path, self.title, self.subtitle = fmt, Path(path), title, subtitle
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._chapters: list[tuple[str, str]] = []
+        self._zip = None
+        self._file = None
+        self._body_path = None
+        if fmt == "epub":
+            self._zip = zipfile.ZipFile(self.path, "w")
+            self._zip.writestr(zipfile.ZipInfo("mimetype"), "application/epub+zip")   # stored, first (EPUB rule)
+        elif fmt == "docx":
+            # Word keeps the body in one part: written to a file beside the target piece by piece, zipped at the end
+            self._body_path = self.path.with_name(self.path.name + ".part")
+            self._file = self._body_path.open("w", encoding="utf-8")
+            self._file.write(_docx_para(title, "Title") + (_docx_para(subtitle) if subtitle else ""))
+        else:
+            self._file = self.path.open("w", encoding="utf-8")
+            if fmt == "html":
+                self._file.write(f"<!doctype html><html><head><meta charset='utf-8'><title>{html.escape(title)}"
+                                 f"</title><style>{_CSS}</style></head><body><h1>{html.escape(title)}</h1>\n"
+                                 + (f"<p class='sub'>{html.escape(subtitle)}</p>\n" if subtitle else ""))
+            elif fmt == "md":
+                self._file.write("\n".join([f"# {title}", ""] + ([f"*{subtitle}*", ""] if subtitle else [])) + "\n")
+            else:
+                self._file.write("\n".join([title, "=" * min(len(title), 70), ""] + ([subtitle, ""] if subtitle
+                                                                                     else [])) + "\n")
+
+    def __enter__(self) -> "DocumentWriter":
+        return self
+
+    def __exit__(self, kind, _value, _tb) -> None:
+        if kind is None:
+            self.close()
+        else:
+            self.abort()
+
+    def section(self, section: Section) -> None:
+        if self.fmt == "html":
+            self._file.write(_section_html(section) + "\n")
+        elif self.fmt == "md":
+            self._file.write(_section_markdown(section) + "\n")
+        elif self.fmt == "txt":
+            self._file.write(_section_text(section) + "\n")
+        elif self.fmt == "docx":
+            self._file.write(_section_docx(section))
+        else:
+            name = f"c{len(self._chapters) + 1:05}.xhtml"
+            heading = section.heading or self.title
+            self._zip.writestr(f"OEBPS/{name}", _xhtml(heading, _section_xhtml(section, self.title)),
+                               zipfile.ZIP_DEFLATED)
+            self._chapters.append((name, heading))
+
+    def close(self) -> Path:
+        if self.fmt == "epub":
+            self._close_epub()
+        elif self.fmt == "docx":
+            self._file.close()
+            _docx_zip(self.path, self._body_path)
+            self._body_path.unlink()
+        else:
+            if self.fmt == "html":
+                self._file.write("</body></html>")
+            self._file.close()
+        return self.path
+
+    def abort(self) -> None:
+        for handle in (self._zip, self._file):
+            try:
+                if handle is not None:
+                    handle.close()
+            except Exception:
+                pass
+        for leftover in (self.path, self._body_path):
+            try:
+                if leftover is not None and leftover.exists():
+                    leftover.unlink()
+            except OSError:
+                pass
+
+    def _close_epub(self) -> None:
+        z = self._zip
+        if not self._chapters:
+            z.writestr("OEBPS/c00001.xhtml", _xhtml(self.title, f"<h2>{_xml(self.title)}</h2>"), zipfile.ZIP_DEFLATED)
+            self._chapters.append(("c00001.xhtml", self.title))
+        chapters = self._chapters
+        book_id = f"urn:uuid:{uuid.uuid4()}"
+        nav = "".join(f'<li><a href="{f}">{_xml(t)}</a></li>' for f, t in chapters)
+        z.writestr("META-INF/container.xml",
+                   '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:'
+                   'container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/'
+                   'oebps-package+xml"/></rootfiles></container>', zipfile.ZIP_DEFLATED)
+        manifest = "".join(f'<item id="c{i}" href="{f}" media-type="application/xhtml+xml"/>'
+                           for i, (f, _t) in enumerate(chapters, 1))
+        spine = "".join(f'<itemref idref="c{i}"/>' for i in range(1, len(chapters) + 1))
+        z.writestr("OEBPS/content.opf",
+                   '<?xml version="1.0" encoding="utf-8"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" '
+                   f'unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier '
+                   f'id="id">{book_id}</dc:identifier><dc:title>{_xml(self.title)}</dc:title><dc:language>ar'
+                   f'</dc:language><meta property="dcterms:modified">{time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}'
+                   '</meta></metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" '
+                   f'properties="nav"/>{manifest}</manifest><spine>{spine}</spine></package>', zipfile.ZIP_DEFLATED)
+        z.writestr("OEBPS/nav.xhtml", _xhtml(self.title, f'<nav epub:type="toc"><h1>{_xml(self.title)}</h1><ol>{nav}'
+                                                         '</ol></nav>'), zipfile.ZIP_DEFLATED)
+        z.close()
+
+
 def document_html(doc: Document) -> str:
+    """The whole document as one HTML page (the preview, and the PDF Qt draws from it)."""
     out = [f"<!doctype html><html><head><meta charset='utf-8'><title>{html.escape(doc.title)}</title>"
            f"<style>{_CSS}</style></head><body><h1>{html.escape(doc.title)}</h1>"]
     if doc.subtitle:
         out.append(f"<p class='sub'>{html.escape(doc.subtitle)}</p>")
-    for section in doc.sections:
-        if section.heading:
-            out.append(f"<h2>{html.escape(section.heading)}</h2>")
-        for e in section.entries:
-            out.append(f"<h3>{html.escape(e.heading)}</h3>")
-            for label, text in e.paragraphs:
-                if not text:
-                    continue
-                cls = "ar" if rtl(text) else ""
-                lab = f"<span class='label'>{html.escape(label)}:</span> " if label and not cls else ""
-                out.append(f"<p class='{cls}' dir='{'rtl' if cls else 'ltr'}'>{lab}{html.escape(text)}</p>")
-            if e.note:
-                out.append(f"<p class='note'>{html.escape(e.note)}</p>")
+    out += [_section_html(section) for section in doc.sections]
     out.append("</body></html>")
     return "\n".join(out)
 
 
 def document_markdown(doc: Document) -> str:
     out = [f"# {doc.title}", ""] + ([f"*{doc.subtitle}*", ""] if doc.subtitle else [])
-    for section in doc.sections:
-        if section.heading:
-            out += [f"## {section.heading}", ""]
-        for e in section.entries:
-            out += [f"### {e.heading}", ""]
-            for label, text in e.paragraphs:
-                if text:
-                    out += [(f"**{label}:** " if label and not rtl(text) else "") + text, ""]
-            if e.note:
-                out += [f"_{e.note}_", ""]
-    return "\n".join(out)
+    return "\n".join(out + [_section_markdown(section) for section in doc.sections])
 
 
 def document_text(doc: Document) -> str:
     out = [doc.title, "=" * min(len(doc.title), 70), ""] + ([doc.subtitle, ""] if doc.subtitle else [])
-    for section in doc.sections:
-        if section.heading:
-            out += [section.heading, "-" * min(len(section.heading), 70), ""]
-        for e in section.entries:
-            out.append(e.heading)
-            for label, text in e.paragraphs:
-                if text:
-                    out.append((f"{label}: " if label and not rtl(text) else "") + text)
-            if e.note:
-                out.append(e.note)
-            out.append("")
-    return "\n".join(out)
+    return "\n".join(out + [_section_text(section) for section in doc.sections])
 
 
 def write_document(doc: Document, fmt: str, path: Path) -> Path:
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if fmt == "html":
-        path.write_text(document_html(doc), encoding="utf-8")
-    elif fmt == "md":
-        path.write_text(document_markdown(doc), encoding="utf-8")
-    elif fmt == "txt":
-        path.write_text(document_text(doc), encoding="utf-8")
-    elif fmt == "epub":
-        _epub(doc, path)
-    elif fmt == "docx":
-        _docx(doc, path)
-    else:
-        raise ValueError(f"A document is not written as {fmt}.")
-    return path
+    with DocumentWriter(fmt, path, doc.title, doc.subtitle) as w:
+        for section in doc.sections:
+            w.section(section)
+    return Path(path)
 
 
 def _xhtml(title: str, body: str) -> str:
@@ -300,72 +458,8 @@ def _xhtml(title: str, body: str) -> str:
             f'<title>{_xml(title)}</title><style>{_CSS}</style></head><body>{body}</body></html>')
 
 
-def _epub(doc: Document, path: Path) -> None:
-    book_id = f"urn:uuid:{uuid.uuid4()}"
-    chapters = []
-    sections = doc.sections or [Section("", [])]
-    for i, section in enumerate(sections, 1):
-        parts = [f"<h2>{_xml(section.heading or doc.title)}</h2>"]
-        for e in section.entries:
-            parts.append(f"<h3>{_xml(e.heading)}</h3>")
-            for label, text in e.paragraphs:
-                if text:
-                    if rtl(text):
-                        parts.append(f'<p class="ar" dir="rtl">{_xml(text)}</p>')
-                    else:
-                        lead = f'<span class="label">{_xml(label)}:</span> ' if label else ""
-                        parts.append(f"<p>{lead}{_xml(text)}</p>")
-            if e.note:
-                parts.append(f'<p class="note">{_xml(e.note)}</p>')
-        chapters.append((f"c{i:04}.xhtml", section.heading or doc.title, _xhtml(section.heading or doc.title,
-                                                                                 "".join(parts))))
-    nav = "".join(f'<li><a href="{f}">{_xml(t)}</a></li>' for f, t, _b in chapters)
-    with zipfile.ZipFile(path, "w") as z:
-        z.writestr(zipfile.ZipInfo("mimetype"), "application/epub+zip")          # stored, first (EPUB rule)
-        z.writestr("META-INF/container.xml",
-                   '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:'
-                   'container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/'
-                   'oebps-package+xml"/></rootfiles></container>', zipfile.ZIP_DEFLATED)
-        manifest = "".join(f'<item id="c{i}" href="{f}" media-type="application/xhtml+xml"/>'
-                           for i, (f, _t, _b) in enumerate(chapters, 1))
-        spine = "".join(f'<itemref idref="c{i}"/>' for i in range(1, len(chapters) + 1))
-        z.writestr("OEBPS/content.opf",
-                   '<?xml version="1.0" encoding="utf-8"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" '
-                   f'unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier '
-                   f'id="id">{book_id}</dc:identifier><dc:title>{_xml(doc.title)}</dc:title><dc:language>ar'
-                   f'</dc:language><meta property="dcterms:modified">{time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}'
-                   '</meta></metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" '
-                   f'properties="nav"/>{manifest}</manifest><spine>{spine}</spine></package>', zipfile.ZIP_DEFLATED)
-        z.writestr("OEBPS/nav.xhtml", _xhtml(doc.title, f'<nav epub:type="toc"><h1>{_xml(doc.title)}</h1><ol>{nav}'
-                                                         '</ol></nav>'), zipfile.ZIP_DEFLATED)
-        for f, _t, body in chapters:
-            z.writestr(f"OEBPS/{f}", body, zipfile.ZIP_DEFLATED)
-
-
-def _docx(doc: Document, path: Path) -> None:
-    def para(text: str, style: str = "", bold: bool = False) -> str:
-        right = rtl(text)
-        ppr = (f'<w:pStyle w:val="{style}"/>' if style else "") + ('<w:bidi/><w:jc w:val="right"/>' if right else "")
-        rpr = ("<w:b/>" if bold else "") + ('<w:rtl/><w:rFonts w:cs="Amiri"/><w:szCs w:val="32"/>' if right else "")
-        return (f'<w:p><w:pPr>{ppr}</w:pPr><w:r><w:rPr>{rpr}</w:rPr><w:t xml:space="preserve">{_xml(text)}</w:t>'
-                '</w:r></w:p>')
-    body = [para(doc.title, "Title")]
-    if doc.subtitle:
-        body.append(para(doc.subtitle))
-    for section in doc.sections:
-        if section.heading:
-            body.append(para(section.heading, "Heading1"))
-        for e in section.entries:
-            body.append(para(e.heading, "Heading2"))
-            for label, text in e.paragraphs:
-                if text:
-                    body.append(para(text if rtl(text) or not label else f"{label}: {text}"))
-            if e.note:
-                body.append(para(e.note))
-    document = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.'
-                'openxmlformats.org/wordprocessingml/2006/main"><w:body>' + "".join(body) +
-                '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" '
-                'w:left="1134"/></w:sectPr></w:body></w:document>')
+def _docx_zip(path: Path, body_path: Path) -> None:
+    """The Word file around a body written beforehand (DocumentWriter)."""
     styles = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.'
               'openxmlformats.org/wordprocessingml/2006/main">'
               '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:rPr><w:sz '
@@ -392,7 +486,16 @@ def _docx(doc: Document, path: Path) -> None:
                    '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/'
                    'package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/'
                    'officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>')
-        z.writestr("word/document.xml", document)
+        with z.open("word/document.xml", "w") as out, Path(body_path).open("rb") as body:
+            out.write(('<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.'
+                       'openxmlformats.org/wordprocessingml/2006/main"><w:body>').encode("utf-8"))
+            while True:
+                chunk = body.read(1 << 20)
+                if not chunk:
+                    break
+                out.write(chunk)
+            out.write(('<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" '
+                       'w:bottom="1134" w:left="1134"/></w:sectPr></w:body></w:document>').encode("utf-8"))
         z.writestr("word/styles.xml", styles)
 
 

@@ -3,6 +3,22 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.4.5] — 2026-10-24
+
+- **Big exports beside the window, with a progress bar (2026-10-24: "epub olarak hepsini tum dilleri ile export
+  etmesini istedim. cok cok uzuyor ama en azindan ayri bir threat olabilir, bunun disinda progress bar da
+  olabilir").** Every export, PDF too, runs in a thread of its own. The dialog and the bar at the bottom of the window
+  show how far it has come (a bar with the percentage, "36,912 / 99,567", the book being written, the time gone and
+  about how long is left) and a Stop button; the dialog is no longer modal and can be closed — the export goes on,
+  and the bottom bar says where the file was written ("Show in folder"). Stopped, the unfinished file is removed;
+  closing isnady during an export asks first. `iy export` shows the same bar on the terminal, and Ctrl+C stops it.
+- **Faster, and in little memory.** The hadith are read and written one after another: an EPUB, Word, HTML,
+  Markdown, text, JSON, JSON Lines, CSV or TSV file grows while the hadith are read, instead of every book being
+  gathered in memory first. Every book in every language with the chains as one EPUB (99,567 hadith, 51 MB): 55
+  seconds and 295 MB instead of 96 seconds and 1.2 GB on the same computer. Each name of a chain is read once
+  (not again in every chain it stands in), each chapter title is asked once, and telling Arabic from other text
+  costs a fraction of what it did.
+
 ## [0.4.4] — 2026-10-24
 
 - **Going through a book with ease (2026-10-24: "kitaplari rahat dolasmak lazim! Max hadis nerede???? max sayfa

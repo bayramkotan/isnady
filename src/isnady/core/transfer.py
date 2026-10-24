@@ -39,6 +39,7 @@ from isnady import __version__
 from isnady.core import formats as F
 
 Progress = Callable[[str], None]
+Tick = Callable[[int, int], None]        # (done, total): how far a long export is — the window's progress bar (EX3)
 
 KINDS: dict[str, dict] = {
     "hadith": {"label": "Hadith", "export": ["json", "jsonl", "csv", "tsv", "xlsx", "md", "html", "txt", "epub",
@@ -62,6 +63,10 @@ DOCUMENT_KINDS = ("hadith", "book", "search")
 
 class TransferError(Exception):
     pass
+
+
+class Cancelled(TransferError):
+    """Stopped by the reader (the Stop button): the half-written file is removed."""
 
 
 def _meta(kind: str, **more) -> dict:
@@ -107,23 +112,44 @@ def _languages_of(conn: sqlite3.Connection, hadith_ids: list[int], wanted: list[
     return chosen
 
 
-def hadith_records(conn: sqlite3.Connection, hadith_ids: list[int], languages: list[str] | None = None,
-                   chains: bool = True, progress: Progress | None = None) -> list[dict]:
-    """Each hadith as a record: book, number, chapter, texts by language, grades, chains (Arabic, Turkish, English)."""
+def _languages_present(conn: sqlite3.Connection, hadith_ids: list[int], langs: list[str]) -> list[str]:
+    """Of the languages chosen, those the books of these hadith have (the columns of a table)."""
+    have: set[str] = set()
+    for start in range(0, len(hadith_ids), 900):
+        chunk = hadith_ids[start:start + 900]
+        have.update(r[0] for r in conn.execute(
+            f"""SELECT DISTINCT e.language FROM editions e WHERE e.collection_id IN
+                (SELECT DISTINCT collection_id FROM hadiths WHERE id IN ({','.join('?' * len(chunk))}))""", chunk))
+    return [lang for lang in langs if lang in have]
+
+
+def iter_records(conn: sqlite3.Connection, hadith_ids: list[int], languages: list[str] | None = None,
+                 chains: bool = True, progress: Progress | None = None, tick: Tick | None = None):
+    """Each hadith as a record, one after another (EX3: a whole library is never held at once): book, number,
+    chapter, texts by language, grades, chains (Arabic, Turkish, English). tick(done, total) is told every few
+    hadith; it may raise Cancelled to stop."""
     from isnady.core import isnad
 
     say = progress or (lambda _m: None)
     langs = _languages_of(conn, hadith_ids, languages)
-    out = []
+    total = len(hadith_ids)
+    titles: dict[tuple, str | None] = {}            # (book, chapter, edition) → the chapter's title, asked once
+    book_now = None
     for i, hid in enumerate(hadith_ids):
-        if i and i % 500 == 0:
-            say(f"{i:,} / {len(hadith_ids):,}")
-        head = conn.execute("""SELECT h.number, h.section_number, c.key, c.name, COALESCE(c.tradition, 'sunni')
+        if tick is not None and (i % 25 == 0):
+            tick(i, total)
+        head = conn.execute("""SELECT h.number, h.section_number, c.key, c.name, COALESCE(c.tradition, 'sunni'),
+                                      h.collection_id
                                FROM hadiths h JOIN collections c ON c.id = h.collection_id WHERE h.id = ?""",
                             (hid,)).fetchone()
         if head is None:
             continue
-        number, section, key, name, road = head
+        number, section, key, name, road, cid = head
+        if key != book_now:
+            from isnady.core import titles
+
+            book_now = key
+            say(f"{titles.book(key, name)} · {i:,} / {total:,}")      # the book's name in the interface language
         texts: dict[str, str] = {}
         chapter: dict[str, str] = {}
         for lang, text, eid in conn.execute(
@@ -132,12 +158,14 @@ def hadith_records(conn: sqlite3.Connection, hadith_ids: list[int], languages: l
             if lang in langs and lang not in texts:
                 texts[lang] = text
                 if section is not None:
-                    row = conn.execute("""SELECT st.title FROM section_titles st JOIN sections s ON s.id = st.section_id
-                                          JOIN hadiths h ON h.collection_id = s.collection_id
-                                          WHERE h.id = ? AND s.number = ? AND st.edition_id = ?""",
-                                       (hid, section, eid)).fetchone()
-                    if row:
-                        chapter[lang] = row[0]
+                    cache_key = (cid, section, eid)
+                    if cache_key not in titles:
+                        row = conn.execute("""SELECT st.title FROM section_titles st JOIN sections s ON s.id = st.section_id
+                                              WHERE s.collection_id = ? AND s.number = ? AND st.edition_id = ?""",
+                                           cache_key).fetchone()
+                        titles[cache_key] = row[0] if row else None
+                    if titles[cache_key]:
+                        chapter[lang] = titles[cache_key]
         grades = [[g, v] for g, v in conn.execute(
             "SELECT grader_name, grade FROM grades WHERE hadith_id = ? ORDER BY id", (hid,))]
         record = {"book": key, "book_title": name, "tradition": road, "number": number, "chapter_number": section,
@@ -154,8 +182,15 @@ def hadith_records(conn: sqlite3.Connection, hadith_ids: list[int], languages: l
                     "narrators": [{"name": link["raw_name"], "term": link["transmission"],
                                    "identified": bool(link.get("person_id"))} for link in ch["links"]],
                     "reaches": isnad.end_label(ch) if (ch["reaches_prophet"] or ch.get("ends_with")) else ""})
-        out.append(record)
-    return out
+        yield record
+    if tick is not None:
+        tick(total, total)
+
+
+def hadith_records(conn: sqlite3.Connection, hadith_ids: list[int], languages: list[str] | None = None,
+                   chains: bool = True, progress: Progress | None = None) -> list[dict]:
+    """Every record at once (a few hadith: a preview, an import test)."""
+    return list(iter_records(conn, hadith_ids, languages, chains, progress))
 
 
 def book_ids(conn: sqlite3.Connection, book: str, chapter: int | None = None) -> list[int]:
@@ -230,52 +265,67 @@ def search_ids(conn: sqlite3.Connection, text: str, limit: int = 1000, books: li
     return [r.hadith_id for r in page.results]
 
 
-def hadith_table(records: list[dict], title: str, meta: dict) -> F.Table:
-    langs = list(dict.fromkeys(lang for r in records for lang in r["texts"]))
-    with_chains = any("chains" in r for r in records)
+def hadith_columns(langs: list[str], with_chains: bool) -> list[str]:
     cols = ["book", "book_title", "tradition", "number", "chapter_number", "chapter"] + \
         [f"text_{lang}" for lang in langs] + ["grades"]
     if with_chains:
         cols += ["chain_arabic", "chain_turkish", "chain_english", "reaches"]
-    rows = []
+    return cols
+
+
+def hadith_row(r: dict, langs: list[str], with_chains: bool) -> dict:
+    row = {"book": r["book"], "book_title": r["book_title"], "tradition": r["tradition"], "number": r["number"],
+           "chapter_number": r["chapter_number"], "chapter": next(iter(r["chapter"].values()), ""),
+           "grades": "; ".join(f"{g}: {v}" for g, v in r["grades"])}
+    for lang in langs:
+        row[f"text_{lang}"] = r["texts"].get(lang, "")
+    if with_chains:
+        chains = r.get("chains") or []
+        row["chain_arabic"] = " ‖ ".join(c["arabic"] for c in chains)
+        row["chain_turkish"] = " ‖ ".join(c["turkish"] for c in chains)
+        row["chain_english"] = " ‖ ".join(c["english"] for c in chains)
+        row["reaches"] = " ‖ ".join(c["reaches"] for c in chains if c["reaches"])
+    return row
+
+
+def hadith_table(records: list[dict], title: str, meta: dict) -> F.Table:
+    langs = list(dict.fromkeys(lang for r in records for lang in r["texts"]))
+    with_chains = any("chains" in r for r in records)
+    return F.Table(title, hadith_columns(langs, with_chains), [hadith_row(r, langs, with_chains) for r in records],
+                   meta)
+
+
+def _entry(r: dict) -> F.Entry:
+    from isnady.core.i18n import tr
+
+    paragraphs: list[tuple[str, str]] = []
+    for c in r.get("chains") or []:
+        paragraphs.append((tr("Chain"), c["arabic"]))
+        paragraphs.append((tr("Turkish"), c["turkish"]))
+        paragraphs.append((tr("English"), c["english"]))
+    for lang, text in r["texts"].items():
+        paragraphs.append((tr(lang), text))
+    note = "; ".join(f"{g}: {v}" for g, v in r["grades"])
+    return F.Entry(f"{r['book_title']} {r['number']}", paragraphs, note)
+
+
+def hadith_sections(records):
+    """The records grouped by book and chapter, one section after another as the records come."""
+    section, current = None, None
     for r in records:
-        row = {"book": r["book"], "book_title": r["book_title"], "tradition": r["tradition"], "number": r["number"],
-               "chapter_number": r["chapter_number"],
-               "chapter": next(iter(r["chapter"].values()), ""),
-               "grades": "; ".join(f"{g}: {v}" for g, v in r["grades"])}
-        for lang in langs:
-            row[f"text_{lang}"] = r["texts"].get(lang, "")
-        if with_chains:
-            chains = r.get("chains") or []
-            row["chain_arabic"] = " ‖ ".join(c["arabic"] for c in chains)
-            row["chain_turkish"] = " ‖ ".join(c["turkish"] for c in chains)
-            row["chain_english"] = " ‖ ".join(c["english"] for c in chains)
-            row["reaches"] = " ‖ ".join(c["reaches"] for c in chains if c["reaches"])
-        rows.append(row)
-    return F.Table(title, cols, rows, meta)
+        key = (r["book"], r["chapter_number"])
+        if key != current:
+            if section is not None:
+                yield section
+            heading = r["book_title"] + (f" — {next(iter(r['chapter'].values()))}" if r["chapter"] else "")
+            section, current = F.Section(heading), key
+        section.entries.append(_entry(r))
+    if section is not None:
+        yield section
 
 
 def hadith_document(records: list[dict], title: str, subtitle: str = "") -> F.Document:
-    from isnady.core.i18n import tr
-
-    sections: list[F.Section] = []
-    current_key = None
-    for r in records:
-        key = (r["book"], r["chapter_number"])
-        if key != current_key:
-            heading = r["book_title"] + (f" — {next(iter(r['chapter'].values()))}" if r["chapter"] else "")
-            sections.append(F.Section(heading))
-            current_key = key
-        paragraphs: list[tuple[str, str]] = []
-        for c in r.get("chains") or []:
-            paragraphs.append((tr("Chain"), c["arabic"]))
-            paragraphs.append((tr("Turkish"), c["turkish"]))
-            paragraphs.append((tr("English"), c["english"]))
-        for lang, text in r["texts"].items():
-            paragraphs.append((tr(lang), text))
-        note = "; ".join(f"{g}: {v}" for g, v in r["grades"])
-        sections[-1].entries.append(F.Entry(f"{r['book_title']} {r['number']}", paragraphs, note))
-    return F.Document(title, sections, subtitle)
+    return F.Document(title, list(hadith_sections(records)), subtitle)
 
 
 def bookmark_table(store=None) -> F.Table:
@@ -360,13 +410,18 @@ def export(conn: sqlite3.Connection | None, kind: str, fmt: str, target: str | P
            chapter: int | None = None, refs: list[str] | None = None, query: str = "",
            languages: list[str] | None = None, chains: bool = True, tradition: str | None = "sunni",
            profile: str | None = None, pdf=None, progress: Progress | None = None,
-           books: list[str] | None = None, profiles: list[str] | None = None, separate: bool = False) -> Path:
+           books: list[str] | None = None, profiles: list[str] | None = None, separate: bool = False,
+           tick: Tick | None = None) -> Path:
     """Write what is asked to target in fmt; returns the file written. pdf: a function (html, path) that draws a PDF
     (gui.pdf.html_to_pdf), given by the window or the command line.
 
     Several at once: books (keys, full names, "all", "sunni", "shia") for a book or the network, profiles for a
     profile. Several books go into one file, or with separate (and always as isnady books) each into its own file
-    in the folder target; several profiles each into its own file in the folder target."""
+    in the folder target; several profiles each into its own file in the folder target.
+
+    tick(done, total) is told how far the hadith have come (a progress bar); it may raise Cancelled, and the
+    half-written file is then removed. Hadith are read and written one after another (EX3), so even every book in
+    every language is never held in memory at once."""
     say = progress or (lambda _m: None)
     if kind == "book" and books:
         if conn is None:
@@ -377,8 +432,21 @@ def export(conn: sqlite3.Connection | None, kind: str, fmt: str, target: str | P
         if len(keys) == 1:
             book, books = keys[0], None
         elif separate or fmt == "isnady-book":
-            return _each(keys, Path(target), fmt, say, lambda key, path: export(
-                conn, "book", fmt, path, book=key, languages=languages, chains=chains, pdf=pdf, progress=say))
+            # one bar over every book: each book's hadith counted on from where the books before it ended
+            counts = {k: conn.execute("SELECT COUNT(*) FROM hadiths h JOIN collections c ON c.id = h.collection_id "
+                                      "WHERE c.key = ?", (k,)).fetchone()[0] for k in keys}
+            whole = sum(counts.values())
+            before = {k: sum(counts[x] for x in keys[:i]) for i, k in enumerate(keys)}
+
+            def one(key, path):
+                inner = (lambda done, _t, k=key: tick(before[k] + done, whole)) if tick is not None else None
+                if inner is not None:
+                    inner(0, counts[key])
+                export(conn, "book", fmt, path, book=key, languages=languages, chains=chains, pdf=pdf, progress=say,
+                       tick=inner)
+                if inner is not None:
+                    inner(counts[key], counts[key])
+            return _each(keys, Path(target), fmt, say, one)
     if kind == "profile" and profiles and len(profiles) > 1:
         from isnady.core import profiles as core_profiles
 
@@ -424,27 +492,53 @@ def export(conn: sqlite3.Connection | None, kind: str, fmt: str, target: str | P
             ids = search_ids(conn, query, languages=None)
             title = f"isnady: “{query}”"
         say(f"{len(ids):,} hadith")
-        records = hadith_records(conn, ids, languages, chains, say)
+        if tick is not None:
+            tick(0, len(ids))
+        records = iter_records(conn, ids, languages, chains, say, tick)
         meta = _meta(kind, book=book, chapter=chapter, refs=refs or [], query=query, languages=languages or [],
                      **({"books": book_keys(conn, books)} if kind == "book" and books else {}))
-        if fmt == "json":
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(json.dumps({"schema": "isnady-export/1", **meta, "title": title, "hadith": records},
-                                         ensure_ascii=False, indent=1), encoding="utf-8")
+        subtitle = f"isnady {__version__} · {time.strftime('%Y-%m-%d')}"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if fmt in ("html", "md", "txt", "epub", "docx"):
+            with F.DocumentWriter(fmt, target, title, subtitle) as w:
+                for section in hadith_sections(records):
+                    w.section(section)
             return target
-        if fmt == "jsonl":
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with target.open("w", encoding="utf-8") as f:
-                for r in records:
-                    f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        if fmt == "pdf":                                # Qt draws the whole page at once
+            pdf(F.document_html(F.Document(title, list(hadith_sections(records)), subtitle)), target)
             return target
-        if fmt in ("html", "md", "txt", "epub", "docx", "pdf"):
-            doc = hadith_document(records, title, f"isnady {__version__} · {time.strftime('%Y-%m-%d')}")
-            if fmt == "pdf":
-                pdf(F.document_html(doc), target)
+        try:
+            if fmt == "json":
+                head = json.dumps({"schema": "isnady-export/1", **meta, "title": title}, ensure_ascii=False, indent=1)
+                with target.open("w", encoding="utf-8") as f:
+                    f.write(head[:-2] + ',\n "hadith": [')
+                    for n, r in enumerate(records):
+                        f.write(("," if n else "") + "\n  " + json.dumps(r, ensure_ascii=False))
+                    f.write("\n ]\n}\n")
                 return target
-            return F.write_document(doc, fmt, target)
-        return F.write_table(hadith_table(records, title, meta), fmt, target)
+            if fmt == "jsonl":
+                with target.open("w", encoding="utf-8") as f:
+                    for r in records:
+                        f.write(json.dumps(r, ensure_ascii=False) + "\n")
+                return target
+            langs = _languages_present(conn, ids, _languages_of(conn, ids, languages))
+            cols = hadith_columns(langs, chains)
+            if fmt in ("csv", "tsv"):
+                with target.open("w", encoding="utf-8-sig", newline="") as f:    # with BOM: Excel reads UTF-8
+                    w = csv.writer(f, delimiter="," if fmt == "csv" else "\t")
+                    w.writerow(cols)
+                    for r in records:
+                        row = hadith_row(r, langs, chains)
+                        w.writerow([F._cell(row.get(c)) for c in cols])
+                return target
+            rows = [hadith_row(r, langs, chains) for r in records]
+            return F.write_table(F.Table(title, cols, rows, meta), fmt, target)
+        except BaseException:
+            try:
+                target.unlink()
+            except OSError:
+                pass
+            raise
 
     if kind == "network":
         chosen = books or ([book] if book else None)
