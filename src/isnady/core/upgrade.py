@@ -5,8 +5,15 @@ gibi, ama kullanıcı bookmark ve diğer bilgileri, tema font.... gibi silinmesi
 
 `version.json` in the data folder names the version that last ran. When another version starts (the window or the
 command line), what isnady computed and kept for speed is deleted, so nothing an older version worked out is shown by
-a newer one: the kept counts (`cache/`) and the saved statistics (`derived/`, computed again when next opened) and
-files an interrupted write left (`*.tmp`). KEPT, always: the database (its schema is upgraded by isnady.data.db), the
+a newer one: the kept counts and readings (`cache/`) and files an interrupted write left (`*.tmp`).
+
+The saved statistics (`derived/`) are NOT deleted on a new version (Bayram, 2026-10-25: "neden surekli istatistik
+kismini hesapliyor … eger cok buyuk bir degisiklik yoksa neden surekli bunu yapiyor?"). Each carries the fingerprint
+of what it was computed from — the hadith, the narrators identified in the chains, the verdicts, the grades, the books
+switched off — and the METHOD of the analysis (stats_corpus, stats_models, stats_lab, stats_graders): it is computed
+again only when one of these changed, a new version or not. A change to an analysis must therefore change its METHOD.
+
+KEPT, always: the database (its schema is upgraded by isnady.data.db), the
 settings (theme, fonts, languages, sidebar), the remembered places and the recent searches (state.json), the
 bookmarks, the profiles and every profile's own files, the downloaded classical works (sources/) and the data
 repositories (repos/). What was deleted is said once, in the window's footer and on the command line.
@@ -22,7 +29,7 @@ from isnady import __version__
 from isnady.data.paths import data_dir
 
 FILE = "version.json"
-CLEARED = ("cache", "derived")          # folders of computed files, deleted on a new version
+CLEARED = ("cache",)                    # folders of computed files, deleted on a new version (derived/: see above)
 
 
 def _path() -> Path:

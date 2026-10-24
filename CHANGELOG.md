@@ -3,6 +3,17 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.4.6] — 2026-10-25
+
+- **Statistics are not computed again for nothing (2026-10-25: "neden surekli istatistik kismini hesapliyor … eger
+  cok buyuk bir degisiklik yoksa neden surekli bunu yapiyor?").** Every new version of isnady deleted the saved
+  statistics with the rest of what it had computed, so Statistics worked everything out again after each update. Now
+  the saved statistics are kept across versions: each carries the fingerprint of what it was computed from (the
+  hadith, the narrators identified in the chains, the verdicts, the grades, the books switched off) and the method
+  of its analysis, and is computed again only when one of these changed — after an update that identifies
+  narrators differently, for example, but not after one that only changes the window. The other kept files
+  (`cache/`) are still made new on a new version.
+
 ## [0.4.5] — 2026-10-24
 
 - **Big exports beside the window, with a progress bar (2026-10-24: "epub olarak hepsini tum dilleri ile export

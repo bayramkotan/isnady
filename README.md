@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.4.5-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.4.6-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.4.5-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.4.6-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.4.5).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.4.6).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -606,7 +606,9 @@ categories, chains to a Ma'sum; al-Majlisi's and al-Behbudi's grades in the four
 sahih, hasan, muwaththaq, da'if), never mixed. Every section is measured on both roads. Grades are
 ordered categories, so they are never turned into numbers or averaged, and no figure is read
 against the science of hadith: the statistics measure what the scholars did, they do not overrule
-it. Every result is computed once and saved as JSON in your data folder (`derived/`).
+it. Every result is computed once and saved as JSON in your data folder (`derived/`), and computed again only when
+what it was computed from changed — new books or hadith, narrators identified differently, new verdicts or grades,
+books switched off — or the analysis itself; a new version of isnady alone does not.
 
 | Section | What it shows |
 |---|---|
@@ -849,8 +851,8 @@ nothing to restart. `iy config set view.ui_language tr`. The hadith texts keep t
 and forward buttons — every narrator, chain, book, scholar, term and tree opened is a step, and pointing at the
 button says where it goes.
 
-**A new version starts clean:** what the earlier version computed (`cache/`, `derived/`) is deleted once and computed
-again, and the footer says so; the settings, bookmarks, profiles, recent searches, the database and the downloaded
+**A new version starts clean:** what the earlier version kept for speed (`cache/`) is deleted once and computed
+again, and the footer says so; the saved statistics (`derived/`) stay while their data and analysis are the same; the settings, bookmarks, profiles, recent searches, the database and the downloaded
 works are kept. **Help → Check for Updates** asks PyPI and npm (whichever isnady is installed from — both, ticked,
 when both are behind) and shows what is new; `iy update --check`, `iy update --npm`. A page that cannot be built
 shows a plain card instead of stopping isnady, the details go to `isnady.log` in the data folder, and an import that
