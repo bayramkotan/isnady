@@ -3,6 +3,27 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.4.2] — 2026-10-24
+
+- **Export and import of everything, each in many formats (2026-10-24: "herseyin ayri ayri farkli formatlarda
+  export/import edilebilirligini istiyorum. Ister bookmarklar ister profiller, ister kitaplar!").** File → Export…
+  (Ctrl+E) and File → Import… (Ctrl+Shift+E), with a preview before writing; an **Export** link on every hadith card;
+  the Bookmarks page's export and import open the same dialogs.
+  - **Hadith** by number (bukhari:1, bukhari:5-10), **search results**, a **book or a chapter**: JSON, JSON Lines,
+    CSV, TSV, Excel (XLSX), Markdown, HTML, text, EPUB, Word (DOCX), PDF, SQLite — each hadith with its chapter,
+    texts in the languages chosen, grades and chains (Arabic, Turkish, English). A book also as an **isnady book**,
+    isnady-data's own format, which comes back in as a book (a source of your own); an export in JSON, JSON Lines,
+    CSV or TSV comes back too, each hadith to its own book.
+  - **Bookmarks** (JSON with the folders, JSON Lines, CSV, TSV, Excel, Markdown, HTML, text, PDF; imported from
+    JSON, JSON Lines, CSV, TSV, into a folder or replacing), **narrators** of a tradition (tables, PDF, SQLite), the
+    **isnad network** — who narrated from whom, how often — for Gephi and yEd (GraphML, GEXF, CSV, JSON),
+    **settings** (only the ones changed), a **profile** (isnady profile or JSON) and a **backup** of everything of
+    yours (settings, place, bookmarks, the list of the books).
+  - PDF is drawn by Qt, so Arabic is joined and set right to left; Excel, Word and EPUB are written without any
+    extra package (core/formats.py, core/transfer.py).
+  - `iy export WHAT … -f FORMAT -o FILE` (`--chapter`, `--language`, `--no-chains`, `--tradition`, `--list`) and
+    `iy import-data WHAT FILE` (`--replace`, `--folder`, `--name`).
+
 ## [0.4.1] — 2026-10-24
 
 - **The content languages can be chosen again (2026-10-24: "diller secilmiyor").** With "All languages" on, a click

@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.4.1-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.4.2-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.4.1-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.4.2-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.4.1).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.4.2).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -743,6 +743,41 @@ pip install "isnady[ai]"        # numpy and scipy
 iy ai build                     # a few seconds; or Tools → Build AI Indexes
 iy search --mode meaning "komşu hakları"
 iy tahric bukhari 1             # the other narrations of a hadith
+```
+
+---
+
+## 📤 Export and import
+
+**File → Export…** (Ctrl+E) writes anything isnady holds to a file, each in the formats that fit it, with a preview
+before it is written; every hadith card has an **Export** link too. **File → Import…** brings it back.
+
+| What | Export as | Import from |
+|---|---|---|
+| Hadith (by number), search results | JSON, JSON Lines, CSV, TSV, Excel, Markdown, HTML, text, EPUB, Word, PDF, SQLite | — |
+| A book or a chapter | the same, and **isnady book** (the format of isnady-data, imported again as a book) | isnady book; an export as JSON, JSON Lines, CSV or TSV |
+| Bookmarks | JSON (isnady's own, with the folders), JSON Lines, CSV, TSV, Excel, Markdown, HTML, text, PDF | JSON, JSON Lines, CSV, TSV |
+| Narrators | JSON, JSON Lines, CSV, TSV, Excel, Markdown, HTML, text, PDF, SQLite | — |
+| Isnad network (who narrated from whom, how often) | GraphML, GEXF (Gephi, yEd), CSV, JSON | — |
+| Settings | JSON, CSV, TSV, Markdown | JSON, CSV, TSV |
+| Profile | isnady profile, JSON | isnady profile, JSON |
+| Everything of mine (backup) | one file: settings, place, bookmarks and the list of the books | the backup |
+
+A hadith keeps its book and number, chapter, texts in the languages chosen, grades and chains — the Arabic as
+written, then said in Turkish and English. PDF is drawn by Qt, so the Arabic is joined and set right to left as on
+the screen; Excel, Word and EPUB files are written without any extra package.
+
+```bash
+iy export --list                                     # what, and in which formats
+iy export hadith bukhari:1 bukhari:5-10 -f pdf -o intention.pdf
+iy export book bukhari --chapter 1 -f docx --language Arabic --language Turkish
+iy export book nawawi -f isnady-book                 # imported again with: iy import-data book …
+iy export narrators -f xlsx --tradition shia
+iy export network bukhari -f gexf                    # open in Gephi
+iy export search "النيات" -f md
+iy export backup -o mine.isnady-backup.zip
+iy import-data bookmarks bookmarks.csv --folder Imported
+iy import-data book nawawi.isnady-book.zip
 ```
 
 ---

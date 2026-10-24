@@ -1594,6 +1594,60 @@ def cmd_narrator(args) -> int:
     return 0
 
 
+def cmd_export(args) -> int:
+    """iy export WHAT … --format F --output FILE (EX1): the same as File → Export…."""
+    from isnady.core import formats, transfer
+
+    if args.list or not args.what:
+        for kind, spec in transfer.KINDS.items():
+            print(f"{kind:10} export: {', '.join(spec['export'])}"
+                  + (f"\n{'':10} import: {', '.join(spec['import'])}" if spec["import"] else ""))
+        return 0
+    kind = args.what
+    fmt = args.format or transfer.KINDS[kind]["export"][0]
+    target = args.output or ("isnady_" + kind + ("_" + "_".join(args.target) if args.target else "")).replace(":", "-") \
+        .replace("/", "_") + transfer.suffix(fmt)
+    conn = _connect() if kind not in ("settings", "profile") else None
+    pdf = None
+    if fmt == "pdf":
+        from isnady.gui.pdf import html_to_pdf as pdf
+    road = None if args.tradition == "all" else args.tradition
+    try:
+        path = transfer.export(conn, kind, fmt, target, book=args.target[0] if kind in ("book", "network") and
+                               args.target else "", chapter=args.chapter, refs=args.target if kind == "hadith" else None,
+                               query=" ".join(args.target) if kind in ("search", "narrators") else "",
+                               languages=args.language, chains=not args.no_chains,
+                               tradition=road if kind != "narrators" else (road if args.tradition else "sunni"),
+                               profile=args.target[0] if kind == "profile" and args.target else None, pdf=pdf,
+                               progress=lambda m: print(f"  {m}", file=sys.stderr))
+    except transfer.TransferError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    finally:
+        if conn is not None:
+            conn.close()
+    print(f"Written ({formats.LABELS.get(fmt, fmt)}): {path}")
+    return 0
+
+
+def cmd_import_data(args) -> int:
+    """iy import-data WHAT FILE (EX1): a book, bookmarks, settings, a profile or a backup, as File → Import…."""
+    from isnady.core import transfer
+
+    conn = _connect() if args.what == "book" else None
+    try:
+        print(transfer.import_file(conn, args.what, args.file, fmt=args.format or "", replace=args.replace,
+                                   folder=args.folder or "", name=args.name or "",
+                                   progress=lambda m: print(f"  {m}", file=sys.stderr)))
+    except transfer.TransferError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    finally:
+        if conn is not None:
+            conn.close()
+    return 0
+
+
 def cmd_reset(args) -> int:
     """iy reset settings|books|all (RST1): back to zero, as Settings → Reset does."""
     from isnady.core import reset
@@ -1831,6 +1885,31 @@ def build_parser() -> argparse.ArgumentParser:
     nr.add_argument("--tradition", choices=("sunni", "shia", "all"), default=None,
                     help="only this road's famous ones (with --famous: Sunni unless asked) or matches")
     nr.set_defaults(func=cmd_narrator)
+    ex = sub.add_parser("export", help="hadith, a book or chapter, search results, bookmarks, narrators, the isnad "
+                                       "network, settings, a profile or a backup, in many formats (iy export --list)")
+    ex.add_argument("what", nargs="?", choices=("hadith", "book", "search", "bookmarks", "narrators", "network",
+                                                "settings", "profile", "backup"))
+    ex.add_argument("target", nargs="*", help="hadith: bukhari:1 bukhari:5-10; book/network: bukhari; search and "
+                                              "narrators: the words; profile: its name")
+    ex.add_argument("--format", "-f", help="json, jsonl, csv, tsv, xlsx, md, html, txt, epub, docx, pdf, sqlite, "
+                                           "isnady-book, graphml, gexf … (iy export --list)")
+    ex.add_argument("--output", "-o", help="the file to write (default: a name in this folder)")
+    ex.add_argument("--chapter", type=int, help="book: only this chapter (its number)")
+    ex.add_argument("--language", action="append", help="hadith/book/search: only these languages (repeatable), "
+                                                        "e.g. Arabic, Turkish")
+    ex.add_argument("--no-chains", action="store_true", help="hadith/book/search: without the chains")
+    ex.add_argument("--tradition", choices=("sunni", "shia", "all"), help="narrators (default sunni) and network")
+    ex.add_argument("--list", action="store_true", help="what can be exported and imported, in which formats")
+    ex.set_defaults(func=cmd_export)
+    im = sub.add_parser("import-data", help="bring back a book, bookmarks, settings, a profile or a backup from a "
+                                            "file made by iy export or File → Export…")
+    im.add_argument("what", choices=("book", "bookmarks", "settings", "profile", "backup"))
+    im.add_argument("file")
+    im.add_argument("--format", help="when the file name does not say it")
+    im.add_argument("--replace", action="store_true", help="bookmarks/settings: replace instead of adding")
+    im.add_argument("--folder", help="bookmarks: put them in this folder")
+    im.add_argument("--name", help="profile: the new profile's name")
+    im.set_defaults(func=cmd_import_data)
     rs = sub.add_parser("reset", help="back to zero: delete all settings, all books, or everything")
     rs.add_argument("what", choices=("settings", "books", "all"))
     rs.add_argument("--yes", action="store_true", help="do not ask")

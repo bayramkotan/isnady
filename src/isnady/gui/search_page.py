@@ -104,7 +104,7 @@ class ResultCard(QFrame):
     def __init__(self, result: core.SearchResult, chain: dict | None = None, open_chain=None,
                  people: dict | None = None, score: float | None = None, related: list | None = None,
                  open_book=None, folded: list | None = None, chains: list | None = None,
-                 on_person=None, on_name=None, on_end=None, on_languages=None) -> None:
+                 on_person=None, on_name=None, on_end=None, on_languages=None, on_export=None) -> None:
         super().__init__()
         self.setObjectName("Card")
         t = theme.current()
@@ -133,6 +133,15 @@ class ResultCard(QFrame):
                                       f"{titles.book(result.collection_key, result.collection_name)} {result.number}",
                                       " ".join((first or "").split())[:160]))
         head.addSpacing(6)
+        if on_export is not None:
+            # this hadith to a file (EX1): PDF, Word, Markdown, JSON …
+            out = QPushButton(tr("Export"))
+            out.setObjectName("Link")
+            out.setCursor(Qt.CursorShape.PointingHandCursor)
+            out.setToolTip(tr("Write this hadith to a file: PDF, Word, Markdown, JSON, Excel …"))
+            out.clicked.connect(lambda: on_export(f"{result.collection_key}:{result.number}"))
+            head.addWidget(out)
+            head.addSpacing(14)
         if open_book is not None:
             book = QPushButton(tr("In its book"))
             book.setObjectName("Link")
@@ -279,6 +288,7 @@ class SearchPage(QWidget):
     data_changed = Signal()
     wants_sources = Signal()          # "more languages": the main window opens File → Data Sources
     wants_languages = Signal()        # "Language settings" on a card: Settings → Books and languages
+    wants_export = Signal(str)        # "Export" on a card: File → Export… with that hadith ("bukhari:1")
     retry_requested = Signal()        # "Try again" after a locked database: the window is built again
 
     def __init__(self, status_message=None, parent=None) -> None:
@@ -1075,7 +1085,7 @@ class SearchPage(QWidget):
                           None if in_book else self.open_book.emit, folded, chains,
                           on_person=self.open_narrator.emit, on_name=self.find_narrator.emit,
                           on_end=lambda node: self.open_tree.emit("quraysh", node),
-                          on_languages=self.wants_languages.emit)
+                          on_languages=self.wants_languages.emit, on_export=self.wants_export.emit)
         card.setProperty("hadith_id", result.hadith_id)
         return card
 

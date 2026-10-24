@@ -12,7 +12,6 @@ from PySide6.QtCore import QMimeData
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
-    QFileDialog,
     QFrame,
     QHBoxLayout,
     QInputDialog,
@@ -468,21 +467,16 @@ class BookmarksPage(QWidget):
         save(s)
 
     def _export(self) -> None:
-        name, _f = QFileDialog.getSaveFileName(self, tr("Export bookmarks"), "isnady_bookmarks.json", "JSON (*.json)")
-        if name:
-            store().save(name)
+        """File → Export… with the bookmarks chosen (EX1): JSON, CSV, Excel, Markdown, HTML, PDF …"""
+        window = self.window()
+        if hasattr(window, "export_dialog"):
+            window.export_dialog("bookmarks")
 
     def _import(self) -> None:
-        name, _f = QFileDialog.getOpenFileName(self, tr("Import bookmarks"), "", "JSON (*.json)")
-        if not name:
-            return
-        other = core.Store.load(name)
-        s = store()
-        items, folders = s.merge(other)
-        save(s)
-        QMessageBox.information(self, tr("Import bookmarks"), tr("{items} bookmark(s) and {folders} folder(s) added; the "
-                                                                 "ones you had stay as they were.", items=items,
-                                                                 folders=folders))
+        window = self.window()
+        if hasattr(window, "import_dialog"):
+            window.import_dialog("bookmarks")
+        self.refresh()
 
     def _open(self, item_id: str) -> None:
         item = store().item(item_id)

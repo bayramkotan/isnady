@@ -272,6 +272,7 @@ class MainWindow(QMainWindow):
         self.search_page.find_narrator.connect(self._find_narrator)
         self.search_page.wants_sources.connect(lambda: self._preferences("sources"))
         self.search_page.wants_languages.connect(lambda: self._preferences("books"))
+        self.search_page.wants_export.connect(lambda ref: self.export_dialog("hadith", refs=ref))
         self.search_page.retry_requested.connect(self.language_switched)   # main.py builds the window again
         self.search_page.data_changed.connect(lambda: setattr(self, "_books_loaded", False))
         self.nav.currentRowChanged.connect(self._load_books_when_shown)
@@ -573,6 +574,13 @@ class MainWindow(QMainWindow):
                      tip=tr("Import built-in sources with one click, or add your own"))
         self._action(file_menu, tr("Open Data Folder"), self._open_data_folder,
                      tip=tr("Open the folder that holds the isnady database"))
+        file_menu.addSeparator()
+        self._action(file_menu, tr("Export…"), lambda: self.export_dialog(), "Ctrl+E",
+                     tip=tr("Hadith, a book or chapter, search results, bookmarks, narrators, the isnad network, "
+                            "settings, a profile or everything of yours, in the format you choose"))
+        self._action(file_menu, tr("Import…"), lambda: self.import_dialog(), "Ctrl+Shift+E",
+                     tip=tr("Bring back a book, bookmarks, settings, a profile or a backup from a file"))
+        file_menu.addSeparator()
         profile_menu = file_menu.addMenu(tr("Profiles"))
         profile_menu.setToolTipsVisible(True)
         profile_menu.aboutToShow.connect(lambda m=profile_menu: self._fill_profile_menu(m))
@@ -937,6 +945,21 @@ class MainWindow(QMainWindow):
         dialog.data_imported.connect(self._data_imported)
         dialog.languages_changed.connect(self._languages_changed)
         dialog.sidebar_changed.connect(self.apply_sidebar_order)
+        dialog.exec()
+
+    # --------------------------------------------------------------- export and import (EX1)
+    def export_dialog(self, kind: str = "hadith", **preset) -> None:
+        from isnady.gui.transfer_dialog import ExportDialog
+
+        ExportDialog(self.search_page.connection, self, kind, preset).exec()
+
+    def import_dialog(self, kind: str = "book") -> None:
+        from isnady.gui.transfer_dialog import ImportDialog
+
+        dialog = ImportDialog(self.search_page.connection, self, kind)
+        dialog.data_imported.connect(self._data_imported)
+        dialog.settings_imported.connect(self._apply_settings)
+        dialog.settings_imported.connect(self._languages_changed)
         dialog.exec()
 
     # --------------------------------------------------------------- the first start (FR1)
