@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.3.9-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.4.0-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.3.9-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.4.0-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.3.9).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.4.0).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -377,7 +377,8 @@ In the window, each result shows its chain as a row of names ending at whom it r
 Imam — with the Arabic text below: the chain in lighter ink, the text of the hadith in full ink.
 Under each Arabic name of a card's chain its words are written in the languages the texts are shown in (Turkish
 and English so far), and under the Arabic text of Isnad Chains the whole chain is said, link by link as the Arabic
-says it — "Qutayba b. Sa'id narrated to us, Layth narrated to us, from Yazid b. Abi Habib, …
+says it ("his father" says whose father and who he is: "Hişâm b. Urve'nin babası Urve b. ez-Zübeyr'den"; a
+Companion has "(r.a.)", the Prophet "(s.a.v.)"; the compiler, the "us" of "narrated to us", heads the chain) — "Qutayba b. Sa'id narrated to us, Layth narrated to us, from Yazid b. Abi Habib, …
 from the Prophet ﷺ" / "Kuteybe b. Saîd bize rivayet etti, Leys bize rivayet etti, Yezîd b. Ebî Habîb'den, … Hz.
 Peygamber ﷺ'den" (`iy chain … --lang tr,en`).
 Every link says who the narrator is and what his critic says of him; a click anywhere on him opens him, and pointing
@@ -812,8 +813,9 @@ again, and the footer says so; the settings, bookmarks, profiles, recent searche
 works are kept. **Help → Check for Updates** asks PyPI and npm (whichever isnady is installed from — both, ticked,
 when both are behind) and shows what is new; `iy update --check`, `iy update --npm`. A page that cannot be built
 shows a plain card instead of stopping isnady, the details go to `isnady.log` in the data folder, and an import that
-was cut short is named on the Search page at the next start. On the very first start, with no books yet, isnady
-offers to import isnady-data in the background, the progress in the bar at the bottom.
+was cut short is named on the Search page at the next start. At every start with no books yet, isnady asks to
+import isnady-data — every hadith book and rijal work with one click (**Import all**) — in the background, the
+progress in the bar at the bottom; on the command line `iy` says so and `iy catalog import --all` does it.
 
 **Settings → Books and languages** switches imported books on and off (Sunni and Shia apart) and
 chooses the languages the texts are shown in; the others are folded behind an arrow on each hadith.
@@ -828,6 +830,9 @@ iy config set text.arabic.size 22
 iy config set view.theme paper
 iy config reset text.arabic               # back to the defaults
 ```
+
+**Back to zero.** **Edit → Reset…** (Settings → Reset) deletes all settings, all books, or everything — books,
+settings, bookmarks and the downloaded data — each after asking once more; `iy reset settings|books|all`.
 
 ### Your data folder
 
@@ -881,6 +886,7 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | `iy import FORMAT FILE-OR-URL` | `iy import isnady ~/my_book/book.json` | Import a file of your own; `--book`, `--language`, `--license`, `--user`, `--token-env`, `--api-key-env` |
 | `iy sources` | | Imported sources, their licence and tier |
 | `iy remove KEY` | | Remove a source and everything imported from it |
+| `iy reset settings\|books\|all` | `iy reset books` | Back to zero: all settings, all books, or everything (`--yes` does not ask) |
 | `iy formats` | | The formats that can be imported |
 | `iy datadir [FOLDER]` | `iy datadir /data/isnady` | Show or move the data folder; `--as-is`, `--default` |
 | `iy config list\|get\|set\|reset` | | Settings — the same as Edit → Preferences |

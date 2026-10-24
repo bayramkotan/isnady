@@ -3,6 +3,34 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.4.0] — 2026-10-24
+
+- **The chain's words, closer to the Arabic and with its manners (2026-10-24, Bayram's screens).** "عمه أبي سهيل"
+  is "Mâlik b. Enes'in amcası Ebû Süheyl b. Mâlik" (it was "Amh Ebû Süheyl"), and Isnad Chains names each link as
+  the chain does — "Nâfi' b. Mâlik'in babası Mâlik b. Ebî Âmir", not "Babası". On road A a Companion carries
+  "(r.a.)" / "(RA)" and the Prophet "(s.a.v.)" in Turkish; after "b." and "bint" Turkish writes the kunya in the
+  genitive (Ebû Bekr b. Ebî Şeybe, Mâlik b. Ebî Âmir, Hind bint Ebî Ümeyye). On a card the compiler heads the
+  chain — he is the "us" of "narrated to us" — and an arrow stays with the name it points to, so that a line never
+  ends on an arrow.
+- **Language settings on every card.** Beside "Other languages" (or alone), **Language settings** opens Settings →
+  Books and languages.
+- **Back to zero (2026-10-24: "tum config'i silme olsun. Tum kitaplari silme de olsun. Sifir duruma
+  getirebilelim").** Edit → Reset… (Settings → Reset): delete all settings, all books (with the narrators, the
+  search index and all that was computed; the database file small again), or everything — books, settings,
+  bookmarks and the downloaded data. `iy reset settings|books|all [--yes]` (core/reset.py).
+- **A book's numbers said as numbers.** Isnad Chains shows "numbers 1 – 7563 · 7,583 hadith" and says why the last
+  number and the count differ (missing and split numbers, a book beginning at 0).
+- **"His father" says whose father (2026-10-24: "babasi-kardesi gibi kavramlar bir supheli. Kimin babasi, kimin
+  kardesi?").** Under the chain, a relative named only as such — أبيه، جده، أمه، أخيه، عمه، ابنه، مولاه — now says whose
+  relative he is and, when isnady has identified him, who he is: "Hişâm b. Urve'nin babası Urve b. ez-Zübeyr'den" /
+  "from Hisham b. Urwa's father, Urwa b. al-Zubayr". "عن أبيه عن جده" is the grandfather of the man before the
+  father ("Sâlih b. İbrâhim'in dedesi Abdurrahman b. Avf'tan"); "أمه أسماء" is "Hişâm'ın annesi Esmâ …". On the
+  cards, in Isnad Chains and in `iy chain --lang`.
+- **The books offered at every start until there are some (2026-10-24: "ilk calistirildiginda … otomatik acip icine
+  aktarmayi sorsun! Tek bir onaylama ile kitaplarin hepsini yuklesin").** With no book in the database, isnady asks
+  at each start — not once only — and **Import all** brings every hadith book and rijal work of isnady-data in the
+  background. The command line says the same and names the one command: `iy catalog import --all`.
+
 ## [0.3.9] — 2026-10-24
 
 - **The chain's words right under its names (2026-10-24: "tam altinda olsa daha guzel olurdu. Ayni sekilde

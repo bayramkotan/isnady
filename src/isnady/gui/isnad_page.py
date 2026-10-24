@@ -190,10 +190,16 @@ class IsnadPage(QWidget):
             return
         span = f"{rng['first']} – {rng['last']}"
         self.number_edit.setPlaceholderText(span)
-        self.range_label.setText(tr("{span} · {n} hadith", span=span, n=f"{rng['count']:,}"))
+        # the numbers are the book's own, not a count (Bayram, 2026-10-24: "0 – 7563 · 7,561 hadis"): said so
+        self.range_label.setText(tr("numbers {span} · {n} hadith", span=span, n=f"{rng['count']:,}"))
+        why = tr("The numbers are the book's own, as its edition gives them, not a count: some numbers are missing, some "
+                 "are split (402.2) and some books begin at 0, so the last number and the number of hadith "
+                 "differ.")
+        self.range_label.setToolTip(why)
         self.number_edit.setToolTip(tr("This book's numbers run from {first} to {last} ({n} hadith). The arrow keys and "
                                        "the mouse wheel go to the next or the previous one; typing shows the numbers "
-                                       "that begin so.", first=rng["first"], last=rng["last"], n=f"{rng['count']:,}"))
+                                       "that begin so.", first=rng["first"], last=rng["last"], n=f"{rng['count']:,}")
+                                    + "\n" + why)
 
     def _typed(self, text: str) -> None:
         book = self._book()
@@ -421,8 +427,14 @@ class IsnadPage(QWidget):
                                                  click_tip=tr("Click to read this hadith in its book, among the "
                                                               "hadith of its chapter")))
             links = chain["links"]
+            from isnady.core import i18n as _i18n
+
+            people = {link["person_id"]: core_narrators.describe(self.conn, link["person_id"])
+                      for link in links if link.get("person_id")}
+            # each name as the whole chain reads it: "his father" says whose (KIN1), a Companion has "(r.a.)"
+            names = core_isnad.chain_link_names(chain, "tr" if _i18n.language() == "tr" else "en", people)
             for i, link in enumerate(links):
-                person = core_narrators.describe(self.conn, link["person_id"]) if link.get("person_id") else None
+                person = people.get(link.get("person_id"))
                 nxt = links[i + 1]["raw_name"] if i + 1 < len(links) else ""
                 note = core_isnad.link_note(link["raw_name"], nxt)
                 look = None
@@ -434,7 +446,8 @@ class IsnadPage(QWidget):
                                                      on_person=self.open_narrator.emit,
                                                      note=note,
                                                      confidence=link.get("match_confidence"), on_click=look,
-                                                     click_tip=tr("Click to look for this name among the narrators")))
+                                                     click_tip=tr("Click to look for this name among the narrators"),
+                                                     reading_text=names[i] if i < len(names) else ""))
             if chain["reaches_prophet"] or chain.get("ends_with"):
                 key = chain.get("ends_with") or "prophet"
                 subtitle = tr("The Messenger of God") if key == "prophet" else core_isnad.end_label(chain)
@@ -522,10 +535,13 @@ class IsnadPage(QWidget):
         from isnady.core import language as content
 
         roads = [c for c in (drawn or []) if not c.get("problem") or c["links"]]
+        # the identified narrators, so that "his father" says whose father and who he is
+        people = {link["person_id"]: core_narrators.describe(self.conn, link["person_id"])
+                  for c in roads for link in c["links"] if link.get("person_id")}
         for code in core_isnad.chain_codes(content.content_languages()):
             name = {"tr": "Turkish", "en": "English"}[code]
             for i, c in enumerate(roads, 1):
-                words = core_isnad.chain_in_words(c, code)
+                words = core_isnad.chain_in_words(c, code, people)
                 if not words:
                     continue
                 head = tr(name) + (" — " + tr("Chain {i}", i=i) if len(roads) > 1 else "")

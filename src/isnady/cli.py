@@ -1496,8 +1496,10 @@ def cmd_chain(args) -> int:
 
         codes = ([c.strip() for c in args.lang.split(",") if c.strip()] if args.lang
                  else core_isnad.chain_codes(content.content_languages()))
+        people = {link["person_id"]: core_narrators.describe(conn, link["person_id"])
+                  for link in ch["links"] if link.get("person_id")}
         for code in codes:
-            words = core_isnad.chain_in_words(ch, code)
+            words = core_isnad.chain_in_words(ch, code, people)
             if words:
                 print(f"  [{code}] {words}")
     conn.close()
@@ -1589,6 +1591,36 @@ def cmd_narrator(args) -> int:
                 print(f"  in the chains of {total} hadith: " + ", ".join(f"{h['book']} {h['number']}" for h in hadith)
                       + (" …" if total > len(hadith) else ""))
     conn.close()
+    return 0
+
+
+def cmd_reset(args) -> int:
+    """iy reset settings|books|all (RST1): back to zero, as Settings → Reset does."""
+    from isnady.core import reset
+
+    what = {"settings": "every setting and remembered place", "books": "every imported book and source",
+            "all": "the books, the settings, the bookmarks and the downloaded data"}[args.what]
+    if not args.yes:
+        if not sys.stdin.isatty():
+            print("Add --yes to delete without being asked.", file=sys.stderr)
+            return 2
+        answer = input(f"Delete {what}? This cannot be undone. Type yes: ").strip().lower()
+        if answer not in ("yes", "evet", "y", "e"):
+            print("Nothing deleted.")
+            return 1
+    if args.what == "settings":
+        print(f"{reset.settings()} settings deleted; isnady is as at its first start.")
+        return 0
+    conn = _connect()
+    try:
+        if args.what == "books":
+            print(f"{reset.books(conn)} sources deleted. Import them again with: iy catalog import --all")
+        else:
+            out = reset.everything(conn)
+            print(f"Everything deleted: {out['books']} sources, the settings"
+                  + (", the bookmarks" if out["bookmarks"] else "") + ".")
+    finally:
+        conn.close()
     return 0
 
 
@@ -1799,6 +1831,10 @@ def build_parser() -> argparse.ArgumentParser:
     nr.add_argument("--tradition", choices=("sunni", "shia", "all"), default=None,
                     help="only this road's famous ones (with --famous: Sunni unless asked) or matches")
     nr.set_defaults(func=cmd_narrator)
+    rs = sub.add_parser("reset", help="back to zero: delete all settings, all books, or everything")
+    rs.add_argument("what", choices=("settings", "books", "all"))
+    rs.add_argument("--yes", action="store_true", help="do not ask")
+    rs.set_defaults(func=cmd_reset)
     ch = sub.add_parser("chain", help="show the chain of one hadith")
     ch.add_argument("book", help="collection key, e.g. bukhari")
     ch.add_argument("number", nargs="?", help="hadith number, e.g. 1; none = the book's numbers, first to last")
@@ -1851,6 +1887,14 @@ def main(argv: list[str] | None = None) -> int:
             print(upgrade.message(changed), file=sys.stderr)
         from isnady.core import imports as core_imports
 
+        if getattr(args, "func", None) not in (cmd_catalog, cmd_version, cmd_reset):
+            # no book yet (FR1): one command brings them all, as one click does in the window
+            probe = _connect()
+            empty = probe.execute("SELECT 1 FROM hadiths LIMIT 1").fetchone() is None
+            probe.close()
+            if empty:
+                print("isnady has no books yet. Import every hadith book and rijal work of isnady-data with one "
+                      "command: iy catalog import --all", file=sys.stderr)
         cut = core_imports.interrupted() if getattr(args, "func", None) is not cmd_catalog else None
         if cut:
             print(f"Note: an import did not finish ({cut['started'].replace('T', ' ')}): {', '.join(cut['titles'][:6])}. "

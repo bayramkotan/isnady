@@ -105,31 +105,50 @@ def stop_note(chain: dict) -> str:
     return tr("The chain is read as far as here; the rest is in the text. ({reason})", reason=tr(chain["problem"]))
 
 
+# the terms with which a compiler names his own teacher: the chain begins with him
+_TO_US = {"haddathana", "haddathani", "akhbarana", "akhbarani", "anba'ana", "anba'ani", "sami'tu", "qara'tu 'ala",
+          "bare"}
+
+
 class _Columns:
-    """Stands in for the strip's FlowLayout when words go under the names: each chip in a column with its words in
-    each language below it (the piece of the chain it says: "Abdân bize rivayet etti", "Ebû Hamza'dan"); each arrow
-    at the height of the chips."""
+    """Stands in for the strip's FlowLayout: each chip in a column with its words in each language below it (the
+    piece of the chain it says: "Abdân bize rivayet etti", "Ebû Hamza'dan"), and each arrow kept with the chip it
+    points to, so that a line never ends on an arrow with its name on the next line (Bayram, 2026-10-24)."""
 
     def __init__(self, flow: FlowLayout, words: list[list[str]]) -> None:
-        self.flow, self.words, self.chips = flow, words, 0
+        self.flow, self.words, self.chips, self.arrow = flow, words, 0, None
 
-    def addWidget(self, widget: QWidget) -> None:  # noqa: N802
+    def addWidget(self, widget: QWidget, words: list[str] | None = None) -> None:  # noqa: N802
+        if widget.objectName() == "ChainArrow":
+            self.arrow = widget                     # held until its chip comes
+            return
         column = QWidget()
         box = QVBoxLayout(column)
         box.setContentsMargins(0, 0, 0, 0)
         box.setSpacing(1)
         box.addWidget(widget, 0, Qt.AlignmentFlag.AlignHCenter)
-        if widget.objectName() != "ChainArrow":
-            for parts in self.words:
-                piece = parts[self.chips] if self.chips < len(parts) else ""
-                if piece:
-                    label = QLabel(piece)
-                    label.setObjectName("ChainWord")
-                    label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-                    box.addWidget(label, 0, Qt.AlignmentFlag.AlignHCenter)
+        pieces = words if words is not None else [
+            parts[self.chips] if self.chips < len(parts) else "" for parts in self.words]
+        if words is None:
             self.chips += 1
+        for piece in pieces:
+            if piece:
+                label = QLabel(piece)
+                label.setObjectName("ChainWord")
+                label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+                box.addWidget(label, 0, Qt.AlignmentFlag.AlignHCenter)
         box.addStretch(1)
-        self.flow.addWidget(column)
+        if self.arrow is None:
+            self.flow.addWidget(column)
+            return
+        pair = QWidget()
+        row = QHBoxLayout(pair)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(4)
+        row.addWidget(column, 0, Qt.AlignmentFlag.AlignTop)
+        row.addWidget(self.arrow, 0, Qt.AlignmentFlag.AlignTop)     # on the right: it comes from the chip before
+        self.arrow = None
+        self.flow.addWidget(pair)
 
 
 class ChainStrip(QWidget):
@@ -137,18 +156,23 @@ class ChainStrip(QWidget):
     Identified narrators are filled chips; names not yet identified have a dashed outline."""
 
     def __init__(self, chain: dict, people: dict | None = None, parent: QWidget | None = None,
-                 on_person=None, on_name=None, on_end=None, codes: list[str] | None = None) -> None:
+                 on_person=None, on_name=None, on_end=None, codes: list[str] | None = None,
+                 compiler: dict | None = None) -> None:
         """codes: the languages ("tr", "en") whose words are written right under each name (ISN-TR1, Bayram
         2026-10-24: "tam altinda olsa daha guzel olurdu. Ayni sekilde oklarla")."""
         super().__init__(parent)
         people = people or {}
-        words = [core_isnad.chain_word_parts(chain, code) for code in (codes or [])]
+        words = [core_isnad.chain_word_parts(chain, code, people) for code in (codes or [])]
         words = [w for w in words if w]
         open_name = (lambda raw: (lambda: on_name(core_isnad.short_name(raw)))) if on_name else (lambda raw: None)
         name_tip = tr("Click to look for this name among the narrators") if on_name else ""
-        flow = FlowLayout(self, spacing=4, rtl=True)
-        if words:
-            flow = _Columns(flow, words)
+        flow = _Columns(FlowLayout(self, spacing=4, rtl=True), words)
+        if compiler and chain["links"] and (chain["links"][0].get("transmission") or "bare") in _TO_US:
+            # the compiler first: the "us" of "narrated to us" (Bayram, 2026-10-24, pointing from the book's name)
+            flow.addWidget(_chip(compiler["arabic"], "ChainChipCompiler",
+                                 tr("The compiler of the book: the \"us\" of \"narrated to us\" is he")),
+                           [compiler.get(code, "") for code in (codes or []) if compiler.get(code)][:len(words)])
+            flow.addWidget(_arrow())
         for i, link in enumerate(chain["links"]):
             arabic, meaning, _why = core_isnad.term_label(link["transmission"])
             if i:
@@ -242,7 +266,10 @@ class ChainNode(QWidget):
     def __init__(self, title: str, subtitle: str = "", term: str | None = None, *, first: bool = False,
                  last: bool = False, prophet: bool = False, full_name: str = "", latin: bool = False,
                  person: dict | None = None, candidates: int | None = None, on_person=None, note: str = "",
-                 confidence: float | None = None, on_click=None, click_tip: str = "") -> None:
+                 confidence: float | None = None, on_click=None, click_tip: str = "",
+                 reading_text: str = "") -> None:
+        """reading_text: the name in Latin letters as the page reads it in the whole chain ("Ebû Süheyl'in babası",
+        "Ebû Hüreyre (r.a.)"); by default read from the Arabic of this link alone."""
         super().__init__()
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
@@ -281,6 +308,8 @@ class ChainNode(QWidget):
             # the name in Latin letters beside the Arabic, as it is written in the chain (Bayram, 2026-10-11:
             # the space on the left stood empty)
             text, spelled = core_isnad.name_reading(full_name or title, i18n.language())
+            if reading_text:
+                text = reading_text[:1].upper() + reading_text[1:]
             if text:
                 reading = QLabel(html.escape(text) + (" <span style='color:%s'>≈</span>" % theme.current().muted
                                                       if spelled else ""))

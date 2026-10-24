@@ -271,6 +271,7 @@ class MainWindow(QMainWindow):
         self.search_page.open_tree.connect(self._open_tree)
         self.search_page.find_narrator.connect(self._find_narrator)
         self.search_page.wants_sources.connect(lambda: self._preferences("sources"))
+        self.search_page.wants_languages.connect(lambda: self._preferences("books"))
         self.search_page.retry_requested.connect(self.language_switched)   # main.py builds the window again
         self.search_page.data_changed.connect(lambda: setattr(self, "_books_loaded", False))
         self.nav.currentRowChanged.connect(self._load_books_when_shown)
@@ -591,6 +592,8 @@ class MainWindow(QMainWindow):
         edit_menu.addSeparator()
         self._action(edit_menu, tr("Preferences…"), lambda: self._preferences(), "Ctrl+,",
                      tip=tr("Fonts, sizes and colours for each script, theme colours, interface font"))
+        self._action(edit_menu, tr("Reset…"), lambda: self._preferences("reset"),
+                     tip=tr("Delete all settings, all books, or everything: back to zero"))
 
         view_menu = bar.addMenu(tr("&View"))
         self._section_actions = {}
@@ -938,21 +941,23 @@ class MainWindow(QMainWindow):
 
     # --------------------------------------------------------------- the first start (FR1)
     def offer_first_import(self) -> None:
-        """An empty database at the start: ask once whether to bring in isnady-data's books, then import them in the
-        background — the window stays usable, the progress shows in the bar at the bottom."""
+        """An empty database at the start: ask whether to bring in isnady-data's books — every hadith book and rijal
+        work, with one click — then import them in the background; the window stays usable, the progress shows in
+        the bar at the bottom. Asked at every start while there is no book (Bayram, 2026-10-24: "ilk calistirildiginda
+        hadis kitaplari olmayacagindan otomatik acip icine aktarmayi sorsun! Tek bir onaylama ile kitaplarin hepsini
+        yuklesin"; it was asked once only, and never again after "No" or a new database)."""
         from PySide6.QtWidgets import QMessageBox
 
-        from isnady import config
         from isnady.core import catalog
+        from isnady.gui import sources_page
 
         conn = self.search_page.connection()
         try:
             empty = conn is None or conn.execute("SELECT 1 FROM hadiths LIMIT 1").fetchone() is None
         except Exception:
             empty = False
-        if not empty or config.state_get("first_import.asked"):
+        if not empty or any(w.isRunning() for w in sources_page._LIVE_WORKERS):
             return
-        config.state_set("first_import.asked", True)
         try:
             entries = catalog.builtin_entries()
         except Exception:
@@ -962,14 +967,16 @@ class MainWindow(QMainWindow):
         if not entries:
             return
         langs = ", ".join(tr(catalog.language_label(c)) for c in catalog.DEFAULT_LANGUAGES)
-        answer = QMessageBox.question(
-            self, tr("Import the books?"),
-            tr("isnady has no books yet. Import the {books} hadith books and the {rijal} rijal works of isnady-data now? "
-               "Languages: {langs} (others can be added in File → Data Sources).\n\nThe import runs in the background "
-               "and the window can be used meanwhile; the progress is shown at the bottom.",
-               books=books, rijal=rijal, langs=langs),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes)
-        if answer == QMessageBox.StandardButton.Yes:
+        box = QMessageBox(QMessageBox.Icon.Question, tr("Import the books?"),
+                          tr("isnady has no books yet. Import the {books} hadith books and the {rijal} rijal works of "
+                             "isnady-data now? Languages: {langs} (others can be added in File → Data Sources).\n\nThe "
+                             "import runs in the background and the window can be used meanwhile; the progress is "
+                             "shown at the bottom.", books=books, rijal=rijal, langs=langs), parent=self)
+        go = box.addButton(tr("Import all"), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(tr("Not now"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(go)
+        box.exec()
+        if box.clickedButton() is go:
             self.import_in_background()
 
     def import_in_background(self, languages=None) -> None:

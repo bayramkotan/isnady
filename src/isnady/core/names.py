@@ -49,11 +49,17 @@ def reading(name: str, language: str = "tr", max_words: int = 8) -> tuple[str, b
             break
         pair = tuple(normalize(w) for w in parts[i:i + 2])
         if len(pair) == 2 and pair in compounds:
-            out.append(compounds[pair][index])
+            word = compounds[pair][index]
+            if word.startswith("Ebû ") and out and out[-1] in ("b.", "bint"):
+                word = "Ebî " + word[4:]                # Ebû Bekr b. Ebî Şeybe
+            out.append(word)
             i += 2
             continue
         if key in words:
-            out.append(words[key][index])
+            word = words[key][index]
+            if word == "Ebû" and out and out[-1] in ("b.", "bint"):
+                word = "Ebî"                    # after "b." the kunya is in the genitive: Mâlik b. Ebî Âmir
+            out.append(word)
         else:
             word = spell(parts[i], language)
             if word:
@@ -133,11 +139,17 @@ def latin(name: str, language: str = "tr", max_words: int = 8) -> str | None:
             break
         pair = tuple(normalize(w) for w in parts[i:i + 2])
         if len(pair) == 2 and pair in compounds:
-            out.append(compounds[pair][index])
+            word = compounds[pair][index]
+            if word.startswith("Ebû ") and out and out[-1] in ("b.", "bint"):
+                word = "Ebî " + word[4:]                # Ebû Bekr b. Ebî Şeybe
+            out.append(word)
             i, read = i + 2, read + 2
             continue
         if key in words:
-            out.append(words[key][index])
+            word = words[key][index]
+            if word == "Ebû" and out and out[-1] in ("b.", "bint"):
+                word = "Ebî"                    # after "b." the kunya is in the genitive: Mâlik b. Ebî Âmir
+            out.append(word)
             i, read = i + 1, read + 1
             continue
         break                                   # an unknown word: the name ends here, or is not given at all

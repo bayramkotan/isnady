@@ -195,7 +195,12 @@ class PreferencesDialog(QDialog):
         tabs.addTab(self._scroll(self._sidebar_tab()), tr("Sidebar"))
         tabs.addTab(self._scroll(self._books_tab()), tr("Books and languages"))
         tabs.addTab(self._scroll(self.sources), tr("Data sources"))
+        tabs.addTab(self._scroll(self._reset_tab()), tr("Reset"))
         if start_tab == "sources":
+            tabs.setCurrentIndex(tabs.count() - 2)
+        elif start_tab == "books":
+            tabs.setCurrentIndex(5)
+        elif start_tab == "reset":
             tabs.setCurrentIndex(tabs.count() - 1)
         elif start_tab == "themes":
             tabs.setCurrentIndex(0)
@@ -222,6 +227,80 @@ class PreferencesDialog(QDialog):
         layout.addWidget(tabs, 1)
         layout.addLayout(bottom)
         self._refresh()
+
+    # ------------------------------------------------------------ reset (RST1)
+    def _reset_tab(self) -> QWidget:
+        """Back to zero: the settings, the books, or everything of this profile (core.reset; `iy reset`)."""
+        page = QWidget()
+        page.setObjectName("Page")
+        box = QVBoxLayout(page)
+        box.setContentsMargins(6, 12, 12, 12)
+        box.setSpacing(12)
+        intro = QLabel(tr("Bring isnady back to how it was: its settings, its books, or everything. Each asks once "
+                          "more before it deletes; nothing can be undone."))
+        intro.setObjectName("Lead")
+        intro.setWordWrap(True)
+        box.addWidget(intro)
+        for kind, title, text in (
+                ("settings", tr("Delete all settings"),
+                 tr("Every setting and every remembered place (theme, fonts, languages, the sidebar, where the reader "
+                    "was, recent searches) as at the first start. The books and bookmarks stay.")),
+                ("books", tr("Delete all books"),
+                 tr("Every imported hadith book, rijal work and source of your own leaves the database, with all that "
+                    "was computed from them. The settings and bookmarks stay; the books can be imported again.")),
+                ("everything", tr("Reset everything"),
+                 tr("The books, the settings, the bookmarks and the downloaded copies of the data: this profile as it "
+                    "was before isnady first ran."))):
+            card = QFrame()
+            card.setObjectName("Card")
+            inner = QVBoxLayout(card)
+            inner.setContentsMargins(18, 14, 18, 14)
+            label = QLabel(text)
+            label.setWordWrap(True)
+            button = QPushButton(title)
+            button.setObjectName("Quiet")
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+            button.clicked.connect(lambda _c=False, k=kind, t=title: self._reset(k, t))
+            row = QHBoxLayout()
+            row.addWidget(button)
+            row.addStretch(1)
+            inner.addWidget(label)
+            inner.addLayout(row)
+            box.addWidget(card)
+        box.addStretch(1)
+        return page
+
+    def _reset(self, kind: str, title: str) -> None:
+        from PySide6.QtWidgets import QMessageBox
+
+        from isnady.core import reset
+
+        sure = QMessageBox.warning(self, title, tr("This cannot be undone. Go on?"),
+                                   QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                   QMessageBox.StandardButton.No)
+        if sure != QMessageBox.StandardButton.Yes:
+            return
+        if kind == "settings":
+            n = reset.settings()
+            done = tr("{n} settings deleted; isnady is as at its first start.", n=n)
+        else:
+            from isnady.data import db
+
+            conn = db.connect()
+            try:
+                result = reset.books(conn) if kind == "books" else reset.everything(conn)
+            finally:
+                conn.close()
+            n = result if kind == "books" else result["books"]
+            done = (tr("{n} sources deleted.", n=n) if kind == "books"
+                    else tr("Everything deleted ({n} sources, the settings and the bookmarks).", n=n))
+            self.data_imported.emit()
+        if kind != "books":
+            self._refresh()
+            self.changed.emit()
+            self.languages_changed.emit()
+            self.sidebar_changed.emit()
+        QMessageBox.information(self, title, done)
 
     # ------------------------------------------------------------ plumbing
     @staticmethod

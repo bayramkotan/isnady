@@ -111,7 +111,7 @@ def gui_main() -> int:
     windows[-1].check_interrupted_import()
     from PySide6.QtCore import QTimer
 
-    QTimer.singleShot(400, windows[-1].offer_first_import)      # FR1: an empty database, asked once
+    QTimer.singleShot(400, windows[-1].offer_first_import)      # FR1: an empty database, asked at each start
 
     def _hook(kind, exc, tb):
         """An error inside a click (ROB1): written to isnady.log and shown on the console; the window goes on."""

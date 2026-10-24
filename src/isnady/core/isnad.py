@@ -1099,8 +1099,12 @@ def ensure_isnads(conn: sqlite3.Connection, progress: Callable[[str], None] | No
 
 
 def chain(conn: sqlite3.Connection, hadith_id: int) -> list[dict]:
-    """The stored chains of a hadith with their links, for display."""
+    """The stored chains of a hadith with their links, for display; each says the road of its book ("sunni" or
+    "shia"), so that its words keep that road's manners (a Companion's "(r.a.)" on road A only)."""
     out = []
+    row = conn.execute("SELECT COALESCE(c.tradition, 'sunni') FROM hadiths h JOIN collections c ON c.id = h.collection_id "
+                       "WHERE h.id = ?", (hadith_id,)).fetchone()
+    road = row[0] if row else "sunni"
     for isnad in conn.execute(
         "SELECT id, raw_text, reaches_prophet, problem, derived_by, ends_with, raised FROM isnads "
         "WHERE hadith_id = ? ORDER BY ordinal",
@@ -1114,7 +1118,7 @@ def chain(conn: sqlite3.Connection, hadith_id: int) -> list[dict]:
         out.append({"raw": isnad["raw_text"], "reaches_prophet": bool(isnad["reaches_prophet"]),
                     "problem": isnad["problem"], "derived_by": isnad["derived_by"],
                     "ends_with": isnad["ends_with"] or "", "raised": bool(isnad["raised"]),
-                    "links": [dict(r) for r in links]})
+                    "links": [dict(r) for r in links], "tradition": road})
     return out
 
 
@@ -1220,6 +1224,14 @@ def name_reading(raw_name: str, language: str = "tr") -> tuple[str, bool]:
             outs.append(_KIN[key][0 if lang == "tr" else 1])
             continue
         words = part.split()
+        kin_word = normalize(words[0]) if len(words) > 1 else ""
+        if kin_word in _KIN:
+            # "عمه أبي سهيل بن مالك": his uncle, Abu Suhayl b. Malik (it was read "Amh Ebû Süheyl …")
+            text, guessed = name_reading(" ".join(words[1:]), lang)
+            kin_text = _KIN[kin_word][0 if lang == "tr" else 1]
+            outs.append(f"{kin_text} {text}" if lang == "tr" else f"{kin_text}, {text}")
+            spelled = spelled or guessed
+            continue
         if words and normalize(words[0]) == "ابن":
             rest = words[1:]
             head = "İbn" if lang == "tr" else "Ibn"
@@ -1238,6 +1250,9 @@ def name_reading(raw_name: str, language: str = "tr") -> tuple[str, bool]:
         return "", False
     # after عن the name stands in the genitive (أبي هريرة); read as a name it is Abu Hurayra
     outs = [("Abu " + o[4:]) if o.startswith("Abi ") else o for o in outs]
+    if lang == "tr":
+        # after "b." and "bint" the kunya is in the genitive, as Turkish writes it: Mâlik b. Ebî Âmir, Ali b. Ebî Tâlib
+        outs = [re.sub(r"\b(b\.|bint|İbn) Ebû ", r"\1 Ebî ", o) for o in outs]
     outs[0] = outs[0][:1].upper() + outs[0][1:]
     if len(outs) == 2:
         return f"{outs[0]} ({'yani' if lang == 'tr' else 'that is,'} {outs[1]})", spelled
@@ -1266,7 +1281,7 @@ CHAIN_LANGUAGES = {"Turkish": "tr", "English": "en"}
 _TR_POSSESSIVE = ("sı", "si", "su", "sü", "oğlu", "biri")
 # the Ma'sumun as a Turkish chain names them (B yolu: in its own terms, without a Sunni honorific)
 _MASUM_TR = {
-    "prophet": "Hz. Peygamber ﷺ", "fatima": "Fâtıma ez-Zehrâ", "ali": "İmam Ali b. Ebî Tâlib (Emîrü'l-mü'minîn)",
+    "prophet": "Hz. Peygamber (s.a.v.)", "fatima": "Fâtıma ez-Zehrâ", "ali": "İmam Ali b. Ebî Tâlib (Emîrü'l-mü'minîn)",
     "hasan": "İmam Hasan b. Ali el-Müctebâ", "husayn": "İmam Hüseyin b. Ali", "sajjad": "İmam Ali b. Hüseyin Zeynelâbidîn",
     "baqir": "İmam Muhammed b. Ali el-Bâkır", "sadiq": "İmam Ca'fer b. Muhammed es-Sâdık",
     "kazim": "İmam Mûsâ b. Ca'fer el-Kâzım", "rida": "İmam Ali b. Mûsâ er-Rızâ", "jawad": "İmam Muhammed b. Ali el-Cevâd",
@@ -1298,6 +1313,9 @@ def _tr_case(name: str, case: str) -> str:
     if case == "abl":
         d = "d" if (possessive or letters[-1] not in "fstkçşhp") else "t"
         suffix = ("n" if possessive else "") + d + ("a" if back else "e") + "n"
+    elif case == "gen":
+        four = ("u" if back else "ü") if round_ else ("ı" if back else "i")
+        suffix = ("n" + four + "n" if (possessive or ends_vowel) else four + "n")
     elif case == "acc":
         four = ("u" if back else "ü") if round_ else ("ı" if back else "i")
         suffix = ("n" if possessive else "y" if ends_vowel else "") + four
@@ -1319,26 +1337,48 @@ def _said(text: str, code: str, **values) -> str:
         return text.format(**{k: v for k, v in values.items() if k == "name"})
 
 
-def chain_in_words(chain: dict, code: str) -> str:
+# a word of kinship that names someone's relative: whose, the narrator before it says ("هشام عن أبيه": Hisham's father)
+_WHOSE = {"ابيه", "امه", "جده", "جدته", "عمه", "خاله", "اخيه", "اخته", "ابنه", "مولاه", "ابوه"}
+
+
+def _known_as(person: dict | None, code: str) -> str:
+    """An identified narrator by the short name he is known by, read in the language: "Urve b. ez-Zübeyr"."""
+    if not person:
+        return ""
+    view = person.get("name_view") or {}
+    arabic = view.get("arabic") or " ".join((person.get("display_name") or "").split()[:3])
+    name, _spelled = name_reading(arabic, code) if arabic else ("", False)
+    if code == "tr" and name.startswith("Ebî "):
+        name = "Ebû " + name[4:]
+    return name
+
+
+def chain_in_words(chain: dict, code: str, people: dict | None = None) -> str:
     """The chain as the Arabic says it, in Turkish or English: "Kuteybe b. Saîd bize rivayet etti, Leys bize rivayet
     etti, Yezîd b. Ebî Habîb'den, … Hz. Peygamber ﷺ'den" / "Qutayba b. Sa'id narrated to us, Layth narrated to us,
     from Yazid b. Abi Habib, … from the Prophet ﷺ". "" for a language isnady cannot read names in, or no links."""
-    parts = chain_word_parts(chain, code)
+    parts = chain_word_parts(chain, code, people)
     if not parts:
         return ""
     text = ", ".join(p for p in parts if p)
     return text[:1].upper() + text[1:] + "."
 
 
-def chain_word_parts(chain: dict, code: str) -> list[str]:
-    """The same, one piece for each link and one for whom it reaches (the end, a raised or a cut chain): what is
-    written under each name of the chain on a hadith card ("Abdân bize rivayet etti" · "Ebû Hamza'dan" · …)."""
+def chain_link_names(chain: dict, code: str, people: dict | None = None) -> list[str]:
+    """Each link of the chain as a name in the language, without its case: "Hişâm", "Hişâm'ın babası Urve b.
+    ez-Zübeyr", "Ebû Hüreyre (r.a.)". people: the identified narrators by id (narrators.describe) — a "his father"
+    then says whose father and who he is (Bayram, 2026-10-24: "babasi-kardesi gibi kavramlar bir supheli. Kimin
+    babasi, kimin kardesi?"). On road A a Companion carries "(r.a.)" / "(RA)" (Sunni manners)."""
     if code not in CHAIN_LANGUAGES.values() or not chain.get("links"):
         return []
-    parts = []
+    names_out: list[str] = []
+    bases: list[str] = []            # each link as a name, without its case: the owner of the next one's "his father"
+    owners: list[str] = []           # whose relative each link is ("" for a link named by his own name)
+    people = people or {}
     from isnady.core.normalize import normalize, normalize_with_map
 
-    for link in chain["links"]:
+    for index, link in enumerate(chain["links"]):
+        person = people.get(link.get("person_id"))
         raw = link["raw_name"]
         folded, where = normalize_with_map(raw)
         honour = _HONOUR_RE.search(folded)
@@ -1353,15 +1393,67 @@ def chain_word_parts(chain: dict, code: str) -> list[str]:
             words = words[1:]                            # "أمه أسماء بنت أبي بكر": his mother, Asma' …
         raw = " ".join(words)
         name, _spelled = name_reading(raw, code)
+        plain = name
         if kin and name:
             name = f"{kin} {name}"
         if not name:
             name = short_name(link["raw_name"])
         if code == "tr" and name.startswith("Ebî "):
             name = "Ebû " + name[4:]
-        # inside the sentence the article and a word of kinship are written small: "ez-Zührî'den", "babasından"
-        if re.match(r"(?:A[lnrstdz]|E[lnrstdzş]|Aş)-", name) or normalize(short_name(link["raw_name"])) in _KIN:
-            name = name[:1].lower() + name[1:]
+        whose = normalize(short_name(link["raw_name"]).split()[0]) in _WHOSE if link["raw_name"].strip() else False
+        known_any = _known_as(person, code)
+        known = known_any if whose else ""
+        if whose and index and bases[index - 1]:
+            # whose relative: the narrator before ("Hişâm'ın babası" / "Hisham's father"), and who he is when known;
+            # "عن أبيه عن جده" is the grandfather of the man before the father (Sâlih b. İbrâhim's, not İbrâhim's)
+            def first_word(raw_name: str) -> str:
+                return (normalize(short_name(raw_name)).split() or [""])[0]
+
+            owner = owners[index - 1] if (owners[index - 1] and first_word(link["raw_name"]) == "جده"
+                                          and first_word(chain["links"][index - 1]["raw_name"]) in ("ابيه", "ابوه")) \
+                else bases[index - 1]
+            owners.append(owner)
+            relation = kin or name
+            relation = relation[:1].lower() + relation[1:]
+            if code == "tr":
+                name = f"{_tr_case(owner, 'gen')} {relation}" + (f" {plain}" if kin else f" {known}" if known else "")
+            else:
+                relation = re.sub(r"^(his|her) ", "", relation)
+                name = f"{owner}'s {relation}" + (f", {plain}" if kin else f", {known}" if known else "")
+            bases.append(known or (plain if kin else name))
+        else:
+            owners.append("")
+            # inside the sentence the article and a word of kinship are written small: "ez-Zührî'den", "babasından"
+            if re.match(r"(?:A[lnrstdz]|E[lnrstdzş]|Aş)-", name) or normalize(short_name(link["raw_name"])) in _KIN:
+                name = name[:1].lower() + name[1:]
+            if whose and known:
+                name = f"{name} {known}" if code == "tr" else f"{name}, {known}"
+            bases.append(known_any or name)
+        if chain.get("tradition", "sunni") == "sunni" and _is_companion_link(link, person):
+            name += " (r.a.)" if code == "tr" else " (RA)"
+        names_out.append(name)
+    return names_out
+
+
+def _is_companion_link(link: dict, person: dict | None) -> bool:
+    """A Companion at this link: identified as one (tabaqa 1, or Ibn Hajar's first rank), or, not identified, named
+    as the chains name the Companions (core.companions)."""
+    if person:
+        ranks = [v.get("rank") for v in person.get("verdicts") or [] if v.get("rank_scheme") != "shia"]
+        return person.get("tabaqa") == 1 or 1 in ranks
+    from isnady.core import companions
+
+    return companions.is_companion_name(short_name(link["raw_name"]))
+
+
+def chain_word_parts(chain: dict, code: str, people: dict | None = None) -> list[str]:
+    """The same, one piece for each link and one for whom it reaches (the end, a raised or a cut chain): what is
+    written under each name of the chain on a hadith card ("Abdân bize rivayet etti" · "Ebû Hamza'dan" · …)."""
+    names = chain_link_names(chain, code, people)
+    if not names:
+        return []
+    parts = []
+    for link, name in zip(chain["links"], names):
         term = link.get("transmission") or "bare"
         template = CHAIN_TEMPLATES.get(term, CHAIN_TEMPLATES["'an"])
         values = {"name": name}
@@ -1386,6 +1478,16 @@ def chain_word_parts(chain: dict, code: str) -> list[str]:
     elif chain.get("problem"):
         parts.append(_said(CHAIN_CUT, code))
     return parts
+
+
+def compiler_of(book_key: str) -> dict | None:
+    """The compiler of a book, for the head of its chains: {"arabic": "البخاري", "tr": "Buhârî", "en": "al-Bukhari"}."""
+    from isnady.core import scholars
+
+    s = next((x for x in scholars.SCHOLARS if book_key in x.get("compiler_of", [])), None)
+    if s is None:
+        return None
+    return {"arabic": s.get("known_ar") or s.get("arabic", ""), "tr": s["tr"].split(" (")[0], "en": s["name"]}
 
 
 def chain_codes(languages: list[str]) -> list[str]:

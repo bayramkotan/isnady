@@ -104,7 +104,7 @@ class ResultCard(QFrame):
     def __init__(self, result: core.SearchResult, chain: dict | None = None, open_chain=None,
                  people: dict | None = None, score: float | None = None, related: list | None = None,
                  open_book=None, folded: list | None = None, chains: list | None = None,
-                 on_person=None, on_name=None, on_end=None) -> None:
+                 on_person=None, on_name=None, on_end=None, on_languages=None) -> None:
         super().__init__()
         self.setObjectName("Card")
         t = theme.current()
@@ -182,7 +182,8 @@ class ResultCard(QFrame):
                 # under each Arabic name, its piece of the chain in the languages the card shows (ISN-TR1)
                 codes = [code for code in (core_isnad.CHAIN_LANGUAGES.get(x.language) for x in result.texts) if code]
                 box.addWidget(ChainStrip(c, people, on_person=on_person, on_name=on_name, on_end=on_end,
-                                         codes=list(dict.fromkeys(codes))))
+                                         codes=list(dict.fromkeys(codes)),
+                                         compiler=core_isnad.compiler_of(result.collection_key)))
             box.addSpacing(6)
 
         if result.grades:
@@ -201,6 +202,14 @@ class ResultCard(QFrame):
 
         for text in result.texts:
             self._add_text(box, text, t)
+        # the languages shown, chosen where the card is (Bayram, 2026-10-24: "Dil Ayarlar")
+        settings_link = None
+        if on_languages is not None:
+            settings_link = QPushButton(tr("Language settings"))
+            settings_link.setObjectName("Link")
+            settings_link.setCursor(Qt.CursorShape.PointingHandCursor)
+            settings_link.setToolTip(tr("Choose the languages the hadith are shown in (Settings → Books and languages)"))
+            settings_link.clicked.connect(on_languages)
         if folded:
             # the languages not chosen in Settings → Books and languages: behind an arrow, opened on a click
             names = ", ".join(dict.fromkeys(x.language for x in folded))
@@ -225,9 +234,17 @@ class ResultCard(QFrame):
             more.clicked.connect(flip)
             row = QHBoxLayout()
             row.addWidget(more)
+            if settings_link is not None:
+                row.addSpacing(18)
+                row.addWidget(settings_link)
             row.addStretch(1)
             box.addLayout(row)
             box.addWidget(holder)
+        elif settings_link is not None:
+            row = QHBoxLayout()
+            row.addWidget(settings_link)
+            row.addStretch(1)
+            box.addLayout(row)
 
     @staticmethod
     def _add_text(box: QVBoxLayout, text, t) -> None:
@@ -261,6 +278,7 @@ class SearchPage(QWidget):
     find_narrator = Signal(str)       # a name of a chain not identified → looked for among the narrators
     data_changed = Signal()
     wants_sources = Signal()          # "more languages": the main window opens File → Data Sources
+    wants_languages = Signal()        # "Language settings" on a card: Settings → Books and languages
     retry_requested = Signal()        # "Try again" after a locked database: the window is built again
 
     def __init__(self, status_message=None, parent=None) -> None:
@@ -1056,7 +1074,8 @@ class SearchPage(QWidget):
         card = ResultCard(result, chain, self.open_chain.emit, people, score, self._related(result.hadith_id),
                           None if in_book else self.open_book.emit, folded, chains,
                           on_person=self.open_narrator.emit, on_name=self.find_narrator.emit,
-                          on_end=lambda node: self.open_tree.emit("quraysh", node))
+                          on_end=lambda node: self.open_tree.emit("quraysh", node),
+                          on_languages=self.wants_languages.emit)
         card.setProperty("hadith_id", result.hadith_id)
         return card
 
