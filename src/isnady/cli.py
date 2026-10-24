@@ -1613,8 +1613,17 @@ def cmd_export(args) -> int:
         from isnady.gui.pdf import html_to_pdf as pdf
     road = None if args.tradition == "all" else args.tradition
     try:
+        several = kind in ("book", "network", "profile") and len(args.target) > 1 or \
+            (kind in ("book", "network") and args.target[:1] in (["all"], ["sunni"], ["shia"]))
+        if several and kind != "network" and (args.separate or fmt == "isnady-book" or kind == "profile") \
+                and not args.output:
+            target = target.rsplit(".", 1)[0] if "." in target.rsplit("/", 1)[-1] else target   # a folder
         path = transfer.export(conn, kind, fmt, target, book=args.target[0] if kind in ("book", "network") and
-                               args.target else "", chapter=args.chapter, refs=args.target if kind == "hadith" else None,
+                               args.target and not several else "",
+                               books=args.target if several and kind in ("book", "network") else None,
+                               profiles=args.target if kind == "profile" and len(args.target) > 1 else None,
+                               separate=args.separate,
+                               chapter=args.chapter, refs=args.target if kind == "hadith" else None,
                                query=" ".join(args.target) if kind in ("search", "narrators") else "",
                                languages=args.language, chains=not args.no_chains,
                                tradition=road if kind != "narrators" else (road if args.tradition else "sunni"),
@@ -1635,17 +1644,20 @@ def cmd_import_data(args) -> int:
     from isnady.core import transfer
 
     conn = _connect() if args.what == "book" else None
+    failed = 0
     try:
-        print(transfer.import_file(conn, args.what, args.file, fmt=args.format or "", replace=args.replace,
-                                   folder=args.folder or "", name=args.name or "",
-                                   progress=lambda m: print(f"  {m}", file=sys.stderr)))
-    except transfer.TransferError as exc:
-        print(exc, file=sys.stderr)
-        return 1
+        for file in args.file:                     # several files at once (2026-10-24)
+            try:
+                print(transfer.import_file(conn, args.what, file, fmt=args.format or "", replace=args.replace,
+                                           folder=args.folder or "", name=args.name or "",
+                                           progress=lambda m: print(f"  {m}", file=sys.stderr)))
+            except transfer.TransferError as exc:
+                print(f"{file}: {exc}", file=sys.stderr)
+                failed += 1
     finally:
         if conn is not None:
             conn.close()
-    return 0
+    return 1 if failed else 0
 
 
 def cmd_reset(args) -> int:
@@ -1889,8 +1901,11 @@ def build_parser() -> argparse.ArgumentParser:
                                        "network, settings, a profile or a backup, in many formats (iy export --list)")
     ex.add_argument("what", nargs="?", choices=("hadith", "book", "search", "bookmarks", "narrators", "network",
                                                 "settings", "profile", "backup"))
-    ex.add_argument("target", nargs="*", help="hadith: bukhari:1 bukhari:5-10; book/network: bukhari; search and "
-                                              "narrators: the words; profile: its name")
+    ex.add_argument("target", nargs="*", help="hadith: bukhari:1 bukhari:5-10; book/network: bukhari, several "
+                                              "(bukhari muslim) or all / sunni / shia; search and narrators: the "
+                                              "words; profile: its name, or several")
+    ex.add_argument("--separate", action="store_true", help="several books: each in its own file, in the folder "
+                                                            "--output (isnady books and profiles always are)")
     ex.add_argument("--format", "-f", help="json, jsonl, csv, tsv, xlsx, md, html, txt, epub, docx, pdf, sqlite, "
                                            "isnady-book, graphml, gexf … (iy export --list)")
     ex.add_argument("--output", "-o", help="the file to write (default: a name in this folder)")
@@ -1904,7 +1919,7 @@ def build_parser() -> argparse.ArgumentParser:
     im = sub.add_parser("import-data", help="bring back a book, bookmarks, settings, a profile or a backup from a "
                                             "file made by iy export or File → Export…")
     im.add_argument("what", choices=("book", "bookmarks", "settings", "profile", "backup"))
-    im.add_argument("file")
+    im.add_argument("file", nargs="+", help="one file or several")
     im.add_argument("--format", help="when the file name does not say it")
     im.add_argument("--replace", action="store_true", help="bookmarks/settings: replace instead of adding")
     im.add_argument("--folder", help="bookmarks: put them in this folder")

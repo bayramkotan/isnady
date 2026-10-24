@@ -478,7 +478,9 @@ def _load_result(conn: sqlite3.Connection, hadith_id: int, terms: list[str], que
     a book read again, a search repeated, draw from memory."""
     from isnady.core import cache
 
-    key = (hadith_id, tuple(terms), tuple(query.languages), query.mode, query.whole_words)
+    from isnady.core import language
+
+    key = (hadith_id, tuple(terms), tuple(query.languages), query.mode, query.whole_words, tuple(language.order()))
     return cache.memo(conn, "result", key, lambda: _load_result_counted(conn, hadith_id, terms, query))
 
 
@@ -509,6 +511,10 @@ def _load_result_counted(conn: sqlite3.Connection, hadith_id: int, terms: list[s
     grades = [(g[0], g[1]) for g in conn.execute(
         "SELECT grader_name, grade FROM grades WHERE hadith_id = ? ORDER BY grader_name", (hadith_id,)
     )]
+    from isnady.core import language
+
+    chosen = language.order()                      # Arabic first, then the languages in the order chosen
+    texts.sort(key=lambda t: language.rank(t.language, chosen))
     return SearchResult(hadith_id, head[1], head[2], head[0], texts, grades)
 
 
@@ -522,6 +528,9 @@ def list_collections(conn: sqlite3.Connection) -> list[tuple[str, str, int]]:
 
 
 def list_languages(conn: sqlite3.Connection) -> list[str]:
-    return [r[0] for r in conn.execute(
+    """The languages of the texts, Arabic first and the others in the order chosen (core.language)."""
+    from isnady.core import language
+
+    return language.sort(r[0] for r in conn.execute(
         "SELECT DISTINCT language FROM editions WHERE language IS NOT NULL AND text_count > 0 ORDER BY language"
-    )]
+    ))

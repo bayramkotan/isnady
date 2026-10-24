@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QPushButton,
     QScrollArea,
+    QSpinBox,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -29,7 +30,8 @@ from isnady.core.names import latin
 from isnady.core.normalize import normalize
 from isnady.core.scholars import find as find_scholar
 from isnady.gui import theme
-from isnady.gui.widgets import TextBlock
+from isnady.gui.hadith_nav import HadithNavigator
+from isnady.gui.widgets import FlowLayout, TextBlock
 from isnady.core.i18n import N_, tr
 
 BATCH = 12           # items drawn at a time, so a long chapter never freezes the window
@@ -116,12 +118,31 @@ class BooksPage(QWidget):
 
         # the reading pane
         self.where = _label("", "Lead", rich=True)
-        self.prev_button = QPushButton(tr("‹ Previous"))
-        self.next_button = QPushButton(tr("Next ›"))
-        for b in (self.prev_button, self.next_button):
+        # going through the book (NAV3, Bayram 2026-10-24: "kitaplari rahat dolasmak lazim! Max hadis nerede????
+        # max sayfa numarasi?????"): chapter by number, first / previous / next / last, and the hadith by its number
+        self.first_chapter = QPushButton("⏮")
+        self.prev_button = QPushButton("‹  " + tr("Previous chapter"))
+        self.next_button = QPushButton(tr("Next chapter") + "  ›")
+        self.last_chapter = QPushButton("⏭")
+        self.first_chapter.setToolTip(tr("The first chapter"))
+        self.last_chapter.setToolTip(tr("The last chapter"))
+        for b in (self.first_chapter, self.prev_button, self.next_button, self.last_chapter):
             b.setObjectName("Quiet")
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
         self.prev_button.clicked.connect(lambda: self._step(-1))
         self.next_button.clicked.connect(lambda: self._step(+1))
+        self.first_chapter.clicked.connect(lambda: self._order and self.open_chapter(self._order[0]))
+        self.last_chapter.clicked.connect(lambda: self._order and self.open_chapter(self._order[-1]))
+        self.chapter_spin = QSpinBox()
+        self.chapter_spin.setMinimum(1)
+        self.chapter_spin.setKeyboardTracking(False)       # goes when Enter is pressed or the arrows are used
+        self.chapter_spin.setMinimumWidth(80)
+        self.chapter_spin.setToolTip(tr("Type a chapter's place in the book and press Enter"))
+        self.chapter_spin.valueChanged.connect(self._chapter_typed)
+        self.chapter_count = QLabel("")
+        self.chapter_count.setObjectName("FilterLabel")
+        self.nav = HadithNavigator(lambda: self.conn, tr("Show"))
+        self.nav.activated.connect(self._hadith_typed)
         self.find = QLineEdit()
         self.find.setPlaceholderText(tr("Find in this chapter"))
         self.find.setClearButtonEnabled(True)
@@ -134,10 +155,14 @@ class BooksPage(QWidget):
         self.languages_box = QHBoxLayout()
         self.languages_box.setSpacing(10)
         self._language_checks: dict[str, QCheckBox] = {}
+        chapters = QWidget()
+        chapter_flow = FlowLayout(chapters, spacing=8)
+        chapter_caption = QLabel(tr("Chapter"))
+        chapter_caption.setObjectName("FilterLabel")
+        for w in (chapter_caption, self.chapter_spin, self.chapter_count, self.first_chapter, self.prev_button,
+                  self.next_button, self.last_chapter):
+            chapter_flow.addWidget(w)
         bar = QHBoxLayout()
-        bar.addWidget(self.prev_button)
-        bar.addWidget(self.next_button)
-        bar.addSpacing(12)
         bar.addLayout(self.languages_box)
         bar.addStretch(1)
         bar.addWidget(self.find)
@@ -159,6 +184,8 @@ class BooksPage(QWidget):
         self.star_box = QHBoxLayout()           # the ☆ of the chapter shown (BM1)
         where_row.addLayout(self.star_box)
         right.addLayout(where_row)
+        right.addWidget(chapters)
+        right.addWidget(self.nav)
         right.addLayout(bar)
         right.addWidget(self.scroll, 1)
         self.more = QPushButton()
@@ -260,6 +287,13 @@ class BooksPage(QWidget):
         self._work = work
         config.state_set("reader.last_work", key)
         self._order = core_works.reading_order(conn, work["id"])
+        self.chapter_spin.blockSignals(True)
+        self.chapter_spin.setMaximum(max(1, len(self._order)))
+        self.chapter_spin.blockSignals(False)
+        self.chapter_count.setText("/ " + f"{len(self._order):,}")
+        self.chapter_count.setToolTip(tr("{n} chapters in this book", n=f"{len(self._order):,}"))
+        self.nav.setVisible(work["kind"] == "hadith")
+        self.nav.set_book(work["key"] if work["kind"] == "hadith" else None)
         self.tree.clear()
 
         def add(parent_item, parent_id):
@@ -289,10 +323,11 @@ class BooksPage(QWidget):
         self._language_checks = {}
         if not self._work or self._work["kind"] != "hadith":
             return
-        langs = [r[0] for r in self.conn.execute(
-            """SELECT DISTINCT e.language FROM editions e JOIN collections c ON c.id = e.collection_id
-               WHERE c.key = ? ORDER BY (e.language != 'Arabic'), e.language""", (self._work["key"],))]
         from isnady.core import language
+
+        langs = language.sort(r[0] for r in self.conn.execute(
+            """SELECT DISTINCT e.language FROM editions e JOIN collections c ON c.id = e.collection_id
+               WHERE c.key = ?""", (self._work["key"],)))
 
         # the book's own choice; without one, the content languages (L1) — and every language when none is among them
         saved = (config.state_get(f"reader.languages.{self._work['key']}")
@@ -343,10 +378,21 @@ class BooksPage(QWidget):
                               + tr("chapter {position} of {count}", position=position, count=len(self._order))
                               + "</span>" if position else ""))
         self.prev_button.setEnabled(position > 1)
+        self.first_chapter.setEnabled(position > 1)
         self.next_button.setEnabled(0 < position < len(self._order))
+        self.last_chapter.setEnabled(0 < position < len(self._order))
+        if position:
+            self.chapter_spin.blockSignals(True)
+            self.chapter_spin.setValue(position)
+            self.chapter_spin.blockSignals(False)
         self._chapter_star(chapter_id)
         self._select_in_tree(chapter_id)
         items, total = core_works.leaves(conn, chapter_id)
+        if self._work["kind"] == "hadith":
+            # the number field shows the hadith asked for, or the first of the chapter
+            shown = focus_hadith or next((i["hadith_id"] for i in items if i.get("hadith_id")), None)
+            row = conn.execute("SELECT number FROM hadiths WHERE id = ?", (shown,)).fetchone() if shown else None
+            self.nav.set_number(row[0] if row else "")
         wanted = normalize(self.find.text()).split()
         if wanted:
             items = [i for i in items if self._matches(i, wanted)]
@@ -484,6 +530,27 @@ class BooksPage(QWidget):
             i = self._order.index(self._chapter) + delta
             if 0 <= i < len(self._order):
                 self.open_chapter(self._order[i])
+
+    def _chapter_typed(self, place: int) -> None:
+        if 0 < place <= len(self._order) and self._order[place - 1] != self._chapter:
+            self.open_chapter(self._order[place - 1])
+
+    def _hadith_typed(self) -> None:
+        """A hadith number typed, or stepped to: its chapter, scrolled to it."""
+        from isnady.core import isnad as core_isnad
+
+        if not self._work or self.conn is None:
+            return
+        number = self.nav.number()
+        hid = core_isnad.hadith_id(self.conn, self._work["key"], number)
+        if hid is None:
+            near = core_isnad.nearest_number(self.conn, self._work["key"], number)
+            if not near:
+                return
+            self.nav.set_number(near)
+            hid = core_isnad.hadith_id(self.conn, self._work["key"], near)
+        if hid is not None:
+            self.show_hadith(hid)
 
     def show_person(self, person_id: int) -> None:
         """Open the rijal work and chapter of a narrator's entry (from the Narrators page)."""

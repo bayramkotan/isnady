@@ -7,6 +7,7 @@ Keys
   view.theme                       system | light | dark
   view.text_scale                  0.8 - 1.6, reading text size multiplier (Ctrl+ / Ctrl-)
   view.sidebar                     the order of the sidebar sections, comma-separated ("" = isnady's order)
+  view.language_order              the order of the texts' languages after Arabic, comma-separated ("" = A to Z)
   ui.family, ui.size               interface font ("" = system font)
   text.<script>.family             reading font for one script
   text.<script>.size               point size
@@ -76,6 +77,7 @@ def defaults() -> dict:
     d = {"view.theme": "system", "view.text_scale": 1.0, "ui.family": "", "ui.size": 0.0,
          "view.ui_language": "en",            # the interface language (I1) and how names and terms are read (L1)
          "view.content_languages": "",        # the hadith texts shown, by language, comma-separated; empty: all
+         "view.language_order": "",           # the languages after Arabic, in the order chosen; empty: A to Z
          "sources.repository": "",            # the data repository chosen (core.repositories); empty: isnady's own
          "books.disabled": "",                # collections switched off (core.books), comma-separated keys
          "view.other_languages": "fold",      # texts in languages not chosen: "fold" behind an arrow, or "omit"
@@ -185,6 +187,9 @@ def validate(key: str, value):
         return "" if order == list(SIDEBAR) else ",".join(order)
     if key == "view.content_languages":
         return ",".join(part.strip() for part in str(value).split(",") if part.strip())
+    if key == "view.language_order":           # Arabic always comes first: it is not in the list
+        parts = [part.strip() for part in str(value).split(",") if part.strip() and part.strip() != "Arabic"]
+        return ",".join(dict.fromkeys(parts))
     if key.endswith(".color") or key.startswith("colors."):
         if not _HEX.match(str(value)):
             raise ConfigError(f"{key} must be a colour like #1D4777 (or empty for the default)")

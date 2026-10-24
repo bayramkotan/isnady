@@ -3,6 +3,25 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.4.4] — 2026-10-24
+
+- **Going through a book with ease (2026-10-24: "kitaplari rahat dolasmak lazim! Max hadis nerede???? max sayfa
+  numarasi????? Isnad Chain de de ayni durum var!!!").** On Books and on Isnad Chains the hadith number has the
+  book's last number beside it ("/ 7563"), where the hadith stands among the book's ("hadith 36 of 7,467 in this
+  book") and ⏮ ‹ › ⏭ for the first, previous, next and last hadith. Books also goes to a chapter by its number
+  ("34 / 57") with the first and last chapter a click away, and to any hadith by its number, opening its chapter
+  where it stands. On Isnad Chains the book list is wide enough to read and nothing is cut off at the right.
+- **The languages in your own order (2026-10-24: "Dilleri (Arapca disinda) yerlerini duzenleyebilmemiz lazim").**
+  Preferences → Books and languages lists the languages to tick and to drag (or move with the arrows); Arabic always
+  stays first, Default puts the others back from A to Z. The texts of every hadith card, the chain said in words, the
+  language lists of the sidebar, Books and Export follow. `iy config set view.language_order Turkish,English`.
+- **Several at once in Export and Import, or all of them (2026-10-24: "birden fazla kitap/..... secilebilir olsun.
+  Hepsi de olsun").** Books are ticked in a list with All, None, Sunni and Shia: together in one file, or each in its
+  own file in a folder (isnady books always so); the isnad network from the books ticked; several profiles, each in
+  its own file. Import takes several files at once and says how each went. `iy export book bukhari muslim`,
+  `iy export book all|sunni|shia --separate -o FOLDER`, `iy export network bukhari muslim`, `iy import-data
+  bookmarks a.json b.csv`.
+
 ## [0.4.3] — 2026-10-24
 
 - **The chain of more hadiths is read to the end (2026-10-24, Muslim 93: "hala senedlerini neden goremiyoruz bazi

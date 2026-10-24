@@ -173,6 +173,22 @@ def book_ids(conn: sqlite3.Connection, book: str, chapter: int | None = None) ->
     return ids
 
 
+def book_keys(conn: sqlite3.Connection, names: list[str]) -> list[str]:
+    """Books named for an export, several at once (Bayram, 2026-10-24: "birden fazla kitap … secilebilir olsun.
+    Hepsi de olsun"): keys or full names, or "all", "sunni", "shia" for every book (of that tradition) switched on."""
+    from isnady.core import books
+
+    every = books.all_books(conn)
+    out: list[str] = []
+    for name in names:
+        name = (name or "").strip()
+        if name in ("all", "sunni", "shia"):
+            out += [b["key"] for b in every if name == "all" or (b.get("tradition") or "sunni") == name]
+        elif name:
+            out.append(books.resolve(name))
+    return list(dict.fromkeys(out))
+
+
 def ref_ids(conn: sqlite3.Connection, refs: list[str]) -> list[int]:
     """"bukhari:1", "bukhari:1-10", "muslim:8 muslim:9" → hadith ids, in the order asked."""
     from isnady.core import books
@@ -295,15 +311,15 @@ def narrator_table(conn: sqlite3.Connection, text: str = "", tradition: str | No
                    _meta("narrators", tradition=tradition or "all", query=text))
 
 
-def network(conn: sqlite3.Connection, book: str | None = None, tradition: str | None = None,
+def network(conn: sqlite3.Connection, book: str | list[str] | None = None, tradition: str | None = None,
             minimum: int = 1) -> tuple[list[dict], list[dict]]:
-    """Who narrated from whom in the chains (of one book, or all): nodes and weighted edges teacher → student."""
-    from isnady.core import books as core_books
-
+    """Who narrated from whom in the chains (of one book, of several, or all): nodes and weighted edges teacher →
+    student."""
     where, args = "", []
-    if book:
-        where = "AND c.key = ?"
-        args.append(core_books.resolve(book))
+    keys = book_keys(conn, [book] if isinstance(book, str) else list(book or [])) if book else []
+    if keys:
+        where = f"AND c.key IN ({','.join('?' * len(keys))})"
+        args.extend(keys)
     if tradition:
         where += " AND COALESCE(c.tradition, 'sunni') = ?"
         args.append(tradition)
@@ -343,10 +359,34 @@ def settings_table(profile: str | None = None) -> F.Table:
 def export(conn: sqlite3.Connection | None, kind: str, fmt: str, target: str | Path, *, book: str = "",
            chapter: int | None = None, refs: list[str] | None = None, query: str = "",
            languages: list[str] | None = None, chains: bool = True, tradition: str | None = "sunni",
-           profile: str | None = None, pdf=None, progress: Progress | None = None) -> Path:
+           profile: str | None = None, pdf=None, progress: Progress | None = None,
+           books: list[str] | None = None, profiles: list[str] | None = None, separate: bool = False) -> Path:
     """Write what is asked to target in fmt; returns the file written. pdf: a function (html, path) that draws a PDF
-    (gui.pdf.html_to_pdf), given by the window or the command line."""
+    (gui.pdf.html_to_pdf), given by the window or the command line.
+
+    Several at once: books (keys, full names, "all", "sunni", "shia") for a book or the network, profiles for a
+    profile. Several books go into one file, or with separate (and always as isnady books) each into its own file
+    in the folder target; several profiles each into its own file in the folder target."""
     say = progress or (lambda _m: None)
+    if kind == "book" and books:
+        if conn is None:
+            raise TransferError("No database.")
+        keys = book_keys(conn, books)
+        if not keys:
+            raise TransferError("No book chosen.")
+        if len(keys) == 1:
+            book, books = keys[0], None
+        elif separate or fmt == "isnady-book":
+            return _each(keys, Path(target), fmt, say, lambda key, path: export(
+                conn, "book", fmt, path, book=key, languages=languages, chains=chains, pdf=pdf, progress=say))
+    if kind == "profile" and profiles and len(profiles) > 1:
+        from isnady.core import profiles as core_profiles
+
+        names = {p["id"]: p.get("name") or p["id"] for p in core_profiles.all_profiles()}
+        return _each(list(dict.fromkeys(profiles)), Path(target), fmt, say,
+                     lambda pid, path: export_profile(fmt, path, pid), names)
+    if kind == "profile" and profiles:
+        profile = profiles[0]
     if kind not in KINDS:
         raise TransferError(f"Nothing called '{kind}' is exported. One of: {', '.join(KINDS)}.")
     if fmt not in KINDS[kind]["export"]:
@@ -359,16 +399,24 @@ def export(conn: sqlite3.Connection | None, kind: str, fmt: str, target: str | P
         if conn is None:
             raise TransferError("No database.")
         if kind == "book":
-            if not book:
+            if not book and not books:
                 raise TransferError("Which book? e.g. bukhari.")
             if fmt == "isnady-book":
                 return export_isnady_book(conn, book, target, languages, say)
-            ids = book_ids(conn, book, chapter)
-            from isnady.core import books
+            if books:                                   # several books in one file, one after another
+                keys = book_keys(conn, books)
+                ids = [i for key in keys for i in book_ids(conn, key)]
+                title = "isnady: " + ", ".join(
+                    conn.execute("SELECT name FROM collections WHERE key = ?", (k,)).fetchone()[0] for k in keys[:6]) \
+                    + (f" … ({len(keys)})" if len(keys) > 6 else "")
+            else:
+                ids = book_ids(conn, book, chapter)
+                from isnady.core import books as core_books
 
-            title = conn.execute("SELECT name FROM collections WHERE key = ?", (books.resolve(book),)).fetchone()[0]
-            if chapter is not None:
-                title += f" — {chapter}"
+                title = conn.execute("SELECT name FROM collections WHERE key = ?",
+                                     (core_books.resolve(book),)).fetchone()[0]
+                if chapter is not None:
+                    title += f" — {chapter}"
         elif kind == "hadith":
             ids = ref_ids(conn, refs or [])
             title = "isnady: " + " ".join(refs or [])
@@ -377,7 +425,8 @@ def export(conn: sqlite3.Connection | None, kind: str, fmt: str, target: str | P
             title = f"isnady: “{query}”"
         say(f"{len(ids):,} hadith")
         records = hadith_records(conn, ids, languages, chains, say)
-        meta = _meta(kind, book=book, chapter=chapter, refs=refs or [], query=query, languages=languages or [])
+        meta = _meta(kind, book=book, chapter=chapter, refs=refs or [], query=query, languages=languages or [],
+                     **({"books": book_keys(conn, books)} if kind == "book" and books else {}))
         if fmt == "json":
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(json.dumps({"schema": "isnady-export/1", **meta, "title": title, "hadith": records},
@@ -398,8 +447,9 @@ def export(conn: sqlite3.Connection | None, kind: str, fmt: str, target: str | P
         return F.write_table(hadith_table(records, title, meta), fmt, target)
 
     if kind == "network":
-        nodes, edges = network(conn, book or None, tradition)
-        return F.write_graph(nodes, edges, fmt, target, f"isnady: {book or 'all books'}")
+        chosen = books or ([book] if book else None)
+        nodes, edges = network(conn, chosen, tradition)
+        return F.write_graph(nodes, edges, fmt, target, f"isnady: {', '.join(chosen) if chosen else 'all books'}")
     if kind == "narrators":
         table = narrator_table(conn, query, tradition, say)
     elif kind == "bookmarks":
@@ -431,6 +481,21 @@ def export(conn: sqlite3.Connection | None, kind: str, fmt: str, target: str | P
         pdf(F.table_html(table), target)
         return target
     return F.write_table(table, fmt, target)
+
+
+def _each(keys: list[str], folder: Path, fmt: str, say: Progress, write, names: dict | None = None) -> Path:
+    """One file for each of several things, in a folder; returns the folder."""
+    from isnady.core import books as core_books
+
+    if folder.suffix and not folder.is_dir():
+        folder = folder.with_suffix("")            # "x.json" given for several: the folder "x"
+    folder.mkdir(parents=True, exist_ok=True)
+    for n, key in enumerate(keys, 1):
+        base = (names or {}).get(key) or core_books.full_name(key)
+        base = "".join(c if c.isalnum() or c in "-_. " else "_" for c in base).strip() or key
+        say(f"{n}/{len(keys)}: {base}")
+        write(key, folder / (base + suffix(fmt)))
+    return folder
 
 
 def export_isnady_book(conn: sqlite3.Connection, book: str, target: Path, languages: list[str] | None,

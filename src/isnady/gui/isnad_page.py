@@ -7,14 +7,12 @@ Every fact shown comes from isnady.core.isnad.
 import html
 import sqlite3
 
-from PySide6.QtCore import QStringListModel, Qt, Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QComboBox,
-    QCompleter,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -27,6 +25,7 @@ from isnady.core.i18n import n_, tr
 from isnady.gui import theme
 from isnady.core import traditions
 from isnady.gui.chain_widgets import ChainNode, end_chip
+from isnady.gui.hadith_nav import HadithNavigator
 from isnady.gui.widgets import TextBlock, expanding_width_policy
 
 
@@ -39,26 +38,6 @@ def _label(text: str = "", name: str = "", wrap: bool = False) -> QLabel:
     if wrap:
         label.setSizePolicy(expanding_width_policy())
     return label
-
-
-class _NumberField(QLineEdit):
-    """The hadith number (CH2): typed freely ("12a", "5:1740"), stepped with the arrow keys and the mouse wheel
-    to the book's next or previous number."""
-
-    def __init__(self, step) -> None:
-        super().__init__()
-        self._step = step
-
-    def keyPressEvent(self, e) -> None:  # noqa: N802 (Qt name)
-        popup = self.completer().popup() if self.completer() else None
-        if e.key() in (Qt.Key.Key_Up, Qt.Key.Key_Down) and not (popup and popup.isVisible()):
-            self._step(1 if e.key() == Qt.Key.Key_Up else -1)
-            return
-        super().keyPressEvent(e)
-
-    def wheelEvent(self, e) -> None:  # noqa: N802
-        self._step(1 if e.angleDelta().y() > 0 else -1)
-        e.accept()
 
 
 class IsnadPage(QWidget):
@@ -77,49 +56,30 @@ class IsnadPage(QWidget):
         self.book_combo = QComboBox()
         self.book_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.book_combo.currentIndexChanged.connect(lambda _i: self._book_changed())
-        self.number_edit = _NumberField(self._step_number)
-        self.number_edit.setObjectName("NumberField")
-        self.number_edit.setPlaceholderText(tr("Hadith number"))
-        self.number_edit.setFixedWidth(150)
-        self.number_edit.returnPressed.connect(self._go)
-        self._numbers = QStringListModel(self)            # the numbers that begin with what is typed (CH2)
-        completer = QCompleter(self._numbers, self)
-        completer.setCompletionMode(QCompleter.CompletionMode.UnfilteredPopupCompletion)
-        completer.activated.connect(lambda text: (self.number_edit.setText(text), self._go()))
-        self.number_edit.setCompleter(completer)
-        self.number_edit.textEdited.connect(self._typed)
-        self.range_label = _label("", "Caption")
+        self.book_combo.setMinimumWidth(260)
         self.random_button = QPushButton(tr("Random hadith"))
         self.random_button.setObjectName("Quiet")
         self.random_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.random_button.setToolTip(tr("A hadith of this book chosen at random"))
         self.random_button.clicked.connect(self._random)
-        go = QPushButton(tr("Show chain"))
-        go.setObjectName("Primary")
-        go.setCursor(Qt.CursorShape.PointingHandCursor)
-        go.clicked.connect(self._go)
-        self.prev_button = QPushButton(tr("‹  Previous"))
-        self.next_button = QPushButton(tr("Next  ›"))
-        for b in (self.prev_button, self.next_button):
-            b.setObjectName("Quiet")
-            b.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.prev_button.clicked.connect(lambda: self._step("prev"))
-        self.next_button.clicked.connect(lambda: self._step("next"))
+        # the number, the last number, first / previous / next / last and the place in the book, on a line of their
+        # own (NAV3, Bayram 2026-10-24: "Max hadis nerede???? … Isnad Chain de de ayni durum var!!!")
+        self.nav = HadithNavigator(lambda: self.conn, tr("Show chain"))
+        self.nav.activated.connect(self._go)
+        self.number_edit = self.nav.field
+        self.prev_button = self.nav.prev_button
+        self.next_button = self.nav.next_button
 
-        top = QHBoxLayout()
+        row = QHBoxLayout()
+        row.setSpacing(8)
+        row.addWidget(_label(tr("Book"), "FilterLabel"))
+        row.addWidget(self.book_combo, 1)
+        row.addSpacing(8)
+        row.addWidget(self.random_button)
+        top = QVBoxLayout()
         top.setSpacing(8)
-        top.addWidget(_label(tr("Book"), "FilterLabel"))
-        top.addWidget(self.book_combo)
-        top.addSpacing(8)
-        top.addWidget(_label(tr("Number"), "FilterLabel"))
-        top.addWidget(self.number_edit)
-        top.addWidget(go)
-        top.addWidget(self.random_button)
-        top.addSpacing(6)
-        top.addWidget(self.range_label)
-        top.addStretch(1)
-        top.addWidget(self.prev_button)
-        top.addWidget(self.next_button)
+        top.addLayout(row)
+        top.addWidget(self.nav)
 
         self.body = QWidget()
         self.body.setObjectName("ResultsBody")
@@ -180,40 +140,8 @@ class IsnadPage(QWidget):
         return key if key and key != "__heading__" else None
 
     def _book_changed(self) -> None:
-        """The range of the book in the field and beside it: "1 – 7,563 · 7,583 hadith"."""
-        book, conn = self._book(), self.conn
-        rng = core_isnad.number_range(conn, book) if book and conn is not None else None
-        if rng is None:
-            self.number_edit.setPlaceholderText(tr("Hadith number"))
-            self.range_label.setText("")
-            self.number_edit.setToolTip("")
-            return
-        span = f"{rng['first']} – {rng['last']}"
-        self.number_edit.setPlaceholderText(span)
-        # the numbers are the book's own, not a count (Bayram, 2026-10-24: "0 – 7563 · 7,561 hadis"): said so
-        self.range_label.setText(tr("numbers {span} · {n} hadith", span=span, n=f"{rng['count']:,}"))
-        why = tr("The numbers are the book's own, as its edition gives them, not a count: some numbers are missing, some "
-                 "are split (402.2) and some books begin at 0, so the last number and the number of hadith "
-                 "differ.")
-        self.range_label.setToolTip(why)
-        self.number_edit.setToolTip(tr("This book's numbers run from {first} to {last} ({n} hadith). The arrow keys and "
-                                       "the mouse wheel go to the next or the previous one; typing shows the numbers "
-                                       "that begin so.", first=rng["first"], last=rng["last"], n=f"{rng['count']:,}")
-                                    + "\n" + why)
-
-    def _typed(self, text: str) -> None:
-        book = self._book()
-        if book and self.conn is not None:
-            self._numbers.setStringList(core_isnad.numbers_starting(self.conn, book, text))
-
-    def _step_number(self, delta: int) -> None:
-        book = self._book()
-        if not book or self.conn is None:
-            return
-        number = core_isnad.step_number(self.conn, book, self.number_edit.text(), delta)
-        if number:
-            self.number_edit.setText(number)
-            self._go()
+        """The range of the book beside the number: "/ 7563", and where the hadith stands among the book's."""
+        self.nav.set_book(self._book())
 
     def _open_first(self, book: str) -> None:
         index = self.book_combo.findData(book)
@@ -367,9 +295,7 @@ class IsnadPage(QWidget):
             self.book_combo.setCurrentIndex(index)
             self.book_combo.blockSignals(False)
             self._book_changed()
-        self.number_edit.setText(info["number"])
-        self.prev_button.setEnabled(info["prev"] is not None)
-        self.next_button.setEnabled(info["next"] is not None)
+        self.nav.set_number(info["number"])
 
         self._clear()
         chains = core_isnad.chain(self.conn, hid)

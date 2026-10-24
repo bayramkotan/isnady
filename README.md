@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.4.3-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.4.4-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.4.3-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.4.4-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.4.3).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.4.4).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -374,10 +374,10 @@ Prophet ﷺ at the end opens his life in the Genealogies (on road B, the Imam th
 on the cards of Search and Books open the same way, name by name, and every teacher and student named in a life
 looks for himself among the narrators.
 
-Choose a book and a number, or let isnady choose: the number field shows the book's range ("1 – 7563 · 7,583
-hadith"), the arrow keys and the mouse wheel go to the next or the previous hadith, typing lists the numbers that
-begin so, a number the book does not have offers the nearest, and **Random hadith** picks one. `iy chain kafi`
-prints the range.
+Choose a book and a number, or let isnady choose: beside the number stands the book's last number ("/ 7563") and
+where the hadith stands among the book's ("hadith 36 of 7,467"); ⏮ ‹ › ⏭ go to the first, previous, next and last
+hadith, so do the arrow keys and the mouse wheel; typing lists the numbers that begin so, a number the book does not
+have offers the nearest, and **Random hadith** picks one. `iy chain kafi` prints the range.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/chain.png" alt="Isnad Chains — the chain of Sahih al-Bukhari 1 as a timeline from the book to the Prophet" width="850">
@@ -538,8 +538,10 @@ Sunni narrators filter by tabaqa, rank and book; Shia narrators by the Imami ass
 isnady is not only for searching: the **Books** section opens every imported work and reads it in
 its own order. A hadith collection reads chapter by chapter, each hadith with its card (chain,
 narrators, other narrations, grades) and the languages you choose; Ibn Hajar's *Taqrib* and
-al-Najashi's *Rijal* read entry by entry, each narrator a click away. Find within a chapter, go to
-the previous or next one, and isnady remembers where you were. From any search result, **In its
+al-Najashi's *Rijal* read entry by entry, each narrator a click away. Go to a chapter by its number ("34 / 57")
+or to the first, previous, next or last one; in a hadith collection go to any hadith by its number, with the
+book's last number beside it and the same ⏮ ‹ › ⏭ as on Isnad Chains. Find within a chapter, and isnady remembers
+where you were. From any search result, **In its
 book** opens the hadith where it stands, among the hadith of its chapter.
 
 Book and chapter titles follow the interface language: the sources give chapter titles in English only, so
@@ -767,17 +769,25 @@ A hadith keeps its book and number, chapter, texts in the languages chosen, grad
 written, then said in Turkish and English. PDF is drawn by Qt, so the Arabic is joined and set right to left as on
 the screen; Excel, Word and EPUB files are written without any extra package.
 
+**Several at once, or all:** books are ticked in a list (All, None, Sunni, Shia) and go into one file, or each into
+its own file in a folder; the isnad network is drawn from the books ticked; several profiles each into their own
+file; and Import takes several files at once.
+
 ```bash
 iy export --list                                     # what, and in which formats
 iy export hadith bukhari:1 bukhari:5-10 -f pdf -o intention.pdf
 iy export book bukhari --chapter 1 -f docx --language Arabic --language Turkish
 iy export book nawawi -f isnady-book                 # imported again with: iy import-data book …
+iy export book bukhari muslim -f xlsx -o two.xlsx    # several books in one file
+iy export book sunni -f json --separate -o sunni     # every Sunni book, each in its own file (all, sunni, shia)
+iy export network bukhari muslim abudawud -f gexf    # the chains of these books together
 iy export narrators -f xlsx --tradition shia
 iy export network bukhari -f gexf                    # open in Gephi
 iy export search "النيات" -f md
 iy export backup -o mine.isnady-backup.zip
 iy import-data bookmarks bookmarks.csv --folder Imported
 iy import-data book nawawi.isnady-book.zip
+iy import-data bookmarks a.json b.csv                # several files at once
 ```
 
 ---
@@ -798,6 +808,10 @@ has its own Default button.
 Statistics, Bookmarks and Learn by default; **Preferences → Sidebar** moves any section up or down (drag it, or
 the arrows), Ctrl+1 … Ctrl+9 and the View menu follow, Default puts isnady's order back.
 `iy config set view.sidebar books,search,narrators`.
+
+**The languages in your own order:** Arabic always first, then the others as you put them — **Preferences → Books
+and languages** (drag a language, or the arrows; Default: A to Z). Every hadith card, the chain said in words and
+the language lists follow. `iy config set view.language_order Turkish,English`.
 
 **Fast, with a cache:** whatever costs time to read from the database — the books and their counts, the narrators'
 lists and readings, each scholar's numbers, the chains' figures per book, the families read from the names, searches

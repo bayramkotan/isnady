@@ -1507,7 +1507,9 @@ def compiler_of(book_key: str) -> dict | None:
 
 def chain_codes(languages: list[str]) -> list[str]:
     """The languages, of those shown ("Turkish", "English" … in order; [] for every one), the chain can be said in."""
-    names = languages or list(CHAIN_LANGUAGES)
+    from isnady.core import language
+
+    names = language.sort(languages or list(CHAIN_LANGUAGES))      # in the order the texts are shown
     return list(dict.fromkeys(CHAIN_LANGUAGES[n] for n in names if n in CHAIN_LANGUAGES))
 
 
@@ -1593,6 +1595,20 @@ def nearest_number(conn: sqlite3.Connection, book: str, number: str) -> str | No
                           WHERE c.key = ? ORDER BY ABS(h.number_sort - ?), h.number_sort LIMIT 1""",
                        (book, key)).fetchone()
     return row[0] if row else None
+
+
+def position(conn: sqlite3.Connection, book: str, number: str) -> tuple[int, int] | None:
+    """(place, count): where a number stands among the book's hadith in its own order — Muslim 93 is the 93rd of
+    7,583 — or None for a number the book does not have. For "the hadith X of Y" beside the number field."""
+    here = conn.execute("""SELECT h.number_sort, h.id FROM hadiths h JOIN collections c ON c.id = h.collection_id
+                           WHERE c.key = ? AND h.number = ?""", (book, (number or "").strip())).fetchone()
+    if here is None:
+        return None
+    before, count = conn.execute(
+        """SELECT SUM(CASE WHEN h.number_sort < ? OR (h.number_sort = ? AND h.id < ?) THEN 1 ELSE 0 END), COUNT(*)
+           FROM hadiths h JOIN collections c ON c.id = h.collection_id WHERE c.key = ?""",
+        (here[0], here[0], here[1], book)).fetchone()
+    return (before or 0) + 1, count
 
 
 def random_number(conn: sqlite3.Connection, book: str) -> str | None:

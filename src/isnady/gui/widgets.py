@@ -51,22 +51,29 @@ class FlowLayout(QLayout):
         return size + QSize(margins.left() + margins.right(), margins.top() + margins.bottom())
 
     def _do_layout(self, rect: QRect, test_only: bool) -> int:
-        x, y, line_height = rect.x(), rect.y(), 0
+        # the items of each line are centred on the line, so a label sits level with the field and the buttons
+        # beside it (NAV3)
         space = self.spacing()
+        lines, line, x = [], [], rect.x()
         for item in self._items:
             hint = item.sizeHint()
-            next_x = x + hint.width() + space
-            if next_x - space > rect.right() and line_height > 0:
-                x = rect.x()
-                y += line_height + space
-                next_x = x + hint.width() + space
-                line_height = 0
+            if line and x + hint.width() > rect.right() + 1:
+                lines.append(line)
+                line, x = [], rect.x()
+            line.append((item, hint, x))
+            x += hint.width() + space
+        if line:
+            lines.append(line)
+        y = rect.y()
+        for i, line in enumerate(lines):
+            height = max(h.height() for _it, h, _x in line)
             if not test_only:
-                left = rect.right() - (x - rect.x()) - hint.width() + 1 if self._rtl else x
-                item.setGeometry(QRect(QPoint(left, y), hint))
-            x = next_x
-            line_height = max(line_height, hint.height())
-        return y + line_height - rect.y()
+                for item, hint, left in line:
+                    if self._rtl:
+                        left = rect.right() - (left - rect.x()) - hint.width() + 1
+                    item.setGeometry(QRect(QPoint(left, y + (height - hint.height()) // 2), hint))
+            y += height + (space if i < len(lines) - 1 else 0)
+        return y - rect.y()
 
 
 def expanding_width_policy() -> QSizePolicy:

@@ -613,23 +613,90 @@ class PreferencesDialog(QDialog):
         title.setObjectName("CardTitle")
         title.setFont(theme.reading_font(13.5, bold=True))
         lay.addWidget(title)
-        lead = QLabel(tr("The languages each hadith is shown in. A text that matches your search is always shown. The same "
-                        "as Content in the sidebar."))
+        lead = QLabel(tr("The languages each hadith is shown in, in this order: Arabic always first, the others as you "
+                        "put them — drag a language to its place or move it with the arrows. A text that matches your "
+                        "search is always shown. The same as Content in the sidebar."))
         lead.setObjectName("Caption")
         lead.setWordWrap(True)
         lay.addWidget(lead)
-        holder = QWidget()
-        flow = FlowLayout(holder, spacing=10)
+        # the order of the languages after Arabic (Bayram, 2026-10-24: "Dilleri (Arapca disinda) yerlerini
+        # duzenleyebilmemiz lazim"): a list to tick and to drag, Arabic fixed at its head
         chosen = language.content_languages()
-        lang_checks = []
-        for lang in available:
-            c = QCheckBox(tr(lang))                 # the language's name in the interface language (LANG3)
-            c.setProperty("language", lang)
-            c.setChecked(not chosen or lang in chosen)
-            c.toggled.connect(lambda _on: save_languages())
-            flow.addWidget(c)
-            lang_checks.append(c)
-        lay.addWidget(holder)
+        lang_row = QHBoxLayout()
+        lang_row.setSpacing(14)
+        listing = QListWidget()
+        listing.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        listing.setDefaultDropAction(Qt.DropAction.MoveAction)
+        listing.setFixedHeight(min(12, max(3, len(available))) * 32 + 8)
+        listing.setMaximumWidth(420)
+        lang_row.addWidget(listing, 1)
+        lang_buttons = QVBoxLayout()
+        lang_buttons.setSpacing(8)
+        up = QPushButton("▲  " + tr("Move up"))
+        down = QPushButton("▼  " + tr("Move down"))
+        az = _default_button()
+        az.setToolTip(tr("Arabic first, the others from A to Z"))
+        for b in (up, down, az):
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            lang_buttons.addWidget(b)
+        lang_buttons.addStretch(1)
+        lang_row.addLayout(lang_buttons)
+        lang_row.addStretch(1)
+        lay.addLayout(lang_row)
+
+        def fill_languages() -> None:
+            current = listing.currentItem().data(Qt.ItemDataRole.UserRole) if listing.currentItem() else None
+            picked = language.content_languages()
+            listing.blockSignals(True)
+            listing.clear()
+            for i, lang in enumerate(language.sort(available)):
+                arabic = lang == "Arabic"
+                item = QListWidgetItem(f"{i + 1}.  {tr(lang)}" + ("   — " + tr("always first") if arabic else ""))
+                item.setData(Qt.ItemDataRole.UserRole, lang)
+                flags = Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsSelectable
+                if not arabic:
+                    flags |= Qt.ItemFlag.ItemIsDragEnabled
+                item.setFlags(flags)
+                item.setCheckState(Qt.CheckState.Checked if not picked or lang in picked else Qt.CheckState.Unchecked)
+                item.setSizeHint(QSize(0, 32))
+                listing.addItem(item)
+                if lang == current:
+                    listing.setCurrentItem(item)
+            listing.blockSignals(False)
+
+        def save_order() -> None:
+            langs = [listing.item(i).data(Qt.ItemDataRole.UserRole) for i in range(listing.count())]
+            others = [lang for lang in langs if lang != "Arabic"]
+            language.set_order([] if others == sorted(others) else others)
+            fill_languages()
+            self.languages_changed.emit()
+
+        def move_language(step: int) -> None:
+            i = listing.currentRow()
+            j = i + step
+            if i < 0 or not 0 <= j < listing.count():
+                return
+            if "Arabic" in (listing.item(i).data(Qt.ItemDataRole.UserRole), listing.item(j).data(Qt.ItemDataRole.UserRole)):
+                return                                  # Arabic stays at the head
+            item = listing.takeItem(i)
+            listing.insertItem(j, item)
+            listing.setCurrentRow(j)
+            save_order()
+
+        def save_languages() -> None:
+            items = [listing.item(i) for i in range(listing.count())]
+            picked = [it.data(Qt.ItemDataRole.UserRole) for it in items if it.checkState() == Qt.CheckState.Checked]
+            language.set_content_languages([] if not picked or len(picked) == len(items) else picked)
+            self.languages_changed.emit()
+
+        fill_languages()
+        listing.itemChanged.connect(lambda _item: save_languages())
+        # after the drop has finished; a language dropped above Arabic goes back below it (language.sort)
+        listing.model().rowsMoved.connect(lambda *_a: QTimer.singleShot(0, save_order))
+        up.clicked.connect(lambda: move_language(-1))
+        down.clicked.connect(lambda: move_language(+1))
+        az.clicked.connect(lambda: (language.set_order([]), fill_languages(), self.languages_changed.emit()))
+        self._rows.append(fill_languages)
         fold = QRadioButton(tr("Fold the other languages behind an arrow on each hadith (▸ click to open)"))
         omit = QRadioButton(tr("Leave the other languages out"))
         (fold if language.folds() else omit).setChecked(True)
@@ -638,11 +705,6 @@ class PreferencesDialog(QDialog):
         lay.addWidget(omit)
         box.addWidget(card)
         box.addStretch(1)
-
-        def save_languages() -> None:
-            picked = [c.property("language") for c in lang_checks if c.isChecked()]
-            language.set_content_languages([] if not picked or len(picked) == len(lang_checks) else picked)
-            self.languages_changed.emit()
 
         return page
 

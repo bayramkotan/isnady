@@ -34,6 +34,32 @@ def set_content_languages(languages: list[str]) -> None:
     config.state_forget("reader.languages.")      # every book follows the new choice
 
 
+def order() -> list[str]:
+    """The languages after Arabic in the order chosen (Bayram, 2026-10-24: "Dilleri (Arapca disinda) yerlerini
+    duzenleyebilmemiz lazim"); [] means A to Z."""
+    return [part for part in str(config.get("view.language_order") or "").split(",") if part and part != "Arabic"]
+
+
+def set_order(languages: list[str]) -> None:
+    config.set("view.language_order", ",".join(languages))
+
+
+def rank(language: str, chosen: list[str] | None = None) -> tuple:
+    """The sort key of a language: Arabic first, then those in the order chosen, then the rest A to Z."""
+    if language == "Arabic":
+        return (0, 0, "")
+    chosen = order() if chosen is None else chosen
+    if language in chosen:
+        return (1, chosen.index(language), "")
+    return (2, 0, language or "")
+
+
+def sort(languages) -> list[str]:
+    """The languages in the order they are shown: Arabic, then the order chosen, then A to Z."""
+    chosen = order()
+    return sorted(languages, key=lambda lang: rank(lang, chosen))
+
+
 def shows(language: str) -> bool:
     chosen = content_languages()
     return not chosen or language in chosen

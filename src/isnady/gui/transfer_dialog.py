@@ -61,6 +61,66 @@ def _label(text: str, name: str = "", wrap: bool = True) -> QLabel:
     return label
 
 
+class _CheckList(QWidget):
+    """Several at once, or all of them (Bayram, 2026-10-24: "birden fazla kitap/..... secilebilir olsun. Hepsi de
+    olsun"): a list to tick, with All, None and — for books — Sunni and Shia."""
+
+    changed = Signal()
+
+    def __init__(self, items: list[tuple[str, str, str]], checked: list[str], groups: bool = False) -> None:
+        super().__init__()
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(4)
+        self.list = QListWidget()
+        self.list.setMaximumHeight(170)
+        for key, text, group in items:
+            item = QListWidgetItem(text)
+            item.setData(Qt.ItemDataRole.UserRole, key)
+            item.setData(Qt.ItemDataRole.UserRole + 1, group)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Checked if key in checked else Qt.CheckState.Unchecked)
+            self.list.addItem(item)
+        self.list.itemChanged.connect(lambda _i: self._count())
+        lay.addWidget(self.list)
+        row = QHBoxLayout()
+        row.setSpacing(6)
+        picks = [(tr("All"), lambda _g: True), (tr("None"), lambda _g: False)]
+        if groups:
+            picks += [(tr("Sunni"), lambda g: g == "sunni"), (tr("Shia"), lambda g: g == "shia")]
+        for text, test in picks:
+            b = QPushButton(text)
+            b.setObjectName("Quiet")
+            b.clicked.connect(lambda _c=False, t=test: self._pick(t))
+            row.addWidget(b)
+        row.addStretch(1)
+        self.count = QLabel("")
+        self.count.setObjectName("Caption")
+        row.addWidget(self.count)
+        lay.addLayout(row)
+        self._count()
+
+    def _pick(self, test) -> None:
+        self.list.blockSignals(True)
+        for i in range(self.list.count()):
+            item = self.list.item(i)
+            item.setCheckState(Qt.CheckState.Checked if test(item.data(Qt.ItemDataRole.UserRole + 1))
+                               else Qt.CheckState.Unchecked)
+        self.list.blockSignals(False)
+        self._count()
+
+    def _count(self) -> None:
+        self.count.setText(tr("{n} of {total} chosen", n=len(self.keys()), total=self.list.count()))
+        self.changed.emit()
+
+    def keys(self) -> list[str]:
+        return [self.list.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.list.count())
+                if self.list.item(i).checkState() == Qt.CheckState.Checked]
+
+    def every(self) -> bool:
+        return self.list.count() > 0 and len(self.keys()) == self.list.count()
+
+
 class _Job(QThread):
     """A long export or import beside the window, with a connection of its own."""
     progress = Signal(str)
@@ -115,17 +175,16 @@ class ExportDialog(QDialog):
         self.refs = QLineEdit(preset.get("refs", ""))
         self.refs.setPlaceholderText("bukhari:1  bukhari:5-10  muslim:8")
         self._add_scope("hadith", [(tr("Hadith"), self.refs)])
-        # book
-        self.book = QComboBox()
-        for w in book_list:
-            self.book.addItem(f"{w['title']} ({w['key']})", w["key"])
-        if preset.get("book"):
-            i = self.book.findData(preset["book"])
-            if i >= 0:
-                self.book.setCurrentIndex(i)
+        # book: one, several or all; a chapter when one book is chosen
+        hadith_books = [w for w in book_list if w.get("kind") == "hadith"]
+        first = preset.get("book") or (hadith_books[0]["key"] if hadith_books else "")
+        self.books = _CheckList([(w["key"], f"{w['title']} ({w['key']})", w["tradition"]) for w in hadith_books],
+                                [first], groups=True)
+        self.books.changed.connect(self._fill_chapters)
         self.chapter = QComboBox()
-        self.book.currentIndexChanged.connect(self._fill_chapters)
-        self._add_scope("book", [(tr("Book"), self.book), (tr("Chapter"), self.chapter)])
+        self.separate = QCheckBox(tr("Each book in its own file (in a folder)"))
+        self.separate.toggled.connect(self._preview_clear)
+        self._add_scope("book", [(tr("Books"), self.books), (tr("Chapter"), self.chapter), ("", self.separate)])
         # search
         self.query = QLineEdit(preset.get("query", ""))
         self.query.setPlaceholderText(tr("the words to search for, as on the Search page"))
@@ -137,20 +196,17 @@ class ExportDialog(QDialog):
         self.narrator_text = QLineEdit()
         self.narrator_text.setPlaceholderText(tr("a name to narrow the list (empty: all of them)"))
         self._add_scope("narrators", [(tr("Tradition"), self.narrator_road), (tr("Name"), self.narrator_text)])
-        # network
-        self.net_book = QComboBox()
-        self.net_book.addItem(tr("All books"), "")
-        for w in book_list:
-            if w.get("kind") == "hadith":
-                self.net_book.addItem(f"{w['title']} ({w['key']})", w["key"])
-        self._add_scope("network", [(tr("Book"), self.net_book)])
-        # profile
+        # network: the chains of the books chosen, together
+        self.net_books = _CheckList([(w["key"], f"{w['title']} ({w['key']})", w["tradition"]) for w in hadith_books],
+                                    [w["key"] for w in hadith_books], groups=True)
+        self._add_scope("network", [(tr("Books"), self.net_books)])
+        # profile: one, several or all, each in its own file
         from isnady.core import profiles
 
-        self.profile = QComboBox()
-        for p in profiles.all_profiles():
-            self.profile.addItem(p.get("name") or p["id"], p["id"])
-        self._add_scope("profile", [(tr("Profile"), self.profile)])
+        every_profile = profiles.all_profiles()
+        self.profiles = _CheckList([(p["id"], p.get("name") or tr("Default"), "") for p in every_profile],
+                                   [profiles.active()])
+        self._add_scope("profile", [(tr("Profiles"), self.profiles)])
         for key in ("bookmarks", "settings", "backup"):
             self._add_scope(key, [])
         form.addRow("", self.scope)
@@ -215,8 +271,13 @@ class ExportDialog(QDialog):
 
     def _fill_chapters(self) -> None:
         self.chapter.clear()
-        self.chapter.addItem(tr("The whole book"), None)
-        conn, key = self._conn_of(), self.book.currentData()
+        keys = self.books.keys()
+        several = len(keys) > 1
+        self.chapter.setEnabled(len(keys) == 1)               # a chapter of one book only
+        self.separate.setVisible(several)
+        self.chapter.addItem(tr("The whole book") if not several else tr("Every chapter of every book chosen"), None)
+        self._preview_clear()
+        conn, key = self._conn_of(), (keys[0] if len(keys) == 1 else "")
         if conn is None or not key:
             return
         rows = conn.execute(
@@ -257,30 +318,41 @@ class ExportDialog(QDialog):
         if kind == "hadith":
             args["refs"] = self.refs.text().split()
         elif kind == "book":
-            args["book"] = self.book.currentData() or ""
-            args["chapter"] = self.chapter.currentData()
-            if preview and args["chapter"] is None and self.format.currentData() != "isnady-book":
-                first = self.chapter.itemData(1) if self.chapter.count() > 1 else None
-                args["chapter"] = first                 # a preview of the first chapter, not of the whole book
+            keys = self.books.keys()
+            if len(keys) == 1 or (preview and keys):
+                args["book"] = keys[0]                  # the preview shows the first book chosen
+                args["chapter"] = self.chapter.currentData() if len(keys) == 1 else None
+                if preview and args["chapter"] is None and self.format.currentData() != "isnady-book":
+                    rows = self._conn_of().execute(
+                        """SELECT MIN(s.number) FROM sections s JOIN collections c ON c.id = s.collection_id
+                           WHERE c.key = ?""", (keys[0],)).fetchone()
+                    args["chapter"] = rows[0] if rows else None    # its first chapter, not the whole book
+            else:
+                args["books"] = ["all"] if self.books.every() else keys
+                args["separate"] = self.separate.isChecked()
         elif kind == "search":
             args["query"] = self.query.text().strip()
         elif kind == "narrators":
             args["tradition"] = self.narrator_road.currentData()
             args["query"] = self.narrator_text.text().strip()
         elif kind == "network":
-            args["book"] = self.net_book.currentData() or ""
+            args["books"] = None if self.net_books.every() else self.net_books.keys()
             args["tradition"] = None
         elif kind == "profile":
-            args["profile"] = self.profile.currentData()
+            args["profiles"] = self.profiles.keys()
+            if preview:
+                args["profiles"] = args["profiles"][:1]
         return args
 
     def _suggested(self) -> str:
         kind, fmt = self._kind(), self.format.currentData()
         a = self._arguments()
-        if kind == "book":
+        if kind == "book" and a.get("books"):
+            base = "isnady_books" if a["books"] == ["all"] else "isnady_" + "_".join(a["books"][:4])
+        elif kind == "book":
             from isnady.core import books
 
-            base = books.full_name(a["book"])
+            base = books.full_name(a.get("book") or "")
             base += f"_chapter_{a['chapter']}" if a.get("chapter") is not None else ""
         elif kind == "hadith":
             base = "isnady_" + "_".join(a["refs"])[:60].replace(":", "-")
@@ -321,16 +393,36 @@ class ExportDialog(QDialog):
         finally:
             QGuiApplication.restoreOverrideCursor()
 
+    def _many_files(self, args: dict) -> bool:
+        """Several things, each into its own file: a folder is asked for, not a file."""
+        fmt = self.format.currentData()
+        return bool(args.get("books") and (args.get("separate") or fmt == "isnady-book")) or \
+            len(args.get("profiles") or []) > 1
+
     def _export(self) -> None:
         fmt, kind = self.format.currentData(), self._kind()
-        start = os.path.join(os.path.expanduser("~"), self._suggested())
-        ext = T.suffix(fmt).rsplit(".", 1)[-1]
-        name, _f = QFileDialog.getSaveFileName(self, tr("Export"), start, f"{tr(F.LABELS.get(fmt, fmt))} (*.{ext})")
-        if not name:
-            return
-        if not name.endswith(T.suffix(fmt)) and not name.endswith(Path(T.suffix(fmt)).suffix):
-            name += T.suffix(fmt)
         args = self._arguments()
+        if kind == "book" and not args.get("book") and not args.get("books"):
+            self.status.setText(tr("Choose at least one book."))
+            return
+        if kind == "profile" and not args.get("profiles"):
+            self.status.setText(tr("Choose at least one profile."))
+            return
+        if self._many_files(args):
+            folder = QFileDialog.getExistingDirectory(self, tr("Export: the folder for the files"),
+                                                      os.path.expanduser("~"))
+            if not folder:
+                return
+            name = os.path.join(folder, self._suggested().rsplit(".", 1)[0].split(".isnady-book")[0])
+        else:
+            start = os.path.join(os.path.expanduser("~"), self._suggested())
+            ext = T.suffix(fmt).rsplit(".", 1)[-1]
+            name, _f = QFileDialog.getSaveFileName(self, tr("Export"), start,
+                                                   f"{tr(F.LABELS.get(fmt, fmt))} (*.{ext})")
+            if not name:
+                return
+            if not name.endswith(T.suffix(fmt)) and not name.endswith(Path(T.suffix(fmt)).suffix):
+                name += T.suffix(fmt)
         if fmt == "pdf":                     # Qt draws a PDF in the window's own thread
             QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             try:
@@ -360,7 +452,8 @@ class ExportDialog(QDialog):
         box.addButton(QMessageBox.StandardButton.Ok)
         box.exec()
         if box.clickedButton() is show:
-            QDesktopServices.openUrl(QUrl.fromLocalFile(str(Path(message).parent)))
+            where = Path(message)
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(where if where.is_dir() else where.parent)))
 
 
 class ImportDialog(QDialog):
@@ -386,7 +479,7 @@ class ImportDialog(QDialog):
         form.addRow("", self.help)
         file_row = QHBoxLayout()
         self.file = QLineEdit()
-        self.file.setPlaceholderText(tr("the file to import"))
+        self.file.setPlaceholderText(tr("the file to import; several: Choose… and pick them all"))
         browse = QPushButton(tr("Choose…"))
         browse.setObjectName("Quiet")
         browse.clicked.connect(self._browse)
@@ -445,25 +538,35 @@ class ImportDialog(QDialog):
     def _browse(self) -> None:
         kind = self.kind.currentData()
         patterns = " ".join(f"*{T.suffix(f)}" for f in T.KINDS[kind]["import"])
-        name, _f = QFileDialog.getOpenFileName(self, tr("Import"), os.path.expanduser("~"),
-                                               f"{tr('isnady files')} ({patterns} book.json);;{tr('All files')} (*)")
-        if name:
-            self.file.setText(name)
+        # several files at once (Bayram, 2026-10-24: "birden fazla … secilebilir olsun. Hepsi de olsun")
+        names, _f = QFileDialog.getOpenFileNames(self, tr("Import"), os.path.expanduser("~"),
+                                                 f"{tr('isnady files')} ({patterns} book.json);;{tr('All files')} (*)")
+        if names:
+            self.file.setText(" ; ".join(names))
+
+    def _paths(self) -> list[str]:
+        return [p.strip() for p in self.file.text().split(";") if p.strip()]
 
     def _detect(self) -> None:
-        path = self.file.text().strip()
-        if not path:
+        paths = self._paths()
+        if not paths:
             self.detected.setText("")
             return
-        fmt = T.guess_format(path, self.kind.currentData())
-        ok = fmt in T.KINDS[self.kind.currentData()]["import"]
-        self.detected.setText((tr("Read as {fmt}.", fmt=tr(F.LABELS.get(fmt, fmt))) if ok
-                               else tr("{fmt} is not read for this; choose another file.", fmt=fmt)))
-        self.go.setEnabled(ok)
+        kind = self.kind.currentData()
+        formats = [T.guess_format(p, kind) for p in paths]
+        wrong = [f"{Path(p).name} ({f})" for p, f in zip(paths, formats) if f not in T.KINDS[kind]["import"]]
+        if wrong:
+            self.detected.setText(tr("Not read for this: {files}; choose other files.", files=", ".join(wrong)))
+        elif len(paths) == 1:
+            self.detected.setText(tr("Read as {fmt}.", fmt=tr(F.LABELS.get(formats[0], formats[0]))))
+        else:
+            self.detected.setText(tr("{n} files, read as {formats}.", n=len(paths),
+                                     formats=", ".join(dict.fromkeys(tr(F.LABELS.get(f, f)) for f in formats))))
+        self.go.setEnabled(not wrong)
 
     def _import(self) -> None:
-        kind, path = self.kind.currentData(), self.file.text().strip()
-        if not path:
+        kind, paths = self.kind.currentData(), self._paths()
+        if not paths:
             return
         if kind == "backup" and QMessageBox.question(
                 self, tr("Import"), tr("Your settings, place and bookmarks will be replaced by the backup's. Go on?")) \
@@ -475,7 +578,19 @@ class ImportDialog(QDialog):
         self.go.setEnabled(False)
         self.status.setText(tr("Importing…"))
         self._kind_running = kind
-        self._job = _Job(lambda conn, say: T.import_file(conn, kind, path, progress=say, **options))
+        def work(conn, say):
+            said = []
+            for n, path in enumerate(paths, 1):
+                prefix = f"{n}/{len(paths)} · {Path(path).name}: " if len(paths) > 1 else ""
+                try:
+                    said.append(prefix + T.import_file(conn, kind, path, progress=lambda m: say(prefix + m), **options))
+                except T.TransferError as exc:
+                    if len(paths) == 1:
+                        raise
+                    said.append(prefix + tr("Failed: ") + str(exc))
+            return "\n".join(said)
+
+        self._job = _Job(work)
         self._job.progress.connect(self.status.setText)
         self._job.done.connect(self._done)
         self._job.start()
