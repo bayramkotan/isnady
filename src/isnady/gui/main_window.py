@@ -220,7 +220,7 @@ class MainWindow(QMainWindow):
         self.isnad_page = self._build('chains', lambda: IsnadPage(self.search_page.connection))
         from isnady.gui.narrators_page import NarratorsPage
 
-        self.narrators_page = self._build('narrators', lambda: NarratorsPage(self.search_page.connection))
+        self.narrators_page = self._build('narrators', lambda: NarratorsPage(self.search_page.connection, tradition="sunni"))
         from isnady.gui.statistics_page import StatisticsPage
 
         self.statistics_page = self._build('statistics', lambda: StatisticsPage(self.search_page.connection))

@@ -577,7 +577,7 @@ The scholars whose work is in the imported data, and what the data measures of i
 (how they grade, and how far they agree with each other on the same hadith — agreement, Cohen's
 kappa, and a strictness index: the classical *mutashaddid* / *mutasahil*, measured), and **critics**
 of narrators — each with **his life** (the same written lives as on Narrators) — Sunni and Shia on one
-page (*All / Sunni / Shia*), each by his own road: al-Kulayni,
+page (*All / Sunni / Shia*; Narrators, Books and Scholars open on *Sunni*), each by his own road: al-Kulayni,
 al-Saduq, al-Mufid and al-Tusi with their chains counted to a Ma'sum; al-Majlisi and al-Behbudi compared
 only with each other on the four Imami grades (sahih, hasan, muwaththaq, da'if); al-Najashi's verdicts in
 the Imami terms. On Sunan Abi Dawud, for example, Zubair 'Ali Za'i grades most strictly (−0.21) and
@@ -843,9 +843,9 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | `iy search WORDS` | `iy search niyet --book abudawud` | Search; `--mode all\|any\|phrase\|meaning`, `--whole-words`, `--book`, `--language`, `--limit`; `--in narrators\|scholars`, `--tradition sunni\|shia`; `--recent`, `--clear-recent` |
 | `iy chain BOOK NUMBER` | `iy chain kafi 5:1740` | One chain, narrator by narrator, with who each one is and whom it reaches; `--raw` adds the wording; without a number, the book's range |
 | `iy isnads` | `iy isnads --rebuild` | Read every chain and report per book: split, reaching the Prophet or a Ma'sum, identified |
-| `iy narrator NAME` | `iy narrator "Ibn Umar"` | A narrator: his critic's verdict (Ibn Hajar's rank, or the Imami terms), tabaqa, death year, books; `--limit 1` adds teachers, students and hadith; `--famous` lists the famous Companions by group (`--tradition shia`: Ashab al-Ijma') |
-| `iy book [KEY [CHAPTER]]` | `iy book bukhari 2` | The books; a book's chapters; a chapter read in order |
-| `iy scholar [NAME]` | `iy scholar albani` | The scholars in the data, or one of them with his measured statistics |
+| `iy narrator NAME` | `iy narrator "Ibn Umar"` | A narrator: his critic's verdict (Ibn Hajar's rank, or the Imami terms), tabaqa, death year, books; `--limit 1` adds teachers, students and hadith; `--famous` lists the famous Companions by group (`--tradition shia`: Ashab al-Ijma'; `all`: both) |
+| `iy book [KEY [CHAPTER]]` | `iy book bukhari 2` | The books (the Sunni ones; `--tradition shia` or `all`); a book's chapters; a chapter read in order |
+| `iy scholar [NAME]` | `iy scholar albani` | The scholars in the data (the Sunni ones; `--tradition shia` or `all`), or one of them with his measured statistics |
 | `iy tahric BOOK NUMBER` | `iy tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |
 | `iy stats [SECTION]` | `iy stats graders --book abudawud` | `corpus`, `narrators`, `chains`, `grades`, `books`, `graders`, `model`, `lab`; `--csv DIR`, `--recompute`; `--book @all` measures both roads |
 | `iy term [NAME]` | `iy term --search tadlis` | The glossary, English, Turkish or Arabic (`--lang tr`, `--lang ar`) |

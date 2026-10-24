@@ -81,7 +81,9 @@ class BooksPage(QWidget):
         lbox.addWidget(title)
         lbox.addWidget(_label(tr("Open a book and read it in its own order, chapter by chapter."), "Caption"))
         # Sunni and Shia on one shelf, each under its own heading; the switch shows one of them alone (SH1)
-        self._shelf_tradition: str | None = config.state_get("reader.shelf") or None
+        # the Sunni books first, each time isnady opens (NR-DEF1, Bayram 2026-10-20: "ilk açıldığında default Sunni …
+        # kitaplar ve alimler içinde"); the reader's choice holds while it runs
+        self._shelf_tradition: str | None = "sunni"
         self._shelf_buttons = QButtonGroup(self)
         seg = QHBoxLayout()
         seg.setSpacing(6)
@@ -234,16 +236,14 @@ class BooksPage(QWidget):
         self._shelf_tradition = tradition
         for b in self._shelf_buttons.buttons():
             b.setChecked(b.property("tradition") == tradition)
-        config.state_set("reader.shelf", tradition or "")
         self.refresh()
 
     def select_work(self, key: str) -> None:
         w = next((x for x in core_works.list_works(self.conn) if x["key"] == key), None) if self.conn else None
         if w and self._shelf_tradition and w["tradition"] != self._shelf_tradition:
-            self._shelf_tradition = None                     # a book of the other tradition was asked for
+            self._shelf_tradition = w["tradition"]           # a book of the other tradition was asked for: its shelf
             for b in self._shelf_buttons.buttons():
-                b.setChecked(b.property("tradition") is None)
-            config.state_set("reader.shelf", "")
+                b.setChecked(b.property("tradition") == self._shelf_tradition)
             self.refresh()
         for i in range(self.works.count()):
             if self.works.item(i).data(Qt.ItemDataRole.UserRole) == key:

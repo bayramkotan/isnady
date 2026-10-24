@@ -1280,7 +1280,11 @@ def cmd_book(args) -> int:
     conn = _connect()
     works.ensure_collection_works(conn)
     if not args.key:
+        # the Sunni books unless the other road, or both, are asked for (NR-DEF1), as the Books page opens
+        road = None if args.tradition == "all" else args.tradition
         for w in works.list_works(conn):
+            if road and w["tradition"] != road:
+                continue
             print(f"  {w['key']:12} {w['title']:32} {w['kind']:8} {w['leaves']:6,} items, {w['chapters']} chapters")
         conn.close()
         return 0
@@ -1328,7 +1332,10 @@ def cmd_scholar(args) -> int:
     conn = _connect()
     people = S.present(conn)
     if not args.name:
+        road = None if args.tradition == "all" else args.tradition
         for s in people:
+            if road and S.tradition_of(s) != road:
+                continue
             print(f"  {s['id']:13} {s['name']:38} {S.tradition_of(s):6} {', '.join(s['roles'])}")
         conn.close()
         return 0
@@ -1519,7 +1526,8 @@ def _famous_list(conn, tradition: str | None) -> int:
 def cmd_narrator(args) -> int:
     conn = _connect()
     if args.famous:
-        return _famous_list(conn, args.tradition)
+        # the Companions unless road B, or both, are asked for (NR-DEF1), as the Narrators page opens
+        return _famous_list(conn, None if args.tradition == "all" else args.tradition or "sunni")
     if not args.words:
         print("Name a narrator, e.g. iy narrator 'Ebu Bekir', or list the famous ones: iy narrator --famous",
               file=sys.stderr)
@@ -1530,7 +1538,7 @@ def cmd_narrator(args) -> int:
     # a famous Companion named any way people write him ("Ebubekir", "Omer ibn Hattap", "Hz. Ali") first (FS1)
     from isnady.core import famous
 
-    first = famous.ids(conn, famous.named(text, args.tradition))
+    first = famous.ids(conn, famous.named(text, None if args.tradition == "all" else args.tradition))
     if first:
         found = [(pid, "") for pid in first] + [f for f in found if f[0] not in first]
         found = found[:max(args.limit, len(first))]
@@ -1759,9 +1767,13 @@ def build_parser() -> argparse.ArgumentParser:
     bk.add_argument("--language", action="append", help="show only this language (repeatable)")
     bk.add_argument("--limit", type=int, default=20)
     bk.add_argument("--width", type=int, default=160)
+    bk.add_argument("--tradition", choices=("sunni", "shia", "all"), default="sunni",
+                    help="the list: the Sunni books (default), the Shia ones, or all")
     bk.set_defaults(func=cmd_book)
     sc = sub.add_parser("scholar", help="the hadith scholars in the data: compilers, graders, critics, with measured statistics")
     sc.add_argument("name", nargs="*", help="part of a name, e.g. albani, bukhari; none = the list")
+    sc.add_argument("--tradition", choices=("sunni", "shia", "all"), default="sunni",
+                    help="the list: the Sunni scholars (default), the Shia ones, or all")
     sc.set_defaults(func=cmd_scholar)
     tk = sub.add_parser("tahric", help="other narrations of a hadith in the imported books (takhrij)")
     tk.add_argument("book")
@@ -1774,8 +1786,8 @@ def build_parser() -> argparse.ArgumentParser:
     nr.add_argument("--famous", action="store_true",
                     help="list the famous Companions by group: the four Caliphs, the Ten, the Mothers of the "
                          "Believers, the Prophet's household, those who narrated most (and road B's Ashab al-Ijma')")
-    nr.add_argument("--tradition", choices=("sunni", "shia"), default=None,
-                    help="only this road's famous ones (with --famous) or matches")
+    nr.add_argument("--tradition", choices=("sunni", "shia", "all"), default=None,
+                    help="only this road's famous ones (with --famous: Sunni unless asked) or matches")
     nr.set_defaults(func=cmd_narrator)
     ch = sub.add_parser("chain", help="show the chain of one hadith")
     ch.add_argument("book", help="collection key, e.g. bukhari")

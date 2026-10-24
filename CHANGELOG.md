@@ -3,6 +3,14 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Narrators, Books and Scholars open on the Sunni ones (2026-10-20: "ilk açıldığında default Sunni Raviler gelsin
+  — kitaplar ve alimler içinde!").** All and Shia are a click away and the choice holds while isnady runs; a Shia
+  narrator, book or scholar opened from another page shows his own road (no longer "All"). The Books page no longer
+  carries the last shelf over to the next start. `iy book` and `iy scholar` list the Sunni ones (`--tradition shia`
+  or `all`); `iy narrator --famous` the Companions (`--tradition shia`, `all`).
+
 ## [0.3.6] — 2026-10-20
 
 - **The famous Companions, however they are written (2026-10-20: "Ebubekir'in diğer isimlerini bilmeyen nasıl

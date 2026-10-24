@@ -106,7 +106,8 @@ class ScholarsPage(QWidget):
         self.note = _label(tr("The scholars whose work is in the imported data, Sunni and Shia, and what the data measures of it "
                              "— each by his own tradition's measure."), "Caption")
         # All / Sunni / Shia (SH1): one page, each tradition apart
-        self._tradition: str | None = None
+        # the Sunni scholars first, each time isnady opens (NR-DEF1); the reader's choice holds while it runs
+        self._tradition: str | None = "sunni"
         self._segments = QButtonGroup(self)
         seg = QHBoxLayout()
         seg.setSpacing(6)
@@ -116,7 +117,7 @@ class ScholarsPage(QWidget):
             b.setCheckable(True)
             b.setCursor(Qt.CursorShape.PointingHandCursor)
             b.setProperty("tradition", key)
-            b.setChecked(key is None)
+            b.setChecked(key == self._tradition)
             self._segments.addButton(b)
             seg.addWidget(b)
         seg.addStretch(1)
@@ -272,7 +273,7 @@ class ScholarsPage(QWidget):
         if conn is None or scholar is None:
             return
         if self._tradition and core_scholars.tradition_of(scholar) != self._tradition:
-            self.set_tradition(None)                  # a scholar of the other tradition was asked for
+            self.set_tradition(core_scholars.tradition_of(scholar))   # a scholar of the other tradition: his own
         self._current = scholar_id
         roles = next((s["roles"] for s in core_scholars.present(conn) if s["id"] == scholar_id), [])
         self._clear()
