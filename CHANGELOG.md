@@ -3,6 +3,18 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.3.8] — 2026-10-24
+
+- **The chain in your languages, under the Arabic (2026-10-20: "Senedlerin hepsi arapça ---> altina gosterilen
+  dillerde de gosterilsin arapcasinin altina!").** On every hadith card (Search, Books) and under the Arabic text of
+  Isnad Chains, the chain is said again in the languages the texts are shown in — Turkish and English so far — link
+  by link as the Arabic says it: each name read from the chain's own wording, with the term that brings it
+  ("Kuteybe b. Saîd bize rivayet etti, Leys bize rivayet etti, Yezîd b. Ebî Habîb'den, … Hz. Peygamber ﷺ'den" /
+  "Qutayba b. Sa'id narrated to us, … from the Prophet ﷺ"). Turkish puts the case on the name by vowel harmony
+  (Leys'ten, Enes'ten, babasından, Ömer b. el-Hattâb'ı işittim); "his mother Asma' …", "his father" and "رضي الله
+  عنها" are read as such; a Shia chain ends at its Ma'sum (İmam Ca'fer b. Muhammed es-Sâdık'tan) or says it is
+  raised. `iy chain BOOK NUMBER --lang tr,en`.
+
 ## [0.3.7] — 2026-10-24
 
 - **Narrators, Books and Scholars open on the Sunni ones (2026-10-20: "ilk açıldığında default Sunni Raviler gelsin

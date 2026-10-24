@@ -1244,6 +1244,147 @@ def name_reading(raw_name: str, language: str = "tr") -> tuple[str, bool]:
     return outs[0], spelled
 
 
+# ----------------------------------------------------------------- the chain in words (ISN-TR1)
+# Bayram (2026-10-20): "Senedlerin hepsi arapça ---> altina gosterilen dillerde de gosterilsin arapcasinin altina!"
+# The chain as the Arabic says it, link by link, in a shown language: each name read from the chain's own wording
+# (name_reading) with the term that brings it. Turkish puts the case on the name (Leys'ten, Ebû Hüreyre'den), so a
+# template may use {name_abl} (from), {name_acc} (whom one heard) or {name_dat} (to whom one read); English {name}.
+CHAIN_TEMPLATES = {
+    "haddathana": N_("{name} narrated to us"), "haddathani": N_("{name} narrated to me"),
+    "akhbarana": N_("{name} informed us"), "akhbarani": N_("{name} informed me"),
+    "anba'ana": N_("{name} told us"), "anba'ani": N_("{name} told me"),
+    "sami'tu": N_("I heard {name}"), "sami'a": N_("he heard {name}"),
+    "qara'tu 'ala": N_("I read it to {name}"), "quri'a 'ala": N_("it was read to {name}"),
+    "za'ama": N_("{name} stated"), "'an": N_("from {name}"), "anna": N_("that {name}"),
+    "qala": N_("{name} said"), "bare": N_("{name} (his teacher)"),
+}
+CHAIN_END = N_("from {name}")                    # the Prophet ﷺ, or the Ma'sum a Shia chain reaches
+CHAIN_RAISED = N_("raised (رفعه): the rest of the chain is not named")
+CHAIN_CUT = N_("… (read as far as here)")
+# the languages a chain can be said in: those whose names isnady reads (core.names: Turkish, English)
+CHAIN_LANGUAGES = {"Turkish": "tr", "English": "en"}
+_TR_POSSESSIVE = ("sı", "si", "su", "sü", "oğlu", "biri")
+# the Ma'sumun as a Turkish chain names them (B yolu: in its own terms, without a Sunni honorific)
+_MASUM_TR = {
+    "prophet": "Hz. Peygamber ﷺ", "fatima": "Fâtıma ez-Zehrâ", "ali": "İmam Ali b. Ebî Tâlib (Emîrü'l-mü'minîn)",
+    "hasan": "İmam Hasan b. Ali el-Müctebâ", "husayn": "İmam Hüseyin b. Ali", "sajjad": "İmam Ali b. Hüseyin Zeynelâbidîn",
+    "baqir": "İmam Muhammed b. Ali el-Bâkır", "sadiq": "İmam Ca'fer b. Muhammed es-Sâdık",
+    "kazim": "İmam Mûsâ b. Ca'fer el-Kâzım", "rida": "İmam Ali b. Mûsâ er-Rızâ", "jawad": "İmam Muhammed b. Ali el-Cevâd",
+    "hadi": "İmam Ali b. Muhammed el-Hâdî", "askari": "İmam Hasan b. Ali el-Askerî",
+    "mahdi": "İmam Muhammed b. Hasan el-Mehdî", "abu_al_hasan": "Ebü'l-Hasan (İmam Kâzım ya da İmam Rızâ)",
+    "imam": "bir İmam", "mudmar": "adı anılmayan bir İmam (mudmar)",
+    "one_of_two": "iki İmamdan biri (Bâkır ya da Sâdık)",
+}
+_HONOUR_RE = re.compile(r"\s*(?:رضي الله|عليه السلام|عليها السلام|عليهما السلام|صلي الله عليه)")
+
+
+def _tr_case(name: str, case: str) -> str:
+    """A Turkish name with its case ending by vowel harmony: Leys'ten, Ebû Hüreyre'den, Saîd'i, babasından, bir
+    adamdan. A proper name takes an apostrophe; a word of kinship ("babası") the buffer n of the possessive."""
+    head, _sep, tail = name.partition(" (")
+    word = head.rstrip()
+    letters = [c for c in word.lower() if c.isalpha()]
+    if not letters:
+        return name
+    vowels = [c for c in letters if c in "aeıioöuüâîû"]
+    last = vowels[-1] if vowels else "e"
+    back = last in "aıouâû"
+    round_ = last in "ouöüû"
+    ends_vowel = letters[-1] in "aeıioöuüâîû"
+    # a word of kinship or a description ("babası", "bir adam") — not a name with its article ("ez-Zührî")
+    last_word = next((w for w in reversed(word.split()) if any(c.isalpha() for c in w)), word)
+    common = last_word[:1].islower() and not re.match(r"[ae][a-zş]{0,2}-", last_word)
+    possessive = common and word.endswith(_TR_POSSESSIVE)
+    if case == "abl":
+        d = "d" if (possessive or letters[-1] not in "fstkçşhp") else "t"
+        suffix = ("n" if possessive else "") + d + ("a" if back else "e") + "n"
+    elif case == "acc":
+        four = ("u" if back else "ü") if round_ else ("ı" if back else "i")
+        suffix = ("n" if possessive else "y" if ends_vowel else "") + four
+    else:
+        suffix = ("n" if possessive else "y" if ends_vowel else "") + ("a" if back else "e")
+    out = word + ("" if common else "'") + suffix
+    return out + (" (" + tail if tail else "")
+
+
+def _said(text: str, code: str, **values) -> str:
+    """A text of the interface in the language asked for, not the interface's own (the chain in Turkish under an
+    English window)."""
+    from isnady.core import i18n
+
+    template = i18n.catalog(code).get(text, text) if code != "en" else text
+    try:
+        return template.format(**values)
+    except (KeyError, IndexError, ValueError):
+        return text.format(**{k: v for k, v in values.items() if k == "name"})
+
+
+def chain_in_words(chain: dict, code: str) -> str:
+    """The chain as the Arabic says it, in Turkish or English: "Kuteybe b. Saîd bize rivayet etti, Leys bize rivayet
+    etti, Yezîd b. Ebî Habîb'den, … Hz. Peygamber ﷺ'den" / "Qutayba b. Sa'id narrated to us, Layth narrated to us,
+    from Yazid b. Abi Habib, … from the Prophet ﷺ". "" for a language isnady cannot read names in, or no links."""
+    if code not in CHAIN_LANGUAGES.values() or not chain.get("links"):
+        return ""
+    parts = []
+    from isnady.core.normalize import normalize, normalize_with_map
+
+    for link in chain["links"]:
+        raw = link["raw_name"]
+        folded, where = normalize_with_map(raw)
+        honour = _HONOUR_RE.search(folded)
+        if honour and honour.start() > 0:
+            raw = raw[:where[honour.start()]]           # "… رضي الله عنها" is no part of her name
+        words = raw.split()
+        if len(words) > 1 and normalize(words[-1]) in ("انها", "انه", "انهما", "انهم"):
+            words = words[:-1]                           # "أسماء بنت أبي بكر أنها": the "that she" of the text
+        kin = ""
+        if len(words) > 1 and normalize(words[0]) in _KIN:
+            kin = _KIN[normalize(words[0])][0 if code == "tr" else 1]
+            words = words[1:]                            # "أمه أسماء بنت أبي بكر": his mother, Asma' …
+        raw = " ".join(words)
+        name, _spelled = name_reading(raw, code)
+        if kin and name:
+            name = f"{kin} {name}"
+        if not name:
+            name = short_name(link["raw_name"])
+        if code == "tr" and name.startswith("Ebî "):
+            name = "Ebû " + name[4:]
+        # inside the sentence the article and a word of kinship are written small: "ez-Zührî'den", "babasından"
+        if re.match(r"(?:A[lnrstdz]|E[lnrstdzş]|Aş)-", name) or normalize(short_name(link["raw_name"])) in _KIN:
+            name = name[:1].lower() + name[1:]
+        term = link.get("transmission") or "bare"
+        template = CHAIN_TEMPLATES.get(term, CHAIN_TEMPLATES["'an"])
+        values = {"name": name}
+        if code == "tr":
+            values.update(name_abl=_tr_case(name, "abl"), name_acc=_tr_case(name, "acc"),
+                          name_dat=_tr_case(name, "dat"))
+        parts.append(_said(template, code, **values))
+    key = chain.get("ends_with") or ("prophet" if chain.get("reaches_prophet") else "")
+    if key and not chain.get("raised"):
+        from isnady.core import traditions
+
+        if code == "tr":
+            whom = _MASUM_TR.get(key, key)
+        else:
+            whom = "the Prophet ﷺ" if key == "prophet" else (traditions.masum_label(key) or key)
+        values = {"name": whom}
+        if code == "tr":
+            values["name_abl"] = _tr_case(whom, "abl")
+        parts.append(_said(CHAIN_END, code, **values))
+    elif chain.get("raised"):
+        parts.append(_said(CHAIN_RAISED, code))
+    elif chain.get("problem"):
+        parts.append(_said(CHAIN_CUT, code))
+    text = ", ".join(p for p in parts if p)
+    return text[:1].upper() + text[1:] + "."
+
+
+def chain_codes(languages: list[str]) -> list[str]:
+    """The languages, of those shown ("Turkish", "English" … in order; [] for every one), the chain can be said in."""
+    names = languages or list(CHAIN_LANGUAGES)
+    return list(dict.fromkeys(CHAIN_LANGUAGES[n] for n in names if n in CHAIN_LANGUAGES))
+
+
 def hadith_id(conn: sqlite3.Connection, book: str, number: str) -> int | None:
     row = conn.execute(
         "SELECT h.id FROM hadiths h JOIN collections c ON c.id = h.collection_id WHERE c.key = ? AND h.number = ?",

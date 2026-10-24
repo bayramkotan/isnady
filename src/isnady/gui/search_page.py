@@ -180,6 +180,17 @@ class ResultCard(QFrame):
                 if len(drawn) > 1:
                     box.addWidget(_label(tr("Chain {i}", i=i), "Caption"))
                 box.addWidget(ChainStrip(c, people, on_person=on_person, on_name=on_name, on_end=on_end))
+                # under the Arabic chain, the chain in the languages the card shows (ISN-TR1)
+                for language in dict.fromkeys(x.language for x in result.texts):
+                    code = core_isnad.CHAIN_LANGUAGES.get(language)
+                    words = core_isnad.chain_in_words(c, code) if code else ""
+                    if words:
+                        line = _label(f"<b>{html.escape(tr(language))}:</b> {html.escape(words)}", "ChainWords",
+                                      wrap=True, selectable=True)
+                        line.setTextFormat(Qt.TextFormat.RichText)
+                        line.setToolTip(tr("The chain as the Arabic says it, link by link: each name read from the "
+                                           "chain's own wording, with the term that brings it"))
+                        box.addWidget(line)
             box.addSpacing(6)
 
         if result.grades:

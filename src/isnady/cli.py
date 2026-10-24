@@ -1490,6 +1490,16 @@ def cmd_chain(args) -> int:
             print(f"      -> {end}" if end else "      (chain stops here)")
         if args.raw and ch["raw"]:
             print(f"  raw: {ch['raw']}")
+        # the chain as the Arabic says it, in the languages asked for (ISN-TR1): --lang tr,en; by default the
+        # languages the texts are shown in (iy config view.content_languages), of those isnady reads names in
+        from isnady.core import language as content
+
+        codes = ([c.strip() for c in args.lang.split(",") if c.strip()] if args.lang
+                 else core_isnad.chain_codes(content.content_languages()))
+        for code in codes:
+            words = core_isnad.chain_in_words(ch, code)
+            if words:
+                print(f"  [{code}] {words}")
     conn.close()
     return 0
 
@@ -1793,6 +1803,8 @@ def build_parser() -> argparse.ArgumentParser:
     ch.add_argument("book", help="collection key, e.g. bukhari")
     ch.add_argument("number", nargs="?", help="hadith number, e.g. 1; none = the book's numbers, first to last")
     ch.add_argument("--raw", action="store_true", help="also print the chain as written")
+    ch.add_argument("--lang", help="the chain in words in these languages, e.g. tr,en (default: the languages the "
+                                   "texts are shown in; Turkish and English so far)")
     ch.set_defaults(func=cmd_chain)
 
     sub.add_parser("sources", help="list imported sources").set_defaults(func=cmd_sources)

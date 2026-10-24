@@ -62,6 +62,19 @@ def fields(text: str) -> set[str]:
         return {"<broken>"}
 
 
+# the cases of a name a language may put on it in place of the name itself (core.isnad.chain_in_words: Turkish
+# "{name_abl}" for "from {name}" — Leys'ten, Ebû Hüreyre'den)
+CASES = ("abl", "acc", "dat")
+
+
+def same_fields(source: str, translation: str) -> bool:
+    """The translation fills the same {fields} as the English, a field in one of its grammatical cases counting as
+    the field: "from {name}" → "{name_abl}"."""
+    want, have = fields(source), fields(translation)
+    bare = {f.rsplit("_", 1)[0] if f.rsplit("_", 1)[-1] in CASES else f for f in have}
+    return want == have or (want == bare and all(f in want or f.rsplit("_", 1)[0] in want for f in have))
+
+
 def load(code: str) -> dict[str, str]:
     path = OUT / f"{code}.json"
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
@@ -97,7 +110,7 @@ def main(argv: list[str]) -> int:
         for code in codes:
             data = load(code)
             have = [k for k in keys if data.get(k)]
-            wrong = [k for k in have if fields(k) != fields(data[k])]
+            wrong = [k for k in have if not same_fields(k, data[k])]
             print(f"{code:4} {len(have):5} of {len(keys)}  ({len(have) / max(1, len(keys)):.0%})"
                   + (f"   {len(wrong)} with other {{fields}}" if wrong else ""))
             for k in wrong[:10]:

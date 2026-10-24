@@ -408,7 +408,7 @@ class IsnadPage(QWidget):
 
         text = core_isnad.arabic_text(self.conn, hid)
         if text:
-            self.body_layout.addWidget(self._text_card(text, chain))
+            self.body_layout.addWidget(self._text_card(text, chain, drawn))
         self.body_layout.addStretch(1)
         self.scroll.verticalScrollBar().setValue(0)
 
@@ -499,7 +499,7 @@ class IsnadPage(QWidget):
         label = _label(text, "Lead", wrap=True)
         return label
 
-    def _text_card(self, text: str, chain: dict | None) -> QFrame:
+    def _text_card(self, text: str, chain: dict | None, drawn: list | None = None) -> QFrame:
         t = theme.current()
         split_known = bool(chain and chain["links"] and not chain["problem"])
         isnad_part, matn = core_isnad.split_text(text, chain["raw"] if split_known else None)
@@ -518,6 +518,23 @@ class IsnadPage(QWidget):
             theme.script_font("arabic"), rtl=True)
         box.addWidget(caption)
         box.addWidget(body)
+        # under the Arabic, the chain in the languages the texts are shown in (ISN-TR1; Settings → Books and languages)
+        from isnady.core import language as content
+
+        roads = [c for c in (drawn or []) if not c.get("problem") or c["links"]]
+        for code in core_isnad.chain_codes(content.content_languages()):
+            name = {"tr": "Turkish", "en": "English"}[code]
+            for i, c in enumerate(roads, 1):
+                words = core_isnad.chain_in_words(c, code)
+                if not words:
+                    continue
+                head = tr(name) + (" — " + tr("Chain {i}", i=i) if len(roads) > 1 else "")
+                line = _label(f"<b>{html.escape(head)}:</b> {html.escape(words)}", "ChainWords", wrap=True)
+                line.setTextFormat(Qt.TextFormat.RichText)
+                line.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+                line.setToolTip(tr("The chain as the Arabic says it, link by link: each name read from the "
+                                   "chain's own wording, with the term that brings it"))
+                box.addWidget(line)
         return card
 
     def retheme(self) -> None:
