@@ -418,6 +418,7 @@ def stylesheet(t: Tokens) -> str:
     QLabel#Lead {{ color: {t.muted}; font-size: 11pt; }}
     QLabel#ChainCount {{ color: {t.lapis}; font-weight: 700; }}
     QLabel#ChainWords {{ color: {t.muted}; padding: 0 2px; }}
+    QLabel#ChainWord {{ color: {t.muted}; font-size: 8.5pt; }}
     QLabel#ChainSection {{ color: {t.ink}; font-weight: 700; font-size: 11pt; margin-top: 4px; }}
     QLabel#PageTitle {{ color: {t.ink}; }}
 

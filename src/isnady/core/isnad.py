@@ -1323,8 +1323,18 @@ def chain_in_words(chain: dict, code: str) -> str:
     """The chain as the Arabic says it, in Turkish or English: "Kuteybe b. Saîd bize rivayet etti, Leys bize rivayet
     etti, Yezîd b. Ebî Habîb'den, … Hz. Peygamber ﷺ'den" / "Qutayba b. Sa'id narrated to us, Layth narrated to us,
     from Yazid b. Abi Habib, … from the Prophet ﷺ". "" for a language isnady cannot read names in, or no links."""
-    if code not in CHAIN_LANGUAGES.values() or not chain.get("links"):
+    parts = chain_word_parts(chain, code)
+    if not parts:
         return ""
+    text = ", ".join(p for p in parts if p)
+    return text[:1].upper() + text[1:] + "."
+
+
+def chain_word_parts(chain: dict, code: str) -> list[str]:
+    """The same, one piece for each link and one for whom it reaches (the end, a raised or a cut chain): what is
+    written under each name of the chain on a hadith card ("Abdân bize rivayet etti" · "Ebû Hamza'dan" · …)."""
+    if code not in CHAIN_LANGUAGES.values() or not chain.get("links"):
+        return []
     parts = []
     from isnady.core.normalize import normalize, normalize_with_map
 
@@ -1375,8 +1385,7 @@ def chain_in_words(chain: dict, code: str) -> str:
         parts.append(_said(CHAIN_RAISED, code))
     elif chain.get("problem"):
         parts.append(_said(CHAIN_CUT, code))
-    text = ", ".join(p for p in parts if p)
-    return text[:1].upper() + text[1:] + "."
+    return parts
 
 
 def chain_codes(languages: list[str]) -> list[str]:

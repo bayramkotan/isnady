@@ -105,17 +105,50 @@ def stop_note(chain: dict) -> str:
     return tr("The chain is read as far as here; the rest is in the text. ({reason})", reason=tr(chain["problem"]))
 
 
+class _Columns:
+    """Stands in for the strip's FlowLayout when words go under the names: each chip in a column with its words in
+    each language below it (the piece of the chain it says: "Abdân bize rivayet etti", "Ebû Hamza'dan"); each arrow
+    at the height of the chips."""
+
+    def __init__(self, flow: FlowLayout, words: list[list[str]]) -> None:
+        self.flow, self.words, self.chips = flow, words, 0
+
+    def addWidget(self, widget: QWidget) -> None:  # noqa: N802
+        column = QWidget()
+        box = QVBoxLayout(column)
+        box.setContentsMargins(0, 0, 0, 0)
+        box.setSpacing(1)
+        box.addWidget(widget, 0, Qt.AlignmentFlag.AlignHCenter)
+        if widget.objectName() != "ChainArrow":
+            for parts in self.words:
+                piece = parts[self.chips] if self.chips < len(parts) else ""
+                if piece:
+                    label = QLabel(piece)
+                    label.setObjectName("ChainWord")
+                    label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+                    box.addWidget(label, 0, Qt.AlignmentFlag.AlignHCenter)
+            self.chips += 1
+        box.addStretch(1)
+        self.flow.addWidget(column)
+
+
 class ChainStrip(QWidget):
     """Narrator names in reading order (right to left), ending at the Prophet when the chain does.
     Identified narrators are filled chips; names not yet identified have a dashed outline."""
 
     def __init__(self, chain: dict, people: dict | None = None, parent: QWidget | None = None,
-                 on_person=None, on_name=None, on_end=None) -> None:
+                 on_person=None, on_name=None, on_end=None, codes: list[str] | None = None) -> None:
+        """codes: the languages ("tr", "en") whose words are written right under each name (ISN-TR1, Bayram
+        2026-10-24: "tam altinda olsa daha guzel olurdu. Ayni sekilde oklarla")."""
         super().__init__(parent)
         people = people or {}
+        words = [core_isnad.chain_word_parts(chain, code) for code in (codes or [])]
+        words = [w for w in words if w]
         open_name = (lambda raw: (lambda: on_name(core_isnad.short_name(raw)))) if on_name else (lambda raw: None)
         name_tip = tr("Click to look for this name among the narrators") if on_name else ""
         flow = FlowLayout(self, spacing=4, rtl=True)
+        if words:
+            flow = _Columns(flow, words)
         for i, link in enumerate(chain["links"]):
             arabic, meaning, _why = core_isnad.term_label(link["transmission"])
             if i:

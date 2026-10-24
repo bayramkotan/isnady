@@ -3,6 +3,14 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.3.9] — 2026-10-24
+
+- **The chain's words right under its names (2026-10-24: "tam altinda olsa daha guzel olurdu. Ayni sekilde
+  oklarla").** On a hadith card each Arabic name of the chain now has its piece of the chain written right under it,
+  in each language the card shows, between the same arrows: "Abdân bize rivayet etti" · "Ebû Hamza'dan" ·
+  "el-A'meş'ten" · … · "Hz. Peygamber ﷺ'den" (English: "Abdan narrated to us" · "from Abu Hamza" …), instead of one
+  sentence below the chain. Isnad Chains keeps the whole sentence under the Arabic text.
+
 ## [0.3.8] — 2026-10-24
 
 - **The chain in your languages, under the Arabic (2026-10-20: "Senedlerin hepsi arapça ---> altina gosterilen

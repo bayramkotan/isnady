@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.3.8-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.3.9-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.3.8-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.3.9-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.3.8).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.3.9).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -361,8 +361,9 @@ Sahih al-Bukhari 1
 In the window, each result shows its chain as a row of names ending at whom it reaches, and
 **View chain** opens it as a timeline from the book to the Prophet ﷺ — or, in a Shia book, to the
 Imam — with the Arabic text below: the chain in lighter ink, the text of the hadith in full ink.
-Under the Arabic chain it is said again in the languages the texts are shown in (Turkish and English so far), link
-by link as the Arabic says it — "Qutayba b. Sa'id narrated to us, Layth narrated to us, from Yazid b. Abi Habib, …
+Under each Arabic name of a card's chain its words are written in the languages the texts are shown in (Turkish
+and English so far), and under the Arabic text of Isnad Chains the whole chain is said, link by link as the Arabic
+says it — "Qutayba b. Sa'id narrated to us, Layth narrated to us, from Yazid b. Abi Habib, …
 from the Prophet ﷺ" / "Kuteybe b. Saîd bize rivayet etti, Leys bize rivayet etti, Yezîd b. Ebî Habîb'den, … Hz.
 Peygamber ﷺ'den" (`iy chain … --lang tr,en`).
 Every link says who the narrator is and what his critic says of him; a click anywhere on him opens him, and pointing
