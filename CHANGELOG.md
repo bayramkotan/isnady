@@ -3,7 +3,7 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.3.7] — 2026-10-24
 
 - **Narrators, Books and Scholars open on the Sunni ones (2026-10-20: "ilk açıldığında default Sunni Raviler gelsin
   — kitaplar ve alimler içinde!").** All and Shia are a click away and the choice holds while isnady runs; a Shia
