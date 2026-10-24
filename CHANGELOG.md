@@ -3,6 +3,13 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.4.1] — 2026-10-24
+
+- **The content languages can be chosen again (2026-10-24: "diller secilmiyor").** With "All languages" on, a click
+  on one language changed nothing and every click closed the menu. The languages are now ticked in place — "All
+  languages" ticks or clears them all — the menu stays open while they are ticked, and the choice is applied when it
+  closes (the Content button at the bottom of the sidebar and View → Content Languages).
+
 ## [0.4.0] — 2026-10-24
 
 - **The chain's words, closer to the Arabic and with its manners (2026-10-24, Bayram's screens).** "عمه أبي سهيل"

@@ -1086,35 +1086,68 @@ class MainWindow(QMainWindow):
         note.setEnabled(False)
 
     def _fill_content_language_menu(self, menu) -> None:
+        """The languages the texts are shown in, ticked in place: the menu stays open while they are ticked and the
+        choice is applied when it closes (Bayram, 2026-10-24: "diller secilmiyor" — with "All languages" on, a
+        click on one language changed nothing, and every click closed the menu)."""
+        from PySide6.QtWidgets import QCheckBox, QWidgetAction
+
         from isnady.core import language
         from isnady.core import search as core_search
 
         menu.clear()
+        earlier = getattr(menu, "_apply_languages", None)
+        if earlier is not None:
+            menu.aboutToHide.disconnect(earlier)
+            menu._apply_languages = None
         conn = self.search_page.connection()
         available = core_search.list_languages(conn) if conn is not None else []
-        chosen = language.content_languages()
-        every = menu.addAction(tr("All languages"))
-        every.setCheckable(True)
-        every.setChecked(not chosen)
-        every.triggered.connect(lambda: self._set_content_languages([]))
-        menu.addSeparator()
-        for lang in available:
-            action = menu.addAction(tr(lang))
-            action.setCheckable(True)
-            action.setChecked(lang in chosen)
-            action.triggered.connect(lambda checked, l=lang: self._toggle_content_language(l, checked))
         if not available:
             menu.addAction(tr("No texts imported yet")).setEnabled(False)
+            return
+        chosen = language.content_languages()
+        shown = set(chosen) if chosen else set(available)
 
-    def _toggle_content_language(self, lang: str, on: bool) -> None:
-        from isnady.core import language
-        from isnady.core import search as core_search
+        def box(text: str, on: bool) -> QCheckBox:
+            check = QCheckBox(text)
+            check.setChecked(on)
+            check.setStyleSheet("QCheckBox { padding: 5px 14px; }")
+            holder = QWidgetAction(menu)
+            holder.setDefaultWidget(check)
+            menu.addAction(holder)
+            return check
 
-        conn = self.search_page.connection()
-        available = core_search.list_languages(conn) if conn is not None else []
-        chosen = language.content_languages() or list(available)
-        chosen = [l for l in available if (l in chosen and l != lang) or (l == lang and on)]
-        self._set_content_languages([] if not chosen or set(chosen) == set(available) else chosen)
+        every = box(tr("All languages"), shown == set(available))
+        menu.addSeparator()
+        boxes = {lang: box(tr(lang), lang in shown) for lang in available}
+        busy = []
+
+        def every_toggled(on: bool) -> None:
+            if busy:
+                return
+            busy.append(1)
+            for b in boxes.values():
+                b.setChecked(on or False)
+            busy.clear()
+
+        def one_toggled(_on: bool) -> None:
+            if busy:
+                return
+            busy.append(1)
+            every.setChecked(all(b.isChecked() for b in boxes.values()))
+            busy.clear()
+
+        every.toggled.connect(every_toggled)
+        for b in boxes.values():
+            b.toggled.connect(one_toggled)
+
+        def apply() -> None:
+            picked = [lang for lang, b in boxes.items() if b.isChecked()]
+            wanted = [] if not picked or set(picked) == set(available) else picked
+            if wanted != language.content_languages():
+                self._set_content_languages(wanted)
+
+        menu.aboutToHide.connect(apply)
+        menu._apply_languages = apply
 
     def _set_ui_language(self, code: str) -> None:
         from isnady.core import language
