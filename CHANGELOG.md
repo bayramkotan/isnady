@@ -3,6 +3,26 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.5.1] — 2026-10-25
+
+- **No chain is left unread (2026-10-25: "arkadasim hepsini coz demistim!").** The reader of the chains
+  (isnady-isnad-14) reads the last 276 problem chains of 0.5.0 to the end:
+  - a story after the chain ("قال قلت لأنس: حدثنا …", "سمع المسلمون ببدر") ends it where it was read, and names read
+    on after a story are kept only while they are names: they are checked against the first words of the names of
+    every chain read whole (a new list shipped with isnady, `assets/sources/name_words.txt`);
+  - two narrators at one link with nothing named after them ("وراشد بن سعد وغيرهما قالوا …"), a "ح" that closes the
+    text (the other road is the next hadith) and a full stop before a sentence keep the road as read;
+  - "قالت زينب فدخلت …", "قال أبو حازم …" take the chain of the hadith before, to the narrator who goes on speaking;
+    "قال أبو عيسى قال محمد بن بشار سألت يحيى …" and "باب … حدثني عن مالك أنه بلغه" are read from their first narrator;
+  - the Shia books: an Alid's nasab that ends "بن علي بن أبي طالب عليهم السلام" goes on to the next narrator; the
+    editor's brackets ("[عن أبيه]") are read through; "رجال الكشي:", "التهذيب: بإسناده عن …", "قال الشيخ … مصنف هذا
+    الكتاب: حدثنا", "قال أبي رحمه الله قال سعد", "أحمد بن مهران رحمه الله رفعه"; a second road from the compiler
+    meets the first where it names the first one's narrator (two roads left unread 27 → 0); the numbers of the
+    edition ("2-120", "[8/42]") are no longer read as a narrator (about 1,000 such links gone).
+  Chains left unread: Sunni 247 → 0, Shia 29 → 0; hadith with no chain drawn 483 → 385 (216 drawn compiler → … →
+  the Prophet ﷺ / the Imam, 169 the compilers' own words). Sunni identified 287,199 → 287,487. The chains are read
+  again once, on the first start.
+
 ## [0.5.0] — 2026-10-25
 
 - **Every hadith with a chain is drawn with it (2026-10-25: "tamamda senedsiz kalmasin … Hepsini hic eksik
