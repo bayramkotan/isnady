@@ -508,7 +508,10 @@ def cached(conn: sqlite3.Connection, collection: str | None = None, progress=Non
         from isnady.core.stats_jobs import NotSaved
 
         raise NotSaved(str(path))
-    result = analyse(conn, collection, progress)
+    from isnady.core import log
+
+    with log.timed("statistics", f"corpus computed for {collection or 'all books'}"):
+        result = analyse(conn, collection, progress)
     result["fingerprint"] = stamp
     try:
         path.parent.mkdir(parents=True, exist_ok=True)

@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.4.7-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.4.8-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.4.7-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.4.8-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.4.7).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.4.8).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -391,7 +391,8 @@ looks for himself among the narrators.
 Choose a book and a number, or let isnady choose: beside the number stands the book's last number ("/ 7563") and
 where the hadith stands among the book's ("hadith 36 of 7,467"); ⏮ ‹ › ⏭ go to the first, previous, next and last
 hadith, so do the arrow keys and the mouse wheel; typing lists the numbers that begin so, a number the book does not
-have offers the nearest, and **Random hadith** picks one. `iy chain kafi` prints the range.
+have offers the nearest, and **Random hadith** picks one among those whose chain was read. `iy chain kafi` prints
+the range. A hadith a book gives without a chain says so above its text.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/chain.png" alt="Isnad Chains — Sahih al-Bukhari 1: the number with the book's last number and its place, first / previous / next / last, and the chain as a timeline from the book to the Prophet" width="850">
@@ -413,11 +414,16 @@ correct. Names are kept exactly as written, with the clarifications the compiler
 <summary><b>📊 How well it reads today</b></summary>
 <br>
 
-| | Chains | Split into narrators | Reaching the Prophet / a Ma'sum | Names identified |
+| | Chains (roads) | Read whole | Reaching the Prophet / a Ma'sum | Names identified |
 |:--|--:|--:|--:|--:|
-| Sahih al-Bukhari | 7,580 | 85.5% | | 51.5% |
-| Sunan Abi Dawud | 5,272 | 71.9% | | 53.0% |
-| al-Kafi (read the Shia way) | 14,239 | 96.8% | 92% | 48.5% |
+| Sahih al-Bukhari | 7,856 | 89.9% | 74.7% | 74.7% |
+| Sahih Muslim | 9,265 | 74.9% | 58.6% | 77.4% |
+| Sunan Abi Dawud | 5,809 | 85.0% | 70.2% | 74.3% |
+| al-Kafi (read the Shia way) | 14,239 | 96.8% | 94.6% | 63.8% |
+
+(isnady 0.4.8, chains isnady-isnad-11, narrators isnady-narrators-15. A road of a tahwil (ح) is a chain of its own;
+"reaching" counts the chains whose last link is the Prophet ﷺ or a Ma'sum — a chain may also end with a Companion's
+own word, or at a link left unread.)
 
 In a blind, hand-checked sample of 30 Sunni chains: **no wrong narrator**, 27 complete. The rest are
 kept whole, each with its reason: *tahwil* (ح, a second chain joining), two teachers at one link
@@ -623,6 +629,11 @@ against the science of hadith: the statistics measure what the scholars did, the
 it. Every result is computed once and saved as JSON in your data folder (`derived/`), and computed again only when
 what it was computed from changed — new books or hadith, narrators identified differently, new verdicts or grades,
 books switched off — or the analysis itself; a new version of isnady alone does not.
+
+**Out of isnady, piece by piece or whole:** every finding has a ⤓ — its chart as a picture (PNG, SVG), a PDF or on
+the clipboard, its figures as CSV, Excel, JSON or Markdown; the page's **Export** writes a section or every section
+as one PDF or one web page with the charts and their tables, every table as one Excel workbook (a sheet each) or as
+CSV files, and the computed results as JSON (`iy export statistics [BOOK]`).
 
 | Section | What it shows |
 |---|---|
@@ -916,6 +927,19 @@ and a folder named `isnady-data` beside a portable application is used instead:
 | `settings.json` | appearance and other settings, shared by the window and the command line |
 | `repos/`, `user_repositories.json` | the catalogs read from the repositories, and the repositories you added |
 | `isnady.<date-time>.bak.db` | a database replaced by a ready one, kept |
+| `logs/isnady.log`, `logs/crash_*.log` | what isnady did and what went wrong; a hard crash's stack (Help → Log, `iy log`) |
+
+**The log.** Every start writes a banner — version, Python, PySide6, system, data folder, profile, database,
+books — and then a line for each thing isnady does: a page drawn, a search and how long it took, an import, an
+export, the chains read, the narrators identified, the statistics computed; every error with its traceback.
+**Help → Log…** (Ctrl+Shift+L) follows it live, shows only the errors or the lines holding a text, larger or
+smaller, copies it with the version at its head for a report, opens its folder, and removes what is older than a
+day. A crash Python itself cannot catch leaves `logs/crash_<time>.log`. `iy log`, `iy log --level error`,
+`iy log -f`; `iy config set log.level debug` for more.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/log.png" alt="Help → Log — this run's banner and every step with its time, followed live; only errors, a text, larger or smaller, copy, the folder, what is older than a day removed" width="850">
+</p>
 
 ---
 
@@ -956,6 +980,7 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | `iy import FORMAT FILE-OR-URL` | `iy import isnady ~/my_book/book.json` | Import a file of your own; `--book`, `--language`, `--license`, `--user`, `--token-env`, `--api-key-env` |
 | `iy sources` | | Imported sources, their licence and tier |
 | `iy remove KEY` | | Remove a source and everything imported from it |
+| `iy log` | `iy log --level error`, `iy log -f` | isnady's log: the last lines, errors only, a text, followed live, the crash reports (`--crash`), `--before DAY`, `--clear` |
 | `iy reset settings\|books\|all` | `iy reset books` | Back to zero: all settings, all books, or everything (`--yes` does not ask) |
 | `iy formats` | | The formats that can be imported |
 | `iy datadir [FOLDER]` | `iy datadir /data/isnady` | Show or move the data folder; `--as-is`, `--default` |

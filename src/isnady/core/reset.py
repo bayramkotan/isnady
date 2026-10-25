@@ -25,6 +25,9 @@ def settings() -> int:
     n = config.reset("")
     config.state_forget("")
     config.forget()
+    from isnady.core import log
+
+    log.get("reset").warning("⟲ every setting reset (%s stored)", n)
     return n
 
 
@@ -44,6 +47,9 @@ def books(conn: sqlite3.Connection) -> int:
     except sqlite3.Error:
         pass
     cache.clear()
+    from isnady.core import log
+
+    log.get("reset").warning("⟲ every book removed (%s sources)", n)
     return n
 
 

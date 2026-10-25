@@ -705,14 +705,20 @@ class SearchPage(QWidget):
             return
         self._found = None
         QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        from isnady.core import log
+
         try:
-            self._scores = {}
-            page = self._fetch(0)
-            if page is None:
-                return
-            self._page = page
-            self._results = list(self._page.results)
-            self._render()
+            # the words isolated (U+2068 … U+2069): Arabic does not turn the rest of the line around
+            with log.timed("search", "“\u2068" + self.query_edit.text().strip() + "\u2069”") as t:
+                self._scores = {}
+                page = self._fetch(0)
+                if page is None:
+                    t.note = "nothing"
+                    return
+                self._page = page
+                self._results = list(self._page.results)
+                t.note = f"{getattr(page, 'total', len(self._results))} hadith"
+                self._render()
         finally:
             QGuiApplication.restoreOverrideCursor()
 

@@ -60,7 +60,7 @@ class IsnadPage(QWidget):
         self.random_button = QPushButton(tr("Random hadith"))
         self.random_button.setObjectName("Quiet")
         self.random_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.random_button.setToolTip(tr("A hadith of this book chosen at random"))
+        self.random_button.setToolTip(tr("A hadith of this book chosen at random, among those whose chain was read"))
         self.random_button.clicked.connect(self._random)
         # the number, the last number, first / previous / next / last and the place in the book, on a line of their
         # own (NAV3, Bayram 2026-10-24: "Max hadis nerede???? … Isnad Chain de de ayni durum var!!!")
@@ -319,11 +319,24 @@ class IsnadPage(QWidget):
         head.addStretch(1)
         self.body_layout.addLayout(head)
 
-        if chain is None or not chain["problem"]:
+        drawn = [c for c in chains if c["links"]]
+        text = core_isnad.arabic_text(self.conn, hid)
+        if not drawn:
+            # nothing to draw: said plainly, never an empty page (2026-10-25: "rasgele hadis … hicbirsey cikmiyor")
+            if not text:
+                why = tr("No Arabic text for this hadith, so no chain was read.")
+            elif chain is not None and chain["problem"] and chain["problem"] != "does not start with a transmission term":
+                why = tr("No chain could be read from this hadith's text: {reason}. Its text is below.",
+                         reason=tr(chain["problem"]))
+            else:
+                why = tr("This book gives the hadith without a chain (the compiler names only the Companion, or none); "
+                         "its text is below.")
+            note = _label(why, "Lead", wrap=True)
+            self.body_layout.addWidget(note)
+        elif chain is None or not chain["problem"]:
             self.body_layout.addWidget(self._verdict(chain))
         self.body_layout.addSpacing(16)
 
-        drawn = [c for c in chains if c["links"]]
         if len(drawn) > 1:
             self.body_layout.addWidget(_label(
                 n_("{n} chain", "{n} chains of this hadith: the compiler joined roads (tahwil, ح), a second road "
@@ -338,7 +351,6 @@ class IsnadPage(QWidget):
             self.body_layout.addSpacing(14)
         self.body_layout.addSpacing(4)
 
-        text = core_isnad.arabic_text(self.conn, hid)
         if text:
             self.body_layout.addWidget(self._text_card(text, chain, drawn))
         self.body_layout.addStretch(1)

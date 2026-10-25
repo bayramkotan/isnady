@@ -3,6 +3,52 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.4.8] — 2026-10-25
+
+- **More chains read to the end: Muslim's way of writing them (2026-10-25, the big problem of this release).** The
+  reader of the chains (isnady-isnad-11) now understands what stopped it in a thousand chains of the Sunni books:
+  - a narrator made plain in dashes — "حدثنا عمارة، - وهو ابن القعقاع - عن أبي زرعة" (with "وهو" as with "يعني");
+  - the compiler's note on whose wording it is — "- قال ابن نمير حدثنا سفيان -", "- واللفظ له -",
+    "- وهذا حديثه -" — no link;
+  - which of two teachers said which word — "حدثنا عثمان وإسحاق، قال إسحاق أخبرنا جرير، وقال عثمان حدثنا
+    جرير، عن منصور": Jarir once, then Mansur;
+  - a narrator quoted before he goes on — "حدثنا حجاج، قال قال ابن جريج أخبرني محمد";
+  - the one asked — "قال سألت عائشة عن …", "قال سئل أنس": the last link, with its own term ("I asked", "was
+    asked");
+  - a long nasab of eleven to thirteen words ("عبد الله بن أبي بكر بن محمد بن عمرو بن حزم");
+  - where the two roads of a tahwil (ح) meet: "ليث" and "الليث", "أبو حيان" and "أبي حيان", "أنسا" and "أنس",
+    "ابن عمر" and "عبد الله بن عمر", "ابن وهب" and "عبد الله بن وهب", a name and its nisba, and "حدثنا محمد بن
+    فليح، حدثني أبي" meeting a road that ended with Fulayh. Muslim 93 now shows its two chains.
+  In the Sunni books: 6,775 more links read (337,712), 1,221 more chains reaching the Prophet ﷺ or their end,
+  326 more roads; chains kept whole fell from 12,042 to 10,967 — "words not understood" from 7,385 to 6,596,
+  unsplit tahwil from 1,039 to 788. The chains are read again once, on the first start.
+- **"حدثني أبي" is the father of the narrator before.** The matcher (isnady-narrators-15) read a lone "أبي" as the
+  kunya "Abu" (698 candidates), and the neighbours then picked a stranger: in Muslim 93 'Ubayd Allah b. Mu'adh's
+  father was al-Mu'tamir. It is now the father, read from the son's full name — Mu'adh b. Mu'adh al-'Anbari — and
+  said as "his father" with whose. 1,034 more links identified. Turkish no longer doubles the apostrophe after a
+  name ending in 'ayn: "Nâfi'den", not "Nâfi''den".
+- **Random hadith always shows a chain (2026-10-25: "rasgele hadis dediginde bazen hicbirsey cikmiyor").** It picks
+  among the hadith whose chain was read; Riyad al-Salihin, Mishkat, the Forty of al-Dehlawi and other books give
+  many hadith without one, and such a pick showed an empty page. A hadith without a chain now says so — the book
+  gives it without one, or why none could be read — above its text.
+- **isnady's log, as VenvStudio has it (2026-10-25: "isnady icin bir log sistemi ---> venvstudio daki gibi").**
+  `logs/isnady.log` in the data folder: every start with a banner (version, Python, PySide6, system, data folder,
+  profile, database, books), then a line for what isnady did — a page drawn, a search and its time, an import, an
+  export, the chains read, the narrators identified, the statistics computed, a cache cleared, a reset — and every
+  error with its traceback; 2 MB, five older files kept. A hard crash writes `logs/crash_<time>.log` with every
+  thread's stack. **Help → Log…** (Ctrl+Shift+L) follows it live, filters errors or a text, makes it larger or
+  smaller, copies it with the version at its head, opens its folder, removes what is older than a day or clears it;
+  `iy log` (`-n`, `--level error`, `--grep`, `--follow`, `--crash`, `--files`, `--before`, `--clear`) does the same
+  on the command line, and every `iy` command is logged. `log.level` debug says more.
+- **Statistics out of isnady, piece by piece or whole (2026-10-25: "Istatistik kismindaki detaylari veya grafikleri
+  ayri ayri ya da tam disari aktarabilmemiz lazim").** Every finding on the Statistics page has a ⤓: its chart as a
+  picture (PNG, SVG), a PDF or on the clipboard, its figures as CSV, Excel, JSON or Markdown. The page's **Export**
+  writes this section or every section as one PDF or one web page (charts and their tables), every table as one
+  Excel workbook with a sheet each or as CSV files in a folder, and the computed results as JSON. File → Export…
+  and `iy export statistics [BOOK] --tradition shia` write the results as JSON too.
+- **Export: every language with one click (2026-10-25: "tum diller sec diye birsey de yok").** The languages of an
+  export are ticked in a list with All and None, like the books.
+
 ## [0.4.7] — 2026-10-25
 
 - **Exporting hadith works again.** In 0.4.5 and 0.4.6 every export of hadith — a book, several books, numbered

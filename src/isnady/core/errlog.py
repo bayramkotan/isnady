@@ -1,33 +1,27 @@
-"""isnady.log in the data folder (ROB1, 2026-10-18): what went wrong, for a report — never shown unasked.
+"""Errors, for a report — never shown unasked (ROB1, 2026-10-18). Since 0.4.8 they go to isnady's log (core.log,
+logs/isnady.log in the data folder), with their traceback and the version, among everything else isnady did.
 
-A page that cannot be built, or an error inside a click, is written here with its traceback and the version; the
-window goes on. The file is kept short (the last 200 KB).
+A page that cannot be built, or an error inside a click, is written here; the window goes on.
 """
 
 from __future__ import annotations
 
-import time
-import traceback
-
-from isnady import __version__
-from isnady.data.paths import data_dir
-
-FILE = "isnady.log"
-LIMIT = 200_000
-
 
 def path():
-    return data_dir() / FILE
+    from isnady.core import log
+
+    return log.path()
 
 
 def write(what: str, exc: BaseException | None = None) -> None:
     try:
-        p = path()
-        p.parent.mkdir(parents=True, exist_ok=True)
-        text = f"--- {time.strftime('%Y-%m-%d %H:%M:%S')}  isnady {__version__}  {what}\n"
+        from isnady.core import log
+
+        if log._handler is None:
+            log.setup("window")
         if exc is not None:
-            text += "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
-        old = p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
-        p.write_text((old + text)[-LIMIT:], encoding="utf-8")
-    except OSError:
+            log.get("error").error("✖ %s", what, exc_info=(type(exc), exc, exc.__traceback__))
+        else:
+            log.get("error").error("✖ %s", what)
+    except Exception:
         pass

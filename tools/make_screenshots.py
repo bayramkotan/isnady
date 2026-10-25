@@ -14,6 +14,9 @@ from PySide6.QtCore import QEventLoop, Qt, QTimer
 from PySide6.QtWidgets import QApplication, QFrame, QPushButton, QTabWidget
 
 app = QApplication([])
+from isnady.core import log  # noqa: E402
+
+log.setup("window")                                 # the log shown at the end (log.png) holds this run
 from isnady.gui import theme  # noqa: E402
 
 theme.load_fonts()
@@ -262,4 +265,11 @@ dialog.close()
 for job_row in list(w.jobs._rows):
     w.jobs._remove(job_row)
 settle(400)
+# Help → Log: what this run did, followed live
+w.show_log()
+settle(1500)
+w._log_viewer.resize(1100, 620)
+settle(600)
+w._log_viewer.grab().save(D + "log.png")
+w._log_viewer.close()
 theme.set_theme_mode("system")

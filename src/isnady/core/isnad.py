@@ -42,9 +42,11 @@ from isnady.core.normalize import normalize_with_map
 from isnady.core.i18n import N_, t, tr
 from isnady.core.companions import is_companion_name
 
-PARSER_ID = "isnady-isnad-10"  # bump when rules change (7: tahwil split; 8: two narrators at a link, a chain kept as far as read;
+PARSER_ID = "isnady-isnad-11"  # bump when rules change (7: tahwil split; 8: two narrators at a link, a chain kept as far as read;
 #                                9: the Prophet by his kunya, the subject of a story, second roads after "وعن" / "وحدثنا")
-#                               10: one man named twice with a comma between, "أبو خيثمة، زهير بن حرب")
+#                               10: one man named twice with a comma between, "أبو خيثمة، زهير بن حرب"
+#                               11: "- وهو ابن …-", an aside in dashes, "قال فلان أخبرنا", "قال قال ابن جريج أخبرني",
+#                                   "سألت عائشة" / "سئل أنس", and where two roads of a tahwil meet)
 
 # normalised form -> term id; longer forms first so "حدثني" is not read as "حدث"
 TERMS = [
@@ -115,7 +117,7 @@ _GENERIC_SUBJECT_RE = re.compile(
     r"ملكا|الملك|الملايكه)(?!\w)")
 # a transmission term soon after the point where reading stopped: the chain goes on
 _CONTINUES_RE = re.compile(r"^(?:\S+\s+){0,8}?(?:و)?(?:حدثنا|حدثني|اخبرنا|اخبرني|انبانا|سمعت|زعم|عن)\s+[^،,\s]")
-_MAX_NAME_WORDS = 10
+_MAX_NAME_WORDS = 13
 # what may stand before the first term: a number ("11 - ", "5ـ"), a brace or a quote, and the reporter's own "قال"
 # (Abdullah b. Ahmad in the Musnad: "قال حدثنا عبد الصمد"; "قال قرأت على عبد الرحمن")
 _SUNNI_PREAMBLE_RE = re.compile(
@@ -203,7 +205,23 @@ _SAME_PERSON = [{"الزهري", "ابن شهاب", "محمد بن مسلم", "�
                 {"ابو الزبير", "محمد بن مسلم بن تدرس"}, {"ابن المبارك", "عبد الله بن المبارك"},
                 {"ابن علیه", "ابن عليه", "اسماعيل بن ابراهيم"}, {"ابن نمير", "عبد الله بن نمير"},
                 {"وكيع", "وكيع بن الجراح"}, {"شعبه", "شعبه بن الحجاج"}, {"مالك", "مالك بن انس"},
-                {"ابن عون", "عبد الله بن عون"}, {"ابن ابي ذيب", "محمد بن عبد الرحمن بن ابي ذيب"}]
+                {"ابن عون", "عبد الله بن عون"}, {"ابن ابي ذيب", "محمد بن عبد الرحمن بن ابي ذيب"},
+                # the Companions called "the son of …" in one road and by their name in the other (2026-10-25)
+                {"ابن عمر", "عبد الله بن عمر", "عبد الله بن عمر بن الخطاب"}, {"ابن عباس", "عبد الله بن عباس"},
+                {"ابن مسعود", "عبد الله بن مسعود"}, {"ابن عمرو", "عبد الله بن عمرو", "عبد الله بن عمرو بن العاص"},
+                {"ابن الزبير", "عبد الله بن الزبير"}, {"ابن ابي اوفي", "عبد الله بن ابي اوفي"},
+                {"ابن المسيب", "سعيد بن المسيب"}, {"ابن سيرين", "محمد بن سيرين"}, {"ابن بريده", "عبد الله بن بريده"},
+                {"ابن ابي مليكه", "عبد الله بن عبيد الله بن ابي مليكه"}, {"ابن المنكدر", "محمد بن المنكدر"},
+                {"عايشه", "ام المومنين عايشه"},
+                # the compilers' teachers and their teachers, "Ibn X" in one road, by name in the other
+                {"ابن وهب", "عبد الله بن وهب"}, {"ابن المثني", "محمد بن المثني"}, {"ابن بشار", "محمد بن بشار"},
+                {"ابن مهدي", "عبد الرحمن بن مهدي"}, {"ابن ابي عدي", "محمد بن ابي عدي"}, {"ابن رمح", "محمد بن رمح"},
+                {"ابن ابي شيبه", "ابو بكر بن ابي شيبه"}, {"ابن السرح", "احمد بن عمرو بن السرح"},
+                {"ابن ابي عمر", "محمد بن يحيي بن ابي عمر"}, {"ابن ابي زايده", "يحيي بن زكريا بن ابي زايده"},
+                {"ابن ادريس", "عبد الله بن ادريس"}, {"ابن فضيل", "محمد بن فضيل"},
+                {"ابن ابي حازم", "عبد العزيز بن ابي حازم"}, {"ابن لهيعه", "عبد الله بن لهيعه"},
+                {"ابن عجلان", "محمد بن عجلان"}, {"ابن اسحاق", "محمد بن اسحاق"},
+                {"ابن ابي ليلي", "عبد الرحمن بن ابي ليلي"}, {"غندر", "محمد بن جعفر"}]
 
 
 def _name_key(raw: str) -> str:
@@ -218,6 +236,16 @@ def _same_narrator(a: str, b: str) -> bool:
     if not a or not b:
         return False
     if a == b:
+        return True
+    # a name in the accusative after "سمعت" / "أن": "أنسا", "جابرا" — the same man as "أنس", "جابر"
+    a_bare, b_bare = re.sub(r"(?<=\w\w)ا$", "", a), re.sub(r"(?<=\w\w)ا$", "", b)
+    if a_bare == b_bare and " " not in a_bare:
+        return True
+    # "ليث" and "الليث"; "أبي حيان" and "أبو حيان" (the kunya in another case): one man (2026-10-25, tahwil)
+    def plain(x: str) -> str:
+        x = re.sub(r"^(?:ابي|ابا) ", "ابو ", x)
+        return x[2:] if " " not in x and x.startswith("ال") and len(x) > 4 else x
+    if plain(a) == plain(b):
         return True
     for group in _SAME_PERSON:
         if any(a == g or a.startswith(g + " ") for g in group) and any(b == g or b.startswith(g + " ") for g in group):
@@ -274,6 +302,16 @@ def _split_tahwil(text: str, depth: int = 0) -> list[ParsedIsnad] | None:
     # جميعاً" (2026-10-18: that came first, and "ح وحدثنا ابن المثنى وابن بشار قالا حدثنا محمد بن جعفر حدثنا شعبة"
     # met road A — "… غندر، عن شعبة" — at the two teachers, making Shu'ba a student of Muhammad b. Ja'far)
     meet = next((j for j, link in enumerate(road_b.links) if _shared(link.raw_name, road_a.links[-1].raw_name)), None)
+    if meet is None:
+        # "ح وحدثني إبراهيم بن المنذر، حدثنا محمد بن فليح، حدثني أبي": the father of Ibn Fulayh is Fulayh, with whom
+        # road A ended (2026-10-25)
+        for j, link in enumerate(road_b.links[1:], 1):
+            if _name_key(_strip_said(link.raw_name)) in ("ابي", "ابيه"):
+                son = _name_key(_strip_said(road_b.links[j - 1].raw_name))
+                father = re.search(r"(?<!\w)بن (.+)$", son)
+                if father and _same_narrator(father.group(1).split(" بن ")[0], _strip_said(road_a.links[-1].raw_name)):
+                    meet = j
+                    break
     if meet is None:
         meet = _meeting(road_b, rest)
         if meet is None:
@@ -367,7 +405,10 @@ def _shared(a: str, b: str) -> bool:
         return True
     # "جعفر بن عمرو بن أمية" and "جعفر بن عمرو بن أمية الضمري": a nasab of three names and a nisba after it
     short, long_ = sorted((a_n, b_n), key=len)
-    return short.count(" بن ") >= 2 and long_.startswith(short + " ") and " بن " not in long_[len(short):] + " "
+    if short.count(" بن ") >= 2 and long_.startswith(short + " ") and " بن " not in long_[len(short):] + " ":
+        return True
+    # "عبد الله بن مسلمة" and "عبد الله بن مسلمة القعنبي": a name and its nisba
+    return short.count(" بن ") == 1 and re.fullmatch(re.escape(short) + r" ال\w+", long_) is not None
 
 
 def _strip_said(raw: str) -> str:
@@ -523,6 +564,50 @@ def _meeting(road: ParsedIsnad, rest: str) -> int | None:
     return None
 
 
+# an aside in dashes after a link: the compiler's note on whose wording it is, or how each teacher said it
+_ASIDE_RE = re.compile(r"[\s،,]*-\s*(?:و?قال|و?اللفظ|ولفظ|لفظ|و?هذا (?:حديث|لفظ)|وتقاربا|وتقاربوا|و?في روايه|و?المعني)"
+                       r"[^-]{0,160}-")
+# "قال سألت عائشة", "قال سألنا جابرا", "قال سئل أنس" (normalised: سيل)
+_ASKED_RE = re.compile(r"(سالت|سالنا|سيل|سيلت)\s+")
+_ASKED_STOP_RE = re.compile(r"[،,.:]|(?<!\w)(?:عن|عما|فقال|فقالت|قال|قالت|هل|ما|كيف|في|اي|متي|اين|لم|ماذا|من|وهو|وهي|"
+                            r"وانا|او|فقلت|قلت|رضي الله)(?!\w)")
+
+
+def _said_name(norm: str, pos: int) -> tuple[str, int] | None:
+    """After "قال": a name and right after it a term of transmission ("قال ابن جريج أخبرني", "قال إسحاق أخبرنا"):
+    (the name as written, where the term begins); None when what follows is no such name."""
+    term = _TERM_RE.search(norm, pos, pos + 70)
+    # "عن" after a name is too often "about" ("سئل سعيد عن الأعضب", "ذكر خلف عن …"): only the terms of hearing
+    if not term or term.group(1) in ("ان", "عن", "زعم"):
+        return None
+    name = norm[pos:term.start()]
+    bare = name.strip(" ،,")
+    words = bare.split()
+    if not words or len(words) > 6 or re.search(r"[.:]", bare) or _ASKED_RE.match(bare + " ") \
+            or re.match(r"(?:قيل|ذكر|ذكره|ذكرت|بلغني|بلغنا|اتي|جاء|كتب|اخذ|راي|رايت|شهدت|وجدت|قرات|لما|ولما)(?!\w)", bare) or _PROPHET_RE.search(bare) \
+            or _PROPHET_NAME_RE.search(bare) or _SENTENCE_START_RE.match(bare) or _NOT_A_NAME_RE.match(bare) \
+            or re.search(r"(?<!\w)(?:قال|قالت|يقول|كان|كنا|كنت|لنا|لي|له|لها|في|ما|لا|اذا|حين|يوم|سمعت|حدث\w*)(?!\w)",
+                         bare):
+        return None
+    return name.rstrip(" ،,"), term.start()
+
+
+def _asked_name(norm: str, pos: int) -> tuple[int, int] | None:
+    """The one asked ("سألت عائشة عن …"): (start, end) of his name, up to "عن", a question word or a comma."""
+    stop = _ASKED_STOP_RE.search(norm, pos, pos + 80)
+    end = stop.start() if stop else min(len(norm), pos + 40)
+    honor = _HONORIFIC_RE.search(norm, pos, end)
+    if honor:
+        end = honor.start()
+    while end > pos and norm[end - 1] in " ،,":
+        end -= 1
+    words = norm[pos:end].split()
+    if not words or len(words) > 6 or _SENTENCE_START_RE.match(norm[pos:end]) or _GENERIC_SUBJECT_RE.match(norm[pos:end]) \
+            or _LONE_GENERIC_RE.match(norm[pos:end]):
+        return None
+    return pos, end
+
+
 def _parse_sunni(text: str) -> ParsedIsnad:
     norm, index_map = _norm_map(text)
     n = len(norm)
@@ -547,12 +632,50 @@ def _parse_sunni(text: str) -> ParsedIsnad:
     links: list[Link] = []
     ends: list[tuple[int, int]] = []      # (end before this link, end after it)
     end_of_chain = 0
+    skip_same = False                   # after "قال إسحاق أخبرنا جرير، وقال عثمان حدثنا جرير": Jarir once, not twice
     while pos < n:
+        aside = _ASIDE_RE.match(norm, pos) if links else None
+        if aside:
+            # "- قال ابن نمير حدثنا سفيان -", "- واللفظ له -", "- وهذا حديثه -": the compiler's note on the wording,
+            # no link (Muslim's way; 2026-10-25, "words not understood" in 26 + 23 + 18 … chains)
+            pos = aside.end()
+            continue
         filler = _FILLER_RE.match(norm, pos)
         said_before = bool(filler and re.search(r"(?<!\w)قال(?!\w)", filler.group(0)))
         if filler:
             pos = filler.end()
         term = _TERM_RE.match(norm, pos)
+        if not term and links:
+            asked = _ASKED_RE.match(norm, pos)
+            if asked and not _PROPHET_RE.match(norm, asked.end()) and not _PROPHET_NAME_RE.match(norm, asked.end()):
+                # "قال سألت عائشة عن صلاة …", "قال سئل أنس": the one asked is the narrator's teacher — the last link
+                got = _asked_name(norm, asked.end())
+                if got:
+                    a, b = got
+                    links.append(Link(len(links) + 1, "su'ila" if asked.group(1).startswith("سي") else "sa'altu",
+                                      _clean_name(orig(a, b)), False))
+                    ends.append((end_of_chain, b))
+                    end_of_chain = b
+            elif asked:
+                result.reaches_prophet = True             # "سألت رسول الله ﷺ": the chain has reached him
+            break
+        if not term and links and said_before:
+            said = _said_name(norm, pos)
+            if said is not None:
+                name_text, next_term_at = said
+                here = [links[-1].raw_name] + [alt.raw_name for i, alt in result.alternates if i == len(links) - 1]
+                if any(_same_narrator(_strip_said(name_text), _strip_said(normalize_name(h))) for h in here):
+                    # "حدثنا عثمان، وإسحاق، قال إسحاق أخبرنا جرير": which of the two said which word — no link
+                    pos = next_term_at
+                    skip_same = True
+                    continue
+                # "حدثنا حجاج، قال قال ابن جريج أخبرني محمد": Hajjaj quotes Ibn Jurayj, who goes on — a link
+                start = pos
+                links.append(Link(len(links) + 1, "qala", _clean_name(orig(start, start + len(name_text))), False))
+                ends.append((end_of_chain, start + len(name_text)))
+                end_of_chain = start + len(name_text)
+                pos = next_term_at
+                continue
         if not term:
             break
         term_id = _TERM_ID[term.group(1)]
@@ -622,11 +745,14 @@ def _parse_sunni(text: str) -> ParsedIsnad:
         if lone_ha and lone_ha.start() > 0:
             name_end = name_start + lone_ha.start()         # "حدثنا أبي ح، وحدثنا …": the tahwil sign is no name
         core_norm = norm[name_start:name_end]
-        clar = re.match(r"[،,]?\s*-\s*(?:يعني|هو)\s[^-]{1,150}-", norm[after:after + 170])
+        clar = re.match(r"[،,]?\s*-\s*(?:و?يعني|و?هو)\s[^-]{1,150}-", norm[after:after + 170])
         if clar:
             name_end = after + clar.end()
 
         words = core_norm.strip(" ،,:-").split()
+        if re.fullmatch(r"و?(?:قال|قالت|قالا|يقول)", core_norm.strip(" ،,:-")) and _TERM_RE.match(norm, name_end):
+            pos = name_end                          # "أخبرني قال سمعت ابن أبي ليلى": no one is called "قال"
+            continue
         if links and _NOT_A_NAME_RE.fullmatch(core_norm.strip(" ،,:-")) and _TERM_RE.match(norm, name_end):
             pos = name_end                          # "أخبرني أنه سمع جدته": "أنه" is no one; the chain goes on
             continue
@@ -640,11 +766,19 @@ def _parse_sunni(text: str) -> ParsedIsnad:
             result.problem = N_("a second chain follows the first; not split in version 1")
             result.links = links                     # the chain as far as it was read: shown, never hidden
             return result
-        if not words or len(words) > _MAX_NAME_WORDS:
-            break                                   # narrative has begun
+        if not words or len(words) > _MAX_NAME_WORDS or (
+                len(words) > 10 and sum(1 for w in words if w in ("بن", "بنت", "ابن")) < 3):
+            break                                   # narrative has begun (a long name is a long nasab, 2026-10-25:
+            #                                         "عبد الله بن أبي بكر بن محمد بن عمرو بن حزم" is 11 words)
         if term_id == "anna" and links and len(bare_core.strip(" ،,:-").split()) > 6:
             break
         fresh = bool(links) and bool(re.search(r"\.|(?<!\w)ح(?!\w)", norm[end_of_chain:term.start()]))
+        if skip_same and links and _same_narrator(_strip_said(core_norm), _strip_said(normalize_name(links[-1].raw_name))):
+            skip_same = False                             # the same man named again by the second teacher's wording
+            end_of_chain = name_end
+            pos = name_end
+            continue
+        skip_same = False
         links.append(Link(len(links) + 1, term_id, _clean_name(orig(name_start, name_end)), fresh))
         ends.append((end_of_chain, name_end))
         end_of_chain = name_end
@@ -1084,6 +1218,11 @@ def ensure_isnads(conn: sqlite3.Connection, progress: Callable[[str], None] | No
         conn.commit()
         return stats
     say(tr("Reading isnads of {todo} hadith", todo=len(todo)))
+    import time as _time
+
+    from isnady.core import log
+
+    started = _time.perf_counter()
     no_links: list[int] = []
     for hadith_id, text, source_id, tradition in todo:
         chains = parse_all(text, tradition)
@@ -1111,6 +1250,9 @@ def ensure_isnads(conn: sqlite3.Connection, progress: Callable[[str], None] | No
             stats["problems"][p.problem] = stats["problems"].get(p.problem, 0) + 1
     stats["borrowed"] = _borrow_previous(conn, sorted(no_links))
     conn.commit()
+    log.get("chains").info("✔ %s chains read by %s in %.1f s: %s with links, %s reaching the Prophet, %s kept whole",
+                           f"{len(todo):,}", PARSER_ID, _time.perf_counter() - started, f"{stats['parsed']:,}",
+                           f"{stats['reaches_prophet']:,}", f"{stats['raw_only']:,}")
     return stats
 
 
@@ -1161,6 +1303,9 @@ TERM_LABELS = {
     "anna": ("أن", N_("that"), N_("Treated by most critics like 'an (mu'anna).")),
     "qala": ("قال", N_("said"), N_("Cited without saying how it was received (ta'liq): the compiler or a narrator "
              "quotes him, as al-Bukhari does after a tahwil (\"وقال ابن وهب\").")),
+    "sa'altu": ("سألت", N_("I asked"), N_("The narrator asked him and heard the answer from him: heard directly.")),
+    "su'ila": ("سئل", N_("was asked"), N_("He was asked, and the narrator reports his answer; how the narrator "
+               "received it is not said.")),
     "bare": ("—", N_("(his teacher)"), N_("The compiler names his teacher without a term, as al-Kulayni does: "
              "it is his own transmission from that teacher.")),
 }
@@ -1203,7 +1348,7 @@ def term_label(term: str) -> tuple[str, str, str]:
 
 def short_name(raw_name: str) -> str:
     """The name without clarifications ("- يعني ابن محمد -", "هو ابن اسلم") for compact display."""
-    name = re.split(r"\s*[،,]?\s*-\s*(?:يَعْنِي|يعني|هُوَ|هو)\s", raw_name)[0]
+    name = re.split(r"\s*[،,]?\s*-\s*(?:وَ?يَعْنِي|و?يعني|وَ?هُوَ|و?هو)\s", raw_name)[0]
     name = re.split(r"\s{2,}(?:هُوَ|هو)\s", name)[0]
     return name.strip(" ،,-")
 
@@ -1223,6 +1368,16 @@ _KIN = {
 }
 
 
+# "حدثني أبي", "حدثني جدي": a relative in the first person, the whole link — never the first word of a name ("أبي
+# هريرة" is Abu Hurayra)
+_KIN_ALONE = {"ابي": ("babam", "my father"), "ابوي": ("babam", "my father"), "جدي": ("dedem", "my grandfather"),
+              "امي": ("annem", "my mother"), "عمي": ("amcam", "my paternal uncle"), "خالي": ("dayım", "my maternal uncle"),
+              "اخي": ("kardeşim", "my brother")}
+
+
+_KIN_THIRD = {"ابي": "ابيه", "ابوي": "ابيه", "جدي": "جده", "امي": "امه", "عمي": "عمه", "خالي": "خاله", "اخي": "اخيه"}
+
+
 def name_reading(raw_name: str, language: str = "tr") -> tuple[str, bool]:
     """A chain link's name in Latin letters as it is written in the chain — "حماد يعني ابن سلمة" → "Hammâd (yani
     İbn Seleme)", "أبيه" → "babası", "ابن أبي عتيق" → "İbn Ebî Atîk". (text, spelled): spelled when a word was not
@@ -1234,10 +1389,10 @@ def name_reading(raw_name: str, language: str = "tr") -> tuple[str, bool]:
     parts = re.split(r"\s*[،,]?\s*-?\s*(?:يَعْنِي|يعني)\s+", raw_name.strip(" ،,-"), maxsplit=1)
     outs, spelled = [], False
     for part in parts:
-        part = re.split(r"\s*[،,]?\s*-\s*(?:هُوَ|هو)\s|\s{2,}(?:هُوَ|هو)\s", part)[0].strip(" ،,-")
+        part = re.split(r"\s*[،,]?\s*-\s*(?:وَ?هُوَ|و?هو)\s|\s{2,}(?:وَ?هُوَ|و?هو)\s", part)[0].strip(" ،,-")
         key = normalize(part)
-        if key in _KIN:
-            outs.append(_KIN[key][0 if lang == "tr" else 1])
+        if key in _KIN or key in _KIN_ALONE:
+            outs.append((_KIN.get(key) or _KIN_ALONE[key])[0 if lang == "tr" else 1])
             continue
         words = part.split()
         kin_word = normalize(words[0]) if len(words) > 1 else ""
@@ -1293,6 +1448,7 @@ CHAIN_TEMPLATES = {
     "qara'tu 'ala": N_("I read it to {name}"), "quri'a 'ala": N_("it was read to {name}"),
     "za'ama": N_("{name} stated"), "'an": N_("from {name}"), "anna": N_("that {name}"),
     "qala": N_("{name} said"), "bare": N_("{name} (his teacher)"),
+    "sa'altu": N_("I asked {name}"), "su'ila": N_("{name} was asked"),
 }
 CHAIN_END = N_("from {name}")                    # the Prophet ﷺ, or the Ma'sum a Shia chain reaches
 CHAIN_RAISED = N_("raised (رفعه): the rest of the chain is not named")
@@ -1342,7 +1498,8 @@ def _tr_case(name: str, case: str) -> str:
         suffix = ("n" if possessive else "y" if ends_vowel else "") + four
     else:
         suffix = ("n" if possessive else "y" if ends_vowel else "") + ("a" if back else "e")
-    out = word + ("" if common else "'") + suffix
+    # a name ending in the sign of 'ayn ("Nâfi'", "Rufey'") has its apostrophe already: "Nâfi'den", not "Nâfi''den"
+    out = word + ("" if common or word.endswith("'") else "'") + suffix
     return out + (" (" + tail if tail else "")
 
 
@@ -1416,6 +1573,8 @@ def chain_link_names(chain: dict, code: str, people: dict | None = None) -> list
             kin = _KIN[normalize(words[0])][0 if code == "tr" else 1]
             words = words[1:]                            # "أمه أسماء بنت أبي بكر": his mother, Asma' …
         raw = " ".join(words)
+        # "حدثنا أبي" in a chain: the father of the narrator before — said as "his father", whose father, who he is
+        raw = _KIN_THIRD.get(normalize(raw).strip(" ،,"), raw)
         name, _spelled = name_reading(raw, code)
         plain = name
         if kin and name:
@@ -1424,7 +1583,8 @@ def chain_link_names(chain: dict, code: str, people: dict | None = None) -> list
             name = short_name(link["raw_name"])
         if code == "tr" and name.startswith("Ebî "):
             name = "Ebû " + name[4:]
-        whose = normalize(short_name(link["raw_name"]).split()[0]) in _WHOSE if link["raw_name"].strip() else False
+        whose = (normalize(short_name(link["raw_name"]).split()[0]) in _WHOSE
+                 or normalize(short_name(link["raw_name"])).strip(" ،,") in _KIN_ALONE) if link["raw_name"].strip() else False
         known_any = _known_as(person, code)
         known = known_any if whose else ""
         if whose and index and bases[index - 1]:
@@ -1620,7 +1780,17 @@ def position(conn: sqlite3.Connection, book: str, number: str) -> tuple[int, int
     return (before or 0) + 1, count
 
 
-def random_number(conn: sqlite3.Connection, book: str) -> str | None:
+def random_number(conn: sqlite3.Connection, book: str, with_chain: bool = True) -> str | None:
+    """A number of the book chosen at random — of a hadith whose chain was read, when the book has any (Bayram,
+    2026-10-25: "rasgele hadis dediginde bazen hicbirsey cikmiyor": Riyad al-Salihin, Mishkat, the Forty of
+    al-Dehlawi and others give many hadith without a chain, and such a pick showed an empty page)."""
+    if with_chain:
+        row = conn.execute("""SELECT h.number FROM hadiths h JOIN collections c ON c.id = h.collection_id
+                              WHERE c.key = ? AND EXISTS (SELECT 1 FROM isnads i JOIN isnad_links l ON l.isnad_id = i.id
+                                                          WHERE i.hadith_id = h.id)
+                              ORDER BY RANDOM() LIMIT 1""", (book,)).fetchone()
+        if row:
+            return row[0]
     row = conn.execute("""SELECT h.number FROM hadiths h JOIN collections c ON c.id = h.collection_id
                           WHERE c.key = ? ORDER BY RANDOM() LIMIT 1""", (book,)).fetchone()
     return row[0] if row else None

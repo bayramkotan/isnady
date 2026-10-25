@@ -44,6 +44,9 @@ def gui_main() -> int:
         except (AttributeError, OSError):
             pass
     app = QApplication(sys.argv[:1])
+    from isnady.core import log
+
+    log.setup("window")                             # logs/isnady.log and a crash file for this run (LOG1)
     from importlib import resources
 
     from PySide6.QtGui import QIcon
@@ -108,6 +111,12 @@ def gui_main() -> int:
 
     if changed:
         windows[-1]._set_footer(upgrade.message(changed, i18n.tr))
+        log.get("upgrade").info("⟳ new version (from %s): %s kept files cleared", changed.get("previous"),
+                                changed.get("files"))
+    try:
+        log.books_line(windows[-1].search_page.connection())
+    except Exception:
+        pass
     windows[-1].check_interrupted_import()
     from PySide6.QtCore import QTimer
 
@@ -118,12 +127,13 @@ def gui_main() -> int:
         from isnady.core import errlog
 
         exc.__traceback__ = tb
-        errlog.write("an error in the window", exc)
+        errlog.write(f"an error in the window ({kind.__name__})", exc)
         sys.__excepthook__(kind, exc, tb)
 
     sys.excepthook = _hook
     windows[-1].check_installation_later()
     code = app.exec()
+    log.shutdown()
     # a statistics computation still running in its own process ends with the window (core.stats_jobs, PERF2)
     from isnady.core import stats_jobs
 

@@ -11,6 +11,7 @@ ordered categories throughout: counted, cross-tabulated and rank-correlated, nev
 import csv
 import html
 import math
+import re
 from collections import Counter
 
 from PySide6.QtCore import QObject, QSize, Qt, QThread, Signal
@@ -222,6 +223,27 @@ class StatisticsPage(QWidget):
         self.c_recompute.setToolTip(tr("The results are kept in a file and reused while the data is unchanged"))
         self.c_recompute.clicked.connect(lambda: self.compute_corpus(True))
         head.addWidget(self.c_recompute, 0, Qt.AlignmentFlag.AlignBottom)
+        # the whole page out (EX4, Bayram 2026-10-25: "Istatistik kismindaki detaylari veya grafikleri ayri ayri ya
+        # da tam disari aktarabilmemiz lazim"); each finding has its own ⤓ too
+        from PySide6.QtWidgets import QMenu
+
+        self.export_button = QPushButton(tr("Export"))
+        self.export_button.setObjectName("Quiet")
+        menu = QMenu(self.export_button)
+        menu.addAction(tr("This section as PDF…"), lambda: self._export_page("section", "pdf"))
+        menu.addAction(tr("This section as a web page (HTML)…"), lambda: self._export_page("section", "html"))
+        menu.addAction(tr("This section as one picture (PNG)…"), lambda: self._export_page("section", "png"))
+        menu.addSeparator()
+        menu.addAction(tr("Every section as PDF…"), lambda: self._export_page("all", "pdf"))
+        menu.addAction(tr("Every section as a web page (HTML)…"), lambda: self._export_page("all", "html"))
+        menu.addSeparator()
+        menu.addAction(tr("Every table as Excel (a sheet each)…"), lambda: self._export_page("all", "xlsx"))
+        menu.addAction(tr("Every table as CSV files (a folder)…"), lambda: self._export_page("all", "csv"))
+        menu.addAction(tr("The computed results (JSON)…"), lambda: self._export_page("all", "json"))
+        self.export_button.setMenu(menu)
+        self.export_button.setToolTip(tr("A section or every section as PDF or HTML, every table as Excel or CSV, the "
+                                         "results as JSON; each finding has its own ⤓ for its chart and its figures"))
+        head.addWidget(self.export_button, 0, Qt.AlignmentFlag.AlignBottom)
         root.addLayout(head)
         self.c_status = _label("", "Caption")
         root.addWidget(self.c_status)
@@ -261,6 +283,9 @@ class StatisticsPage(QWidget):
         body.addWidget(self.stack, 1)
         root.addLayout(body, 1)
         self._loaded = False
+        from isnady.gui.stats_export import Armer
+
+        self._armer = Armer(self, [box.parentWidget() for box in self._boxes.values()] + [self.body])
 
     @property
     def conn(self):
@@ -274,6 +299,8 @@ class StatisticsPage(QWidget):
         t = theme.current()
         card = QFrame()
         card.setObjectName("Card")
+        card._isnady_name = re.sub(r"<[^>]+>", "", headline)[:90] if headline else kicker   # for its export (EX4)
+        card._isnady_table = table
         lay = QVBoxLayout(card)
         lay.setContentsMargins(24, 18, 24, 14)
         lay.setSpacing(10)
@@ -317,6 +344,83 @@ class StatisticsPage(QWidget):
                 lay.addWidget(more)
         self._boxes[key].addWidget(card)
         return card
+
+    # ------------------------------------------------------------------ export (EX4)
+    def _section_page(self, row: int) -> QWidget | None:
+        key = self.rail.item(row).data(Qt.ItemDataRole.UserRole) if 0 <= row < self.rail.count() else None
+        if key == "graders":
+            return self.body
+        box = self._boxes.get(key)
+        return box.parentWidget() if box is not None else None
+
+    def _export_page(self, which: str, fmt: str) -> None:
+        import os
+
+        from PySide6.QtWidgets import QApplication, QMessageBox
+
+        from isnady.gui import stats_export as SE
+
+        scope = self.scope.currentText() or tr("Statistics")
+        here = self.rail.currentRow()
+        rows = [here] if which == "section" else list(range(self.rail.count()))
+        title = tr("isnady statistics — {scope}", scope=scope)
+        if which == "section":
+            title += " — " + self.rail.item(here).text().split("\n")[0]
+        ext = {"pdf": "pdf", "html": "html", "png": "png", "xlsx": "xlsx", "json": "json", "csv": ""}[fmt]
+        base = os.path.join(os.path.expanduser("~"), "isnady-" + SE._safe(title.replace("isnady", "")))
+        if fmt == "csv":
+            path = QFileDialog.getExistingDirectory(self, tr("Export: the folder for the files"), os.path.expanduser("~"))
+            if path:
+                path = os.path.join(path, os.path.basename(base))
+        else:
+            path, _f = QFileDialog.getSaveFileName(self, tr("Export"), f"{base}.{ext}", f"{ext.upper()} (*.{ext})")
+        if not path:
+            return
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        sections: list[tuple[str, list]] = []
+        try:
+            for row in rows:                       # each section shown once, so that its cards have their size
+                if which != "section":
+                    self.rail.setCurrentRow(row)
+                    for _ in range(3):
+                        QApplication.processEvents()
+                page = self._section_page(row)
+                if page is not None:
+                    found = SE.cards(page)
+                    if found:
+                        sections.append((self.rail.item(row).text().split("\n")[0], found))
+            if which != "section":
+                self.rail.setCurrentRow(here)
+            if fmt == "pdf":
+                widgets, heads = [], []
+                for heading, found in sections:
+                    for i, card in enumerate(found):
+                        widgets.append(card)
+                        heads.append(heading if i == 0 else "")
+                SE.save_pdf(widgets, path, title, heads)
+            elif fmt == "html":
+                SE.save_html(sections, path, title)
+            elif fmt == "png":
+                page = self._section_page(here)
+                SE.save_png(page, path)
+            elif fmt in ("xlsx", "csv"):
+                tables = [(SE.card_name(card), *card._isnady_table) for _h, found in sections for card in found
+                          if getattr(card, "_isnady_table", None)]
+                if fmt == "xlsx":
+                    SE.save_workbook(tables, path)
+                else:
+                    SE.save_csv_folder(tables, path)
+            else:
+                SE.save_json({"scope": scope, "corpus": self._result, "graders": getattr(self, "_gresult", None)}, path)
+        except Exception as exc:                    # said, never a crash
+            QApplication.restoreOverrideCursor()
+            QMessageBox.warning(self, tr("Export"), f"{type(exc).__name__}: {exc}")
+            return
+        QApplication.restoreOverrideCursor()
+        from isnady.core import log
+
+        log.get("export").info("✔ statistics (%s, %s) → %s", which, fmt, path)
+        self.c_status.setText(tr("Written: {path}", path=path))
 
     def _save_csv(self, name: str, header: list, rows: list) -> None:
         safe = "".join(c if c.isalnum() else "-" for c in name.lower()).strip("-")
@@ -1546,6 +1650,7 @@ class StatisticsPage(QWidget):
     def _card(self, title: str = "") -> QFrame:
         card = QFrame()
         card.setObjectName("Card")
+        card._isnady_name = title
         lay = QVBoxLayout(card)
         lay.setContentsMargins(22, 16, 22, 16)
         lay.setSpacing(8)

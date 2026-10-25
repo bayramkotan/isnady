@@ -1629,7 +1629,7 @@ def cmd_export(args) -> int:
         if several and kind != "network" and (args.separate or fmt == "isnady-book" or kind == "profile") \
                 and not args.output:
             target = target.rsplit(".", 1)[0] if "." in target.rsplit("/", 1)[-1] else target   # a folder
-        path = transfer.export(conn, kind, fmt, target, book=args.target[0] if kind in ("book", "network") and
+        path = transfer.export(conn, kind, fmt, target, book=args.target[0] if kind in ("book", "network", "statistics") and
                                args.target and not several else "",
                                books=args.target if several and kind in ("book", "network") else None,
                                profiles=args.target if kind == "profile" and len(args.target) > 1 else None,
@@ -1917,7 +1917,7 @@ def build_parser() -> argparse.ArgumentParser:
     ex = sub.add_parser("export", help="hadith, a book or chapter, search results, bookmarks, narrators, the isnad "
                                        "network, settings, a profile or a backup, in many formats (iy export --list)")
     ex.add_argument("what", nargs="?", choices=("hadith", "book", "search", "bookmarks", "narrators", "network",
-                                                "settings", "profile", "backup"))
+                                                "settings", "profile", "backup", "statistics"))
     ex.add_argument("target", nargs="*", help="hadith: bukhari:1 bukhari:5-10; book/network: bukhari, several "
                                               "(bukhari muslim) or all / sunni / shia; search and narrators: the "
                                               "words; profile: its name, or several")
@@ -1942,6 +1942,17 @@ def build_parser() -> argparse.ArgumentParser:
     im.add_argument("--folder", help="bookmarks: put them in this folder")
     im.add_argument("--name", help="profile: the new profile's name")
     im.set_defaults(func=cmd_import_data)
+    lg = sub.add_parser("log", help="isnady's log: the last lines, errors only, a text, follow it, crash reports")
+    lg.add_argument("--lines", "-n", type=int, default=60, help="the last N lines (0: all; default 60)")
+    lg.add_argument("--level", choices=("info", "warning", "error"), help="only lines of this level and above")
+    lg.add_argument("--grep", help="only lines holding this text")
+    lg.add_argument("--follow", "-f", action="store_true", help="keep showing new lines (Ctrl+C ends)")
+    lg.add_argument("--crash", action="store_true", help="the newest crash report instead")
+    lg.add_argument("--files", action="store_true", help="list the log files")
+    lg.add_argument("--path", action="store_true", help="print where the log is")
+    lg.add_argument("--before", metavar="YYYY-MM-DD", help="remove what was logged before this day")
+    lg.add_argument("--clear", action="store_true", help="empty the log and remove the crash reports")
+    lg.set_defaults(func=cmd_log)
     rs = sub.add_parser("reset", help="back to zero: delete all settings, all books, or everything")
     rs.add_argument("what", choices=("settings", "books", "all"))
     rs.add_argument("--yes", action="store_true", help="do not ask")
@@ -2018,8 +2029,20 @@ def main(argv: list[str] | None = None) -> int:
 
         args.book = [core_books.resolve(b) for b in args.book] if isinstance(args.book, list) \
             else core_books.resolve(args.book)
+    # every command in the log too (LOG1): what was asked, how it ended, how long it took — not `iy log` itself
+    from isnady.core import log
+
+    logged = getattr(args, "func", None) is not cmd_log
+    if logged:
+        log.setup("command line")
+        log.get("cli").info("▶ iy %s", " ".join(argv if argv is not None else sys.argv[1:]))
+    started = time.perf_counter()
     try:
-        return args.func(args)
+        code = args.func(args)
+        if logged:
+            log.get("cli").info("%s exit %s in %.1f s", "✔" if not code else "✖", code or 0,
+                                time.perf_counter() - started)
+        return code
     except BrokenPipeError:
         # the output was cut short by the reader ("iy search … | head"): not an error
         import os
@@ -2027,6 +2050,58 @@ def main(argv: list[str] | None = None) -> int:
         devnull = os.open(os.devnull, os.O_WRONLY)
         os.dup2(devnull, sys.stdout.fileno())
         return 0
+    except Exception as exc:
+        if logged:
+            log.get("cli").error("✖ iy %s", getattr(args, "command", ""), exc_info=exc)
+        raise
+
+
+def cmd_log(args) -> int:
+    """iy log (LOG1): the log of isnady — the last lines, only errors, a text, follow it, the crash reports, clear."""
+    from isnady.core import log
+
+    if args.path:
+        print(log.path())
+        return 0
+    if args.clear:
+        print(f"{log.clear()} log file(s) emptied or removed: {log.folder()}")
+        return 0
+    if args.before:
+        print(f"{log.delete_before(args.before)} line(s) before {args.before} removed")
+        return 0
+    if args.files:
+        for f in log.files():
+            st = f.stat()
+            print(f"{time.strftime('%Y-%m-%d %H:%M', time.localtime(st.st_mtime))}  {st.st_size / 1024:8.1f} KB  {f}")
+        return 0
+    target = log.path()
+    if args.crash:
+        crashes = [f for f in log.files() if f.name.startswith("crash_")]
+        if not crashes:
+            print("No crash reports.")
+            return 0
+        target = crashes[0]
+    if not target.exists():
+        print(f"No log yet: {target}")
+        return 0
+    print(log.read(target, args.lines, args.level or "", args.grep or ""))
+    if args.follow:
+        size = target.stat().st_size
+        try:
+            while True:
+                time.sleep(1)
+                now = target.stat().st_size
+                if now < size:
+                    size = 0
+                if now > size:
+                    with target.open(encoding="utf-8", errors="replace") as f:
+                        f.seek(size)
+                        sys.stdout.write(f.read())
+                        sys.stdout.flush()
+                    size = now
+        except KeyboardInterrupt:
+            return 0
+    return 0
 
 
 if __name__ == "__main__":

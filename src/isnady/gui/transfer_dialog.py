@@ -36,7 +36,7 @@ from isnady.core.i18n import N_, tr
 _KIND_TEXT = {"hadith": N_("Hadith (by number)"), "book": N_("A book or a chapter"), "search": N_("Search results"),
               "bookmarks": N_("Bookmarks"), "narrators": N_("Narrators"),
               "network": N_("Isnad network (who narrated from whom)"), "settings": N_("Settings"),
-              "profile": N_("Profile"), "backup": N_("Everything of mine (backup)")}
+              "profile": N_("Profile"), "backup": N_("Everything of mine (backup)"), "statistics": N_("Statistics")}
 _KIND_HELP = {
     "hadith": N_("The hadith named, with their chapter, texts, grades and chains (Arabic as written, then in "
                  "Turkish and English)."),
@@ -51,6 +51,9 @@ _KIND_HELP = {
     "profile": N_("A profile with its settings, place and bookmarks."),
     "backup": N_("This profile's settings, place and bookmarks and the list of the books imported: what makes your "
                  "isnady yours, in one file."),
+    "statistics": N_("The results of the Statistics page — the corpus, the model, the laboratory and the graders — as "
+                     "data. Each chart and table on the Statistics page has its own ⤓ too, and its Export button "
+                     "writes a section or all of them as PDF, a web page or Excel."),
 }
 
 
@@ -208,21 +211,25 @@ class ExportDialog(QDialog):
         self.profiles = _CheckList([(p["id"], p.get("name") or tr("Default"), "") for p in every_profile],
                                    [profiles.active()])
         self._add_scope("profile", [(tr("Profiles"), self.profiles)])
+        # statistics: of a road or of one book
+        self.stats_scope = QComboBox()
+        self.stats_scope.addItem(tr("All Sunni books"), ("", "sunni"))
+        self.stats_scope.addItem(tr("All Shia books"), ("", "shia"))
+        for w in hadith_books:
+            self.stats_scope.addItem(f"{w['title']} ({w['key']})", (w["key"], w["tradition"]))
+        self._add_scope("statistics", [(tr("Books"), self.stats_scope)])
         for key in ("bookmarks", "settings", "backup"):
             self._add_scope(key, [])
         form.addRow("", self.scope)
 
-        self.languages = QListWidget()
-        self.languages.setMaximumHeight(120)
         from isnady.core import language, search
 
+        # every language with one click (Bayram, 2026-10-25: "tum diller sec diye birsey de yok!")
         chosen = language.content_languages()
-        for lang in (search.list_languages(conn) if conn is not None else []):
-            item = QListWidgetItem(tr(lang))
-            item.setData(Qt.ItemDataRole.UserRole, lang)
-            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            item.setCheckState(Qt.CheckState.Checked if not chosen or lang in chosen else Qt.CheckState.Unchecked)
-            self.languages.addItem(item)
+        have = search.list_languages(conn) if conn is not None else []
+        self.languages = _CheckList([(lang, tr(lang), "") for lang in have],
+                                    [lang for lang in have if not chosen or lang in chosen])
+        self.languages.list.setMaximumHeight(110)
         self.languages_label = QLabel(tr("Languages"))
         form.addRow(self.languages_label, self.languages)
         self.chains = QCheckBox(tr("With the chains (Arabic, Turkish, English)"))
@@ -319,8 +326,7 @@ class ExportDialog(QDialog):
         self.status.setText("")
 
     def _languages(self) -> list[str]:
-        return [self.languages.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.languages.count())
-                if self.languages.item(i).checkState() == Qt.CheckState.Checked]
+        return self.languages.keys()
 
     def _arguments(self, preview: bool = False) -> dict:
         kind = self._kind()
@@ -348,6 +354,9 @@ class ExportDialog(QDialog):
         elif kind == "network":
             args["books"] = None if self.net_books.every() else self.net_books.keys()
             args["tradition"] = None
+        elif kind == "statistics":
+            key, road = self.stats_scope.currentData()
+            args["book"], args["tradition"] = key, road
         elif kind == "profile":
             args["profiles"] = self.profiles.keys()
             if preview:
@@ -393,7 +402,7 @@ class ExportDialog(QDialog):
             path = T.export(self._conn_of(), kind, shown, tmp, pdf=self._pdf(), **args)
             text = path.read_text(encoding="utf-8-sig", errors="replace") if path.is_file() else ""
             note = "" if shown == fmt else tr("(shown as {shown}; the file will be {fmt})", shown=tr(F.LABELS.get(shown, shown)),
-                                              fmt=F.LABELS.get(fmt))
+                                              fmt=tr(F.LABELS.get(fmt, fmt)))
             self.preview.setPlainText((note + "\n\n" if note else "") + text[:20000]
                                       + ("\n…" if len(text) > 20000 else ""))
             self.status.setText("")
@@ -417,6 +426,9 @@ class ExportDialog(QDialog):
             return
         if kind == "profile" and not args.get("profiles"):
             self.status.setText(tr("Choose at least one profile."))
+            return
+        if kind in T.DOCUMENT_KINDS and fmt != "isnady-book" and self.languages.list.count() and not self._languages():
+            self.status.setText(tr("Choose at least one language."))
             return
         if self._many_files(args):
             folder = QFileDialog.getExistingDirectory(self, tr("Export: the folder for the files"),

@@ -7,6 +7,7 @@ Keys
   view.theme                       system | light | dark
   view.text_scale                  0.8 - 1.6, reading text size multiplier (Ctrl+ / Ctrl-)
   view.sidebar                     the order of the sidebar sections, comma-separated ("" = isnady's order)
+  log.level                        info | debug: how much logs/isnady.log says (core.log)
   view.language_order              the order of the texts' languages after Arabic, comma-separated ("" = A to Z)
   ui.family, ui.size               interface font ("" = system font)
   text.<script>.family             reading font for one script
@@ -81,7 +82,8 @@ def defaults() -> dict:
          "sources.repository": "",            # the data repository chosen (core.repositories); empty: isnady's own
          "books.disabled": "",                # collections switched off (core.books), comma-separated keys
          "view.other_languages": "fold",      # texts in languages not chosen: "fold" behind an arrow, or "omit"
-         "view.sidebar": ""}                  # the order of the sidebar (SIDEBAR); empty: isnady's
+         "view.sidebar": "",                  # the order of the sidebar (SIDEBAR); empty: isnady's
+         "log.level": "info"}                 # how much the log says (core.log): info, or debug for more
     for script, (_label, _sample, family, size, line) in SCRIPTS.items():
         d[f"text.{script}.family"] = family
         d[f"text.{script}.size"] = size
@@ -187,6 +189,11 @@ def validate(key: str, value):
         return "" if order == list(SIDEBAR) else ",".join(order)
     if key == "view.content_languages":
         return ",".join(part.strip() for part in str(value).split(",") if part.strip())
+    if key == "log.level":
+        value = str(value).strip().lower()
+        if value not in ("info", "debug"):
+            raise ConfigError("log.level is info or debug")
+        return value
     if key == "view.language_order":           # Arabic always comes first: it is not in the list
         parts = [part.strip() for part in str(value).split(",") if part.strip() and part.strip() != "Arabic"]
         return ",".join(dict.fromkeys(parts))

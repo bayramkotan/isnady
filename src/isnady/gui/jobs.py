@@ -55,17 +55,25 @@ class Job(QThread):
     def run(self) -> None:
         from isnady.data import db
 
+        from isnady.core import log
+
+        out = log.get("export")
         self.started_at = time.monotonic()
+        out.info("▶ %s", self.title)
         conn = db.connect()
         try:
             result = self._work(conn, self.progress.emit, self._tick)
+            out.info("✔ %s → %s in %.1f s", self.title, result, time.monotonic() - self.started_at)
             self.done.emit(True, str(result))
         except T.Cancelled as exc:
             self.cancelled = True
+            out.info("■ %s stopped after %.1f s", self.title, time.monotonic() - self.started_at)
             self.done.emit(False, str(exc))
         except (T.TransferError, OSError, ValueError, KeyError) as exc:
+            out.warning("✖ %s: %s", self.title, exc)
             self.done.emit(False, str(exc))
-        except Exception as exc:          # anything else: said, never a crash of the window
+        except Exception as exc:          # anything else: said, never a crash of the window — and kept in the log
+            out.error("✖ %s", self.title, exc_info=exc)
             self.done.emit(False, f"{type(exc).__name__}: {exc}")
         finally:
             conn.close()

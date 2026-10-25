@@ -364,9 +364,16 @@ class MainWindow(QMainWindow):
 
     def _refresh_pending(self, row: int) -> None:
         key = self._order[row] if 0 <= row < len(self._order) else None
+        if key is not None:
+            from isnady.core import log
+
+            log.get("window").debug("page %s", key)
         if key in self._pending:
             self._pending.discard(key)
-            self._lazy[key]()
+            from isnady.core import log
+
+            with log.timed("window", f"page {key} drawn"):
+                self._lazy[key]()
 
     def showEvent(self, event) -> None:  # noqa: N802 (Qt's name)
         super().showEvent(event)
@@ -390,7 +397,10 @@ class MainWindow(QMainWindow):
             return
         key = waiting[0]
         self._pending.discard(key)
-        self._lazy[key]()
+        from isnady.core import log
+
+        with log.timed("window", f"page {key} drawn ahead"):
+            self._lazy[key]()
         QTimer.singleShot(60, self._warm_next)
 
     def _refresh_or_later(self, key: str) -> None:
@@ -676,11 +686,28 @@ class MainWindow(QMainWindow):
                      tip=tr("The latest isnady on PyPI and npm, what is new, and the update"))
         self._action(help_menu, tr("Check Installation…"), self._check_installation,
                      tip=tr("Every copy of isnady on this computer, and which one really runs"))
+        self._action(help_menu, tr("Log…"), self.show_log, "Ctrl+Shift+L",
+                     tip=tr("What isnady did and what went wrong, followed live; the crash reports (iy log)"))
         self._action(help_menu, tr("Licences"), lambda: dialogs.licenses(self, search.connection()).exec())
         self._action(help_menu, tr("isnady on GitHub"), lambda: QDesktopServices.openUrl(QUrl(dialogs.REPO_URL)))
         self._action(help_menu, tr("Report an Issue"), lambda: QDesktopServices.openUrl(QUrl(dialogs.ISSUES_URL)))
         help_menu.addSeparator()
         self._action(help_menu, tr("About isnady"), lambda: dialogs.about(self).exec())
+
+    def show_log(self) -> None:
+        """Help → Log (LOG1): one log window, raised when already open."""
+        from isnady.gui.log_viewer import LogViewer
+
+        viewer = getattr(self, "_log_viewer", None)
+        try:
+            if viewer is not None and viewer.isVisible():
+                viewer.raise_()
+                viewer.activateWindow()
+                return
+        except RuntimeError:
+            pass
+        self._log_viewer = LogViewer(self)
+        self._log_viewer.show()
 
     def _create_shortcut(self) -> None:
         import html as _html

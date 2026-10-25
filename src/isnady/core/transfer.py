@@ -57,6 +57,7 @@ KINDS: dict[str, dict] = {
     "settings": {"label": "Settings", "export": ["json", "csv", "tsv", "md"], "import": ["json", "csv", "tsv"]},
     "profile": {"label": "Profile", "export": ["isnady-profile", "json"], "import": ["isnady-profile", "json"]},
     "backup": {"label": "Everything of mine (backup)", "export": ["backup"], "import": ["backup"]},
+    "statistics": {"label": "Statistics", "export": ["json"], "import": []},
 }
 DOCUMENT_KINDS = ("hadith", "book", "search")
 
@@ -569,12 +570,48 @@ def export(conn: sqlite3.Connection | None, kind: str, fmt: str, target: str | P
         return export_profile(fmt, target, profile)
     elif kind == "backup":
         return export_backup(conn, target)
+    elif kind == "statistics":
+        return export_statistics(conn, target, book or None, tradition, say)
     else:
         raise TransferError(kind)
     if fmt == "pdf":
         pdf(F.table_html(table), target)
         return target
     return F.write_table(table, fmt, target)
+
+
+def export_statistics(conn: sqlite3.Connection, target: Path, book: str | None, tradition: str | None,
+                      say: Progress) -> Path:
+    """The Statistics page's results as JSON (EX4): the corpus, the model and the laboratory of a book or of every
+    book of a road, and the graders of a book — from the saved results, computed when not saved yet."""
+    from isnady.core import books as core_books
+    from isnady.core import stats_corpus as sc
+    from isnady.core import stats_graders as sg
+    from isnady.core import stats_lab, stats_models
+
+    if conn is None:
+        raise TransferError("No database.")
+    scope = core_books.resolve(book) if book else (sc.SHIA_SCOPE if tradition == "shia" else None)
+    say(f"statistics of {scope or 'every Sunni book'}")
+    out = {"scope": scope or "all sunni books", "corpus": sc.cached(conn, scope, say),
+           "models": stats_models.cached(conn, scope, say), "lab": stats_lab.cached(conn, scope, say)}
+    if book:
+        graded = {k for k, *_r in sg.books_with_grades(conn)}
+        if scope in graded:
+            out["graders"] = sg.cached(conn, scope, say)
+
+    def plain(x):
+        if isinstance(x, dict):
+            return {str(k): plain(v) for k, v in x.items()}
+        if isinstance(x, (list, tuple, set)):
+            return [plain(v) for v in x]
+        if isinstance(x, float) and (x != x or x in (float("inf"), float("-inf"))):
+            return None
+        return x if isinstance(x, (str, int, float, bool)) or x is None else str(x)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps({"schema": "isnady-statistics/1", **_meta("statistics", scope=out["scope"]),
+                                  "results": plain(out)}, ensure_ascii=False, indent=1), encoding="utf-8")
+    return target
 
 
 def _each(keys: list[str], folder: Path, fmt: str, say: Progress, write, names: dict | None = None) -> Path:

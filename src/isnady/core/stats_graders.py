@@ -362,7 +362,10 @@ def cached(conn: sqlite3.Connection, collection: str, progress=None, recompute: 
         from isnady.core.stats_jobs import NotSaved
 
         raise NotSaved(str(path))
-    result = analyse(conn, collection, progress)
+    from isnady.core import log
+
+    with log.timed("statistics", f"graders computed for {collection or 'all books'}"):
+        result = analyse(conn, collection, progress)
     result["fingerprint"] = stamp
     # JSON keys are strings: hadith ids in the model's grades
     for d in result.get("disputed", []):

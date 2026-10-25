@@ -147,6 +147,9 @@ def _main(argv: list[str]) -> int:
     from isnady.data import db
 
     set_language(lang)
+    from isnady.core import log
+
+    log.setup("statistics", banner=False)           # its lines go to the same log as the window's (LOG1)
     conn = db.connect()
     try:
         JOBS[name](conn, None if key == NONE else key, lambda text: print(text, flush=True), recompute)

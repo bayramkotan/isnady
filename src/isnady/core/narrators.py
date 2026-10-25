@@ -71,7 +71,7 @@ from isnady.core.i18n import t, tr
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
-MATCHER_ID = "isnady-narrators-14"
+MATCHER_ID = "isnady-narrators-15"
 _TEACHER_MIN_TABAQA = 9           # the compilers' own teachers (Ibn Hajar's tabaqat 9-12)
 _HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم).*$")
 # "عائشة، زوج النبي ﷺ", "ثوبان مولى رسول الله ﷺ", "عائشة أم المؤمنين": who she is, not her name (2026-10-18: the
@@ -345,7 +345,9 @@ def name_tokens(raw_name: str, previous: list[str] | None, after_father: bool = 
     text = _SAYS.sub("", text).strip(" ،,-")
     clarification = _CLARIFY.search(text)
     base = text[: clarification.start()].strip(" ،,-") if clarification else text
-    toks = tokens(base)
+    # "حدثني أبي" / "حدثنا أبي": my father — tokens() reads a lone "أبي" as the kunya "Abu" (698 candidates; Muslim 93's
+    # second road gave the father of 'Ubayd Allah b. Mu'adh to al-Mu'tamir, 2026-10-25)
+    toks = ["ابيه"] if base in ("ابي", "ابوي") else (["جده"] if base == "جدي" else tokens(base))
     how = "name"
     if clarification:
         extra = tokens(clarification.group(1))
@@ -507,7 +509,8 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
         left.extend(cands)
     if names is not None:
         for link, w in zip(links, written):
-            plain = tokens(_HONORIFIC.sub("", normalize(link["raw_name"])))
+            bare_name = _HONORIFIC.sub("", normalize(link["raw_name"])).strip(" ،,-")
+            plain = ["ابيه"] if bare_name in ("ابي", "ابوي") else tokens(bare_name)
             # a relative ("عن أبيه") is kept as written, for by_relatives to read once the son is known
             names.append(plain[0] if plain and plain[0] in _RELATIVE else " ".join(w))
     out = []
@@ -726,6 +729,10 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
                      "WHERE isnad_id = ? AND position = ?", updates)
     conn.execute("INSERT OR REPLACE INTO core_meta (key, value) VALUES ('narrator_matcher', ?)", (stamp,))
     conn.commit()
+    from isnady.core import log
+
+    log.get("narrators").info("✔ narrators identified by %s: %s of %s links in %s chains", MATCHER_ID,
+                              f"{identified:,}", f"{total:,}", f"{len(chains):,}")
     return {"chains": len(chains), "links": total, "identified": identified}
 
 

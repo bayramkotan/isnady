@@ -99,12 +99,16 @@ def forget_interrupted() -> None:
 def run_import(conn: sqlite3.Connection, request: ImportRequest,
                progress: Callable[[str], None] | None = None) -> tuple[ImportReport, dict]:
     """Import and bring every derived table up to date. Raises ResourceError / KeyError on failure."""
+    from isnady.core import log
+
     say = progress or (lambda _m: None)
     importer = get_importer(request.format_id)
     source = SourceInfo(location=request.location, name=request.name, license=request.license,
                         origin=request.origin, tier=request.tier, auth=request.auth)
-    with _running([request.name or request.location]):
+    with log.timed("import", f"import {request.name or request.location} ({request.format_id})") as t, \
+            _running([request.name or request.location]):
         report = importer.run(conn, source, request.options, progress=say)
+        t.note = f"{getattr(report, 'hadith', '')} hadith, {getattr(report, 'texts', '')} texts".strip(", ")
     db.cleanup(conn)
     core_search.ensure_index(conn, progress=say)
     core_isnad.ensure_isnads(conn, progress=say)
@@ -125,15 +129,21 @@ def run_many(conn: sqlite3.Connection, requests: list[tuple[str, ImportRequest]]
 
     Returns (imported, failed, narrator stats). A source that fails does not stop the others.
     """
+    from isnady.core import log
+
     say = progress or (lambda _m: None)
     imported, failed = [], []
     try:
-        with _running([label for label, _r in requests]):
+        with log.timed("import", f"import of {len(requests)} source(s)") as t, \
+                _running([label for label, _r in requests]):
             _import_each(conn, requests, say, imported, failed)
+            t.note = f"{len(imported)} imported, {len(failed)} failed"
     finally:
         from isnady.data import fetch
 
         fetch.forget_prefetched()
+    for label, why in failed:
+        log.get("import").warning("⚠ %s: %s", label, why)
     db.cleanup(conn)
     core_search.ensure_index(conn, progress=say)
     core_isnad.ensure_isnads(conn, progress=say)

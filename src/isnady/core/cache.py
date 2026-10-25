@@ -196,6 +196,9 @@ def info() -> tuple[int, int]:
 
 def clear() -> int:
     """Delete the kept files and forget what is in memory; everything is counted again when next asked for."""
+    from isnady.core import log
+
+    log.get("cache").info("⟲ kept files cleared")
     forget()
     where = folder()
     if where is None or not where.exists():
