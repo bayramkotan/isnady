@@ -233,5 +233,33 @@ HUB.changed.emit()
 
 prefs("Reading text", "preferences.png", (900, 660))
 prefs("Data sources", "data-sources.png", (1100, 900))
-prefs("Books and languages", "books-languages.png", (1000, 640))
+prefs("Books and languages", "books-languages.png", (1000, 980))
+prefs("Reset", "reset.png", (1000, 760))
+
+# Export: every book as one EPUB, the dialog and the window's bottom bar while it runs; stopped, nothing kept
+import tempfile  # noqa: E402
+
+from PySide6.QtWidgets import QFileDialog  # noqa: E402
+
+w.nav.setCurrentRow(w._row("books"))
+settle(800)
+w.export_dialog("book")
+settle(800)
+dialog = w._open_dialogs[-1]
+dialog.books._pick(lambda _group: True)
+dialog.format.setCurrentIndex(dialog.format.findData("epub"))
+settle(400)
+target = str(Path(tempfile.mkdtemp(prefix="isnady-shot-")) / "isnady_books.epub")
+QFileDialog.getSaveFileName = staticmethod(lambda *_a, **_k: (target, ""))
+dialog._export()
+settle(9000)
+dialog.grab().save(D + "export.png")
+w.grab().save(D + "export-progress.png")
+dialog._stop_job()
+w.jobs.stop_all()
+settle(800)
+dialog.close()
+for job_row in list(w.jobs._rows):
+    w.jobs._remove(job_row)
+settle(400)
 theme.set_theme_mode("system")

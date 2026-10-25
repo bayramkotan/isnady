@@ -146,10 +146,10 @@ def iter_records(conn: sqlite3.Connection, hadith_ids: list[int], languages: lis
             continue
         number, section, key, name, road, cid = head
         if key != book_now:
-            from isnady.core import titles
+            from isnady.core import titles as core_titles   # not "titles": that name holds the chapter titles here
 
             book_now = key
-            say(f"{titles.book(key, name)} · {i:,} / {total:,}")      # the book's name in the interface language
+            say(f"{core_titles.book(key, name)} · {i:,} / {total:,}")      # the book's name in the interface language
         texts: dict[str, str] = {}
         chapter: dict[str, str] = {}
         for lang, text, eid in conn.execute(

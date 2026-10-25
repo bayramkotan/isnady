@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.4.6-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.4.7-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.4.6-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.4.7-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.4.6).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.4.7).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -394,7 +394,7 @@ hadith, so do the arrow keys and the mouse wheel; typing lists the numbers that 
 have offers the nearest, and **Random hadith** picks one. `iy chain kafi` prints the range.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/chain.png" alt="Isnad Chains — the chain of Sahih al-Bukhari 1 as a timeline from the book to the Prophet" width="850">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/chain.png" alt="Isnad Chains — Sahih al-Bukhari 1: the number with the book's last number and its place, first / previous / next / last, and the chain as a timeline from the book to the Prophet" width="850">
 </p>
 
 ### 👤 Who each narrator is
@@ -580,7 +580,7 @@ whose leaves are hadith, narrators' entries or paragraphs — so commentaries, m
 other works of the scholars can be read the same way as they are added.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/books.png" alt="Books — the Sunni and Shia shelves; reading Sahih al-Bukhari chapter by chapter, Arabic, English and Turkish, each hadith with its chain" width="850">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/books.png" alt="Books — the Sunni and Shia shelves; Sahih al-Bukhari chapter 2 of 98 and hadith 8 of 7,583, with first / previous / next / last for chapters and hadith; Arabic, English and Turkish, each hadith with its chain" width="850">
 </p>
 
 ```bash
@@ -812,6 +812,13 @@ iy import-data book nawawi.isnady-book.zip
 iy import-data bookmarks a.json b.csv                # several files at once
 ```
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/export.png" alt="Export — every book ticked (All, None, Sunni, Shia), all languages with the chains, as EPUB; the bar shows 14%, the book being written, the time gone and the time left, with Stop" width="640">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/export-progress.png" alt="The export goes on with the dialog closed: the bar at the bottom of the window, with Stop, while the window is used" width="850">
+</p>
+
 ---
 
 ## 🎨 Appearance and settings
@@ -874,11 +881,12 @@ was cut short is named on the Search page at the next start. At every start with
 import isnady-data — every hadith book and rijal work with one click (**Import all**) — in the background, the
 progress in the bar at the bottom; on the command line `iy` says so and `iy catalog import --all` does it.
 
-**Settings → Books and languages** switches imported books on and off (Sunni and Shia apart) and
-chooses the languages the texts are shown in; the others are folded behind an arrow on each hadith.
+**Settings → Books and languages** switches imported books on and off (Sunni and Shia apart),
+chooses the languages the texts are shown in — the others are folded behind an arrow on each hadith — and puts
+them in your own order: Arabic always first, the others dragged or moved with the arrows.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/books-languages.png" alt="Settings → Books and languages — books on and off, Sunni and Shia apart; the languages shown, the others folded behind an arrow" width="760">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/books-languages.png" alt="Settings → Books and languages — books on and off, Sunni and Shia apart; the languages shown and their order, Arabic always first, the others folded behind an arrow" width="760">
 </p>
 
 ```bash
@@ -891,6 +899,10 @@ iy config reset text.arabic               # back to the defaults
 **Back to zero.** Settings → Reset has three cards — only the settings, only the books, or everything (books,
 settings, bookmarks and the downloaded data) — each listing what is deleted and what is kept, and each asking once
 more; `iy reset settings|books|all`.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/reset.png" alt="Settings → Reset — three cards: only the settings, only the books, everything; each says what is deleted and what is kept" width="760">
+</p>
 
 ### Your data folder
 
@@ -991,8 +1003,8 @@ Sunan Abu Dawud #472
   *Tahdhib al-Kamal*), the verdicts of other critics beside Ibn Hajar's, and whether each link could
   have met the next; fuller, richer lives of narrators and scholars.
 - **Statistics in plain words** — every finding said simply first, the method after.
-- **Settings and export** — every setting in one place, export in every common format (named by the
-  books' full names), reset and remove from inside the window.
+- **Settings and export** — more of isnady set from one place; export as ODS, TEI-XML and BibTeX/RIS, of the
+  scholars and the glossary, and a preview of an import before it comes in.
 - **Every interface language in full** — the 21 listed after English, Türkçe and العربية; the command line
   and the glossary in them too.
 - **isnady.net** — the same engine on the web.

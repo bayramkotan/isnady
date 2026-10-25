@@ -3,6 +3,22 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.4.7] — 2026-10-25
+
+- **Exporting hadith works again.** In 0.4.5 and 0.4.6 every export of hadith — a book, several books, numbered
+  hadith or search results, in any format — stopped at once with "TypeError: argument of type 'module' is not
+  iterable": the name kept for the chapters' titles was taken over by the module that gives the books' names in
+  the interface language. Each now has its own name; every format was written again and read back (JSON, JSON
+  Lines, CSV, TSV, Excel, Markdown, HTML, text, EPUB, Word, SQLite, PDF).
+- **The README and its screenshots are up to date on GitHub, PyPI and npm (2026-10-25: "readme ve screenshotlari
+  guncellemedin. 3 ayri yerdeki readme").** Every screenshot was taken again: Books and Isnad Chains with the
+  number, the last number, the place in the book and ⏮ ‹ › ⏭; Settings → Books and languages with the languages in
+  their order; and three new ones — Settings → Reset with its three cards, the Export dialog writing every book as
+  one EPUB with its progress bar, and the same export going on in the bar at the bottom of the window. The text
+  says what 0.4.3–0.4.6 brought (going through a book, the language order, several books at once, big exports
+  beside the window, statistics kept across versions), and the roadmap no longer lists what is done.
+  `tools/make_screenshots.py` takes the three new ones too.
+
 ## [0.4.6] — 2026-10-25
 
 - **Statistics are not computed again for nothing (2026-10-25: "neden surekli istatistik kismini hesapliyor … eger
