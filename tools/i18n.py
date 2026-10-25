@@ -64,7 +64,7 @@ def fields(text: str) -> set[str]:
 
 # the cases of a name a language may put on it in place of the name itself (core.isnad.chain_in_words: Turkish
 # "{name_abl}" for "from {name}" — Leys'ten, Ebû Hüreyre'den)
-CASES = ("abl", "acc", "dat")
+CASES = ("abl", "acc", "dat", "gen")
 
 
 def same_fields(source: str, translation: str) -> bool:

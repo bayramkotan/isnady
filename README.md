@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.4.8-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.4.9-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.4.8-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.4.9-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.4.8).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.4.9).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -402,12 +402,12 @@ correct. Names are kept exactly as written, with the clarifications the compiler
 
 | | Chains (roads) | Read whole | Reaching the Prophet / a Ma'sum | Names identified |
 |:--|--:|--:|--:|--:|
-| Sahih al-Bukhari | 7,856 | 89.9% | 74.7% | 74.7% |
-| Sahih Muslim | 9,265 | 74.9% | 58.6% | 77.4% |
-| Sunan Abi Dawud | 5,809 | 85.0% | 70.2% | 74.3% |
+| Sahih al-Bukhari | 8,073 | 97.0% | 77.5% | 74.7% |
+| Sahih Muslim | 12,330 | 96.7% | 70.4% | 77.6% |
+| Sunan Abi Dawud | 6,422 | 95.9% | 76.8% | 74.3% |
 | al-Kafi (read the Shia way) | 14,239 | 96.8% | 94.6% | 63.8% |
 
-(isnady 0.4.8, chains isnady-isnad-11, narrators isnady-narrators-15. A road of a tahwil (ح) is a chain of its own;
+(isnady 0.4.9, chains isnady-isnad-12, narrators isnady-narrators-15. A road of a tahwil (ح) is a chain of its own;
 "reaching" counts the chains whose last link is the Prophet ﷺ or a Ma'sum — a chain may also end with a Companion's
 own word, or at a link left unread.)
 

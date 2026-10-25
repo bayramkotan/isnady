@@ -3,6 +3,39 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.4.9] — 2026-10-25
+
+- **Ten thousand chains that stopped halfway are read to the end (2026-10-25: "10bin senet az mı????!!!! Bunları da
+  düzelt").** The reader of the chains (isnady-isnad-12) now reads what kept a chain of the Sunni books "kept
+  whole":
+  - the Musnad of Ahmad, written without commas: a name ends where the story begins ("عن عائشة أنها كانت تقول",
+    "عن أبي بكر أنه سمعه حين …", "وكان عاملاً على توج", "في بيت قتادة"); two teachers at one link with no comma
+    ("حدثنا سفيان وشعبة عن منصور", "قتادة وثابت"); "قال قال إسرائيل قال أبو إسحاق عن زيد"; "قال لي ابن أبي نجيح";
+    "قال كان محمد بن جبير يحدث عن معاوية"; "قرأت على عبد الرحمن: مالك عن …"; "وجدت في كتاب أبي بخط يده";
+  - which teacher said which word, in every form of Muslim's and Abu Dawud's: "قال إسحاق أخبرنا وقال الآخران
+    حدثنا جرير", "- قال ابن أيوب حدثنا إسماعيل -", "قال عفان عن ابن بريدة", "- المعنى - قالا", "- واللفظ لحرملة -";
+  - three or four teachers before "قالوا"/"كلهم", "عبد الرحمن ومجمع ابنا يزيد", "انهما أخبراه", "سمعا";
+  - al-Bukhari's asides between "ـ … ـ" ("عن أبي عبيد ـ اسمه سعد بن عبيد ـ"), a blessing between them is no aside;
+  - a narrator's doubt: "عن أبي هريرة أو عن أبي سعيد - شك الأعمش -" (both, as two roads), "أو أخيه سليمان",
+    "حدثني أو أخبرني"; "عن رجل لم يسمه"; "عن مسعر وغيره"; "غير مرة"; "ثقة حدثنا";
+  - new terms with their meaning: "كتب إليّ" (wrote to me), "وجدت في كتاب" (found in writing, wijada), "بلغه عن"
+    / "بلغني عن" (it reached him), "سأل" (he asked); also "حدثتني", "أخبرتني", "حدثكم", "سمعه من", "قلت لأبي
+    أسامة: حدثكم عبيد الله …", "أن رجلاً سأل ابن عمر" (Ibn Umar the one asked);
+  - al-Bukhari's citations without a chain of hearing ("وقال الليث حدثني جعفر", "وقال لنا أحمد بن حنبل"): the man
+    cited is the first link (qala);
+  - a tahwil whose meeting nothing names: the two roads are of one depth to there; road A's second teacher at a
+    link is a road of its own; "عائشة" and "عائشة بنت طلحة" are two women;
+  - the books that cite their hadith without a chain (Bulugh al-Maram, Riyad al-Salihin, Mishkat, the Forty of
+    al-Dehlawi, al-Mu'min) say so — "no chain: the book cites the text without one" — instead of "does not start
+    with a transmission term"; the Musnad's "وقال رسول الله ﷺ …" and "وبإسناده" take the chain of the hadith before,
+    and al-Kafi's or Thawab al-A'mal's "وبهذا الإسناد عن أحمد بن أبي عبد الله …" that chain to the man named, then
+    its own narrators.
+  In the Sunni books, chains (first roads) kept whole fell from 10,214 to 2,001 — "words not understood" 6,596 →
+  1,515, tahwil 788 → 90, two at one link 923 → 99 — and 513 more are books that give no chain. Links read
+  448,822 → 513,880; Sunni links identified 232,106 → 279,943 (68.2% → 69.2%). Sahih Muslim is read whole in 96.7%
+  of its chains (74.9% before), al-Bukhari 97.0% (89.9%), Abu Dawud 95.9% (85.0%). The Shia books are read as
+  before (their own terms). The chains are read again once, on the first start.
+
 ## [0.4.8] — 2026-10-25
 
 - **More chains read to the end: Muslim's way of writing them (2026-10-25, the big problem of this release).** The

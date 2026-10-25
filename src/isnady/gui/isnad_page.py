@@ -325,7 +325,8 @@ class IsnadPage(QWidget):
             # nothing to draw: said plainly, never an empty page (2026-10-25: "rasgele hadis … hicbirsey cikmiyor")
             if not text:
                 why = tr("No Arabic text for this hadith, so no chain was read.")
-            elif chain is not None and chain["problem"] and chain["problem"] != "does not start with a transmission term":
+            elif chain is not None and chain["problem"] and chain["problem"] not in (
+                    "does not start with a transmission term", core_isnad.NO_CHAIN):
                 why = tr("No chain could be read from this hadith's text: {reason}. Its text is below.",
                          reason=tr(chain["problem"]))
             else:
