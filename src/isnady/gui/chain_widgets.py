@@ -174,6 +174,12 @@ class ChainStrip(QWidget):
                                  tr("The compiler of the book: the \"us\" of \"narrated to us\" is he")),
                            [compiler.get(code, "") for code in (codes or []) if compiler.get(code)][:len(words)])
             flow.addWidget(_arrow())
+        if chain.get("problem") == core_isnad.BORROWED:
+            # not written in this hadith: the book points to the chain before it (v0.5.1: "Hadis ilmi cercevesinde yap")
+            flow.addWidget(_chip("بهذا الإسناد", "ChainChipUnknown",
+                                 tr("Taken from the hadith before it: the book says \"وعنه\" / \"وبهذا الإسناد\". "
+                                    "Not counted in the statistics.")))
+            flow.addWidget(_arrow())
         for i, link in enumerate(chain["links"]):
             arabic, meaning, _why = core_isnad.term_label(link["transmission"])
             if i:
@@ -201,7 +207,8 @@ class ChainStrip(QWidget):
         if direct:
             flow.addWidget(_chip("…", "ChainChipUnknown", tr("The compiler gives no narrators between himself and "
                                                                "whom the words are from")))
-        if chain.get("problem") and not (chain["reaches_prophet"] or chain.get("ends_with")):
+        if chain.get("problem") and chain["problem"] != core_isnad.BORROWED \
+                and not (chain["reaches_prophet"] or chain.get("ends_with")):
             # read as far as here: the rest of the chain runs on in the text (shown below the chain)
             flow.addWidget(_arrow())
             flow.addWidget(_chip("…", "ChainChipUnknown", stop_note(chain)))

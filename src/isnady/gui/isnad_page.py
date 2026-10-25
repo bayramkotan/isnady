@@ -325,6 +325,9 @@ class IsnadPage(QWidget):
             # nothing to draw: said plainly, never an empty page (2026-10-25: "rasgele hadis … hicbirsey cikmiyor")
             if not text:
                 why = tr("No Arabic text for this hadith, so no chain was read.")
+            elif chain is not None and chain["problem"] == core_isnad.CONTINUED:
+                why = tr("This text goes on from the hadith before it and names no chain of its own; none is drawn "
+                         "for it. The text is below.")
             elif chain is not None and chain["problem"] == core_isnad.NOTE:
                 why = tr("These are the compiler's own words, not a narration: there is no chain to draw. The text "
                          "is below.")
@@ -337,20 +340,31 @@ class IsnadPage(QWidget):
                          "its text is below.")
             note = _label(why, "Lead", wrap=True)
             self.body_layout.addWidget(note)
-        elif chain is None or not chain["problem"]:
+        elif chain is None or not chain["problem"] or chain["problem"] == core_isnad.BORROWED:
             self.body_layout.addWidget(self._verdict(chain))
+        borrowed = [c for c in drawn if c.get("problem") == core_isnad.BORROWED]
+        if borrowed and chain is not None and chain["problem"] != core_isnad.BORROWED:
+            # "… عن الأعمش بهذا الإسناد": the road as written, and beside it the chain the book points to (v0.5.1)
+            self.body_layout.addWidget(_label(tr(
+                "This road ends where its text says \"بهذا الإسناد\" (with the chain of the hadith before). The chain "
+                "marked \"from the hadith before\" goes on as that hadith's chain does; it is not written here and is "
+                "not counted in the statistics."), "Lead", wrap=True))
         self.body_layout.addSpacing(16)
 
-        if len(drawn) > 1:
+        own = [c for c in drawn if c.get("problem") != core_isnad.BORROWED]
+        if len(own) > 1:
             self.body_layout.addWidget(_label(
                 n_("{n} chain", "{n} chains of this hadith: the compiler joined roads (tahwil, ح), a second road "
                    "follows a link (\"وعن\", \"وحدثنا\") or two narrators stand at one link; each is drawn whole, the "
-                   "links they share included.", len(drawn)),
+                   "links they share included.", len(own)),
                 "ChainCount", wrap=True))
             self.body_layout.addSpacing(8)
         for i, c in enumerate(drawn, 1):
             if len(drawn) > 1:
-                self.body_layout.addWidget(_label(tr("Chain {i}", i=i), "ChainSection"))
+                self.body_layout.addWidget(_label(
+                    tr("Chain {i}", i=i) + (" — " + tr("from the hadith before (بهذا الإسناد), not counted in the "
+                                                        "statistics") if c.get("problem") == core_isnad.BORROWED else ""),
+                    "ChainSection"))
             self._draw_chain(c, info)
             self.body_layout.addSpacing(14)
         self.body_layout.addSpacing(4)
@@ -410,7 +424,7 @@ class IsnadPage(QWidget):
                 # "رفعه": the narrator raises it to the Ma'sum without the links between — a gap, shown as one
                 self.body_layout.addWidget(ChainNode("رفعه", tr("Raised (marfu'): the rest of the chain is left out — "
                                                         "whom it reaches is not named"), None, last=True))
-            elif chain.get("problem"):
+            elif chain.get("problem") and chain["problem"] != core_isnad.BORROWED:
                 from isnady.gui.chain_widgets import stop_note
 
                 self.body_layout.addWidget(ChainNode("…", stop_note(chain), None, last=True))
@@ -418,6 +432,10 @@ class IsnadPage(QWidget):
     def _verdict(self, chain: dict | None) -> QLabel:
         if chain is None:
             text = tr("No Arabic text for this hadith, so no chain was read.")
+        elif chain["problem"] == core_isnad.BORROWED:
+            text = tr("This hadith names no chain of its own: the book says it is the chain of the hadith before it "
+                      "(\"وعنه\", \"وبهذا الإسناد\"). The chain drawn is taken from that hadith and is not counted in "
+                      "the statistics.")
         elif chain["problem"]:
             text = tr("This chain was kept whole and not split: {reason}. The full wording is shown below.",
                       reason=tr(chain["problem"]))

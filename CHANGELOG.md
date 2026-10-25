@@ -3,6 +3,29 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.5.2] — 2026-10-25
+
+- **Only what the text says is drawn, as the science of hadith reads it (2026-10-25: "Hadis ilmi cercevesinde
+  yap demistim!").** 0.5.0 and 0.5.1 joined chains on their own suppositions; they are taken back (isnady-isnad-15):
+  - "بهذا الإسناد" (Muslim's way): the road stays as it is written, and the chain of the hadith before it is drawn
+    beside it, marked "from the hadith before" and kept out of the statistics. "مثله", "نحوه", "بمعناه" speak of
+    the wording of the text, not of its chain, and complete nothing. Sahih Muslim reaches the Prophet ﷺ in 69.5%
+    of the roads as written (0.5.0 said 81.9%, counting the completed ones);
+  - a chain is borrowed from the hadith before only where the book says so: "وعنه" (from him), "وبهذا الإسناد",
+    "وبإسناده". A text that merely goes on from the one before ("ونهى عن …", "قالت: …", the Musnad's pieces) is
+    said to have no chain of its own, and none is drawn (589 hadith);
+  - the books that cite without chains (Bulugh, Riyad, Mishkat): the Companion is shown only where the text names
+    him; "وفي رواية لمسلم" no longer takes the Companion of the hadith before;
+  - two roads whose meeting the text does not name (a tahwil, al-Kulayni's second road without "جميعاً") are no
+    longer joined "at one depth": each is drawn as far as it is written;
+  - a text is called "the compiler's own words" only where he says so ("قال أبو عيسى", "قال مصنف هذا الكتاب",
+    "قلنا", "فإن قيل"); otherwise "the book gives the text without a chain".
+  The chain page and the CLI say so on every borrowed chain ("taken from the hadith before it … not counted in the
+  statistics"), and the card of a search result marks it "بهذا الإسناد".
+  Hadith with no chain drawn: 1,314 (589 going on from the hadith before, 484 given without a chain, 216 drawn
+  compiler → … → the Prophet ﷺ / the Imam, 25 the compilers' own words) — more than 0.5.1's 385, because the chains
+  it supposed are no longer drawn as their own. The chains are read again once, on the first start.
+
 ## [0.5.1] — 2026-10-25
 
 - **No chain is left unread (2026-10-25: "arkadasim hepsini coz demistim!").** The reader of the chains

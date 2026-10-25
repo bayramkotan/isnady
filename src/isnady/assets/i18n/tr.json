@@ -1706,5 +1706,11 @@
  "Search every language, or tick the ones to search": "Bütün dillerde arayın ya da aranacak dilleri işaretleyin",
  "{n} languages": "{n} dil",
  "More languages: {names} — import": "Başka diller: {names} — içe aktar",
- "These books are in the data repository in more languages: {names}. File → Data Sources imports them (tick the languages beside a book); they then appear in this list.": "Bu kitaplar veri deposunda başka dillerde de var: {names}. Dosya → Veri Kaynakları bunları içe aktarır (kitabın yanındaki dilleri işaretleyin); sonra bu listede görünürler."
+ "These books are in the data repository in more languages: {names}. File → Data Sources imports them (tick the languages beside a book); they then appear in this list.": "Bu kitaplar veri deposunda başka dillerde de var: {names}. Dosya → Veri Kaynakları bunları içe aktarır (kitabın yanındaki dilleri işaretleyin); sonra bu listede görünürler.",
+ "no chain of its own: the text goes on from the hadith before it": "kendi senedi yok: metin önceki hadisin devamı",
+ "Taken from the hadith before it: the book says \"وعنه\" / \"وبهذا الإسناد\". Not counted in the statistics.": "Önceki hadisten alındı: kitap \"وعنه\" / \"وبهذا الإسناد\" diyor. İstatistiğe sayılmaz.",
+ "This text goes on from the hadith before it and names no chain of its own; none is drawn for it. The text is below.": "Bu metin önceki hadisin devamıdır ve kendi senedini söylemez; onun için sened çizilmez. Metin aşağıda.",
+ "This hadith names no chain of its own: the book says it is the chain of the hadith before it (\"وعنه\", \"وبهذا الإسناد\"). The chain drawn is taken from that hadith and is not counted in the statistics.": "Bu hadisin kendi senedi yazılı değil: kitap, senedinin önceki hadisin senedi olduğunu söylüyor (\"وعنه\", \"وبهذا الإسناد\"). Çizilen sened o hadisten alınmıştır ve istatistiğe sayılmaz.",
+ "This road ends where its text says \"بهذا الإسناد\" (with the chain of the hadith before). The chain marked \"from the hadith before\" goes on as that hadith's chain does; it is not written here and is not counted in the statistics.": "Bu yol, metninin \"بهذا الإسناد\" (önceki hadisin senediyle) dediği yerde biter. \"Önceki hadisten\" işaretli sened, o hadisin senedi gibi devam eder; burada yazılı değildir ve istatistiğe sayılmaz.",
+ "from the hadith before (بهذا الإسناد), not counted in the statistics": "önceki hadisten (بهذا الإسناد), istatistiğe sayılmaz"
 }

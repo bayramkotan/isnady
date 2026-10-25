@@ -1706,5 +1706,11 @@
  "Search every language, or tick the ones to search": "ابحث في كل اللغات، أو اختر اللغات",
  "{n} languages": "{n} لغات",
  "More languages: {names} — import": "لغات أخرى: {names} — استيراد",
- "These books are in the data repository in more languages: {names}. File → Data Sources imports them (tick the languages beside a book); they then appear in this list.": "هذه الكتب موجودة في مستودع البيانات بلغات أخرى: {names}. ملف ← مصادر البيانات يستوردها (علّم اللغات بجانب الكتاب)؛ ثم تظهر في هذه القائمة."
+ "These books are in the data repository in more languages: {names}. File → Data Sources imports them (tick the languages beside a book); they then appear in this list.": "هذه الكتب موجودة في مستودع البيانات بلغات أخرى: {names}. ملف ← مصادر البيانات يستوردها (علّم اللغات بجانب الكتاب)؛ ثم تظهر في هذه القائمة.",
+ "no chain of its own: the text goes on from the hadith before it": "لا إسناد له: النص تتمة الحديث الذي قبله",
+ "Taken from the hadith before it: the book says \"وعنه\" / \"وبهذا الإسناد\". Not counted in the statistics.": "مأخوذ من الحديث الذي قبله: يقول الكتاب \"وعنه\" / \"وبهذا الإسناد\". لا يُحسب في الإحصاءات.",
+ "This text goes on from the hadith before it and names no chain of its own; none is drawn for it. The text is below.": "هذا النص تتمة للحديث الذي قبله ولا يذكر إسنادًا خاصًّا به؛ فلا يُرسم له إسناد. النص أدناه.",
+ "This hadith names no chain of its own: the book says it is the chain of the hadith before it (\"وعنه\", \"وبهذا الإسناد\"). The chain drawn is taken from that hadith and is not counted in the statistics.": "هذا الحديث لم يُذكر له إسناد خاص: يقول الكتاب إن إسناده إسناد الحديث الذي قبله (\"وعنه\"، \"وبهذا الإسناد\"). الإسناد المرسوم مأخوذ من ذلك الحديث ولا يُحسب في الإحصاءات.",
+ "This road ends where its text says \"بهذا الإسناد\" (with the chain of the hadith before). The chain marked \"from the hadith before\" goes on as that hadith's chain does; it is not written here and is not counted in the statistics.": "ينتهي هذا الطريق حيث يقول نصه \"بهذا الإسناد\" (بإسناد الحديث الذي قبله). الإسناد المعلَّم \"من الحديث الذي قبله\" يمضي كما يمضي إسناد ذلك الحديث؛ وهو غير مكتوب هنا ولا يُحسب في الإحصاءات.",
+ "from the hadith before (بهذا الإسناد), not counted in the statistics": "من الحديث الذي قبله (بهذا الإسناد)، لا يُحسب في الإحصاءات"
 }

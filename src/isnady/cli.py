@@ -1460,7 +1460,10 @@ def cmd_chain(args) -> int:
     for k, ch in enumerate(chains, 1):
         if len(chains) > 1:
             print(f"  Chain {k} of {len(chains)}" + (" (roads joined by tahwil, a second road after a link — \"وعن\" / \"وحدثنا\" — or two narrators at one link)" if k == 1 else ""))
-        if ch["problem"]:
+        if ch["problem"] == core_isnad.BORROWED:
+            print("  taken from the hadith before it (the book says \"وعنه\" / \"وبهذا الإسناد\"); "
+                  "not counted in the statistics")
+        elif ch["problem"]:
             print(f"  not split: {ch['problem']}")
         for i, link in enumerate(ch["links"]):
             arabic, meaning, _why = core_isnad.term_label(link["transmission"])
