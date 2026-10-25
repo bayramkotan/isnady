@@ -9,6 +9,9 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
     QButtonGroup,
+    QInputDialog,
+    QMenu,
+    QToolButton,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -25,6 +28,7 @@ from PySide6.QtWidgets import (
 
 from isnady import config
 from isnady.core import search as core
+from isnady.core import readmarks
 from isnady.core import works as core_works
 from isnady.core.names import latin
 from isnady.core.normalize import normalize
@@ -177,12 +181,31 @@ class BooksPage(QWidget):
         self.scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.scroll.setWidget(self.body)
+        # where the reader has come to: the hadith at the top of the page, kept a moment after the scrolling stops
+        self._reading_timer = QTimer(self)
+        self._reading_timer.setSingleShot(True)
+        self._reading_timer.setInterval(700)
+        self._reading_timer.timeout.connect(self._remember_reading)
+        self.scroll.verticalScrollBar().valueChanged.connect(lambda _v: self._reading_timer.start())
         right = QVBoxLayout()
         right.setSpacing(8)
         where_row = QHBoxLayout()
         where_row.addWidget(self.where, 1)
         self.star_box = QHBoxLayout()           # the ☆ of the chapter shown (BM1)
         where_row.addLayout(self.star_box)
+        # the reader's markers (BM3, Bayram: "Kitaplarda nerede kaldım?"): put one here, go to one, or to where each
+        # book was left
+        self.marks_button = QToolButton()
+        self.marks_button.setText("🔖 " + tr("Markers"))
+        self.marks_button.setObjectName("Quiet")
+        self.marks_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.marks_button.setToolTip(tr("Put a marker where you are reading, go to one of your markers, or to where "
+                                        "you left each book"))
+        self.marks_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.marks_menu = QMenu(self.marks_button)
+        self.marks_menu.aboutToShow.connect(self._fill_marks_menu)
+        self.marks_button.setMenu(self.marks_menu)
+        where_row.addWidget(self.marks_button)
         right.addLayout(where_row)
         right.addWidget(chapters)
         right.addWidget(self.nav)
@@ -245,6 +268,11 @@ class BooksPage(QWidget):
             if w["tradition"] == "shia":
                 facts.insert(0, f"<span style='color:{theme.current().gold}'><b>{tr('Shia')}</b></span>")
             box.addWidget(_label(" · ".join(facts), "Caption", wrap=False, rich=True))
+            left_at = readmarks.last(w["key"])
+            if left_at and (left_at["number"] or left_at["place"]):
+                where = (tr("hadith {number}", number=left_at["number"]) if left_at["number"]
+                         else tr("chapter {position}", position=left_at["place"]))
+                box.addWidget(_label("🔖 " + tr("You left off at {where}", where=where), "Caption", wrap=False))
             item.setSizeHint(row.sizeHint())
             self.works.addItem(item)
             self.works.setItemWidget(item, row)
@@ -309,8 +337,18 @@ class BooksPage(QWidget):
                     add(item, c["id"])
         add(None, None)
         self._build_language_checks()
+        if chapter:
+            self.open_chapter(chapter)
+            return
+        # where the book was left (BM3): its chapter, scrolled to the hadith the reader had come to
+        left_at = readmarks.last(key)
+        if left_at:
+            at, hid = readmarks.resolve(conn, left_at)
+            if at in self._order:
+                self.open_chapter(at, focus_hadith=hid)
+                return
         remembered = config.state_get(f"reader.position.{key}")
-        target = chapter or (remembered if remembered in self._order else (self._order[0] if self._order else None))
+        target = remembered if remembered in self._order else (self._order[0] if self._order else None)
         if target:
             self.open_chapter(target)
 
@@ -387,6 +425,7 @@ class BooksPage(QWidget):
             self.chapter_spin.blockSignals(False)
         self._chapter_star(chapter_id)
         self._select_in_tree(chapter_id)
+        self._remember_place(chapter_id, focus_hadith)
         items, total = core_works.leaves(conn, chapter_id)
         if self._work["kind"] == "hadith":
             # the number field shows the hadith asked for, or the first of the chapter
@@ -417,6 +456,88 @@ class BooksPage(QWidget):
         self.body_layout.addStretch(1)
         self._more()
         self.scroll.verticalScrollBar().setValue(0)
+
+    # ------------------------------------------------------------------ where the reader is (BM3)
+    def _remember_place(self, chapter_id: int, hadith_id: int | None = None) -> None:
+        if self._work is None or self.conn is None:
+            return
+        p = readmarks.place_of(self.conn, self._work["key"], chapter_id, hadith_id)
+        readmarks.remember(p["book"], p["chapter"], p["number"], p["title"], p["place"])
+
+    def _top_hadith(self) -> int | None:
+        """The hadith whose card is at the top of the reading pane now."""
+        top = self.scroll.verticalScrollBar().value()
+        for i in range(self.body_layout.count()):
+            w = self.body_layout.itemAt(i).widget()
+            if w is not None and not w.isHidden() and w.property("hadith_id") and w.y() + w.height() > top + 8:
+                return w.property("hadith_id")
+        return None
+
+    def _remember_reading(self) -> None:
+        if self._chapter and self._work and self._work["kind"] == "hadith":
+            hid = self._top_hadith()
+            if hid:
+                self._remember_place(self._chapter, hid)
+
+    def _fill_marks_menu(self) -> None:
+        menu = self.marks_menu
+        menu.clear()
+        here = menu.addAction(tr("Put a marker here…"))
+        here.setEnabled(bool(self._work and self._chapter))
+        here.triggered.connect(self._add_mark)
+        titles = {w["key"]: w["title"] for w in core_works.list_works(self.conn)} if self.conn else {}
+        mine = readmarks.marks()
+        if mine:
+            menu.addSeparator()
+            menu.addSection(tr("Your markers"))
+            for m in mine:
+                act = menu.addAction(f"🔖 {m['name']}   —   {readmarks.describe(m, titles.get(m['book'], ''))}")
+                act.triggered.connect(lambda _c=False, m=m: self.go_to_mark(m))
+        left = [p for p in readmarks.recent(10) if p["book"] in titles]
+        if left:
+            menu.addSeparator()
+            menu.addSection(tr("Where you left each book"))
+            for p in left:
+                act = menu.addAction(readmarks.describe(p, titles.get(p["book"], "")))
+                act.triggered.connect(lambda _c=False, p=p: self.go_to_mark(p))
+        if mine:
+            menu.addSeparator()
+            manage = menu.addMenu(tr("Remove a marker"))
+            for m in mine:
+                act = manage.addAction(m["name"])
+                act.triggered.connect(lambda _c=False, mid=m["id"]: readmarks.remove(mid))
+            rename = menu.addMenu(tr("Rename a marker"))
+            for m in mine:
+                act = rename.addAction(m["name"])
+                act.triggered.connect(lambda _c=False, m=m: self._rename_mark(m))
+
+    def _add_mark(self) -> None:
+        if not (self._work and self._chapter):
+            return
+        hid = self._top_hadith() if self._work["kind"] == "hadith" else None
+        p = readmarks.place_of(self.conn, self._work["key"], self._chapter, hid)
+        suggested = readmarks.describe(p, self._work["title"])
+        name, ok = QInputDialog.getText(self, tr("Put a marker here"), tr("Name of the marker:"), text=suggested)
+        if ok:
+            readmarks.add(name, p["book"], p["chapter"], p["number"], p["title"], p["place"])
+
+    def _rename_mark(self, mark: dict) -> None:
+        name, ok = QInputDialog.getText(self, tr("Rename a marker"), tr("Name of the marker:"), text=mark["name"])
+        if ok and name.strip():
+            readmarks.rename(mark["id"], name)
+
+    def go_to_mark(self, mark: dict) -> None:
+        """Open a kept place: its book, its chapter, the hadith it was at."""
+        if self.conn is None:
+            return
+        chapter, hid = readmarks.resolve(self.conn, mark)
+        if chapter is None:
+            return
+        if self.works.count() == 0:
+            self.refresh()
+        if not self._work or self._work["key"] != mark["book"]:
+            self.select_work(mark["book"])
+        self.open_chapter(chapter, focus_hadith=hid)
 
     def _matches(self, item: dict, wanted: list[str]) -> bool:
         if item["kind"] == "hadith":

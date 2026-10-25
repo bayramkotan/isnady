@@ -2121,10 +2121,14 @@ def chain(conn: sqlite3.Connection, hadith_id: int) -> list[dict]:
             "FROM isnad_links WHERE isnad_id = ? ORDER BY position",
             (isnad["id"],),
         ).fetchall()
+        from isnady.core import tahwil_meet
+
         out.append({"raw": isnad["raw_text"], "reaches_prophet": bool(isnad["reaches_prophet"]),
                     "problem": isnad["problem"], "derived_by": isnad["derived_by"],
                     "ends_with": isnad["ends_with"] or "", "raised": bool(isnad["raised"]),
-                    "links": [dict(r) for r in links], "tradition": road})
+                    "links": [dict(r) for r in links], "tradition": road, "id": isnad["id"],
+                    # a tahwil road joined where the text or the narrators say the roads meet (ISN-TAH)
+                    "meeting": tahwil_meet.meeting(conn, isnad["id"])})
     return out
 
 

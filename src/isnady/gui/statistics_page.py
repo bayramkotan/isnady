@@ -41,6 +41,7 @@ from isnady.core import narrators as core_narrators
 from isnady.core import stats_corpus as corpus
 from isnady.core import stats_graders as core
 from isnady.core import stats_lab as lab
+from isnady.core import stats_words as sw
 from isnady.core.i18n import N_, n_, tr
 from isnady.core.rijal import RANK_LABELS, TABAQA_LABELS
 from isnady.core.scholars import SCHOLARS
@@ -66,6 +67,8 @@ SECTIONS = [
     ("lab", N_("Correlations and tests"), N_("what goes with what, and is it real")),
     ("books", N_("Books"), N_("the books compared")),
     ("graders", N_("Graders"), N_("the scholars who graded")),
+    # every measure of the page in plain words (ST-EXP1, Bayram: "istatistik bilmeyenlerde anlayacak sekilde")
+    ("terms", N_("Terms explained"), N_("every measure in plain words")),
 ]
 # Ranks and grades are ordered AND two-sided (accepted ↔ rejected): a diverging scale, blue for the accepted side, red
 # for the rejected, the neutral grey in the middle for "acceptable when followed" (maqbul). Lightness grows towards the
@@ -277,6 +280,7 @@ class StatisticsPage(QWidget):
             scroll.setWidget(page)
             self.stack.addWidget(scroll)
             self._boxes[key] = box
+        self._fill_terms()
         self.rail.currentRowChanged.connect(self.stack.setCurrentIndex)
         self.rail.setCurrentRow(0)
         body.addWidget(self.rail)
@@ -290,6 +294,77 @@ class StatisticsPage(QWidget):
     @property
     def conn(self):
         return self._conn_of()
+
+    # ------------------------------------------------------------------ plain words (ST-EXP1)
+    def _say(self, lines: list, terms: tuple = ()) -> None:
+        """What the next finding means, in words anyone can follow: shown open under its headline, never folded."""
+        self._pending_plain = ([x for x in lines if x], tuple(terms))
+
+    def _plain_box(self, lines: list, terms: tuple) -> QFrame:
+        t = theme.current()
+        box = QFrame()
+        box.setObjectName("PlainBox")
+        box.setStyleSheet(f"QFrame#PlainBox {{ border-left: 3px solid {t.gold}; background: transparent; }}")
+        lay = QVBoxLayout(box)
+        lay.setContentsMargins(12, 4, 4, 4)
+        lay.setSpacing(4)
+        head = _label(tr("In plain words"), "Caption")
+        head.setStyleSheet(f"color: {t.gold}; font-weight: bold;")
+        lay.addWidget(head)
+        for line in lines:
+            lay.addWidget(_label("• " + line, "Lead", rich=True))
+        if terms:
+            row = QHBoxLayout()
+            row.setSpacing(12)
+            row.addWidget(_label(tr("What do these words mean?"), "Caption"))
+            for key in terms:
+                info = sw.term(key)
+                b = QPushButton(info["name"])
+                b.setObjectName("Link")
+                b.setCursor(Qt.CursorShape.PointingHandCursor)
+                b.setToolTip(info["what"] + "\n\n" + info["read"])
+                b.clicked.connect(lambda _c=False, k=key: self._show_term(k))
+                row.addWidget(b)
+            row.addStretch(1)
+            lay.addLayout(row)
+        return box
+
+    def _show_term(self, key: str) -> None:
+        from PySide6.QtWidgets import QMessageBox
+
+        info = sw.term(key)
+        box = QMessageBox(self)
+        box.setWindowTitle(info["name"])
+        box.setTextFormat(Qt.TextFormat.RichText)
+        box.setText(self._term_html(info))
+        box.exec()
+
+    @staticmethod
+    def _term_html(info: dict) -> str:
+        return (f"<h3>{html.escape(info['name'])}</h3>"
+                f"<p><b>{html.escape(tr('What it measures'))}</b><br>{html.escape(info['what'])}</p>"
+                f"<p><b>{html.escape(tr('How to read it'))}</b><br>{html.escape(info['read'])}</p>"
+                f"<p><b>{html.escape(tr('What it means for hadith science'))}</b><br>{html.escape(info['hadith'])}</p>"
+                f"<p><b>{html.escape(tr('Example'))}</b><br><i>{html.escape(info['example'])}</i></p>")
+
+    def _fill_terms(self) -> None:
+        """The last section: every measure of the page, explained."""
+        box = self._boxes.get("terms")
+        if box is None:
+            return
+        box.addWidget(_label(tr("Every figure on these pages, in everyday words: what it measures, how to read it, what "
+                                "it means for the science of hadith, and an example. The same words open from \u201cWhat "
+                                "do these words mean?\u201d under each finding."), "Lead"))
+        for info in sw.all_terms():
+            card = QFrame()
+            card.setObjectName("Card")
+            card._isnady_name = info["name"]
+            card._isnady_table = None
+            lay = QVBoxLayout(card)
+            lay.setContentsMargins(24, 14, 24, 14)
+            lay.addWidget(_label(self._term_html(info), "Lead", rich=True))
+            box.addWidget(card)
+        box.addStretch(1)
 
     # ------------------------------------------------------------------ building blocks
     def _finding(self, key: str, kicker: str, headline: str, widgets: list, how: str = "",
@@ -311,6 +386,10 @@ class StatisticsPage(QWidget):
         h.setFont(theme.reading_font(16, bold=True))
         h.setStyleSheet(f"color: {t.ink};")
         lay.addWidget(h)
+        pending = getattr(self, "_pending_plain", None)
+        if pending and pending[0]:
+            lay.addWidget(self._plain_box(*pending))
+        self._pending_plain = None
         for w in widgets:
             if isinstance(w, QWidget):
                 lay.addWidget(w)
@@ -490,8 +569,14 @@ class StatisticsPage(QWidget):
                 "rank_shown": tr("Ibn Hajar's rank"), "grades": tr("five ordered groups"),
                 "scale": tr("sahih → fabricated"), "otherwise": tr("a narrator the grader judged otherwise than Ibn Hajar")}
 
+    def _data_boxes(self) -> dict:
+        """The sections that show the books' figures (not the glossary)."""
+        return {k: b for k, b in self._boxes.items() if k != "terms"}
+
     def _clear_sections(self) -> None:
-        for box in self._boxes.values():
+        for key, box in self._boxes.items():
+            if key == "terms":
+                continue                        # the glossary does not change with the books
             while box.count():
                 item = box.takeAt(0)
                 w = item.widget()
@@ -594,18 +679,18 @@ class StatisticsPage(QWidget):
                      (tr("Shia books"), tr("Measured apart, on al-Najashi's Imami categories; the chains reach a "
                                            "Ma'sum. The two roads are never measured together."))]
             for road, (title, note) in zip(both["roads"], heads):
-                for box in self._boxes.values():
+                for box in self._data_boxes().values():
                     head = _label(f"<b>{title}</b> — {note}", "Lead", rich=True)
                     head.setContentsMargins(4, 12, 4, 2)
                     box.addWidget(head)
                 self._show_corpus_one(road)
             self._result = both
-            for box in self._boxes.values():
+            for box in self._data_boxes().values():
                 box.addStretch(1)
             return
         self._clear_sections()
         self._show_corpus_one(both)
-        for box in self._boxes.values():
+        for box in self._data_boxes().values():
             box.addStretch(1)
 
     def _show_corpus_one(self, both: dict) -> None:
@@ -613,7 +698,7 @@ class StatisticsPage(QWidget):
         self._result = both
         r, self._models = both["corpus"], both.get("models") or {}
         if r.get("empty") or not r.get("overview", {}).get("chains"):
-            for key in self._boxes:
+            for key in self._data_boxes():
                 self._boxes[key].addWidget(_label(tr("Nothing to measure yet: import a hadith collection (File → Data Sources), and a book of narrators "
                                                     "(Ibn Hajar's Taqrib) to identify them."), "Lead"))
             self.c_status.setText("")
@@ -647,6 +732,10 @@ class StatisticsPage(QWidget):
                                                          identified=o["identified"], links=o["links"])),
             (tr("Narrators"), f"{o['narrators']:,}", tr("different people identified in the chains")),
         ])
+        self._say([tr("{share} of the names in the chains are matched to one definite narrator of {rijal}; the other "
+                      "names are shown in the chains but are not counted in the figures below.", share=_pct(share_id),
+                      rijal=self._words()["rijal"]),
+                   tr("{reach} of the chains reach {end}.", reach=_pct(reach), end=self._words()["end"])], ("share",))
         self._finding("overview", tr("The corpus"), tr("{hadith:,} hadith, {chains:,} chains, {narrators:,} narrators identified.", hadith=o['hadith'], chains=o['chains'], narrators=o['narrators']), [tiles],
                       tr("A chain is <b>read</b> when isnady split its text into names; a name is <b>identified</b> when it "
                         "is matched to one person of {rijal}. Everything below rests on the identified names, so their "
@@ -660,6 +749,10 @@ class StatisticsPage(QWidget):
         if self._shia():
             rows = [(tr("All narrators of al-Najashi"), n["rank_all"]), (tr("The narrators in these chains"), n["rank_people"]),
                     (tr("Every name in these chains"), n["rank_links"])]
+            self._say([tr("Of every 100 times a narrator stands in a chain, {n} are a narrator al-Najashi calls trustworthy "
+                          "or praises.", n=f"{100 * strong:.0f}"),
+                       tr("For the science of hadith: the hadith of these books rest mostly on narrators the critics "
+                          "accepted.")], ("share",))
             self._finding("overview", tr("Reliability"), tr("{strong} of the judged transmission passes through narrators al-Najashi calls trustworthy or "
                                                        "praises.", strong=_pct(strong)), [StackedBars(rows, cats)],
                           tr("al-Najashi's words read in the four Imami categories — trustworthy (thiqa), praised (mamduh), a "
@@ -671,6 +764,10 @@ class StatisticsPage(QWidget):
         else:
             rows = [(tr("All narrators of the Taqrib"), n["rank_all"]), (tr("The narrators in these chains"), n["rank_people"]),
                     (tr("Every name in these chains"), n["rank_links"])]
+            self._say([tr("Of every 100 times a narrator stands in a chain, {n} are a Companion or a trustworthy narrator.",
+                          n=f"{100 * strong:.0f}"),
+                       tr("For the science of hadith: the hadith of these books rest mostly on narrators the critics "
+                          "accepted.")], ("share",))
             self._finding("overview", tr("Reliability"), tr("{strong} of all transmission passes through Companions and trustworthy narrators — far more than "
                                                        "their share of the Taqrib.", strong=_pct(strong)),
                           [StackedBars(rows, cats)],
@@ -682,6 +779,8 @@ class StatisticsPage(QWidget):
         if r["grades"]:
             gcats = self._grade_categories(r)
             grows = [(f"{_short(g['grader'])} — {_bk(g['book'])}", g["distribution"]) for g in r["grades"]]
+            self._say([tr("Each bar is one scholar and one book: how many of its hadith he put in each grade, from the "
+                          "strongest on the left.")])
             self._finding("overview", tr("Grades"), tr("How each scholar graded each book."), [StackedBars(grows, gcats, label_w=260)],
                           ((tr("Each bar is one scholar's grades of one book, in the four Imami categories — sahih (every "
                               "narrator an Imami thiqa), hasan (a praised Imami), muwaththaq (a thiqa of another school), da'if "
@@ -701,6 +800,11 @@ class StatisticsPage(QWidget):
                                (tr("Busiest 10%"), _pct(c["top10"]), tr("of all identified names")),
                                (tr("Half of all names"), f"{c['half_by']:,}", tr("narrators, of {people:,}", people=c["people"])),
                                (tr("Gini"), f"{c['gini']:.2f}", tr("0 equal shares, 1 one man carries all"))])
+            self._say([tr("The busiest tenth of the narrators carry {top10} of all appearances in the chains.",
+                          top10=_pct(c["top10"])),
+                       tr("Gini {g:.2f}: {words}.", g=c["gini"], words=sw.gini(c["gini"])),
+                       tr("For the science of hadith: these few are the pivots (madar) the critics speak of — the great "
+                          "narrators most hadith pass through.")], ("gini", "lorenz"))
             self._finding("narrators", tr("Concentration"), tr("The busiest 10% of narrators carry {top10} of the transmission; {half_by:,} narrators carry half "
                                                           "of it.", top10=_pct(c['top10']), half_by=c['half_by']), [tiles, Lorenz(c["curve"])],
                           tr("The curve sorts the narrators from the least to the most often seen and adds up their share of "
@@ -708,6 +812,10 @@ class StatisticsPage(QWidget):
                             "curve sags below it, the more the corpus rests on a few — the madar (pivot) narrators of the "
                             "classical critics. The Gini coefficient is the area between the two, doubled."),
                           (["share of narrators", "share of names"], c["curve"]))
+        if n["pillars"]:
+            self._say([tr("The longer the bar, the more often the narrator stands in these chains; {first} comes first, "
+                          "{times:,} times.", first=html.escape(self._name(n["pillars"][0]["id"], n["pillars"][0]["name"])),
+                          times=n["pillars"][0]["links"])])
         self._finding("narrators", tr("The pillars"), tr("The narrators the most hadith pass through."),
                       [self._people(n["pillars"][:20])],
                       tr("Counted from the identified names of these chains: how often a narrator appears, and (on hover) "
@@ -716,6 +824,8 @@ class StatisticsPage(QWidget):
                        [[self._name(p["id"], p["name"]), p["name"], p["rank"], p["tabaqa"], p["links"], p["hadith"]]
                         for p in n["pillars"]]))
         if n["weak_pillars"]:
+            self._say([tr("These are the weak or unknown narrators met most often. A hadith that passes through one of "
+                          "them is accepted only when other routes support it.")], ("weakest",))
             self._finding("narrators", tr("Weak narrators"), tr("The weak or unknown narrators the most hadith pass through — where a grade would hang on one man."), [self._people(n["weak_pillars"])],
                           (tr("Narrators al-Najashi calls weak (da'if, confused, accused, extremist), by how often they "
                               "appear. A hadith that passes through one of them is graded on its other routes — or stays "
@@ -726,6 +836,9 @@ class StatisticsPage(QWidget):
                            [[self._name(p["id"], p["name"]), p["name"], p["rank"], p["links"], p["hadith"]]
                             for p in n["weak_pillars"]]))
         if n["central"]:
+            self._say([tr("The higher the figure, the more chains run through the narrator on their way to {end}; {first} "
+                          "leads.", end=self._words()["end"],
+                          first=html.escape(self._name(n["central"][0]["id"], n["central"][0]["name"])))], ("pagerank",))
             self._finding("narrators", tr("The network"), tr("The narrators the transmission flows through, towards {end}.", end=self._words()['end']), [self._people(n["central"], value=lambda p: 100 * p["score"], unit=" ‰")],
                           tr("PageRank on the graph of who narrates from whom (each pair of neighbours in a chain, weighted by "
                             "how often): a narrator ranks high when many chains lead to him and through him, not only when he "
@@ -737,6 +850,8 @@ class StatisticsPage(QWidget):
         rows = [(f"{t} · {tr(TABAQA_LABELS.get(t, '')).split(' (')[0]}", n["tabaqa_groups"][t - 1]) for t in range(1, 13)
                 if sum(n["tabaqa_groups"][t - 1])]
         if rows:
+            self._say([tr("Each bar is one generation (tabaqa); the blue part is its accepted narrators, the red part the "
+                          "rejected ones.")])
             self._finding("narrators", tr("Generations"), tr("Reliability generation by generation (tabaqa)."),
                           [StackedBars(rows, cats, label_w=250)],
                           tr("Ibn Hajar's twelve generations, from the Companions (1) to the teachers of the six books' "
@@ -751,6 +866,9 @@ class StatisticsPage(QWidget):
         bins = [(str(k), lengths.get(k, 0)) for k in range(1, max(lengths or {1: 0}) + 1)]
         counts = sorted(k for k, v in lengths.items() for _ in range(v))
         median = counts[len(counts) // 2] if counts else 0
+        self._say([tr("Half of the chains have {median} narrators or fewer.", median=median),
+                   tr("For the science of hadith: fewer narrators is a 'high' chain (isnad 'ali), prized by the "
+                      "muhaddithun; more is a 'low' one (nazil).")], ("median",))
         self._finding("chains", tr("Length"), tr("Most chains have {median} narrators between the compiler and {end}.", median=median, end=self._words()['end']),
                       [Columns(bins, " " + tr("chains"))],
                       tr("The number of names in each chain. A short chain (isnad 'ali) has fewer links between the "
@@ -760,6 +878,9 @@ class StatisticsPage(QWidget):
         cats = self._group_categories(r)
         good = sum(ch["weakest"][:2 if self._shia() else 3]) / (sum(ch["weakest"]) or 1)
         rows = [(tr("Chains with a judged narrator"), ch["weakest"]), (tr("Chains fully identified"), ch["weakest_full"])]
+        self._say([tr("In {good} of the chains every identified narrator is at least acceptable; the rest have at least "
+                      "one weaker man, and are graded on their other routes — or stay weak.", good=_pct(good))],
+                  ("weakest",))
         self._finding("chains", tr("The weakest link"),
                       tr("In {good} of the chains the weakest narrator is trustworthy or praised.", good=_pct(good))
                       if self._shia() else
@@ -776,6 +897,9 @@ class StatisticsPage(QWidget):
         marked = {i for i, (k, _v) in enumerate(ch["gaps"]) if k > 100 or k <= -60}
         outside = sum(v for i, (_k, v) in enumerate(ch["gaps"]) if i in marked)
         table = self._suspects_table(ch["gap_suspects"], gap=True)
+        self._say([tr("{outside:,} pairs of teacher and student lived too far apart to have met. Each is a name matched to "
+                      "the wrong man, a wrong year, or a break in the chain — to be checked.", outside=outside)],
+                  ("time_gap",))
         self._finding("chains", tr("Time"), tr("{outside:,} teacher–student pairs lie too far apart in time — each points to a wrongly identified "
                                           "name or a wrong year.", outside=outside), [Columns(gaps, " " + tr("pairs"), marked, label_every=2), table],
                       tr("For two neighbours in a chain whose years of death are known: the student's year minus the "
@@ -788,6 +912,9 @@ class StatisticsPage(QWidget):
         total = ch["order_ok"] + ch["order_bad"]
         if total:
             table = self._suspects_table(ch["order_suspects"], gap=False)
+            self._say([tr("In {value} of the pairs the student is of the same or a later generation than his teacher, as "
+                          "it must be; the pairs listed are not, and point to wrong identifications.",
+                          value=_pct(ch["order_ok"] / total))], ("tabaqa_order",))
             self._finding("chains", tr("Generations in order"), tr("{value} of the identified pairs are in the right order of generations.", value=_pct(ch['order_ok'] / total)), [table],
                           tr("A student belongs to the same or a later generation (tabaqa) than his teacher. A pair where the "
                             "student is of an EARLIER generation than his teacher is a sign of a wrong identification; the "
@@ -856,6 +983,11 @@ class StatisticsPage(QWidget):
         else:
             headline = tr("The weaker a chain's weakest narrator, the lower the grade — for {n} of {total} graders "
                           "beyond chance (τ<sub>b</sub> {tau}).", n=len(clear), total=len(plot), tau=span)
+        self._say([tr("{who}: \u03c4b {tau:.2f} — {strength}, {sure}.", who=html.escape(label),
+                      tau=tau, strength=sw.strength(tau), sure=sw.sure(*ci)) for label, tau, ci in plot[:5]]
+                  + [tr("A positive value: the weaker the chain's weakest narrator, the weaker the scholar's grade. It is "
+                        "not near 1 because a scholar also weighs other routes, hidden defects and the text.")],
+                  ("kendall", "interval", "bootstrap", "gamma"))
         self._finding("grades", tr("The weakest link and the grade"), headline,
                       [IntervalPlot(plot, tr("weaker narrator, higher grade"), tr("weaker narrator, lower grade"))],
                       tr("For each graded hadith: the weakest identified narrator of its best chain against the scholar's "
@@ -888,6 +1020,9 @@ class StatisticsPage(QWidget):
                                    cell=QSize(80, 40), label_w=170, head_h=52,
                                    corner=tr("weakest narrator ↓\ngrade →")), i * 2 + 1, 0)
         grid.setColumnStretch(1, 1)
+        self._say([tr("Read a row: of the hadith whose weakest narrator is of that level, the share the scholar put in "
+                      "each grade. A sahih grade in a weak row is a hadith the scholar found supported by other "
+                      "routes.")], ("weakest",))
         self._finding("grades", tr("Cross-tables"), tr("How each grade is spread over the weakest narrator."), [grid],
                       tr("Rows: the weakest narrator of the hadith's best chain; columns: the grade. Each row adds up to "
                         "100%. A sahih grade where the weakest narrator is weak is a hadith strengthened by other routes, "
@@ -916,6 +1051,9 @@ class StatisticsPage(QWidget):
                                "less than the weakest narrator.", n=len(lower) + len(higher), total=len(plot)) if smaller
                             else tr("Length goes with the grade for {n} of {total} graders, in different directions.",
                                     n=len(lower) + len(higher), total=len(plot)))
+            self._say([tr("{who}: \u03c4b {tau:.2f} — {strength}, {sure}.", who=html.escape(label),
+                          tau=tau, strength=sw.strength(tau), sure=sw.sure(*ci)) for label, tau, ci in plot[:5]],
+                      ("kendall", "interval"))
             self._finding("grades", tr("Length and grade"), headline,
                           [IntervalPlot(plot, tr("longer, higher grade"), tr("longer, lower grade"))],
                           tr("The same rank correlation between the number of names in the hadith's chain and its grade. Its "
@@ -993,6 +1131,11 @@ class StatisticsPage(QWidget):
             headline = tr("For {name}, no factor of the chain moves the grade beyond chance.", name=name)
         plot = [(_factor(c["name"]), c["beta"], (c["beta"] - 1.96 * c["se"], c["beta"] + 1.96 * c["se"])) for c in coefs]
         fmt = lambda v, lo, hi: f"OR {math.exp(v):.2f}  [{math.exp(lo):.2f}–{math.exp(hi):.2f}]"  # noqa: E731
+        self._say([tr("{factor}: {odds} of a weaker grade — {sure}.", factor=html.escape(_factor(c["name"])),
+                      odds=sw.odds(c["or"]), sure=sw.sure(c["or_ci"][0] - 1, c["or_ci"][1] - 1))
+                   for c in sorted(sig, key=lambda c: -c["beta"])[:4]]
+                  + [tr("Each factor is measured with the others held equal: it is credited only with its own part.")],
+                  ("odds", "ordinal", "interval"))
         self._model_finding(
             tr("What the grade follows"), headline,
             [IntervalPlot(plot, tr("a stronger grade"), tr("a weaker grade"), fmt=fmt, label_w=250)],
@@ -1026,6 +1169,9 @@ class StatisticsPage(QWidget):
         table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         table.setFixedHeight(len(tests) * 30 + 34)
         lead = tests[0] if tests else None
+        self._say(([tr("{factor} decides the most: {share} of what the chain explains.",
+                       factor=html.escape(_factor(lead["label"])), share=_pct(lead["chi2"] / total))] if lead else [])
+                  + [tr("Factors in grey could be chance; the others matter beyond chance.")], ("lr", "pvalue"))
         self._model_finding(
             tr("Which factors matter"),
             (tr("{matter} of {tests} factors matter; {factor} alone carries {share} of what the chain explains.",
@@ -1047,6 +1193,14 @@ class StatisticsPage(QWidget):
              tr("0.2–0.4 is a very good fit")),
             ("Somers' D", f"{m['somers_d']:.2f}" if m["somers_d"] is not None else "—", tr("ordering: 0 none, 1 perfect")),
         ])
+        self._say([tr("The model's most likely grade is the scholar's own in {right} of the hadith; always saying the "
+                      "most common grade would give {base}.", right=_pct(m["accuracy"]), base=_pct(m["base_rate"])),
+                   (tr("R\u00b2 {r2:.3f}: {words}.", r2=m["mcfadden"], words=sw.r2(m["mcfadden"]))
+                    if m["mcfadden"] is not None else ""),
+                   (tr("Somers' D {d:.2f}: {words}.", d=m["somers_d"], words=sw.somers(m["somers_d"]))
+                    if m["somers_d"] is not None else ""),
+                   tr("The rest is what the scholar weighed beyond this one chain: other routes, hidden defects, the "
+                      "text.")], ("r2", "somers", "calibration"))
         self._model_finding(
             tr("How much the chain explains"),
             tr("The chain explains part of {name}'s grades, not most: the rest is what a scholar weighs beyond "
@@ -1110,6 +1264,8 @@ class StatisticsPage(QWidget):
             sentence = tr(sentence, n=total_side, name=name) + " " + (
                 tr("{strong:,} of them clearly (the model gave that grade 5% or less).", strong=strong) if strong
                 else tr("None clearly: the model gave each grade more than 5%."))
+            self._say([tr("Each row is a hadith worth reading: the scholar saw in it more than its one chain shows. "
+                          "Double-click to open it.")], ("surprise",))
             self._model_finding(tr(title), sentence, [self._surprise_table(items, m["labels"])], tr(how),
                                 (["hadith", "grade", "model's most likely", "probability", "weakest narrator",
                                   "chain length", "chains"],
@@ -1125,6 +1281,8 @@ class StatisticsPage(QWidget):
                     if c:
                         rows.append((f"{tr(c_name.replace('Weakest: ', ''))} — {_short(x['grader'])}", c["beta"],
                                      (c["beta"] - 1.96 * c["se"], c["beta"] + 1.96 * c["se"])))
+            self._say([tr("The further a scholar's line lies towards \u201ca weaker grade\u201d, the more his grade drops "
+                          "when the narrator is weak.")], ("odds",))
             self._model_finding(
                 tr("The scholars compared"), tr("How strongly each scholar's grade follows the weakest narrator."),
                 [IntervalPlot(rows, tr("a stronger grade"), tr("a weaker grade"), fmt=fmt, label_w=300)],
@@ -1188,6 +1346,8 @@ class StatisticsPage(QWidget):
         table.setFixedHeight(min(30, len(shared)) * 30 + 34)
         table.cellDoubleClicked.connect(lambda rr, _c: self.open_hadith.emit(table.item(rr, 0).data(Qt.ItemDataRole.UserRole)))
         up = sum(1 for s in shared if s["side"] == "graded_higher")
+        self._say([tr("When several scholars are surprised by the same hadith in the same way, the reason lies in the "
+                      "hadith itself: its other routes, or a defect they all saw.")], ("surprise",))
         self._finding("model", tr("Surprises the scholars share"),
                       tr("{shared} hadith surprise two scholars or more in the same way — {up} graded higher than their "
                         "chain, {value} lower.", shared=len(shared), up=up, value=len(shared) - up), [table],
@@ -1359,6 +1519,10 @@ class StatisticsPage(QWidget):
                        factor=html.escape(named[f].lower()), rho=v) for g, (v, f) in best.items()))
             else:
                 headline = tr("With the other factors equal, no factor of the chain goes with the grades beyond chance.")
+            self._say([tr("Each cell asks: does this factor go with a weaker grade when everything else is the same? "
+                          "Coloured: too clear to be chance; only outlined: could be chance."),
+                       tr("Blue: more of the factor, a weaker grade; gold: a stronger one.")],
+                      ("spearman", "partial", "pvalue"))
             self._lab_finding(
                 tr("What goes with a weaker grade"), headline,
                 [HeatMap(rows, shown, cells, -0.5, 0.5, diverging=True, cell=QSize(84, 50), label_w=190, tips=tips,
@@ -1381,6 +1545,8 @@ class StatisticsPage(QWidget):
                            "{rho:+.2f}, the others equal).", **values) if fm["partial"] else
                         tr("Of the chain's own factors, <i>{a}</i> and <i>{b}</i> are the most bound together (ρ "
                            "{rho:+.2f}).", **values))
+            self._say([tr("{a} and {b}: \u03c1 {rho:+.2f} — {strength}.", a=values["a"], b=values["b"], rho=rho,
+                          strength=sw.strength(rho))], ("spearman", "partial"))
             self._lab_finding(
                 tr("The factors with each other"), headline,
                 [self._switchable(fm, shown, QSize(84, 46), 190)],
@@ -1427,6 +1593,10 @@ class StatisticsPage(QWidget):
                                pairs=len(tests), **values))
             else:
                 headline = tr("How closely the scholars' grades follow each other.")
+            self._say(([tr("{hi} grades the same hadith higher than {lo} {more:,} times and lower {less:,} times: {hi} is "
+                           "the milder of the two.", **values)] if tests else [])
+                      + [tr("In the matrix, the nearer \u03c1 is to 1, the more the two put the hadith in the same "
+                            "order.")], ("spearman", "stuart"))
             self._lab_finding(
                 tr("Scholar against scholar"), headline, widgets,
                 tr("The matrix: Spearman's ρ between two scholars' grades of the same hadith — how far one's order of "
@@ -1488,6 +1658,10 @@ class StatisticsPage(QWidget):
                           what=what)
         else:
             headline = tr("The hadith model's shape holds: each factor weighs the same at every step of the grades.")
+        self._say([tr("For these scholars a factor weighs differently at different steps of the grades: the model's single "
+                      "number for it is an average, still right about its direction.") if broken else
+                   tr("Each factor weighs the same at every step of the grades: the model's numbers can be read as "
+                      "they are.")], ("brant", "odds"))
         self._lab_finding(
             tr("Does the model's shape hold?"), headline, [table],
             tr("The hadith model (an ordinal, proportional-odds regression) gives each factor ONE weight for "
@@ -1514,6 +1688,11 @@ class StatisticsPage(QWidget):
             a, b, rho, *_rest = lab.pairs_table(m)[0]
             headline = tr("Among the narrators, {a} and {b} go together most (ρ {rho:+.2f}).", a=html.escape(tr(a).lower()),
                           b=html.escape(tr(b).lower()), rho=rho)
+        self._say(([tr("\u03c1 {rho:+.2f} between {rank} and how often a narrator appears: {strength}.",
+                       rho=cell["rho"], rank=self._words()["rank_shown"], strength=sw.strength(cell["rho"]))]
+                   if cell and cell.get("rho") is not None else [])
+                  + [tr("Rank runs from the strongest to the weakest, so a minus sign means: the more of the other, the "
+                        "stronger the narrator.")], ("spearman", "partial"))
         self._finding(
             "lab", tr("The narrators' measures"), headline,
             [_label(tr("{people:,} narrators identified in the chains; {complete:,} with every measure known (the partial "
@@ -1564,6 +1743,11 @@ class StatisticsPage(QWidget):
         else:
             headline = tr("The books' chains cannot be told apart in {measures}.", measures=", ".join(
                 html.escape(tr(c["measure"]).lower()) for c in comparisons if c["kruskal"]))
+        self._say(([tr("{a} and {b} differ most in {measure}: \u03b4 {delta:+.2f}, {words}.", a=html.escape(strongest[1]["a"]),
+                       b=html.escape(strongest[1]["b"]), measure=html.escape(tr(strongest[0]).lower()),
+                       delta=strongest[1]["delta"], words=sw.cliff(strongest[1]["delta"]))] if strongest else [])
+                  + [tr("H and p: do the books differ at all; \u03b5\u00b2 and \u03b4: by how much.")],
+                  ("kruskal", "cliff"))
         self._finding(
             "lab", tr("Are the books different?"), headline, [table],
             tr("Kruskal–Wallis asks whether the books' chains could come from one distribution (ε² is its size: "
@@ -1591,6 +1775,8 @@ class StatisticsPage(QWidget):
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)       # the title takes the room that is left
         table.setFixedHeight(len(rows) * 30 + 34)
         cats = self._group_categories(r)
+        self._say([tr("Each row is one book: how many chains, how long they usually are, how many of their names are "
+                      "identified, how many reach {end}.", end=self._words()["end"])], ("median", "share"))
         self._finding("books", tr("The books side by side"), tr("Each book's chains and the narrators they rest on."),
                       [table, StackedBars([(_bk(row["name"]), row["groups"]) for row in rows], cats, label_w=230)],
                       tr("The table compares the books' chains; the bars, the narrators each book's chains pass through, "
@@ -1602,6 +1788,8 @@ class StatisticsPage(QWidget):
         if len(b["names"]) > 1:
             cells = [[(None, []) if i == j else (v, [f"{100 * v:.0f}%"]) for j, v in enumerate(row)]
                      for i, row in enumerate(b["overlap"])]
+            self._say([tr("A cell of 40% means four in ten of the narrators of the two books appear in both.")],
+                      ("jaccard",))
             self._finding("books", tr("Shared narrators"), tr("How many narrators each pair of books shares."),
                           # the cells shrink with the number of books, so the map fits the page (96 px each was 1,200 px
                           # wide for ten books and cut the whole section off on the right)
@@ -1846,6 +2034,11 @@ class StatisticsPage(QWidget):
                             "{left_out} is measured against the model's result without moving it.", kept=_short(ov['kept']), left_out=_short(ov['left_out']), value=100 * ov['agree']), "Caption")
             warn.setStyleSheet(f"color: {t.gold};")
             card.layout().addWidget(warn)
+        card.layout().addWidget(self._plain_box([
+            tr("\u03b1 {a:.2f}: {words}.", a=a["value"], words=sw.alpha(a["value"])),
+            tr("The model is sure of the grade of {high:.0f}% of the hadith; for {low:.0f}% the scholars' grades point "
+               "different ways — there ijtihad differs.", high=100 * c["high"] / c["total"], low=100 * c["low"] / c["total"])],
+            ("alpha", "dawid", "interval")))
         card.layout().addWidget(self._how(
             tr("alpha measures agreement beyond chance for all graders at once, by the order of the grades (a "
               "near miss counts less than a far one): 1 is complete agreement, 0 no better than chance; above "
@@ -1877,6 +2070,9 @@ class StatisticsPage(QWidget):
         card.layout().addWidget(_label(tr("<b>Ordinal (weighted) kappa</b>"), "Lead", rich=True))
         card.layout().addWidget(HeatMap(names, names, matrix("wkappa", lambda v: f"κw {v:.2f}", lambda a, b: f"{a:.2f}–{b:.2f}"),
                                         low=0.0, high=1.0, label_w=210))
+        card.layout().addWidget(self._plain_box([
+            tr("Each cell is two scholars on the hadith both graded: above, how often they give the very same grade; "
+               "below, their agreement once the agreement chance would give is taken away.")], ("kappa", "interval")))
         card.layout().addWidget(self._how(
             tr("each cell compares the row's grader with the column's on the hadith both graded (n). Left: how "
               "often they give the same grade. Right: Cohen's kappa weighted by order — agreement beyond chance, "
@@ -1905,6 +2101,11 @@ class StatisticsPage(QWidget):
             pair_cells.append(row)
         card.layout().addWidget(_label(tr("<b>Pair by pair</b>: P(row grades higher) − P(row grades lower)"), "Lead", rich=True))
         card.layout().addWidget(HeatMap(names, names, pair_cells, low=-0.25, high=0.25, diverging=True, label_w=210))
+        card.layout().addWidget(self._plain_box([
+            tr("{strict} is the strictest ({v1:+.3f}), {lenient} the most lenient ({v2:+.3f}).", strict=html.escape(rows[0][0]),
+               v1=rows[0][1], lenient=html.escape(rows[-1][0]), v2=rows[-1][1]),
+            tr("For the science of hadith: the classical labels mutashaddid (strict) and mutasahil (lenient), put in "
+               "numbers on the very same hadith.")], ("strictness", "interval")))
         card.layout().addWidget(self._how(
             tr("from the model: the chance a grader gives a hadith a LOWER grade than its true grade, minus the "
               "chance he gives it a HIGHER one — by order only. Below zero (gold) he is stricter, above zero "
@@ -1938,6 +2139,9 @@ class StatisticsPage(QWidget):
             + ("" if not few_all else " " + tr("No row for {grades}: too few hadith of that true grade to measure how a "
                                                "grader treats it.", grades=", ".join(labels[k] for k in order
                                                                                     if k in few_all))), "Lead"))
+        card.layout().addWidget(self._plain_box([
+            tr("Read a row: for a hadith whose grade (by all the graders together) is this, how often each grader gives "
+               "each grade. Much outside the diagonal is a grader who sees it otherwise.")], ("dawid",)))
         card.layout().addWidget(self._how(
             tr("rows are the true grade, columns what the grader says. A strong diagonal is a grader who sees the "
               "grade the others see; weight to the right of it (towards weaker grades) is strictness, to the "
@@ -2037,6 +2241,9 @@ class StatisticsPage(QWidget):
         table.cellDoubleClicked.connect(lambda rr, _c: self.open_hadith.emit(table.item(rr, 0).data(Qt.ItemDataRole.UserRole)))
         card.layout().addWidget(table)
         same = [f"{_short(k)} ≈ {_short(v)}" for k, v in voices.items()]
+        card.layout().addWidget(self._plain_box([
+            tr("{n:,} hadith where the scholars are two grades apart or the model is unsure — the places where their "
+               "ijtihad differs most.", n=r["disputed_total"])], ("dawid",)))
         card.layout().addWidget(self._how(
             tr("the hadith where the scholars are furthest apart come first. <i>Certainty</i> is the model's "
               "probability for its grade: where only two voices weigh and they disagree, it sits a little above "

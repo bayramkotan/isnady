@@ -71,7 +71,7 @@ from isnady.core.i18n import t, tr
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
-MATCHER_ID = "isnady-narrators-15"
+MATCHER_ID = "isnady-narrators-16"
 _TEACHER_MIN_TABAQA = 9           # the compilers' own teachers (Ibn Hajar's tabaqat 9-12)
 _HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم).*$")
 # "عائشة، زوج النبي ﷺ", "ثوبان مولى رسول الله ﷺ", "عائشة أم المؤمنين": who she is, not her name (2026-10-18: the
@@ -566,6 +566,38 @@ def by_neighbours(chains: list[tuple[list, list]], rounds: int = 3) -> int:
     return found
 
 
+_ONE_SIDE_MIN, _ONE_SIDE_LEAD = 6, 5.0
+
+
+def by_one_side(chains: list[tuple[list, list]]) -> int:
+    """NR-ID3 (2026-10-25): a bare name ("سفيان", "يحيى", "محمد بن جعفر") whose neighbour on ONE side only is known —
+    the other is itself a bare name, or the end of the chain: the critics' tamyiz al-muhmal by the teacher or by the
+    student alone. Kept only when the known neighbour is seen with one candidate far more often than with any other
+    (at least six chains, five times the next) in the chains read whole. Returns how many links."""
+    edges: dict[tuple[int, int], int] = defaultdict(int)
+    for results, _c, *_rest in chains:
+        for i in range(len(results) - 1):
+            a, b = results[i][0], results[i + 1][0]
+            if a is not None and b is not None and (results[i][1] or 0) >= 0.8 and (results[i + 1][1] or 0) >= 0.8:
+                edges[(a, b)] += 1
+    found = 0
+    for results, cands, *_rest in chains:
+        for i, (pid, _conf, count) in enumerate(results):
+            if pid is not None or len(cands[i]) < 2:
+                continue
+            student = results[i - 1][0] if i > 0 else None
+            teacher = results[i + 1][0] if i + 1 < len(results) else None
+            if (student is None) == (teacher is None):
+                continue                            # both known (the two-sided rule decided or could not), or none
+            rows = sorted(((edges.get((student, p), 0) if student else edges.get((p, teacher), 0)), p) for p in cands[i])
+            best, who = rows[-1]
+            second = rows[-2][0]
+            if best >= _ONE_SIDE_MIN and best >= _ONE_SIDE_LEAD * max(second, 1):
+                results[i] = (who, _EDGE_CONFIDENCE, count)
+                found += 1
+    return found
+
+
 def by_famous(chains: list[tuple[list, list, list]], famous: dict[str, int]) -> int:
     """NR-ID2: a bare name still open after every other evidence is the famous narrator of that name, when he is
     among its candidates (_FAMOUS). Returns how many links."""
@@ -578,6 +610,64 @@ def by_famous(chains: list[tuple[list, list, list]], famous: dict[str, int]) -> 
                     results[i] = (who, _FAMOUS_CONFIDENCE, count)
                     found += 1
     return found
+
+
+def _father_by_nasab(index: "Index", son: int) -> int | None:
+    """The father of a narrator, read from the son's own nasab in the rijal work and found as an entry of his own
+    (NR-ID3, 2026-10-25): "سهيل بن أبي صالح ذكوان السمان" → "ذكوان أبو صالح السمان", "عبد الله بن أبي قتادة
+    الأنصاري" → "أبو قتادة الأنصاري …", "عمر بن حفص بن غياث" → "حفص بن غياث …", "زيد بن أسلم العدوي مولى عمر" →
+    "أسلم العدوي مولى عمر". The entry must carry the father's name (his ism, or his kunya when the nasab gives only
+    that) AND one more thing of the son's nasab — the grandfather, the kunya, or a nisba — and be of the son's
+    generation or before it; one such entry, or none."""
+    son_toks = index.full.get(son) or []
+    if "بن" not in son_toks:
+        return None
+    i = son_toks.index("بن")
+    seg = son_toks[i + 1:]
+    kunya = None
+    if seg[:1] in (["ابي"], ["ابو"]) and len(seg) >= 2:
+        kunya = ("ابو", seg[1])
+        seg = seg[2:]
+    ism = seg[0] if seg and seg[0] not in ("بن", "ابن") and not seg[0].startswith("ال") and seg[0] not in ("مولي", "ابو") else None
+    if ism in ("عبد", "عبيد") and len(seg) > 1:
+        ism = None                                  # a compound name ("عبد الله"): the rule below is too loose for it
+    grand = None
+    if "بن" in seg:
+        j = seg.index("بن")
+        grand = seg[j + 1] if j + 1 < len(seg) else None
+    nisbas = {t for t in son_toks if t.startswith("ال") and len(t) > 3 and t not in ("الله", "الرحمن")}
+    if not ism and not kunya:
+        return None
+    low = index.tabaqa.get(son)
+    pool = set()
+    if ism:
+        pool |= {pid for pid, toks, alias in index.names.get(ism, []) if not alias}
+    if kunya:
+        pool |= {pid for pid, toks, alias in index.names.get("ابو", []) if not alias and toks[1:2] == [kunya[1]]}
+    found = set()
+    for pid in pool:
+        if pid == son:
+            continue
+        toks = index.full.get(pid) or []
+        if ism and ism not in toks[:3]:
+            continue
+        if kunya and not ism and not (toks[:2] == ["ابو", kunya[1]] or any(
+                toks[k:k + 2] == ["ابو", kunya[1]] for k in range(len(toks) - 1))):
+            continue
+        more = 0
+        if grand and "بن" in toks and toks.index("بن") + 1 < len(toks) and toks[toks.index("بن") + 1] == grand:
+            more += 1
+        if kunya and any(toks[k:k + 2] == ["ابو", kunya[1]] for k in range(len(toks) - 1)):
+            more += 1
+        if nisbas & set(toks):
+            more += 1
+        if not more:
+            continue
+        t = index.tabaqa.get(pid)
+        if low is not None and t is not None and not (low - 4 <= t <= low):
+            continue                                # a father of a later generation than his son, or far before him
+        found.add(pid)
+    return next(iter(found)) if len(found) == 1 else None
 
 
 def by_relatives(chains: list[tuple[list, list, list]], index: "Index") -> int:
@@ -594,10 +684,9 @@ def by_relatives(chains: list[tuple[list, list, list]], index: "Index") -> int:
             if student is None:
                 continue
             toks, how = name_tokens(names[i], index.full.get(student))
-            if not toks or how == "relative that cannot be read":
-                continue
-            found_here = set(index.candidates(toks))
-            if not found_here and "بن" in toks:
+            unreadable = not toks or how == "relative that cannot be read"
+            found_here = set() if unreadable else set(index.candidates(toks))
+            if not found_here and not unreadable and "بن" in toks:
                 # "علي بن إبراهيم بن هاشم أبو الحسن القمي": the father is "إبراهيم بن هاشم" — the son's kunya and
                 # nisba are not his
                 last = len(toks) - 1 - toks[::-1].index("بن")
@@ -609,6 +698,12 @@ def by_relatives(chains: list[tuple[list, list, list]], index: "Index") -> int:
             teacher = results[i + 1][0] if i + 1 < len(results) else None
             if teacher is not None and t(teacher) is not None:
                 found_here = {p for p in found_here if t(p) is None or t(p) >= t(teacher)}
+            if len(found_here) != 1 and names[i] in ("ابيه", "ابوه"):
+                # the father not found by his name as the chain reads it: as the son's own nasab gives him (NR-ID3)
+                father = _father_by_nasab(index, student)
+                if father is not None and (teacher is None or t(teacher) is None or t(father) is None
+                                           or t(father) >= t(teacher)):
+                    found_here = {father}
             if len(found_here) == 1:
                 who = next(iter(found_here))
                 results[i] = (who, 0.8, count or 1)       # his name, read from the son's: as evidence 4
@@ -676,6 +771,9 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
         return {"chains": 0, "links": 0, "identified": 0, "note": "up to date"}
 
     say(tr("Identifying narrators"))
+    from isnady.core import tahwil_meet
+
+    tahwil_meet.undo(conn)            # the roads joined last time are taken apart: joined again below, on the new names
     indexes: dict[str, Index] = {}
     # the same matcher and the same narrators, and only a few chains not looked up yet (a small book added): those
     # alone. Many — a large book, chains read again — and every chain is matched again: the evidence of the
@@ -719,6 +817,10 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
             by_neighbours(pairs)                    # the famous ones now known, their neighbours may decide more
         if by_relatives(pairs, indexes[road]):
             by_neighbours(pairs)
+        if by_one_side(pairs):                      # NR-ID3: the bare names known by one neighbour alone
+            by_neighbours(pairs)
+            if by_relatives(pairs, indexes[road]):
+                by_neighbours(pairs)
     for isnad_id, links, results, road in order:
         drop_impossible(results, indexes[road])
         for link, (pid, confidence, count) in zip(links, results):
@@ -727,12 +829,15 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
             identified += pid is not None
     conn.executemany("UPDATE isnad_links SET person_id = ?, match_confidence = ?, candidates = ? "
                      "WHERE isnad_id = ? AND position = ?", updates)
+    # a tahwil whose meeting the text does not name: joined where the narrators attest it (ISN-TAH, v0.5.3)
+    met = tahwil_meet.join(conn)
     conn.execute("INSERT OR REPLACE INTO core_meta (key, value) VALUES ('narrator_matcher', ?)", (stamp,))
     conn.commit()
     from isnady.core import log
 
-    log.get("narrators").info("✔ narrators identified by %s: %s of %s links in %s chains", MATCHER_ID,
-                              f"{identified:,}", f"{total:,}", f"{len(chains):,}")
+    log.get("narrators").info("✔ narrators identified by %s: %s of %s links in %s chains; %s tahwil roads joined "
+                              "where the narrators attest the meeting (of %s)", MATCHER_ID, f"{identified:,}",
+                              f"{total:,}", f"{len(chains):,}", f"{met['joined']:,}", f"{met['looked']:,}")
     return {"chains": len(chains), "links": total, "identified": identified}
 
 

@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.5.2-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.5.3-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.5.2-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.5.3-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.5.2).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.5.3).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -402,16 +402,18 @@ correct. Names are kept exactly as written, with the clarifications the compiler
 
 | | Chains (roads) | Read whole | Reaching the Prophet / a Ma'sum | Names identified |
 |:--|--:|--:|--:|--:|
-| Sahih al-Bukhari | 8,085 | 99.7% | 78.2% | 74.7% |
-| Sahih Muslim | 12,382 | 100.0% | 69.5% | 77.5% |
-| Sunan Abi Dawud | 6,422 | 100.0% | 75.6% | 74.2% |
-| al-Kafi (read the Shia way) | 14,436 | 98.8% | 94.0% | 63.4% |
+| Sahih al-Bukhari | 8,085 | 99.7% | 78.3% | 79.8% |
+| Sahih Muslim | 12,382 | 100.0% | 70.6% | 81.3% |
+| Sunan Abi Dawud | 6,422 | 100.0% | 76.7% | 78.3% |
+| al-Kafi (read the Shia way) | 14,436 | 98.8% | 94.6% | 65.2% |
 
-(isnady 0.5.2, chains isnady-isnad-15, narrators isnady-narrators-15. A road of a tahwil (ح) is a chain of its own;
+(isnady 0.5.3, chains isnady-isnad-15, narrators isnady-narrators-16. A road of a tahwil (ح) is a chain of its own;
 "reaching" counts the chains whose last link is the Prophet ﷺ or a Ma'sum — a chain may also end with a Companion's
 own word. Only what the text says is drawn: where a book writes "وعنه" or "بهذا الإسناد", the chain of the hadith
 before it is drawn beside the road, marked as taken from there, and kept out of these figures; a text that merely
-goes on from the hadith before is given no chain.)
+goes on from the hadith before is given no chain. A road of a tahwil whose meeting the text does not name goes on
+as the other road only where the narrators attest it: its last narrator is found narrating from that one in at least
+three other hadith, in chains read whole — and the chain page says so.)
 
 In a blind, hand-checked sample of 30 Sunni chains: **no wrong narrator**, 27 complete. The rest are
 kept whole, each with its reason: *tahwil* (ح, a second chain joining), two teachers at one link
@@ -618,6 +620,12 @@ it. Every result is computed once and saved as JSON in your data folder (`derive
 what it was computed from changed — new books or hadith, narrators identified differently, new verdicts or grades,
 books switched off — or the analysis itself; a new version of isnady alone does not.
 
+**For readers who never studied statistics:** under every headline an open box, *In plain words*, says what came out
+here ("τb 0.35 — a moderate relation, too clear to be chance"; "the busiest tenth of the narrators carry 84% of all
+appearances — the pivots (madar) the critics speak of"), and its words — Gini, Kendall's τb, the 95% interval, the
+odds ratio, kappa … — open on a click with what they measure, how to read them, what they mean for the science of
+hadith, and an example.
+
 **Out of isnady, piece by piece or whole:** every finding has a ⤓ — its chart as a picture (PNG, SVG), a PDF or on
 the clipboard, its figures as CSV, Excel, JSON or Markdown; the page's **Export** writes a section or every section
 as one PDF or one web page with the charts and their tables, every table as one Excel workbook (a sheet each) or as
@@ -633,6 +641,7 @@ CSV files, and the computed results as JSON (`iy export statistics [BOOK]`).
 | **Books** | the books side by side |
 | **Graders** | agreement of every pair (same grade, Cohen's and the ordinal kappa, 95% intervals, Krippendorff's alpha); a **Dawid–Skene model** of each hadith's true grade and each grader's confusion matrix; **strictness**; the **disputed hadith** |
 | **The hadith model** | what each scholar's grade follows — ordinal regression with odds ratios and 95% intervals, and the hadith graded higher or lower than their chain |
+| **Terms explained** | every measure of the page in everyday words — what it measures, how to read it, what it means for the science of hadith, an example (`iy stats --explain`) |
 | **Correlations and tests** | every measure against every other (Spearman's ρ with Benjamini–Hochberg q-values, the partial ρ with the others held equal) and what differs: graders pair by pair (Stuart–Maxwell), books (Kruskal–Wallis, Mann–Whitney with Cliff's δ), whether the model's shape holds (Brant) |
 
 <p align="center">
@@ -650,6 +659,7 @@ iy stats                     # what the database holds, per book
 iy stats graders --book abudawud
 iy stats model --grader albani
 iy stats lab --csv ./lab     # every table behind the figures, as CSV
+iy stats --explain kendall   # any measure in plain words (or every one: iy stats --explain)
 ```
 
 ---
@@ -727,6 +737,13 @@ alone, never published) and can be exported and imported as a file; a hadith is 
 bookmark survives a new import. `iy bookmark add hadith bukhari:1 --folder "Intention/Deeds" --note "…"`,
 `iy bookmark list`, `iy bookmark list tree`, `iy bookmark add tree prophets:musa`, `iy bookmark folders`,
 `iy bookmark export file.json`.
+
+**Where you left off.** Each book remembers by itself the chapter and the hadith you had come to, and opens there
+again ("🔖 You left off at hadith 59" under it on the shelf). Put markers of your own wherever you like and name them
+("Prayer reading", "Ramadan"), as many as you want, in any book; the 🔖 Markers menu of the Books page goes to any of
+them, or to where you left each book. They are kept with your profile, and the same from the command line:
+`iy book bukhari --resume`, `iy book bukhari 3 --mark "Knowledge"`, `iy book --marks`, `iy book --go knowledge`,
+`iy book --unmark knowledge`.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/bookmarks.png" alt="Bookmarks — folders on the left, a hadith, a narrator, a scholar and a term with their folders and a note" width="850">
@@ -950,10 +967,10 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | `iy chain BOOK NUMBER` | `iy chain kafi 5:1740` | One chain, narrator by narrator, with who each one is and whom it reaches, then said in Turkish and English (`--lang tr,en`); `--raw` adds the wording; without a number, the book's range |
 | `iy isnads` | `iy isnads --rebuild` | Read every chain and report per book: split, reaching the Prophet or a Ma'sum, identified |
 | `iy narrator NAME` | `iy narrator "Ibn Umar"` | A narrator: his critic's verdict (Ibn Hajar's rank, or the Imami terms), tabaqa, death year, books; `--limit 1` adds teachers, students and hadith; `--famous` lists the famous Companions by group (`--tradition shia`: Ashab al-Ijma'; `all`: both) |
-| `iy book [KEY [CHAPTER]]` | `iy book bukhari 2` | The books (the Sunni ones; `--tradition shia` or `all`); a book's chapters; a chapter read in order |
+| `iy book [KEY [CHAPTER]]` | `iy book bukhari 2` | The books (the Sunni ones; `--tradition shia` or `all`); a book's chapters; a chapter read in order; `--resume` where you left it, `--mark NAME`, `--marks`, `--go NAME`, `--unmark NAME` |
 | `iy scholar [NAME]` | `iy scholar albani` | The scholars in the data (the Sunni ones; `--tradition shia` or `all`), or one of them with his measured statistics |
 | `iy tahric BOOK NUMBER` | `iy tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |
-| `iy stats [SECTION]` | `iy stats graders --book abudawud` | `corpus`, `narrators`, `chains`, `grades`, `books`, `graders`, `model`, `lab`; `--csv DIR`, `--recompute`; `--book @all` measures both roads |
+| `iy stats [SECTION]` | `iy stats graders --book abudawud` | `corpus`, `narrators`, `chains`, `grades`, `books`, `graders`, `model`, `lab`; `--csv DIR`, `--recompute`; `--book @all` measures both roads; `--explain [TERM]` every measure in plain words |
 | `iy term [NAME]` | `iy term --search tadlis` | The glossary, English, Turkish or Arabic (`--lang tr`, `--lang ar`) |
 | `iy life NAME` | `iy life Abu Hurayra --lang tr` | The life of a Companion, a narrator or a scholar (`--lang en\|tr\|ar`, `--tradition`, `--limit`); `--source` downloads al-Dhahabi's *Siyar* and shows its entry |
 | `iy tree WHICH [NAME]` | `iy tree family "Ibn Umar"` | Genealogies: `prophets`, `quraysh`, a narrator's `family`, his line of `learning` (`--depth`, `--width`); `--hadith` the hadith that speak of a prophet |
@@ -1015,7 +1032,6 @@ Sunan Abu Dawud #472
 - **Narrators** — the other half of the names identified through teachers and students (al-Mizzi's
   *Tahdhib al-Kamal*), the verdicts of other critics beside Ibn Hajar's, and whether each link could
   have met the next; fuller, richer lives of narrators and scholars.
-- **Statistics in plain words** — every finding said simply first, the method after.
 - **Settings and export** — more of isnady set from one place; export as ODS, TEI-XML and BibTeX/RIS, of the
   scholars and the glossary, and a preview of an import before it comes in.
 - **Every interface language in full** — the 21 listed after English, Türkçe and العربية; the command line

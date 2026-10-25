@@ -3,6 +3,44 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.5.3] — 2026-10-25
+
+- **Where you left off, and markers of your own (BM3, 2026-10-25: "Kitaplarda nerede kaldım?").** Each book
+  remembers by itself the chapter and the hadith you had come to (the hadith at the top of the page when the scrolling
+  stops) and opens there again; the shelf says "You left off at hadith 59" under it. The 🔖 Markers menu of the Books
+  page puts a marker of your own where you are reading, named as you like, in any book and as many as you want, goes
+  to any of them or to where you left each book, renames and removes them. Kept with the profile (state.json, in a
+  profile file too) by book, chapter label and hadith number, so they survive a new import. The command line does the
+  same: `iy book bukhari --resume`, `iy book bukhari 3 --mark NAME`, `iy book --marks`, `--go NAME`, `--unmark NAME`.
+- **Statistics in plain words (ST-EXP1: "istatistik bilmeyenlerde anlayacak sekilde gosterilsin!").** Every finding
+  of the Statistics page has under its headline an open box, *In plain words*, that says what came out here, with
+  the figure in words ("τb 0.35 — a moderate relation, too clear to be chance", "Gini 0.88: very uneven: a few carry
+  most of it — the pivots (madar) the critics speak of", "an odds ratio of 17.8 for a weak weakest narrator"); its
+  words open on a click with what they measure, how to read them, what they mean for the science of hadith and an
+  example. A new last section, *Terms explained*, holds all 31 of them; `iy stats --explain [TERM]` prints them, and
+  `iy stats` adds a plain line under concentration, the grades, the model's fit, the graders' agreement and
+  strictness. Turkish and Arabic complete.
+- **The roads of a tahwil meet where the narrators attest it (ISN-TAH).** 0.5.2 stopped joining two roads whose
+  meeting the text does not name; now a stopped road goes on as the other road does only (1) where the text names the
+  meeting after it ("كلهم عن الزهري", "جميعا عن هشام") and the pair is attested, or (2) where its last narrator is
+  found narrating from a narrator of the other road in at least three OTHER hadith, in chains read whole — never the
+  other way round more often, never a teacher of a later generation, never one dead too long before to have taught
+  him; the most attested meeting wins. 330 roads joined this way, 99 of them where the text names the meeting; Sahih Muslim reaches the
+  Prophet ﷺ in 70.6% of its roads (69.5%); the chain page and `iy chain` say at the joining link why the roads meet there and how many hadith
+  attest it. A road that ends with "بهذا الإسناد" is never joined so: the book's own pointer is drawn beside it.
+- **More narrators identified, by their teachers and students (NR-ID3).** The matcher (isnady-narrators-16):
+  - a bare name ("سفيان", "يحيى", "عبيد الله", "أبي سلمة") whose neighbour on ONE side only is known is the
+    candidate that neighbour is seen with in at least six chains read whole, five times as often as any other (the
+    critics' tamyiz al-muhmal);
+  - "عن أبيه" is the father as the son's own nasab in the rijal work names him, found as an entry of his own —
+    "سهيل بن أبي صالح ذكوان" → Dhakwan Abu Salih, "عبد الله بن أبي قتادة" → Abu Qatada, "عمر بن حفص بن غياث" →
+    Hafs b. Ghiyath — when the entry carries his name and one more thing of the nasab (the grandfather, the kunya, a
+    nisba) and is of the son's generation or before.
+  21,507 more links identified (344,822 → 366,314); al-Bukhari 74.7% → 79.8%, Muslim 77.6% → 81.3%, Abu Dawud
+  74.3% → 78.3%, al-Kafi 63.5% → 65.2%. The new identifications break the order of generations or the years of death
+  far less often than the ones before (18 in 21,507 against 156 in as many). The narrators are identified again once,
+  on the first start.
+
 ## [0.5.2] — 2026-10-25
 
 - **Only what the text says is drawn, as the science of hadith reads it (2026-10-25: "Hadis ilmi cercevesinde

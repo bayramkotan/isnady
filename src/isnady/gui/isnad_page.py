@@ -374,6 +374,18 @@ class IsnadPage(QWidget):
         self.body_layout.addStretch(1)
         self.scroll.verticalScrollBar().setValue(0)
 
+    @staticmethod
+    def _meeting_words(meeting: dict, links: list, i: int) -> str:
+        before = core_isnad.short_name(links[i - 1]["raw_name"]) if i else ""
+        here = core_isnad.short_name(links[i]["raw_name"])
+        if meeting["said"]:
+            return tr("The tahwil (ح): this road joins the others here — the text says they all narrate from {here} "
+                      "(\u201cكلهم عن …\u201d), and {before} is found narrating from him in {n} other hadith.",
+                      here=here, before=before, n=meeting["attested"])
+        return tr("The tahwil (ح): the text does not say where this road joins the others; it goes on here because "
+                  "{before} is found narrating from {here} in {n} other hadith of these books, in chains read whole.",
+                  before=before, here=here, n=meeting["attested"])
+
     def _draw_chain(self, chain: dict, info: dict) -> None:
         """One chain from the compiler's book to whom it reaches, node by node."""
         if chain and (chain["links"] or chain["problem"] == core_isnad.DIRECT):
@@ -393,7 +405,12 @@ class IsnadPage(QWidget):
                 # al-Dehlawi's Forty, al-Mu'min: the words of the Prophet ﷺ or the Ma'sum with no narrator between
                 self.body_layout.addWidget(ChainNode("…", tr("The compiler gives no narrators between himself and "
                                                             "whom the words are from"), None))
+            meeting = chain.get("meeting")
             for i, link in enumerate(links):
+                if meeting and link["position"] == meeting["first_position"]:
+                    # where a tahwil road goes on as the other road does, and why there (ISN-TAH)
+                    self.body_layout.addWidget(_label("⤷ " + self._meeting_words(meeting, links, i), "Caption",
+                                                      wrap=True))
                 person = people.get(link.get("person_id"))
                 nxt = links[i + 1]["raw_name"] if i + 1 < len(links) else ""
                 note = core_isnad.link_note(link["raw_name"], nxt)

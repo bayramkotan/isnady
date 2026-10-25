@@ -572,8 +572,11 @@ def cmd_stats_graders(args) -> int:
     if len(r["graders"]) < 2:
         print("  fewer than two graders who give more than one grade: no agreement or model")
         return 0
+    from isnady.core import stats_words as sw
+
     a = r["alpha"]
     print(f"Krippendorff's alpha (ordinal) {a['value']:.3f}  95% {a['ci'][0]:.3f}–{a['ci'][1]:.3f}  over {a['units']:,} hadith")
+    print(f"  → in plain words: {sw.alpha(a['value'])}  (iy stats --explain alpha)")
     for ov in r.get("one_voice", []):
         print(f"  ! {short[ov['kept']]} and {short[ov['left_out']]} agree {100 * ov['agree']:.1f}%: one voice in the model")
     print("Pairs: same grade · Cohen's kappa · ordinal kappa (95% intervals)")
@@ -584,7 +587,9 @@ def cmd_stats_graders(args) -> int:
               f" · κ {p['kappa']:.2f} [{ci['kappa'][0]:.2f}–{ci['kappa'][1]:.2f}] · κw {p['wkappa']:.2f} [{ci['wkappa'][0]:.2f}–{ci['wkappa'][1]:.2f}]")
     print("Strictness from the model: P(below the true grade) − P(above it); negative = stricter")
     for g, s in sorted(r["model"]["strictness"].items(), key=lambda kv: kv[1]["value"]):
-        print(f"  {short[g]:40} {s['value']:+.3f}  [{s['ci'][0]:+.3f}, {s['ci'][1]:+.3f}]")
+        print(f"  {short[g]:40} {s['value']:+.3f}  [{s['ci'][0]:+.3f}, {s['ci'][1]:+.3f}]  "
+              + ("stricter (mutashaddid)" if s["ci"][1] < 0 else "more lenient (mutasahil)" if s["ci"][0] > 0
+                 else "neither, within chance"))
     c = r["certainty"]
     print(f"The model is sure (≥95%) of {c['high']:,} of {c['total']:,} hadith, unsure (<60%) of {c['low']:,}; "
           f"{r['disputed_total']:,} disputed")
@@ -613,6 +618,8 @@ def cmd_stats_corpus(args) -> int:
                 one.csv = os.path.join(args.csv, "sunni" if road is None else "shia")
             code = cmd_stats_corpus(one) or code
         return code
+    from isnady.core import stats_words as sw
+
     conn = _connect()
     r = sc.cached(conn, args.book, lambda m: print(f"  … {m}", file=sys.stderr), args.recompute)
     if r.get("empty"):
@@ -639,6 +646,7 @@ def cmd_stats_corpus(args) -> int:
         if c.get("gini") is not None:
             print(f"\nConcentration: busiest 1% carry {100 * c['top1']:.1f}%, busiest 10% {100 * c['top10']:.1f}%; "
                   f"{c['half_by']:,} of {c['people']:,} narrators carry half; Gini {c['gini']:.3f}")
+            print(f"  → in plain words: {sw.gini(c['gini'])} — the pivots (madar) of the corpus  (iy stats --explain gini)")
         print("\nThe pillars (times in the chains · hadith · rank)")
         for p in n["pillars"][:args.limit]:
             print(f"  {p['links']:6,} {p['hadith']:6,}  rank {p['rank'] or '—':>2}  {p['name']}")
@@ -662,6 +670,8 @@ def cmd_stats_corpus(args) -> int:
             lt = f"{ln['tau']:.3f}" if ln and ln["tau"] is not None else "—"
             print(f"  {g['grader'][:34]:34} {g['book'][:22]:22} n {w['n']:5,}  tau-b {w['tau']:.3f} {ci}  "
                   f"gamma {w['gamma']:.3f}  · length tau-b {lt}")
+            print(f"    → in plain words: {sw.strength(w['tau'])}, "
+                  f"{sw.sure(*(w['tau_ci'] or (None, None))) or 'no interval'}  (iy stats --explain kendall)")
     if topic in ("books", None):
         print("\nBooks: chains · median length · identified · " + ("reach a Ma'sum" if shia else "reach the Prophet")
               + " · narrators")
@@ -690,6 +700,11 @@ def cmd_stats_model(args) -> int:
         print(f"  fit: McFadden R² {m['mcfadden']:.3f} · right {100 * m['accuracy']:.1f}% (always "
               f"“{m.get('base_label', m['labels'][0])}”: {100 * m['base_rate']:.1f}%) "
               f"· Somers' D {m['somers_d']:.3f} · LR χ² {m['lr_all']['chi2']:.1f} on {m['lr_all']['df']} df")
+        from isnady.core import stats_words as sw
+
+        print(f"  → in plain words: the chain explains {sw.r2(m['mcfadden'])} of the grades and gives "
+              f"{sw.somers(m['somers_d'])} of the hadith; the rest is what the scholar weighed beyond one chain "
+              f"(iy stats --explain r2)")
         print("  odds ratio of a WEAKER grade (95% interval), p")
         for c in m["coefficients"]:
             print(f"    {c['name']:34} {c['or']:7.2f} [{c['or_ci'][0]:.2f}–{c['or_ci'][1]:.2f}]  p {c['p']:.2g}")
@@ -806,7 +821,23 @@ def _write_corpus_csv(r: dict, folder: str) -> None:
     print(f"\nCSV tables written to {out}")
 
 
+def _explain_terms(which: str) -> int:
+    """iy stats --explain [TERM]: every measure in plain words (ST-EXP1)."""
+    from isnady.core import stats_words as sw
+
+    chosen = sw.all_terms() if which in ("", "all") else [t for t in [sw.find(which)] if t]
+    if not chosen:
+        print(f"No measure '{which}'. Known: " + ", ".join(t["name"] for t in sw.all_terms()), file=sys.stderr)
+        return 1
+    for t in chosen:
+        print(f"\n{t['name']}\n  What it measures: {t['what']}\n  How to read it:   {t['read']}"
+              f"\n  Hadith science:   {t['hadith']}\n  Example:          {t['example']}")
+    return 0
+
+
 def cmd_stats(args) -> int:
+    if getattr(args, "explain", None) is not None:
+        return _explain_terms(args.explain)
     if getattr(args, "topic", None) == "graders":
         return cmd_stats_graders(args)
     if getattr(args, "topic", None) == "model":
@@ -1275,11 +1306,50 @@ def cmd_shortcut(args) -> int:
     return 0
 
 
+def _book_marks(conn, args) -> int | None:
+    """The reader's markers (BM3): list them, put one, remove one; None when none of that was asked."""
+    from isnady.core import readmarks, works
+
+    titles = {w["key"]: w["title"] for w in works.list_works(conn)}
+    if args.marks:
+        mine = readmarks.marks()
+        print("Your markers:" if mine else "No markers yet (iy book KEY CHAPTER --mark NAME).")
+        for m in mine:
+            print(f"  {m['name']:30} {readmarks.describe(m, titles.get(m['book'], ''))}")
+        left = [p for p in readmarks.recent(20) if p["book"] in titles]
+        if left:
+            print("\nWhere you left each book (iy book KEY --resume):")
+            for p in left:
+                print(f"  {p['book']:12} {readmarks.describe(p, titles.get(p['book'], ''))}")
+        return 0
+    if args.unmark:
+        m = readmarks.find(args.unmark)
+        if m is None:
+            print(f"No marker '{args.unmark}'. See: iy book --marks", file=sys.stderr)
+            return 1
+        readmarks.remove(m["id"])
+        print(f"Removed the marker: {m['name']}")
+        return 0
+    if args.go:
+        m = readmarks.find(args.go)
+        if m is None:
+            print(f"No marker '{args.go}'. See: iy book --marks", file=sys.stderr)
+            return 1
+        args.key = m["book"]
+        args.resume_mark = m
+    return None
+
+
 def cmd_book(args) -> int:
-    from isnady.core import works
+    from isnady.core import readmarks, works
 
     conn = _connect()
     works.ensure_collection_works(conn)
+    args.resume_mark = None
+    done = _book_marks(conn, args)
+    if done is not None:
+        conn.close()
+        return done
     if not args.key:
         # the Sunni books unless the other road, or both, are asked for (NR-DEF1), as the Books page opens
         road = None if args.tradition == "all" else args.tradition
@@ -1297,6 +1367,18 @@ def cmd_book(args) -> int:
         conn.close()
         return 1
     order = works.reading_order(conn, work["id"])
+    focus = None
+    if args.resume or args.resume_mark:
+        # where this book was left, or a marker (BM3): its chapter, from the hadith it was at
+        kept = args.resume_mark or readmarks.last(work["key"])
+        if kept is None:
+            print(f"Nothing kept for {work['title']} yet: read a chapter (iy book {work['key']} N) and it is remembered.")
+            conn.close()
+            return 0
+        at, focus = readmarks.resolve(conn, kept)
+        if at in order:
+            args.chapter = order.index(at) + 1
+            print("Continuing at: " + readmarks.describe(kept, work["title"]))
     if args.chapter is None:
         for i, cid in enumerate(order, 1):
             trail = " › ".join((p["title"] or "") for p in works.path(conn, cid))
@@ -1308,7 +1390,19 @@ def cmd_book(args) -> int:
         conn.close()
         return 1
     cid = order[args.chapter - 1]
-    items, total = works.leaves(conn, cid, 0, args.limit)
+    if focus is not None:
+        # start at the hadith kept, not at the top of the chapter
+        every, _n = works.leaves(conn, cid, 0, 1_000_000)
+        start = next((i for i, it in enumerate(every) if it.get("hadith_id") == focus), 0)
+        items, total = every[start:start + args.limit], len(every)
+    else:
+        items, total = works.leaves(conn, cid, 0, args.limit)
+    place = readmarks.place_of(conn, work["key"], cid, focus or next((it["hadith_id"] for it in items
+                                                                       if it.get("hadith_id")), None))
+    readmarks.remember(place["book"], place["chapter"], place["number"], place["title"], place["place"])
+    if args.mark:
+        m = readmarks.add(args.mark, place["book"], place["chapter"], place["number"], place["title"], place["place"])
+        print(f"Marker put: {m['name']} — {readmarks.describe(m, work['title'])}")
     print(" › ".join([work["title"]] + [(p["title"] or "") for p in works.path(conn, cid)]) + f"   ({total} items)")
     query = core_search.SearchQuery(text="", languages=args.language or [])
     for it in items:
@@ -1321,7 +1415,7 @@ def cmd_book(args) -> int:
         else:
             body = " ".join((it["text"] or it["title"] or "").split())
             print(f"\n{('#' + it['label']) if it['label'] else '→'} {body[: args.width] + (' ...' if len(body) > args.width else '')}")
-    if total > len(items):
+    if total > len(items) and focus is None:
         print(f"\n… {total - len(items)} more (--limit)")
     conn.close()
     return 0
@@ -1466,6 +1560,12 @@ def cmd_chain(args) -> int:
         elif ch["problem"]:
             print(f"  not split: {ch['problem']}")
         for i, link in enumerate(ch["links"]):
+            met = ch.get("meeting")
+            if met and link["position"] == met["first_position"]:
+                print("      ⤷ tahwil: the roads meet here — " + (
+                    f"the text says so (كلهم عن …); attested in {met['attested']} other hadith" if met["said"] else
+                    f"not said in the text: the narrator before is found narrating from this one in {met['attested']} "
+                    "other hadith, in chains read whole"))
             arabic, meaning, _why = core_isnad.term_label(link["transmission"])
             meaning = meaning if meaning.startswith("(") else f"({meaning})"
             print(f"  {link['position']:>2}. {arabic} {meaning}  {link['raw_name']}")
@@ -1897,6 +1997,11 @@ def build_parser() -> argparse.ArgumentParser:
     bk.add_argument("--width", type=int, default=160)
     bk.add_argument("--tradition", choices=("sunni", "shia", "all"), default="sunni",
                     help="the list: the Sunni books (default), the Shia ones, or all")
+    bk.add_argument("--resume", action="store_true", help="go on where you left this book (its chapter and hadith)")
+    bk.add_argument("--mark", metavar="NAME", help="put a marker of this name at the chapter shown")
+    bk.add_argument("--marks", action="store_true", help="your markers and where you left each book")
+    bk.add_argument("--go", metavar="NAME", help="open a marker (by its name or the start of it)")
+    bk.add_argument("--unmark", metavar="NAME", help="remove a marker")
     bk.set_defaults(func=cmd_book)
     sc = sub.add_parser("scholar", help="the hadith scholars in the data: compilers, graders, critics, with measured statistics")
     sc.add_argument("name", nargs="*", help="part of a name, e.g. albani, bukhari; none = the list")
@@ -1983,6 +2088,9 @@ def build_parser() -> argparse.ArgumentParser:
                                    "for graders, the book with most graders)")
     st.add_argument("--recompute", action="store_true", help="compute again instead of reading the saved results")
     st.add_argument("--limit", type=int, default=10, help="rows to list (disputed hadith, strongest relations)")
+    st.add_argument("--explain", nargs="?", const="all", metavar="TERM",
+                    help="every measure in plain words (what it measures, how to read it, what it means for hadith "
+                         "science, an example); or one, e.g. gini, kendall, kappa")
     st.set_defaults(func=cmd_stats)
     rm = sub.add_parser("remove", help="remove a source and everything imported from it")
     rm.add_argument("key", help="source key, see 'iy sources'")
