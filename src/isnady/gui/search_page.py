@@ -180,7 +180,7 @@ class ResultCard(QFrame):
             if open_chain is not None:
                 also.linkActivated.connect(lambda hid: open_chain(int(hid)))
             box.addWidget(also)
-        drawn = [c for c in (chains or ([chain] if chain else [])) if c["links"]]
+        drawn = [c for c in (chains or ([chain] if chain else [])) if c["links"] or c.get("problem") == core_isnad.DIRECT]
         if drawn:
             if len(drawn) > 1:
                 # a tahwil: the compiler joined roads in one hadith — each drawn (2026-10-13)

@@ -319,12 +319,15 @@ class IsnadPage(QWidget):
         head.addStretch(1)
         self.body_layout.addLayout(head)
 
-        drawn = [c for c in chains if c["links"]]
+        drawn = [c for c in chains if c["links"] or c["problem"] == core_isnad.DIRECT]
         text = core_isnad.arabic_text(self.conn, hid)
         if not drawn:
             # nothing to draw: said plainly, never an empty page (2026-10-25: "rasgele hadis … hicbirsey cikmiyor")
             if not text:
                 why = tr("No Arabic text for this hadith, so no chain was read.")
+            elif chain is not None and chain["problem"] == core_isnad.NOTE:
+                why = tr("These are the compiler's own words, not a narration: there is no chain to draw. The text "
+                         "is below.")
             elif chain is not None and chain["problem"] and chain["problem"] not in (
                     "does not start with a transmission term", core_isnad.NO_CHAIN):
                 why = tr("No chain could be read from this hadith's text: {reason}. Its text is below.",
@@ -359,7 +362,7 @@ class IsnadPage(QWidget):
 
     def _draw_chain(self, chain: dict, info: dict) -> None:
         """One chain from the compiler's book to whom it reaches, node by node."""
-        if chain and chain["links"]:
+        if chain and (chain["links"] or chain["problem"] == core_isnad.DIRECT):
             self.body_layout.addWidget(ChainNode(info["book_name"], tr("The compiler's book, where the chain begins"),
                                                  first=True, latin=True,
                                                  on_click=lambda h=info["id"]: self.open_in_book.emit(h),
@@ -372,6 +375,10 @@ class IsnadPage(QWidget):
                       for link in links if link.get("person_id")}
             # each name as the whole chain reads it: "his father" says whose (KIN1), a Companion has "(r.a.)"
             names = core_isnad.chain_link_names(chain, "tr" if _i18n.language() == "tr" else "en", people)
+            if not links:
+                # al-Dehlawi's Forty, al-Mu'min: the words of the Prophet ﷺ or the Ma'sum with no narrator between
+                self.body_layout.addWidget(ChainNode("…", tr("The compiler gives no narrators between himself and "
+                                                            "whom the words are from"), None))
             for i, link in enumerate(links):
                 person = people.get(link.get("person_id"))
                 nxt = links[i + 1]["raw_name"] if i + 1 < len(links) else ""

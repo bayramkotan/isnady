@@ -3,6 +3,30 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.5.0] — 2026-10-25
+
+- **Every hadith with a chain is drawn with it (2026-10-25: "tamamda senedsiz kalmasin … Hepsini hic eksik
+  kalmayacak sekilde coz").** The reader of the chains (isnady-isnad-13) no longer stops where a chain goes on:
+  - after words not understood, a pair of teachers it could not split, or a full stop, it reads on from the next
+    term of hearing ("قال قلت لأبي أسامة: حدثكم …", "قالا سمعنا قيسًا", "عن مسعر وغيره"); after a Companion the
+    words are his story and the chain ends with him;
+  - a road that stops at a narrator and says "بهذا الإسناد", "بمثله", "نحوه" (Muslim's way) goes on as the chain of the
+    hadith before it does, from that narrator: Sahih Muslim reaches the Prophet ﷺ in 81.9% of its chains (70.4%);
+  - every tahwil is drawn, each road its own chain, a road that names a narrator of another going on as that one;
+  - the man not named: "حدثني من شهد النبي ﷺ", "عمّن صلى مع رسول الله ﷺ", "عن رجل من القوم الذين سألوا عمر";
+    "فأخبرني", "قلت لعائشة: أخبريني", "أن رجلاً سأل ابن عمر"; the Musnad's pieces without a chain ("ثم قالت …",
+    "قال: وقال رسول الله ﷺ") take the chain of the hadith before;
+  - the books that cite without chains name their Companion ("ولأبي داود من حديث أبي هريرة", "وعن جابر نحوه") or
+    take the Companion of the hadith before ("وفي رواية لمسلم"); al-Dehlawi's Forty and al-Mu'min, which give the
+    words of the Prophet ﷺ or the Imam alone, are drawn as the compiler → … → him;
+  - the Shia books: a second road from the compiler without "جميعاً" is read whole and both roads drawn
+    (232 → 27); "بإسناده عن …", "بإسناده رفعه", "أبي رحمه الله قال سعد بن عبد الله عن …"; "وبهذا الإسناد عن X" whose X
+    is not in the chain before draws its own narrators (bi-isnadihi left unread 397 → 2); "قال سعد: …" (al-Tusi) is a
+    link; what is the compiler's own word (a date, a note on a narrator) is said to be so.
+  Hadith with no chain drawn: 1,950 → 483 (of them 213 now drawn compiler → … → the Prophet ﷺ / the Imam, 184 the
+  compilers' own words); chains left unread: Sunni 2,001 → 247, Shia 1,058 → 29. Links 513,880 → 527,724; Sunni
+  identified 279,943 → 287,199. The chains are read again once, on the first start.
+
 ## [0.4.9] — 2026-10-25
 
 - **Ten thousand chains that stopped halfway are read to the end (2026-10-25: "10bin senet az mı????!!!! Bunları da

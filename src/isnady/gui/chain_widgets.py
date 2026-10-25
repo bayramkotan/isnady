@@ -167,7 +167,8 @@ class ChainStrip(QWidget):
         open_name = (lambda raw: (lambda: on_name(core_isnad.short_name(raw)))) if on_name else (lambda raw: None)
         name_tip = tr("Click to look for this name among the narrators") if on_name else ""
         flow = _Columns(FlowLayout(self, spacing=4, rtl=True), words)
-        if compiler and chain["links"] and (chain["links"][0].get("transmission") or "bare") in _TO_US:
+        direct = not chain["links"] and chain.get("problem") == core_isnad.DIRECT
+        if compiler and (direct or chain["links"] and (chain["links"][0].get("transmission") or "bare") in _TO_US):
             # the compiler first: the "us" of "narrated to us" (Bayram, 2026-10-24, pointing from the book's name)
             flow.addWidget(_chip(compiler["arabic"], "ChainChipCompiler",
                                  tr("The compiler of the book: the \"us\" of \"narrated to us\" is he")),
@@ -197,6 +198,9 @@ class ChainStrip(QWidget):
                 flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChipUnknown",
                                      f"{link['raw_name']}\n{why}\n{arabic}: {meaning}",
                                      None if note else open_name(link["raw_name"]), name_tip))
+        if direct:
+            flow.addWidget(_chip("…", "ChainChipUnknown", tr("The compiler gives no narrators between himself and "
+                                                               "whom the words are from")))
         if chain.get("problem") and not (chain["reaches_prophet"] or chain.get("ends_with")):
             # read as far as here: the rest of the chain runs on in the text (shown below the chain)
             flow.addWidget(_arrow())
