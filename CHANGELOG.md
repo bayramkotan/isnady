@@ -3,6 +3,23 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.5.4] — 2026-10-26
+
+- **Abu Mu'awiya is al-Darir again, and seven famous kunyas are read as the six books mean them (NR-ID5, 2026-10-26).**
+  "أبو معاوية" bare in the six books is Muhammad b. Khazim al-Darir, al-A'mash's student; Hushaym b. Bashir shares
+  the kunya, but the chains call him "هشيم" — and his name had been given to 190 of al-Darir's links, the neighbours
+  outvoting a man the chains hardly ever name in full. Each is now told apart by the teachers only he narrates from
+  (al-A'mash, Hisham b. 'Urwa, 'Asim al-Ahwal … for al-Darir; Husayn, Mughira, Abu Bishr, Yunus b. 'Ubayd … for
+  Hushaym), and al-Darir is the reading of the bare kunya when nothing else decides: 1,420 links (56). In the same
+  way "أبو عوانة" (al-Waddah al-Yashkuri, 873), "أبو نعيم" (al-Fadl b. Dukayn, 646), "أبو أسامة" (Hammad b. Usama),
+  "أبو الزناد" ('Abd Allah b. Dhakwan), "أبو عاصم" (al-Dahhak b. Makhlad), "أبو قلابة" ('Abd Allah b. Zayd al-Jarmi)
+  are no longer left among their namesakes. A neighbour known only as the famous bearer of such a bare name does not
+  count as evidence for the next link (so "شعيب عن أبي الزناد" is still Shu'ayb b. Abi Hamza by his student). The
+  matcher is isnady-narrators-17: 5,026 more links identified (366,314 → 371,319), 192 corrected; al-Bukhari 81.6%,
+  Muslim 82.8%, Abu Dawud 79.2%. The narrators are identified again once, on the first start.
+- **The recent searches no longer cut their second row in half** (Bayram, 2026-10-26, screenshot): a row of buttons
+  that wraps (the recent searches, and every other such row) now makes its box as tall as its lines.
+
 ## [0.5.3] — 2026-10-25
 
 - **Where you left off, and markers of your own (BM3, 2026-10-25: "Kitaplarda nerede kaldım?").** Each book

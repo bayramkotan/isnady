@@ -71,7 +71,7 @@ from isnady.core.i18n import t, tr
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
-MATCHER_ID = "isnady-narrators-16"
+MATCHER_ID = "isnady-narrators-17"
 _TEACHER_MIN_TABAQA = 9           # the compilers' own teachers (Ibn Hajar's tabaqat 9-12)
 _HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم).*$")
 # "عائشة، زوج النبي ﷺ", "ثوبان مولى رسول الله ﷺ", "عائشة أم المؤمنين": who she is, not her name (2026-10-18: the
@@ -139,6 +139,15 @@ _MUHMAL = [
     ("taqrib:7299", ("هشام",),                                          # Hisham al-Dastuwa'i
      ("قتادة", "يحيى بن أبي كثير", "يحيى"), ("معاذ بن هشام",)),
     ("taqrib:7289", ("هشام",), ("محمد", "ابن سيرين", "محمد بن سيرين", "الحسن"), ()),   # Hisham b. Hassan
+    # 2026-10-26: "أبو معاوية" bare in the six books is Muhammad b. Khazim al-Darir — Hushaym b. Bashir shares the
+    # kunya but the chains call him "هشيم"; his name had been given to 190 of al-Darir's links (al-A'mash's student).
+    # Each by the teachers only he narrates from (students both share: Ahmad, Abu Kurayb, Sa'id b. Mansur …)
+    ("taqrib:5841", ("أبو معاوية", "أبي معاوية"),
+     ("الأعمش", "هشام بن عروة", "هشام", "عاصم الأحول", "عاصم", "إسماعيل بن أبي خالد", "عبيد الله بن عمر",
+      "عبيد الله", "الشيباني", "أبي مالك الأشجعي", "ليث", "حجاج", "موسى الجهني", "يزيد بن زياد"), ()),
+    ("taqrib:7312", ("أبو معاوية", "أبي معاوية"),
+     ("حصين", "مغيرة", "المغيرة", "أبي بشر", "أبو بشر", "يونس بن عبيد", "خالد الحذاء", "منصور بن زاذان",
+      "يعلى بن عطاء", "داود بن أبي هند", "سيار", "العوام", "إسماعيل بن سالم"), ()),
 ]
 
 
@@ -179,6 +188,12 @@ _FAMOUS = {
     # FS1: the Mother of the Believers (Asma' bt. Yazid is called Umm Salama too, but the chains name her Asma'),
     # and Abu Umama al-Bahili (Abu Umama b. Sahl is named with his father)
     "ام سلمه": "taqrib:8694", "ابو امامه": "taqrib:2923",
+    # 2026-10-26: the kunyas by which the six books call these men alone ("أبو عوانة" al-Waddah al-Yashkuri, "أبو
+    # نعيم" al-Fadl b. Dukayn, "أبو أسامة" Hammad b. Usama, "أبو الزناد" 'Abd Allah b. Dhakwan, "أبو عاصم" al-Dahhak
+    # b. Makhlad al-Nabil, "أبو قلابة" 'Abd Allah b. Zayd al-Jarmi, "أبو معاوية" Muhammad b. Khazim al-Darir) — each
+    # had hundreds of links left unidentified among the namesakes of that kunya
+    "ابو عوانه": "taqrib:7407", "ابو نعيم": "taqrib:5401", "ابو اسامه": "taqrib:1487", "ابو الزناد": "taqrib:3302",
+    "ابو عاصم": "taqrib:2977", "ابو قلابه": "taqrib:3333", "ابو معاويه": "taqrib:5841",
 }
 _FAMOUS_CONFIDENCE = 0.5
 # Road B (al-Najashi's keys), the same three helps, from the Imami scholars' own tamyiz (2026-10-18): the nisbas and
@@ -523,7 +538,8 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
     return out
 
 
-def by_neighbours(chains: list[tuple[list, list]], rounds: int = 3) -> int:
+def by_neighbours(chains: list[tuple[list, list]], rounds: int = 3, trust: float = 0.8, least: int = 0,
+                  lead: float = 0.0) -> int:
     """Evidence 5: [(results, candidates)] per chain, results changed in place where the narrators around a link
     decide between its candidates. Returns how many links were identified this way."""
     found = 0
@@ -532,8 +548,8 @@ def by_neighbours(chains: list[tuple[list, list]], rounds: int = 3) -> int:
         for results, _c, *_rest in chains:
             for i in range(len(results) - 1):
                 a, b = results[i][0], results[i + 1][0]
-                if a is not None and b is not None and results[i][1] and results[i][1] >= 0.8 \
-                        and results[i + 1][1] and results[i + 1][1] >= 0.8:
+                if a is not None and b is not None and results[i][1] and results[i][1] >= trust \
+                        and results[i + 1][1] and results[i + 1][1] >= trust:
                     edges[(a, b)] += 1
         if not edges:
             break
@@ -557,7 +573,8 @@ def by_neighbours(chains: list[tuple[list, list]], rounds: int = 3) -> int:
                 rows.sort()
                 best, who = rows[-1]
                 second = rows[-2][0]
-                if best >= (_EDGE_MIN + 1 if last else _EDGE_MIN) and best >= _EDGE_LEAD * second and best > second:
+                floor = least or (_EDGE_MIN + 1 if last else _EDGE_MIN)
+                if best >= floor and best >= (lead or _EDGE_LEAD) * second and best > second:
                     results[i] = (who, _EDGE_CONFIDENCE, count)
                     changed += 1
         found += changed
@@ -587,6 +604,12 @@ def by_one_side(chains: list[tuple[list, list]]) -> int:
                 continue
             student = results[i - 1][0] if i > 0 else None
             teacher = results[i + 1][0] if i + 1 < len(results) else None
+            if student is not None and teacher is not None:
+                # both known, one of them only as the famous bearer of a bare name (0.5): the other side decides
+                weak_s = (results[i - 1][1] or 0) <= _FAMOUS_CONFIDENCE
+                weak_t = (results[i + 1][1] or 0) <= _FAMOUS_CONFIDENCE
+                if weak_s != weak_t:
+                    student, teacher = (None, teacher) if weak_s else (student, None)
             if (student is None) == (teacher is None):
                 continue                            # both known (the two-sided rule decided or could not), or none
             rows = sorted(((edges.get((student, p), 0) if student else edges.get((p, teacher), 0)), p) for p in cands[i])

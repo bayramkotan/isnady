@@ -38,7 +38,16 @@ class FlowLayout(QLayout):
 
     def setGeometry(self, rect: QRect) -> None:  # noqa: N802
         super().setGeometry(rect)
-        self._do_layout(rect, test_only=False)
+        height = self._do_layout(rect, test_only=False)
+        # the widget that holds the flow is made as tall as its lines: a layout that does not ask heightForWidth (a
+        # QVBoxLayout in a scroll area) gave it the height of one line and cut the second row of the recent searches
+        # in half (Bayram, 2026-10-26, screenshot)
+        owner = self.parentWidget()
+        if owner is not None and owner.layout() is self and rect.width() > 0:
+            margins = self.contentsMargins()
+            need = height + margins.top() + margins.bottom()
+            if owner.minimumHeight() != need:
+                owner.setMinimumHeight(need)
 
     def sizeHint(self) -> QSize:  # noqa: N802
         return self.minimumSize()
