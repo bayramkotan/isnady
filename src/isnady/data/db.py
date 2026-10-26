@@ -213,6 +213,8 @@ CREATE TABLE IF NOT EXISTS isnad_links (
     PRIMARY KEY (isnad_id, position)
 );
 CREATE INDEX IF NOT EXISTS ix_isnad_links_person ON isnad_links(person_id);
+-- the links not looked up yet: none, nearly always, so finding that out reads nothing (PERF-START)
+CREATE INDEX IF NOT EXISTS ix_isnad_links_todo ON isnad_links(isnad_id) WHERE candidates IS NULL;
 
 -- ------------------------------------------------------------------- grades
 -- A grader's verdict on a hadith (or on one of its chains), exactly as written.

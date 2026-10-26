@@ -769,6 +769,27 @@ def drop_impossible(results: list, index: "Index") -> int:
     return dropped
 
 
+def links_ready(conn: sqlite3.Connection) -> bool:
+    """Every link looked up by this matcher, on these narrators and these chains — known from the small indexes
+    alone, as link_narrators decides it is up to date (PERF-START: the window opens at once when it is)."""
+    from isnady.core import rijal
+    from isnady.core.isnad import PARSER_ID
+
+    try:
+        if conn.execute("SELECT COUNT(*) FROM persons").fetchone()[0] == 0:
+            return True
+        death = conn.execute("SELECT value FROM core_meta WHERE key = 'death_rule'").fetchone()
+        if death is None or death[0] != rijal.DEATH_RULE:
+            return False
+        persons_now = str(tuple(conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM persons").fetchone()))
+        row = conn.execute("SELECT value FROM core_meta WHERE key = 'narrator_matcher'").fetchone()
+        if row is None or row[0] != f"{MATCHER_ID}|{persons_now}|{PARSER_ID}":
+            return False
+        return not conn.execute("SELECT EXISTS (SELECT 1 FROM isnad_links WHERE candidates IS NULL)").fetchone()[0]
+    except sqlite3.OperationalError:
+        return False
+
+
 def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | None = None,
                    rebuild: bool = False) -> dict:
     """Identify the narrators of every chain read from the texts."""
@@ -788,7 +809,7 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
     stamp = f"{MATCHER_ID}|{persons_now}|{PARSER_ID}"
     row = conn.execute("SELECT value FROM core_meta WHERE key = 'narrator_matcher'").fetchone()
     pending = conn.execute(
-        """SELECT COUNT(*) FROM isnad_links l WHERE l.candidates IS NULL"""
+        "SELECT EXISTS (SELECT 1 FROM isnad_links WHERE candidates IS NULL)"
     ).fetchone()[0]
     if not rebuild and row is not None and row[0] == stamp and pending == 0:
         return {"chains": 0, "links": 0, "identified": 0, "note": "up to date"}

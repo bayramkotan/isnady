@@ -3,6 +3,23 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.5.5] — 2026-10-26
+
+- **isnady opens at once again (PERF-START, Bayram 2026-10-26: "isnady son zamanlarda cok cok gec aciliyor").**
+  Before the window showed, every start looked for texts not yet indexed, hadith without a chain and links not yet
+  looked up — and each of those looks read a whole table: about 320 MB of the 740 MB database, at every start, and
+  half a minute and more on a disk not yet warm (after a restart). Each is now known from a few small index reads,
+  kept as a stamp of what was done last (the number and the last row of the texts, the hadith and the chains; a
+  partial index of the links not yet looked up): about 8 MB. A book added, removed or imported again changes the
+  stamp, and the full look is made then. What the window reads in all at a start fell from about 670 MB to 170 MB:
+  the Chains page's share of narrators identified in each book is kept with the other figures (it was counted again,
+  book by book, at every start), and the Narrators page no longer draws the first narrator twice.
+- **A new version no longer keeps the window from opening.** When a new version reads the chains again or identifies
+  the narrators again (once), that work used to come before the window: the window did not show at all for a minute
+  or more. It now runs in a thread of its own after the window has opened, says so in the status bar, and every page
+  is drawn again with the new results when it ends. With a new matcher: the window in about 1.5 s, the narrators
+  identified behind it in about 45 s, with the same results as before.
+
 ## [0.5.4] — 2026-10-26
 
 - **Abu Mu'awiya is al-Darir again, and seven famous kunyas are read as the six books mean them (NR-ID5, 2026-10-26).**

@@ -1967,5 +1967,7 @@
  "{strict} is the strictest ({v1:+.3f}), {lenient} the most lenient ({v2:+.3f}).": "En katı {strict} ({v1:+.3f}), en gevşek {lenient} ({v2:+.3f}).",
  "For the science of hadith: the classical labels mutashaddid (strict) and mutasahil (lenient), put in numbers on the very same hadith.": "Hadis ilmi açısından: klasik müteşeddid (katı) ve mütesâhil (gevşek) nitelemeleri, aynı hadisler üzerinde sayıya dökülmüş hâli.",
  "Read a row: for a hadith whose grade (by all the graders together) is this, how often each grader gives each grade. Much outside the diagonal is a grader who sees it otherwise.": "Bir satırı okuyun: hükmü (bütün hüküm verenlere göre) bu olan bir hadise, her hüküm verenin ne sıklıkla hangi hükmü verdiği. Köşegenin dışına çok düşen, onu farklı gören bir hüküm verendir.",
- "{n:,} hadith where the scholars are two grades apart or the model is unsure — the places where their ijtihad differs most.": "Âlimlerin iki derece ayrıldığı ya da modelin emin olmadığı {n:,} hadis — ictihadlarının en çok ayrıldığı yerler."
+ "{n:,} hadith where the scholars are two grades apart or the model is unsure — the places where their ijtihad differs most.": "Âlimlerin iki derece ayrıldığı ya da modelin emin olmadığı {n:,} hadis — ictihadlarının en çok ayrıldığı yerler.",
+ "Bringing the chains up to date after the new version (once)…": "Yeni sürümden sonra senedler güncelleniyor (bir kez)…",
+ "The chains could not be brought up to date: {error}": "Senedler güncellenemedi: {error}"
 }

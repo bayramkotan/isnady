@@ -381,12 +381,13 @@ class NarratorsPage(QWidget):
             self._show_empty()
             return
         self.overview.setText("<br>".join(lines))
+        shown = self._current
         if self._famous_mode:
             self._show_famous()
         else:
             self._populate()
-        if self._current:
-            self.show_person(self._current)
+        if shown:                       # the one shown before; the list's first is drawn by _populate only when none
+            self.show_person(shown)
 
     def _populate(self) -> None:
         conn = self.conn

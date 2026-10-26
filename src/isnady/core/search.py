@@ -85,8 +85,36 @@ def _drop_index(conn: sqlite3.Connection) -> None:
     )
 
 
+def _index_stamp(conn: sqlite3.Connection) -> str:
+    """What the texts are now, read from the small indexes alone (no text is read): their number, the last one, the
+    last one indexed. A book added, removed or imported again changes it."""
+    row = conn.execute("SELECT (SELECT COUNT(*) FROM texts), (SELECT MAX(id) FROM texts), "
+                       "(SELECT MAX(text_id) FROM text_norm)").fetchone()
+    return f"{NORMALIZER_VERSION}|{row[0]}|{row[1]}|{row[2]}"
+
+
+def index_ready(conn: sqlite3.Connection) -> bool:
+    """Every text indexed, known without reading them (PERF-START, 2026-10-26: looking for the texts not indexed yet
+    read the whole index, 130 MB, at every start: half a minute on a cold disk before the window showed)."""
+    try:
+        row = conn.execute("SELECT value FROM core_meta WHERE key = 'index_ready'").fetchone()
+        return row is not None and row[0] == _index_stamp(conn)
+    except sqlite3.OperationalError:            # a database without the index tables yet
+        return False
+
+
 def ensure_index(conn: sqlite3.Connection, progress: Callable[[str], None] | None = None) -> int:
     """Index every text that is not indexed yet. Returns how many were added."""
+    if index_ready(conn):
+        return 0
+    added = _ensure_index(conn, progress)
+    conn.execute("CREATE TABLE IF NOT EXISTS core_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+    conn.execute("INSERT OR REPLACE INTO core_meta (key, value) VALUES ('index_ready', ?)", (_index_stamp(conn),))
+    conn.commit()
+    return added
+
+
+def _ensure_index(conn: sqlite3.Connection, progress: Callable[[str], None] | None = None) -> int:
     say = progress or (lambda _m: None)
     _create_index_tables(conn)
     row = conn.execute("SELECT value FROM core_meta WHERE key = 'normalizer_version'").fetchone()

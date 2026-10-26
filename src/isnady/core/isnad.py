@@ -1981,9 +1981,37 @@ def _borrow_previous(conn: sqlite3.Connection, hadith_ids: list[int], whole_ids:
     return done
 
 
+def _isnads_stamp(conn: sqlite3.Connection) -> str:
+    """What the hadith, their texts and their chains are now, read from the small indexes alone (no text is read)."""
+    row = conn.execute("SELECT (SELECT COUNT(*) FROM hadiths), (SELECT MAX(id) FROM hadiths), "
+                       "(SELECT COUNT(*) FROM texts), (SELECT MAX(id) FROM texts), "
+                       "(SELECT COUNT(*) FROM isnads), (SELECT MAX(hadith_id) FROM isnads)").fetchone()
+    return PARSER_ID + "|" + "|".join(str(v) for v in row)
+
+
+def isnads_ready(conn: sqlite3.Connection) -> bool:
+    """Every chain read by this parser, known without reading the texts (PERF-START, 2026-10-26: looking for the
+    hadith without a chain read every Arabic text, 150 MB, at every start)."""
+    try:
+        row = conn.execute("SELECT value FROM core_meta WHERE key = 'isnads_ready'").fetchone()
+        return row is not None and row[0] == _isnads_stamp(conn)
+    except sqlite3.OperationalError:
+        return False
+
+
 def ensure_isnads(conn: sqlite3.Connection, progress: Callable[[str], None] | None = None,
                   rebuild: bool = False) -> dict:
     """Parse the Arabic text of every hadith that has no derived chain yet."""
+    if not rebuild and isnads_ready(conn):
+        return {"parsed": 0, "reaches_prophet": 0, "raw_only": 0, "links": 0, "problems": {}}
+    stats = _ensure_isnads(conn, progress, rebuild)
+    conn.execute("INSERT OR REPLACE INTO core_meta (key, value) VALUES ('isnads_ready', ?)", (_isnads_stamp(conn),))
+    conn.commit()
+    return stats
+
+
+def _ensure_isnads(conn: sqlite3.Connection, progress: Callable[[str], None] | None = None,
+                   rebuild: bool = False) -> dict:
     say = progress or (lambda _m: None)
     conn.execute("CREATE TABLE IF NOT EXISTS core_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
     row = conn.execute("SELECT value FROM core_meta WHERE key = 'isnad_parser'").fetchone()

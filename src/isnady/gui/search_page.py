@@ -8,7 +8,7 @@ only collects the query, calls the core and renders the results as cards.
 import html
 import sqlite3
 
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import QThread, Qt, QTimer, Signal
 from PySide6.QtGui import QGuiApplication, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -277,6 +277,39 @@ class ResultCard(QFrame):
         box.addWidget(caption)
 
 
+def _ready(conn) -> bool:
+    """The search index, the chains and the narrators all up to date (only small index reads)."""
+    try:
+        return core.index_ready(conn) and core_isnad.isnads_ready(conn) and core_narrators.links_ready(conn)
+    except sqlite3.Error:
+        return False
+
+
+class _CatchUp(QThread):
+    """ensure_index → ensure_isnads → link_narrators on a connection of its own; the window stays usable."""
+
+    progress = Signal(str)
+    ended = Signal(str)             # "" when done, else what went wrong
+
+    def run(self) -> None:
+        from isnady.core import log
+
+        conn = None
+        try:
+            conn = db.connect()
+            with log.timed("window", "chains brought up to date"):
+                core.ensure_index(conn, progress=self.progress.emit)
+                core_isnad.ensure_isnads(conn, progress=self.progress.emit)
+                core_narrators.link_narrators(conn, progress=self.progress.emit)
+            self.ended.emit("")
+        except Exception as exc:  # said in the status bar and kept in the log; never a crash of the window
+            log.get("window").error("bringing the chains up to date", exc_info=exc)
+            self.ended.emit(f"{type(exc).__name__}: {exc}")
+        finally:
+            if conn is not None:
+                conn.close()
+
+
 class SearchPage(QWidget):
     open_chain = Signal(int)          # hadith id; the main window shows it on the Isnad Chains page
     open_book = Signal(int)           # hadith id; the main window opens its book at its chapter (Books)
@@ -437,7 +470,36 @@ class SearchPage(QWidget):
             self._conn = None
             self._show_error(exc)
             return
-        self._sync_with_database(force=True)
+        if _ready(self._conn):
+            self._sync_with_database(force=True)        # nothing to catch up: a few small index reads
+        else:
+            self._catch_up()
+
+    def _catch_up(self) -> None:
+        """A new version reads the chains or identifies the narrators again, once (or texts were added by another
+        program): in a thread of its own, after the window has opened — the window used to wait minutes for it
+        before showing at all (PERF-START, 2026-10-26: "isnady son zamanlarda cok cok gec aciliyor")."""
+        from isnady.gui import sources_page
+
+        self._catching = True
+        self._fill_filters()
+        self._show_start()
+        self._status(tr("Bringing the chains up to date after the new version (once)…"))
+        worker = _CatchUp()
+        worker.progress.connect(self._status)
+        worker.ended.connect(self._caught_up)
+        sources_page._LIVE_WORKERS.add(worker)          # the window closing waits for it, or ends it (main.py)
+        worker.finished.connect(lambda w=worker: (sources_page._LIVE_WORKERS.discard(w), w.deleteLater()))
+        self._catch_worker = worker
+        QTimer.singleShot(0, worker.start)
+
+    def _caught_up(self, error: str) -> None:
+        self._catching = False
+        self._catch_worker = None
+        if error:
+            self._status(tr("The chains could not be brought up to date: {error}", error=error))
+            return
+        self._sync_with_database(force=True)            # now only the small reads, then every page drawn again
 
     def _show_error(self, exc: Exception) -> None:
         """The database could not be opened: say why and what to do, in the middle of the page."""
@@ -486,7 +548,7 @@ class SearchPage(QWidget):
 
     def _sync_with_database(self, force: bool = False) -> None:
         """Index new texts and refresh the filters when another program changed the data."""
-        if self._conn is None:
+        if self._conn is None or getattr(self, "_catching", False):
             return
         version = self._conn.execute("PRAGMA data_version").fetchone()[0]
         if not force and version == self._data_version:

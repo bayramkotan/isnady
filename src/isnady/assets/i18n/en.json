@@ -1967,5 +1967,7 @@
  "Search every language, or tick the ones to search": "Search every language, or tick the ones to search",
  "{n} languages": "{n} languages",
  "More languages: {names} — import": "More languages: {names} — import",
- "These books are in the data repository in more languages: {names}. File → Data Sources imports them (tick the languages beside a book); they then appear in this list.": "These books are in the data repository in more languages: {names}. File → Data Sources imports them (tick the languages beside a book); they then appear in this list."
+ "These books are in the data repository in more languages: {names}. File → Data Sources imports them (tick the languages beside a book); they then appear in this list.": "These books are in the data repository in more languages: {names}. File → Data Sources imports them (tick the languages beside a book); they then appear in this list.",
+ "Bringing the chains up to date after the new version (once)…": "Bringing the chains up to date after the new version (once)…",
+ "The chains could not be brought up to date: {error}": "The chains could not be brought up to date: {error}"
 }

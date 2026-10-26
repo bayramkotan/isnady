@@ -1967,5 +1967,7 @@
  "{strict} is the strictest ({v1:+.3f}), {lenient} the most lenient ({v2:+.3f}).": "{strict} أشدّهم ({v1:+.3f})، و{lenient} أكثرهم تساهلًا ({v2:+.3f}).",
  "For the science of hadith: the classical labels mutashaddid (strict) and mutasahil (lenient), put in numbers on the very same hadith.": "في علم الحديث: الوصفان الكلاسيكيان المتشدد والمتساهل، مُعبَّرًا عنهما بالأرقام على الأحاديث نفسها.",
  "Read a row: for a hadith whose grade (by all the graders together) is this, how often each grader gives each grade. Much outside the diagonal is a grader who sees it otherwise.": "اقرأ صفًّا: لحديث حكمه (بمجموع المحكِّمين) هذا، كم مرة يعطي كل محكِّم كل حكم. والخروج الكثير عن القطر محكِّم يراه على خلاف ذلك.",
- "{n:,} hadith where the scholars are two grades apart or the model is unsure — the places where their ijtihad differs most.": "{n:,} حديثًا يختلف فيها العلماء بدرجتين أو لا يكون النموذج واثقًا — أكثر المواضع اختلافًا في اجتهادهم."
+ "{n:,} hadith where the scholars are two grades apart or the model is unsure — the places where their ijtihad differs most.": "{n:,} حديثًا يختلف فيها العلماء بدرجتين أو لا يكون النموذج واثقًا — أكثر المواضع اختلافًا في اجتهادهم.",
+ "Bringing the chains up to date after the new version (once)…": "تحديث الأسانيد بعد الإصدار الجديد (مرة واحدة)…",
+ "The chains could not be brought up to date: {error}": "تعذّر تحديث الأسانيد: {error}"
 }

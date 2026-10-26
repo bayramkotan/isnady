@@ -40,6 +40,20 @@ def _label(text: str = "", name: str = "", wrap: bool = False) -> QLabel:
     return label
 
 
+
+def _known_by_book(conn) -> dict:
+    """{book key: (links, identified, looked up)} of the whole chains — counted once per change of the database and
+    kept on disk (PERF-START, 2026-10-26: counted again book by book at every start, 80 MB read)."""
+    from isnady.core import cache
+
+    def count(c):
+        return {r[0]: (r[1], r[2], r[3]) for r in c.execute(
+            """SELECT c.key, COUNT(*), SUM(l.person_id IS NOT NULL), SUM(l.candidates IS NOT NULL) FROM isnad_links l
+               JOIN isnads i ON i.id = l.isnad_id JOIN hadiths h ON h.id = i.hadith_id
+               JOIN collections c ON c.id = h.collection_id WHERE i.problem IS NULL GROUP BY c.key""")}
+
+    return cache.kept(conn, "chains-known-by-book", count)
+
 class IsnadPage(QWidget):
     open_narrator = Signal(int)      # person id → Narrators page
     open_in_book = Signal(int)       # the compiler's book at the top of a chain → this hadith in Books
@@ -256,11 +270,7 @@ class IsnadPage(QWidget):
         cells = [(f"{b['chains']:,}", tr("chains read")), (f"{split_pct:.1f}%", tr("split into narrators")),
                  (f"{marfu_pct:.1f}%", tr("of those reach a Ma'sum") if shia else tr("of those reach the Prophet")),
                  (f"{avg:.1f}", tr("narrators per chain"))]
-        known = self.conn.execute(
-            """SELECT COUNT(*), SUM(l.person_id IS NOT NULL), SUM(l.candidates IS NOT NULL) FROM isnad_links l
-               JOIN isnads i ON i.id = l.isnad_id JOIN hadiths h ON h.id = i.hadith_id
-               JOIN collections c ON c.id = h.collection_id WHERE c.key = ? AND i.problem IS NULL""", (b["key"],)
-        ).fetchone()
+        known = _known_by_book(self.conn).get(b["key"])
         if known and known[2]:
             cells.append((f"{100 * (known[1] or 0) / known[0]:.1f}%",
                           tr("identified in al-Najashi") if shia else tr("identified in the Taqrib")))
