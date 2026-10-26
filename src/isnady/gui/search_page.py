@@ -31,7 +31,7 @@ from isnady.core import search as core
 from isnady.data import db
 from isnady.gui import theme
 from isnady.gui.chain_widgets import ChainStrip
-from isnady.gui.widgets import BookPicker, FlowLayout, LanguagePicker, TextBlock, expanding_width_policy
+from isnady.gui.widgets import BookPicker, FlowLayout, GradePicker, LanguagePicker, TextBlock, expanding_width_policy
 from isnady.core import titles
 from isnady.core.i18n import N_, n_, tr
 
@@ -208,6 +208,17 @@ class ResultCard(QFrame):
                 pills.addWidget(pill)
             box.addLayout(pills)
             box.addSpacing(4)
+        elif result.collection_key in ("bukhari", "muslim"):
+            # no grader grades the two Sahihs: their place is said as the rule it is, never as a grader's grade
+            pills = FlowLayout(spacing=6)
+            pill = _label(tr("In the Sahihayn: <b>sahih</b> by its compiler's condition"), "Pill")
+            pill.setTextFormat(Qt.TextFormat.RichText)
+            pill.setToolTip(tr("No grader grades the hadith of the two Sahihs: they are sahih by their compiler's "
+                               "condition and by the community's acceptance of the two books. This is the rule of "
+                               "hadith science, not a grader's grade; each such hadith says so."))
+            pills.addWidget(pill)
+            box.addLayout(pills)
+            box.addSpacing(4)
 
         for text in result.texts:
             self._add_text(box, text, t)
@@ -275,6 +286,12 @@ class ResultCard(QFrame):
         if text.direction == "rtl":
             caption.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignAbsolute)
         box.addWidget(caption)
+
+
+def _grades_words(query) -> str:
+    from isnady.core import grades as core_grades
+
+    return core_grades.describe_choice(query.grades, query.every_grader)
 
 
 def _ready(conn) -> bool:
@@ -383,6 +400,8 @@ class SearchPage(QWidget):
         self.language_combo = LanguagePicker()     # all languages, or any few ticked (LANG3)
         self.language_combo.changed.connect(self._rerun_if_searched)
         self.language_combo.wants_import.connect(self.wants_sources.emit)
+        self.grade_combo = GradePicker()           # every grade, or sahih / hasan / … ticked (GR-FLT)
+        self.grade_combo.changed.connect(self._rerun_if_searched)
         for combo in (self.mode_combo,):
             combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
             combo.currentIndexChanged.connect(self._rerun_if_searched)
@@ -426,7 +445,8 @@ class SearchPage(QWidget):
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
         for text, widget in ((tr("Match"), self.mode_combo), (None, self.whole_words),
-                             (tr("Books"), self.book_combo), (tr("Language"), self.language_combo)):
+                             (tr("Books"), self.book_combo), (tr("Grade"), self.grade_combo),
+                             (tr("Language"), self.language_combo)):
             if text:
                 row.addSpacing(10)
                 row.addWidget(_label(text, "FilterLabel"))
@@ -508,7 +528,8 @@ class SearchPage(QWidget):
 
         self.query_edit.setEnabled(False)
         self.search_button.setEnabled(False)
-        for widget in (self.kind_combo, self.mode_combo, self.whole_words, self.book_combo, self.language_combo):
+        for widget in (self.kind_combo, self.mode_combo, self.whole_words, self.book_combo, self.grade_combo,
+                       self.language_combo):
             widget.setEnabled(False)
         self._clear_body()
         box_widget = QWidget()
@@ -584,7 +605,8 @@ class SearchPage(QWidget):
             text=self.query_edit.text(), mode=self.mode_combo.currentData(),
             whole_words=self.whole_words.isChecked(),
             collections=books or [], languages=self.language_combo.selected(),
-            limit=PAGE_SIZE, offset=offset,
+            grades=self.grade_combo.selected(), every_grader=self.grade_combo.every,
+            sahihayn=self.grade_combo.sahihayn, limit=PAGE_SIZE, offset=offset,
         )
 
     def _related(self, hadith_id: int) -> list:
@@ -733,6 +755,7 @@ class SearchPage(QWidget):
         self.whole_words.setEnabled(True)
         self.whole_words.blockSignals(False)
         self.book_combo.reset()
+        self.grade_combo.reset()
         if self.kind() != "hadith":
             self.kind_combo.blockSignals(True)
             self.kind_combo.setCurrentIndex(0)
@@ -920,6 +943,10 @@ class SearchPage(QWidget):
             hint = tr("Try fewer words, “Any word”, or turn off “Whole words only”.") if (
                 len(page.terms) > 1 or page.query.whole_words) else tr("Try another spelling, or search in another "
                                                                        "language.")
+            if page.query.grades and getattr(page, "before_grades", 0):
+                hint = n_("The words are in {n:,} hadith, none of them of the grades chosen ({grades}).",
+                          "The words are in {n:,} hadith, none of them of the grades chosen ({grades}).",
+                          page.before_grades, grades=_grades_words(page.query))
             box.addWidget(title)
             box.addWidget(_label(hint, "Lead", wrap=True))
             self.body_layout.addWidget(empty)
@@ -972,6 +999,12 @@ class SearchPage(QWidget):
                                              if getattr(self, "_meaning_stale", False) else "")
         if page.spellings:          # words found in another spelling (? and *, or one letter away)
             note += " · " + tr("near spellings: {spellings}", spellings=core.spellings_text(page.spellings))
+        if page.query.grades:
+            note += " · " + tr("of the grades chosen: {total:,} / {all:,}", total=page.total,
+                               all=getattr(page, "before_grades", 0) or page.total)
+            self.summary.setToolTip(_grades_words(page.query))
+        else:
+            self.summary.setToolTip("")
         self.summary.setText(tr("{total:,} hadith, {ms} ms", total=page.total, ms=page.elapsed_ms) + note)
 
     # -------------------------------------------------------------- people (S3)

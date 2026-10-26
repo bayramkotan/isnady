@@ -3,6 +3,22 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.5.6] — 2026-10-27
+
+- **Search by grade (GR-FLT, Bayram 2026-10-27: "sadece sahih ya da hasen arayabilirim, ya da her ikisi, ya da daha
+  fazlasi").** A **Grade** choice beside Books on the Search page, and `--grade` for `iy search`: only sahih, only
+  hasan, both, or any grades ticked. Each tradition keeps its own scale and is never matched to the other: the Sunni
+  books by sahih, hasan, da'if, very weak, fabricated and not graded; the Shia books by the Imami categories sahih,
+  hasan, muwaththaq and da'if (al-Majlisi's and al-Behbudi's grades). A hadith is found when one of its graders gave
+  a grade ticked; with *Every grader agrees* (`--every-grader`) only when every grade it was given is among those
+  ticked. The grades are the graders' own words, grouped as the statistics group them; a grade given to the chain
+  alone ("Isnaad Hasan") counts in its group and is shown as written. Al-Bukhari's and Muslim's own hadith carry no
+  grader's grade: they count as sahih by their compiler's condition and the community's acceptance of the two books —
+  the rule of hadith science, not a grader's grade, said so on each of their hadith ("In the Sahihayn: sahih by its
+  compiler's condition"), and left out with one tick (`--no-sahihayn`). The search says how many of the hadith its
+  words found are of the grades chosen, and when none is, how many the words found. Word search and search by meaning
+  alike.
+
 ## [0.5.5] — 2026-10-26
 
 - **isnady opens at once again (PERF-START, Bayram 2026-10-26: "isnady son zamanlarda cok cok gec aciliyor").**

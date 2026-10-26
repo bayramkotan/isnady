@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.5.5-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.5.6-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.5.5-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.5.6-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.5.5).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.5.6).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -212,6 +212,7 @@ iy catalog import --all                                   # everything
 
 iy search النيات              # Arabic, with or without diacritics
 iy search "niyetlere göre"     # Turkish, English, any imported language
+iy search niyet --grade sahih --grade hasan   # only sahih and hasan hadith
 iy chain bukhari 1             # one chain, narrator by narrator
 iy chain kafi 5:1740           # a Shia chain, read the Shia way
 iy narrator الزهري             # who a narrator is
@@ -327,6 +328,7 @@ without authentication (credentials are never stored), are read as well.
 | **Language** | One language or several to search in — tick them in the list (Arabic and Turkish, say); the languages you do not read are folded behind an arrow on each hadith, a click opens them. The list holds the languages imported; the languages the same books have in isnady-data (Urdu, Indonesian, Bengali, French, Russian, Tamil) are named at its end — choosing them opens **File → Data Sources** to import them |
 | **Active books** | A book can be switched off in **Settings → Books and languages**: it stays imported but is left out of searches, book lists and statistics until switched on |
 | **Grades** | Shown under each hadith with the scholar's name, exactly as given, and explained when you point at them |
+| **Search by grade** | **Grade** beside Books: only sahih, only hasan, both, or any grades ticked — the Sunni scale (sahih, hasan, da'if, very weak, fabricated, not graded) and the Shia books' Imami scale (sahih, hasan, muwaththaq, da'if) apart, never matched to each other. A hadith is found when one of its graders gave a grade ticked, or — with *Every grader agrees* — only when all did. Al-Bukhari's and Muslim's hadith, which no grader grades, count as sahih by their compiler's condition (said so on each; one tick leaves them out). `iy search niyet --grade sahih --grade hasan`, `--every-grader`, `--no-sahihayn` |
 | **Highlighting** | On the original, diacritised text, diacritics included |
 | **Recent searches** | The last twenty, under the examples on the start page — a click searches again, one link forgets them all; kept with your profile. `iy search --recent`, `iy search --clear-recent` |
 | **Home** | ⌂ beside the box (Alt+Home) brings the page back to how it opens: no words, every filter at its default. Esc empties the box |
@@ -963,7 +965,7 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | Short | Example | What it does |
 |:------|:-----|:-------------|
 | `iy` | `isnady` | Open the window |
-| `iy search WORDS` | `iy search niyet --book abudawud` | Search; `--mode all\|any\|phrase\|meaning`, `--whole-words`, `--book`, `--language`, `--limit`; `--in narrators\|scholars`, `--tradition sunni\|shia`; `--recent`, `--clear-recent` |
+| `iy search WORDS` | `iy search niyet --book abudawud` | Search; `--mode all\|any\|phrase\|meaning`, `--whole-words`, `--book`, `--language`, `--grade` (`sahih`, `hasan`, `daif` … `imami-sahih`, `muwaththaq` …), `--every-grader`, `--no-sahihayn`, `--limit`; `--in narrators\|scholars`, `--tradition sunni\|shia`; `--recent`, `--clear-recent` |
 | `iy chain BOOK NUMBER` | `iy chain kafi 5:1740` | One chain, narrator by narrator, with who each one is and whom it reaches, then said in Turkish and English (`--lang tr,en`); `--raw` adds the wording; without a number, the book's range |
 | `iy isnads` | `iy isnads --rebuild` | Read every chain and report per book: split, reaching the Prophet or a Ma'sum, identified |
 | `iy narrator NAME` | `iy narrator "Ibn Umar"` | A narrator: his critic's verdict (Ibn Hajar's rank, or the Imami terms), tabaqa, death year, books; `--limit 1` adds teachers, students and hadith; `--famous` lists the famous Companions by group (`--tradition shia`: Ashab al-Ijma'; `all`: both) |

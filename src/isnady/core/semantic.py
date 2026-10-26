@@ -260,12 +260,15 @@ def search(conn: sqlite3.Connection, query: SearchQuery, min_score: float = 0.10
         allowed = {r[0] for r in conn.execute(
             f"SELECT h.id FROM hadiths h JOIN collections c ON c.id = h.collection_id "
             f"WHERE c.key IN ({','.join('?' * len(keys)) or 'NULL'})", keys)}
+    from isnady.core.search import grade_filter
+
+    graded = grade_filter(conn, query)                    # the grades chosen (GR-FLT)
     picked = []
     for i in order:
         if all_scores[i] < min_score:
             break
         hid = int(ids[i])
-        if allowed is not None and hid not in allowed:
+        if (allowed is not None and hid not in allowed) or (graded is not None and hid not in graded):
             continue
         picked.append((hid, float(all_scores[i])))
     page = picked[query.offset: query.offset + query.limit]

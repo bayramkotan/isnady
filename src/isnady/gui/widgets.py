@@ -379,6 +379,147 @@ class BookPicker(QWidget):
         popup.show()
 
 
+class GradePicker(QWidget):
+    """Choose the grades of the hadith to search (GR-FLT, 2026-10-27: "sadece sahih ya da hasen arayabilirim, ya da
+    her ikisi, ya da daha fazlasi"): every grade, or any few ticked — the Sunni grades and the Shia (Imami) ones
+    apart, each in its own scale, never matched to each other. Two choices with them: every grader agrees (else one
+    grader is enough), and al-Bukhari's and Muslim's own hadith counted as sahih (said so on each of them).
+    selected() is [] for every grade."""
+
+    changed = Signal()
+
+    def __init__(self, parent=None) -> None:
+        from PySide6.QtWidgets import QHBoxLayout, QPushButton
+
+        super().__init__(parent)
+        self._chosen: set[str] = set()                   # empty: every grade
+        self.every = False
+        self.sahihayn = True
+        self.button = QPushButton(tr("All grades"))
+        self.button.setObjectName("BookPicker")
+        self.button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.button.setToolTip(tr("Search hadith of every grade, or tick the grades to search (sahih, hasan …)"))
+        self.button.clicked.connect(self._open)
+        row = QHBoxLayout(self)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.addWidget(self.button)
+        self._label()
+
+    def selected(self) -> list[str]:
+        return sorted(self._chosen)
+
+    def reset(self) -> None:
+        self._chosen = set()
+        self.every = False
+        self.sahihayn = True
+        self._label()
+
+    def _label(self) -> None:
+        from isnady.core import grades as core_grades
+
+        if not self._chosen:
+            text = tr("All grades")
+        else:
+            names = []
+            for filters, road in ((core_grades.SUNNI_FILTERS, tr("Sunni")), (core_grades.SHIA_FILTERS, tr("Shia"))):
+                picked = [tr(label) for code, _g, label in filters if code in self._chosen]
+                if picked:
+                    names.append(", ".join(picked) + ("" if road == tr("Sunni") else f" ({road})"))
+            text = " · ".join(names)
+            if len(text) > 40:
+                text = tr("{n} grades", n=len(self._chosen))
+        self.button.setText(text + "   ▾")
+        self.button.setToolTip(core_grades.describe_choice(self._chosen, self.every) if self._chosen else
+                               tr("Search hadith of every grade, or tick the grades to search (sahih, hasan …)"))
+        self.button.setProperty("active", bool(self._chosen))
+        self.button.style().unpolish(self.button)
+        self.button.style().polish(self.button)
+
+    def _open(self) -> None:
+        from PySide6.QtWidgets import (QCheckBox, QFrame, QHBoxLayout, QLabel, QPushButton, QTreeWidget,
+                                       QTreeWidgetItem, QVBoxLayout)
+
+        from isnady.core import grades as core_grades
+
+        popup = QFrame(self, Qt.WindowType.Popup)
+        popup.setObjectName("Card")
+        lay = QVBoxLayout(popup)
+        lay.setContentsMargins(10, 10, 10, 10)
+        tree = QTreeWidget()
+        tree.setHeaderHidden(True)
+        tree.setMinimumSize(380, 300)
+        heads = ((tr("Sunni books"), core_grades.SUNNI_FILTERS),
+                 (tr("Shia books (the Imami scale: sahih, hasan, muwaththaq, da'if)"), core_grades.SHIA_FILTERS))
+        for title, filters in heads:
+            head = QTreeWidgetItem(tree, [title])
+            head.setFlags(head.flags() | Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsAutoTristate)
+            font = head.font(0)
+            font.setBold(True)
+            head.setFont(0, font)
+            for code, _g, label in filters:
+                item = QTreeWidgetItem(head, [tr(label)])
+                item.setData(0, Qt.ItemDataRole.UserRole, code)
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                item.setCheckState(0, Qt.CheckState.Checked if code in self._chosen else Qt.CheckState.Unchecked)
+            head.setExpanded(True)
+        lay.addWidget(tree)
+        every = QCheckBox(tr("Every grader agrees"))
+        every.setChecked(self.every)
+        every.setToolTip(tr("Off: a hadith is found when one of its graders gave a grade ticked.\nOn: only when every "
+                            "grade it was given is among those ticked."))
+        lay.addWidget(every)
+        sahihayn = QCheckBox(tr("Count al-Bukhari's and Muslim's hadith as sahih"))
+        sahihayn.setChecked(self.sahihayn)
+        sahihayn.setToolTip(tr("No grader grades the hadith of the two Sahihs: they are sahih by their compiler's "
+                               "condition and by the community's acceptance of the two books. This is the rule of "
+                               "hadith science, not a grader's grade; each such hadith says so."))
+        lay.addWidget(sahihayn)
+        note = QLabel(tr("The grades are those the graders gave, word for word, grouped; a grade given to the chain "
+                         "alone (\"its isnad is hasan\") is counted with its group and shown as written."))
+        note.setObjectName("Caption")
+        note.setWordWrap(True)
+        lay.addWidget(note)
+        row = QHBoxLayout()
+
+        def tick(codes: set) -> None:
+            for i in range(tree.topLevelItemCount()):
+                head = tree.topLevelItem(i)
+                for j in range(head.childCount()):
+                    c = head.child(j)
+                    c.setCheckState(0, Qt.CheckState.Checked if c.data(0, Qt.ItemDataRole.UserRole) in codes
+                                    else Qt.CheckState.Unchecked)
+        for text, codes in ((tr("Sahih and hasan"), {"sahih", "hasan", "imami-sahih", "imami-hasan"}),
+                            (tr("None"), set())):
+            b = QPushButton(text)
+            b.setObjectName("Quiet")
+            b.clicked.connect(lambda _c=False, k=codes: tick(k))
+            row.addWidget(b)
+        row.addStretch(1)
+        done = QPushButton(tr("Search these"))
+        done.setObjectName("Primary")
+        row.addWidget(done)
+        lay.addLayout(row)
+
+        def apply() -> None:
+            picked = set()
+            for i in range(tree.topLevelItemCount()):
+                head = tree.topLevelItem(i)
+                for j in range(head.childCount()):
+                    c = head.child(j)
+                    if c.checkState(0) == Qt.CheckState.Checked:
+                        picked.add(c.data(0, Qt.ItemDataRole.UserRole))
+            new = (picked, every.isChecked(), sahihayn.isChecked())
+            popup.close()
+            if new != (self._chosen, self.every, self.sahihayn):
+                self._chosen, self.every, self.sahihayn = new
+                self._label()
+                self.changed.emit()
+        done.clicked.connect(apply)
+        popup.adjustSize()
+        popup.move(self.button.mapToGlobal(self.button.rect().bottomLeft()))
+        popup.show()
+
+
 class LanguagePicker(QWidget):
     """Choose the languages to search (LANG3, 2026-10-18): all of them, or any few ticked. The button shows the
     choice ("All languages", "Arabic", "Arabic, Turkish"); the list holds every imported language by its name in the

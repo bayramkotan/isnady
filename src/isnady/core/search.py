@@ -209,6 +209,9 @@ class SearchQuery:
     whole_words: bool = False
     collections: list[str] = field(default_factory=list)   # collection keys; empty = all
     languages: list[str] = field(default_factory=list)     # language names; empty = all
+    grades: list[str] = field(default_factory=list)        # grade codes (core.grades.FILTER_CODES); empty = all
+    every_grader: bool = False            # with grades: each grade the hadith was given among those chosen
+    sahihayn: bool = True                 # with grades: al-Bukhari's and Muslim's own hadith count as sahih
     limit: int = 25
     offset: int = 0
 
@@ -242,6 +245,7 @@ class SearchPage:
     used_index: bool
     elapsed_ms: int
     spellings: dict = field(default_factory=dict)   # a word as typed → the spellings found for it (?, *, near)
+    before_grades: int = 0                # with grades chosen: how many the words found in all (GR-FLT)
 
 
 # punctuation that clings to a word in a pasted passage ("قَالَ:", "«لَا", "أَوْ؟"): not part of what is looked for
@@ -410,7 +414,7 @@ def search(conn: sqlite3.Connection, query: SearchQuery) -> SearchPage:
     from isnady.core import cache, i18n
 
     key = (query.text, query.mode, query.whole_words, tuple(query.collections), tuple(query.languages),
-           query.limit, query.offset, i18n.language())
+           tuple(query.grades), query.every_grader, query.sahihayn, query.limit, query.offset, i18n.language())
     return cache.memo(conn, "search", key, lambda: _search_counted(conn, query))
 
 
@@ -426,7 +430,7 @@ def _search_counted(conn: sqlite3.Connection, query: SearchQuery) -> SearchPage:
     terms, spellings = _spell(conn, typed, query.mode, near=False)
     page = _search_terms(conn, query, terms, use_index, started, spellings)
     for near in ("unknown", "all"):
-        if page.total:
+        if page.total or page.before_grades:      # found, only not of the grades chosen: no other spellings
             break
         # nothing as typed: the words found in no text (then every word) also in their spellings one letter away
         near_terms, near_spellings = _spell(conn, typed, query.mode, near)
@@ -479,15 +483,19 @@ def _search_terms(conn: sqlite3.Connection, query: SearchQuery, terms: list[str]
         params,
     ).fetchall()
 
-    # 2. exact check (whole words, all/any within one text), keep hadith order
+    # 2. exact check (whole words, all/any within one text), keep hadith order; the grades chosen (GR-FLT)
+    allowed = grade_filter(conn, query)
     hadith_ids: list[int] = []
     seen = set()
+    before = 0
     for hadith_id, norm in rows:
         if hadith_id in seen:
             continue
         if _text_matches(norm, terms, query.mode, query.whole_words):
             seen.add(hadith_id)
-            hadith_ids.append(hadith_id)
+            before += 1
+            if allowed is None or hadith_id in allowed:
+                hadith_ids.append(hadith_id)
 
     total = len(hadith_ids)
     page_ids = hadith_ids[query.offset: query.offset + query.limit]
@@ -498,7 +506,17 @@ def _search_terms(conn: sqlite3.Connection, query: SearchQuery, terms: list[str]
         spellings = {w: [a for a in alts if a in seen] for w, alts in spellings.items()}
         spellings = {w: alts for w, alts in spellings.items() if alts}
     elapsed = int((time.perf_counter() - started) * 1000)
-    return SearchPage(query, terms, total, results, use_index, elapsed, spellings if total else {})
+    return SearchPage(query, terms, total, results, use_index, elapsed, spellings if total else {},
+                      before if allowed is not None else total)
+
+
+def grade_filter(conn: sqlite3.Connection, query: SearchQuery) -> set[int] | None:
+    """The hadith the grades chosen allow, or None when no grade was chosen."""
+    if not query.grades:
+        return None
+    from isnady.core import grades as core_grades
+
+    return core_grades.allowed_ids(conn, query.grades, query.every_grader, query.sahihayn)
 
 
 def _load_result(conn: sqlite3.Connection, hadith_id: int, terms: list[str], query: SearchQuery) -> SearchResult:

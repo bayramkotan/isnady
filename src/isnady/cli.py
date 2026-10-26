@@ -957,17 +957,26 @@ def cmd_search(args) -> int:
     q = core_search.SearchQuery(
         text=" ".join(args.words), mode=args.mode, whole_words=args.whole_words,
         collections=args.book or [], languages=args.language or [], limit=args.limit, offset=args.offset,
+        grades=args.grade or [], every_grader=args.every_grader, sahihayn=not args.no_sahihayn,
     )
     page = core_search.search(conn, q)
     conn.close()
     print(f"{page.total} hadith found in {page.elapsed_ms} ms"
           f"{'' if page.used_index else ' (no FTS5 index available; slower scan)'}")
+    if q.grades:
+        from isnady.core import grades as core_grades
+
+        print(f"grades: {core_grades.describe_choice(q.grades, q.every_grader)} — "
+              f"{page.before_grades} found by the words in all")
     if page.spellings:
         print(f"near spellings: {core_search.spellings_text(page.spellings)}")
     for r in page.results:
         print(f"\n{r.collection_name} #{r.number}")
         if r.grades:
             print("  grades: " + "; ".join(f"{g}: {v}" for g, v in r.grades))
+        elif q.grades and q.sahihayn and r.collection_key in ("bukhari", "muslim"):
+            print("  sahih: in the Sahihayn — by the compiler's condition and the community's acceptance, "
+                  "not a grader's grade")
         for t in r.texts:
             if not t.matched and not args.all_texts:
                 continue
@@ -987,7 +996,9 @@ def _search_meaning(conn, args) -> int:
     from isnady.core import semantic
 
     q = core_search.SearchQuery(text=" ".join(args.words), collections=args.book or [],
-                                languages=args.language or [], limit=args.limit, offset=args.offset)
+                                languages=args.language or [], limit=args.limit, offset=args.offset,
+                                grades=args.grade or [], every_grader=args.every_grader,
+                                sahihayn=not args.no_sahihayn)
     try:
         st = semantic.status(conn)
         page = semantic.search(conn, q)
@@ -1939,6 +1950,19 @@ def build_parser() -> argparse.ArgumentParser:
     se.add_argument("--whole-words", action="store_true", help="match whole words only")
     se.add_argument("--book", action="append", help="collection key, e.g. bukhari (repeatable)")
     se.add_argument("--language", action="append", help="language name, e.g. Turkish (repeatable)")
+    from isnady.core.grades import FILTER_CODES
+
+    se.add_argument("--grade", action="append", choices=FILTER_CODES, metavar="GRADE",
+                    help="only hadith of this grade (repeatable: --grade sahih --grade hasan). Sunni books: sahih, "
+                         "hasan, daif, very-weak, fabricated, ungraded. Shia books, in their own scale: imami-sahih, "
+                         "imami-hasan, muwaththaq, imami-daif, imami-ungraded. A hadith passes when one of its "
+                         "graders gave a grade chosen")
+    se.add_argument("--every-grader", action="store_true",
+                    help="with --grade: only when every grade the hadith was given is among those chosen")
+    se.add_argument("--no-sahihayn", action="store_true",
+                    help="with --grade sahih: leave out the hadith of al-Bukhari and Muslim, which no grader grades "
+                         "(by default they count as sahih: by their compiler's condition and the community's "
+                         "acceptance of the two books)")
     se.add_argument("--limit", type=int, default=10)
     se.add_argument("--offset", type=int, default=0)
     se.add_argument("--width", type=int, default=300, help="characters of text to show")
