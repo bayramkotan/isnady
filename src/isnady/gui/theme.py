@@ -44,7 +44,7 @@ class Tokens:
     pill: str
     # the feel of a theme beside its colours (UI-FRESH, Bayram 2026-10-27: "cocuklarin bile guzel bulacagi temalar,
     # araliklar"): its typefaces, how round its corners are, how much room its buttons and boxes have, and whether
-    # the sections of the sidebar carry a sign. The older themes keep the defaults: they look as they did.
+    # the sections of the sidebar carry a sign. Every theme has the same measures and signs (Bayram, 2026-10-27: "mevcut temalarina da ayni olculeri ve ikonlari"); the older ones keep their typefaces.
     ui_family: str = ""            # the interface's typeface ("": the system's)
     heading_family: str = ""       # titles and the reading of translations ("": Amiri)
     roundness: float = 1.0         # every corner radius × this
@@ -58,12 +58,14 @@ LIGHT = Tokens(
     lapis="#1D4777", lapis_soft="#E3EBF5", gold="#A47E24", gilt="#F2E2B3",
     sidebar="#14304F", sidebar_ink="#F1F4F8", sidebar_muted="#9DB0C6", sidebar_selected="#22466F",
     pill="#EDF1F6",
+    roundness=1.6, room=1.2, nav_signs=True
 )
 DARK = Tokens(
     dark=True, window="#10151C", surface="#18202A", border="#2A3542", ink="#E4E9EF", muted="#8E9BAA",
     lapis="#7FAEE0", lapis_soft="#1F2C3B", gold="#D6B25E", gilt="#4B3C17",
     sidebar="#0B1522", sidebar_ink="#E4E9EF", sidebar_muted="#7D8FA5", sidebar_selected="#1A2D45",
     pill="#222C38",
+    roundness=1.6, room=1.2, nav_signs=True
 )
 
 # Named themes (UI5). "light" and "dark" keep their keys (saved settings) and are the Lapis pair that "system"
@@ -73,30 +75,35 @@ PAPER = Tokens(
     lapis="#8A3B1F", lapis_soft="#F1E2D4", gold="#A8792A", gilt="#F3DFAE",
     sidebar="#3A2A1E", sidebar_ink="#F6EEE3", sidebar_muted="#BCAA93", sidebar_selected="#55402E",
     pill="#EFE6D8",
+    roundness=1.6, room=1.2, nav_signs=True
 )
 SLATE = Tokens(
     dark=False, window="#F5F6F8", surface="#FFFFFF", border="#E2E5EA", ink="#111827", muted="#646B78",
     lapis="#4338CA", lapis_soft="#ECEDFE", gold="#C2700A", gilt="#FCE7C2",
     sidebar="#FFFFFF", sidebar_ink="#111827", sidebar_muted="#646B78", sidebar_selected="#ECEDFE",
     pill="#F0F2F5",
+    roundness=1.6, room=1.2, nav_signs=True
 )
 EMERALD = Tokens(
     dark=False, window="#EFF5F2", surface="#FFFFFF", border="#D3E2DB", ink="#13241D", muted="#58706A",
     lapis="#0F6E66", lapis_soft="#DCF0EA", gold="#B0741C", gilt="#F6E1B2",
     sidebar="#0B3B33", sidebar_ink="#EAF6F2", sidebar_muted="#93BCB1", sidebar_selected="#14544A",
     pill="#E7F1ED",
+    roundness=1.6, room=1.2, nav_signs=True
 )
 MIDNIGHT = Tokens(
     dark=True, window="#0D1117", surface="#161B22", border="#2A313C", ink="#E6EDF3", muted="#8B949E",
     lapis="#5CC8BC", lapis_soft="#16302E", gold="#E3B341", gilt="#4A3A12",
     sidebar="#090C10", sidebar_ink="#E6EDF3", sidebar_muted="#7D8590", sidebar_selected="#18242C",
     pill="#21262D",
+    roundness=1.6, room=1.2, nav_signs=True
 )
 CONTRAST = Tokens(
     dark=True, window="#000000", surface="#0B0B0B", border="#BDBDBD", ink="#FFFFFF", muted="#D4D4D4",
     lapis="#FFD400", lapis_soft="#2E2A00", gold="#FFD400", gilt="#5C4D00",
     sidebar="#000000", sidebar_ink="#FFFFFF", sidebar_muted="#D4D4D4", sidebar_selected="#262626",
     pill="#1A1A1A",
+    roundness=1.6, room=1.2, nav_signs=True
 )
 # Friendlier themes (UI-FRESH): soft colours, round corners, more room, typefaces made for reading on a screen —
 # Nunito (round and warm), Baloo 2 (playful titles), Lexend (made for easy reading); Amiri stays for the Arabic.

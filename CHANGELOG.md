@@ -3,6 +3,13 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.6.0] — 2026-10-27
+
+- **Every theme with the same measures and signs (Bayram 2026-10-27: "mevcut temalarina da ayni olculeri ve
+  ikonlari uygulamamissin").** Lapis, Lapis Night, Paper, Slate, Emerald, Midnight and High Contrast now have the
+  rounder corners, the roomier buttons and boxes and the sign before each section of the sidebar that Sky, Starry
+  Night and Rose Garden brought; each keeps its colours and its typefaces.
+
 ## [0.5.9] — 2026-10-27
 
 - **Friendlier themes: Sky, Starry Night and Rose Garden (UI-FRESH, Bayram 2026-10-27: "cok guzel cazip bir duzen
