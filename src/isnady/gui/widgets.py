@@ -296,6 +296,11 @@ class BookPicker(QWidget):
         self._chosen = None
         self._label()
 
+    def choose(self, keys) -> None:
+        """These books alone (a search started from Books, SRCH-SEC1); no changed signal."""
+        self._chosen = set(keys) or None
+        self._label()
+
     def _label(self) -> None:
         if self._chosen is None:
             text = tr("All books")

@@ -192,7 +192,14 @@ class ExportDialog(QDialog):
         # search
         self.query = QLineEdit(preset.get("query", ""))
         self.query.setPlaceholderText(tr("the words to search for, as on the Search page"))
-        self._add_scope("search", [(tr("Search"), self.query)])
+        # the Search page's choices come with its words (SRCH-EXP1): kept while the words are the same
+        self._search_words = preset.get("query", "")
+        self._search_filters = preset.get("search") or None
+        self.search_with = QLabel(self._filters_text())
+        self.search_with.setObjectName("Caption")
+        self.search_with.setWordWrap(True)
+        self.query.textChanged.connect(lambda _t: self.search_with.setText(self._filters_text()))
+        self._add_scope("search", [(tr("Search"), self.query), ("", self.search_with)])
         # narrators
         self.narrator_road = QComboBox()
         for key, text in (("sunni", N_("Sunni")), ("shia", N_("Shia")), (None, N_("All"))):
@@ -277,6 +284,26 @@ class ExportDialog(QDialog):
         self._fill_chapters()
         self._kind_changed()
 
+    def _filters_text(self) -> str:
+        """What the Search page had chosen with these words, said in a line (or that the words alone are used)."""
+        f = self._search_filters
+        if not f or self.query.text().strip() != self._search_words.strip():
+            return tr("All books and languages, every grade (the words alone).")
+        from isnady.core import transfer
+
+        m = transfer.search_method(self._conn_of(), self._search_words, f)
+        from isnady.core import titles
+
+        parts = [tr("Books: {books}", books=", ".join(titles.book(k, k) for k in m["books"])
+                    if isinstance(m["books"], list) else tr("all"))]
+        if isinstance(m["languages"], list):
+            parts.append(tr("Languages: {languages}", languages=", ".join(m["languages"])))
+        if m.get("grades"):
+            parts.append(tr("Grades: {grades}", grades=m["grades"]))
+        if m.get("chapters"):
+            parts.append(tr("Chapter: {chapter}", chapter="; ".join(m["chapters"])))
+        return tr("With the choices of the Search page — {choices}", choices=" · ".join(parts))
+
     def _add_scope(self, key: str, rows: list) -> None:
         page = QWidget()
         lay = QFormLayout(page)
@@ -348,6 +375,8 @@ class ExportDialog(QDialog):
                 args["separate"] = self.separate.isChecked()
         elif kind == "search":
             args["query"] = self.query.text().strip()
+            if self._search_filters and args["query"] == self._search_words.strip():
+                args["search"] = self._search_filters
         elif kind == "narrators":
             args["tradition"] = self.narrator_road.currentData()
             args["query"] = self.narrator_text.text().strip()

@@ -959,10 +959,19 @@ def cmd_search(args) -> int:
         collections=args.book or [], languages=args.language or [], limit=args.limit, offset=args.offset,
         grades=args.grade or [], every_grader=args.every_grader, sahihayn=not args.no_sahihayn,
     )
+    chapters = _chapters(conn, args.chapter)
+    if chapters is None:
+        conn.close()
+        return 1
+    q.chapters = [c["id"] for c in chapters]
+    if chapters and not q.collections:
+        q.collections = sorted({c["book"] for c in chapters})
     page = core_search.search(conn, q)
     conn.close()
     print(f"{page.total} hadith found in {page.elapsed_ms} ms"
           f"{'' if page.used_index else ' (no FTS5 index available; slower scan)'}")
+    for c in chapters:
+        print(f"in: {c['book']} › {c['label'] + '. ' if c['label'] else ''}{c['title']}")
     if q.grades:
         from isnady.core import grades as core_grades
 
@@ -992,6 +1001,22 @@ def cmd_search(args) -> int:
     return 0
 
 
+def _chapters(conn, given) -> list[dict] | None:
+    """--chapter BOOK:CHAPTER → the chapters (with their book), or None after saying which was not found."""
+    from isnady.core import works
+
+    out = []
+    for item in given or []:
+        book, _sep, label = item.partition(":")
+        found = works.chapter_named(conn, book.strip(), label.strip()) if label.strip() else None
+        if found is None:
+            print(f"No chapter '{label}' in '{book}'. See: iy book {book}", file=sys.stderr)
+            return None
+        found["book"] = book.strip()
+        out.append(found)
+    return out
+
+
 def _search_meaning(conn, args) -> int:
     from isnady.core import semantic
 
@@ -999,6 +1024,11 @@ def _search_meaning(conn, args) -> int:
                                 languages=args.language or [], limit=args.limit, offset=args.offset,
                                 grades=args.grade or [], every_grader=args.every_grader,
                                 sahihayn=not args.no_sahihayn)
+    chapters = _chapters(conn, args.chapter)
+    if chapters is None:
+        conn.close()
+        return 1
+    q.chapters = [c["id"] for c in chapters]
     try:
         st = semantic.status(conn)
         page = semantic.search(conn, q)
@@ -1391,6 +1421,17 @@ def _book_marks(conn, args) -> int | None:
             print("\nWhere you left each book (iy book KEY --resume):")
             for p in left:
                 print(f"  {p['book']:12} {readmarks.describe(p, titles.get(p['book'], ''))}")
+        return 0
+    if args.forget:
+        key = None if args.forget == "all" else args.forget
+        n = readmarks.forget(key)
+        print(f"Forgot where you left {n} book(s)." if n else f"No place kept for '{args.forget}'.")
+        return 0
+    if args.unmark == "all":
+        mine = readmarks.marks()
+        for m in mine:
+            readmarks.remove(m["id"])
+        print(f"Removed {len(mine)} marker(s).")
         return 0
     if args.unmark:
         m = readmarks.find(args.unmark)
@@ -1796,6 +1837,15 @@ def cmd_export(args) -> int:
             print(f"\r  {done * 100 // total:3d}%  {done:,} / {total:,} hadith  {gone // 60} min {gone % 60} s ",
                   end="", file=sys.stderr, flush=True)
 
+    search_filters = None
+    if kind == "search":
+        chapters = _chapters(conn, getattr(args, "in_chapter", None))
+        if chapters is None:
+            return 1
+        search_filters = {"collections": args.search_book or sorted({c["book"] for c in chapters}),
+                          "languages": args.language or [], "grades": args.grade or [],
+                          "every_grader": args.every_grader, "sahihayn": not args.no_sahihayn,
+                          "chapters": [c["id"] for c in chapters]}
     try:
         several = kind in ("book", "network", "profile") and len(args.target) > 1 or \
             (kind in ("book", "network") and args.target[:1] in (["all"], ["sunni"], ["shia"]))
@@ -1813,7 +1863,7 @@ def cmd_export(args) -> int:
                                tradition=road if kind != "narrators" else (road if args.tradition else "sunni"),
                                profile=args.target[0] if kind == "profile" and args.target else None, pdf=pdf,
                                progress=lambda m: None if interactive else print(f"  {m}", file=sys.stderr),
-                               tick=bar if interactive else None)
+                               tick=bar if interactive else None, search=search_filters)
     except transfer.TransferError as exc:
         print(("\n" if interactive else "") + str(exc), file=sys.stderr)
         return 1
@@ -2022,6 +2072,9 @@ def build_parser() -> argparse.ArgumentParser:
                     help="with --grade sahih: leave out the hadith of al-Bukhari and Muslim, which no grader grades "
                          "(by default they count as sahih: by their compiler's condition and the community's "
                          "acceptance of the two books)")
+    se.add_argument("--chapter", action="append", metavar="BOOK:CHAPTER",
+                    help="only in this chapter of a book and the chapters under it, by its number or the start of its "
+                         "title: --chapter bukhari:3, --chapter \"bukhari:Knowledge\" (repeatable)")
     se.add_argument("--limit", type=int, default=10)
     se.add_argument("--offset", type=int, default=0)
     se.add_argument("--width", type=int, default=300, help="characters of text to show")
@@ -2090,7 +2143,8 @@ def build_parser() -> argparse.ArgumentParser:
     bk.add_argument("--mark", metavar="NAME", help="put a marker of this name at the chapter shown")
     bk.add_argument("--marks", action="store_true", help="your markers and where you left each book")
     bk.add_argument("--go", metavar="NAME", help="open a marker (by its name or the start of it)")
-    bk.add_argument("--unmark", metavar="NAME", help="remove a marker")
+    bk.add_argument("--unmark", metavar="NAME", help="remove a marker (all: every marker)")
+    bk.add_argument("--forget", metavar="KEY", help="forget where you left a book (all: every book); markers are kept")
     bk.set_defaults(func=cmd_book)
     sc = sub.add_parser("scholar", help="the hadith scholars in the data: compilers, graders, critics, with measured statistics")
     sc.add_argument("name", nargs="*", help="part of a name, e.g. albani, bukhari; none = the list")
@@ -2127,6 +2181,16 @@ def build_parser() -> argparse.ArgumentParser:
     ex.add_argument("--language", action="append", help="hadith/book/search: only these languages (repeatable), "
                                                         "e.g. Arabic, Turkish")
     ex.add_argument("--no-chains", action="store_true", help="hadith/book/search: without the chains")
+    from isnady.core.grades import FILTER_CODES as _GRADES
+
+    ex.add_argument("--grade", action="append", choices=_GRADES, metavar="GRADE",
+                    help="search: only hadith of this grade, as iy search --grade (repeatable)")
+    ex.add_argument("--every-grader", action="store_true", help="search: every grade among those chosen")
+    ex.add_argument("--no-sahihayn", action="store_true", help="search: al-Bukhari's and Muslim's not counted sahih")
+    ex.add_argument("--in-chapter", action="append", metavar="BOOK:CHAPTER",
+                    help="search: only in this chapter, as iy search --chapter (repeatable)")
+    ex.add_argument("--book", action="append", dest="search_book", metavar="KEY",
+                    help="search: only in this book (repeatable)")
     ex.add_argument("--tradition", choices=("sunni", "shia", "all"), help="narrators (default sunni) and network")
     ex.add_argument("--list", action="store_true", help="what can be exported and imported, in which formats")
     ex.set_defaults(func=cmd_export)

@@ -255,15 +255,44 @@ def ref_ids(conn: sqlite3.Connection, refs: list[str]) -> list[int]:
     return list(dict.fromkeys(out))
 
 
+SEARCH_FILTERS = ("mode", "whole_words", "collections", "languages", "grades", "every_grader", "sahihayn", "chapters")
+
+
 def search_ids(conn: sqlite3.Connection, text: str, limit: int = 1000, books: list[str] | None = None,
-               languages: list[str] | None = None) -> list[int]:
+               languages: list[str] | None = None, filters: dict | None = None) -> list[int]:
+    """The hadith a search finds, in the order the Search page shows them; filters: the Search page's choices
+    (SEARCH_FILTERS — books, languages, grades, chapters …), so the file holds what the page showed (SRCH-EXP1)."""
     from isnady.core import search
 
-    page = search.search(conn, search.SearchQuery(text=text, collections=books or [], languages=languages or [],
-                                                  limit=limit))
+    given = {k: v for k, v in (filters or {}).items() if k in SEARCH_FILTERS and v not in (None, [])}
+    given.setdefault("collections", books or [])
+    given.setdefault("languages", languages or [])
+    if given.get("mode") == "meaning":
+        given["mode"] = "all"                     # by meaning needs the meaning index: the words themselves
+    page = search.search(conn, search.SearchQuery(text=text, limit=limit, **given))
     if not page.results:
         raise TransferError(f"Nothing found for '{text}'.")
     return [r.hadith_id for r in page.results]
+
+
+def search_method(conn: sqlite3.Connection, query: str, filters: dict | None) -> dict:
+    """How the hadith of a search were found, said plainly — kept in the file, for a reader who checks the work."""
+    from isnady.core import grades as core_grades
+    from isnady.core import works
+
+    f = filters or {}
+    out = {"words": query, "match": f.get("mode") or "all", "whole_words": bool(f.get("whole_words")),
+           "books": f.get("collections") or "all", "languages": f.get("languages") or "all"}
+    if f.get("grades"):
+        out["grades"] = core_grades.describe_choice(f["grades"], f.get("every_grader", False))
+        out["sahihayn_counted_sahih"] = bool(f.get("sahihayn", True)) and "sahih" in f["grades"]
+    if f.get("chapters"):
+        names = []
+        for cid in f["chapters"]:
+            trail = works.path(conn, int(cid))
+            names.append(" › ".join(((n["label"] + ". ") if n["label"] else "") + (n["title"] or "") for n in trail))
+        out["chapters"] = names
+    return out
 
 
 def hadith_columns(langs: list[str], with_chains: bool) -> list[str]:
@@ -412,7 +441,7 @@ def export(conn: sqlite3.Connection | None, kind: str, fmt: str, target: str | P
            languages: list[str] | None = None, chains: bool = True, tradition: str | None = "sunni",
            profile: str | None = None, pdf=None, progress: Progress | None = None,
            books: list[str] | None = None, profiles: list[str] | None = None, separate: bool = False,
-           tick: Tick | None = None) -> Path:
+           tick: Tick | None = None, search: dict | None = None) -> Path:
     """Write what is asked to target in fmt; returns the file written. pdf: a function (html, path) that draws a PDF
     (gui.pdf.html_to_pdf), given by the window or the command line.
 
@@ -490,13 +519,14 @@ def export(conn: sqlite3.Connection | None, kind: str, fmt: str, target: str | P
             ids = ref_ids(conn, refs or [])
             title = "isnady: " + " ".join(refs or [])
         else:
-            ids = search_ids(conn, query, languages=None)
+            ids = search_ids(conn, query, languages=None, filters=search)
             title = f"isnady: “{query}”"
         say(f"{len(ids):,} hadith")
         if tick is not None:
             tick(0, len(ids))
         records = iter_records(conn, ids, languages, chains, say, tick)
         meta = _meta(kind, book=book, chapter=chapter, refs=refs or [], query=query, languages=languages or [],
+                     **({"search": search_method(conn, query, search)} if kind == "search" else {}),
                      **({"books": book_keys(conn, books)} if kind == "book" and books else {}))
         subtitle = f"isnady {__version__} · {time.strftime('%Y-%m-%d')}"
         target.parent.mkdir(parents=True, exist_ok=True)

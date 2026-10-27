@@ -339,6 +339,7 @@ class SearchPage(QWidget):
     wants_sources = Signal()          # "more languages": the main window opens File → Data Sources
     wants_languages = Signal()        # "Language settings" on a card: Settings → Books and languages
     wants_export = Signal(str)        # "Export" on a card: File → Export… with that hadith ("bukhari:1")
+    wants_search_export = Signal(str, dict)   # "Export these results": the words and every filter of the page
     retry_requested = Signal()        # "Try again" after a locked database: the window is built again
 
     def __init__(self, status_message=None, parent=None) -> None:
@@ -402,6 +403,15 @@ class SearchPage(QWidget):
         self.language_combo.wants_import.connect(self.wants_sources.emit)
         self.grade_combo = GradePicker()           # every grade, or sahih / hasan / … ticked (GR-FLT)
         self.grade_combo.changed.connect(self._rerun_if_searched)
+        # a chapter of a book to search in (SRCH-SEC1): set from Books ("Search in this chapter"), cleared with ✕
+        self._chapter_scope: list[dict] = []
+        self.chapter_chip = QPushButton()
+        self.chapter_chip.setObjectName("BookPicker")
+        self.chapter_chip.setProperty("active", True)
+        self.chapter_chip.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.chapter_chip.setToolTip(tr("Searching in this chapter only — click to search the whole book again"))
+        self.chapter_chip.clicked.connect(self.clear_chapter_scope)
+        self.chapter_chip.hide()
         for combo in (self.mode_combo,):
             combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
             combo.currentIndexChanged.connect(self._rerun_if_searched)
@@ -445,7 +455,7 @@ class SearchPage(QWidget):
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
         for text, widget in ((tr("Match"), self.mode_combo), (None, self.whole_words),
-                             (tr("Books"), self.book_combo), (tr("Grade"), self.grade_combo),
+                             (tr("Books"), self.book_combo), (None, self.chapter_chip), (tr("Grade"), self.grade_combo),
                              (tr("Language"), self.language_combo)):
             if text:
                 row.addSpacing(10)
@@ -463,6 +473,16 @@ class SearchPage(QWidget):
         filters.addWidget(self.people_filters)
         filters.addStretch(1)
         filters.addWidget(self.summary)
+        # the hadith found, with every choice of the page, to a file (SRCH-EXP1, Bayram 2026-10-27: "Aramalari bir
+        # cikti olarak alabilir miyiz?")
+        self.export_button = QPushButton("⤓ " + tr("Export these results"))
+        self.export_button.setObjectName("Link")
+        self.export_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.export_button.setToolTip(tr("All the hadith found (up to 1,000), with the books, languages, grades and "
+                                         "chapter chosen here, to a file: Word, PDF, Excel, CSV, JSON …"))
+        self.export_button.clicked.connect(self._export_results)
+        self.export_button.hide()
+        filters.addWidget(self.export_button)
 
         column = QWidget()
         # the column follows the window (Bayram, 2026-10-04: like the Narrators page), with margins only
@@ -606,7 +626,8 @@ class SearchPage(QWidget):
             whole_words=self.whole_words.isChecked(),
             collections=books or [], languages=self.language_combo.selected(),
             grades=self.grade_combo.selected(), every_grader=self.grade_combo.every,
-            sahihayn=self.grade_combo.sahihayn, limit=PAGE_SIZE, offset=offset,
+            sahihayn=self.grade_combo.sahihayn, chapters=[c["id"] for c in self._chapter_scope],
+            limit=PAGE_SIZE, offset=offset,
         )
 
     def _related(self, hadith_id: int) -> list:
@@ -661,6 +682,8 @@ class SearchPage(QWidget):
         self.body_layout.addWidget(box_widget)
         self.body_layout.addStretch(1)
         self.summary.setText("")
+        if hasattr(self, "export_button"):
+            self.export_button.hide()
 
     def build_meaning_index(self) -> None:
         """Build the meaning index in the background (its own database connection)."""
@@ -710,6 +733,38 @@ class SearchPage(QWidget):
         if ok and self.query_edit.text().strip() and (semantic_mode or self._results):
             self.run_search()
 
+    def _export_results(self) -> None:
+        if self._page is None or not self.query_edit.text().strip():
+            return
+        q = self._query(0)
+        from isnady.core import transfer
+
+        self.wants_search_export.emit(q.text.strip(), {k: getattr(q, k) for k in transfer.SEARCH_FILTERS})
+
+    def set_chapter_scope(self, book: str, chapter_id: int, title: str) -> None:
+        """Search in one chapter of a book (and the chapters under it): asked from Books (SRCH-SEC1)."""
+        if self.kind() != "hadith":
+            index = self.kind_combo.findData("hadith")
+            if index >= 0:
+                self.kind_combo.setCurrentIndex(index)
+        self.book_combo.choose([book])
+        self._chapter_scope = [{"id": chapter_id, "book": book, "title": title}]
+        self.chapter_chip.setText("📖 " + (title if len(title) <= 34 else title[:32] + "…") + "   ✕")
+        self.chapter_chip.setToolTip(title + "\n" + tr("Searching in this chapter only — click to search the whole "
+                                                      "book again"))
+        self.chapter_chip.show()
+        self.query_edit.setFocus()
+        self.query_edit.selectAll()
+        if self.query_edit.text().strip():
+            self.run_search()
+        else:
+            self._status(tr("Type the words to search in {chapter}", chapter=title))
+
+    def clear_chapter_scope(self) -> None:
+        self._chapter_scope = []
+        self.chapter_chip.hide()
+        self._rerun_if_searched()
+
     def _rerun_if_searched(self, *_args) -> None:
         if (self._page is not None or self._found is not None) and self.query_edit.text().strip():
             self.run_search()
@@ -724,6 +779,8 @@ class SearchPage(QWidget):
         self.people_filters.setVisible(kind == "narrators")
         self.query_edit.setPlaceholderText(tr(KIND_TEXT[kind][0]))
         self.summary.setText("")
+        if hasattr(self, "export_button"):
+            self.export_button.hide()
         if self.query_edit.text().strip():
             self.run_search()
         else:
@@ -756,6 +813,8 @@ class SearchPage(QWidget):
         self.whole_words.blockSignals(False)
         self.book_combo.reset()
         self.grade_combo.reset()
+        self._chapter_scope = []
+        self.chapter_chip.hide()
         if self.kind() != "hadith":
             self.kind_combo.blockSignals(True)
             self.kind_combo.setCurrentIndex(0)
@@ -846,6 +905,8 @@ class SearchPage(QWidget):
     def _show_start(self) -> None:
         self._clear_body()
         self.summary.setText("")
+        if hasattr(self, "export_button"):
+            self.export_button.hide()
         hadith = self._conn.execute("SELECT COUNT(*) FROM hadiths").fetchone()[0] if self._conn else 0
 
         hero = QWidget()
@@ -943,6 +1004,10 @@ class SearchPage(QWidget):
             hint = tr("Try fewer words, “Any word”, or turn off “Whole words only”.") if (
                 len(page.terms) > 1 or page.query.whole_words) else tr("Try another spelling, or search in another "
                                                                        "language.")
+            if page.query.chapters and getattr(page, "before_grades", 0):
+                hint = n_("The words are in {n:,} hadith, none of them in the chapter chosen.",
+                          "The words are in {n:,} hadith, none of them in the chapter chosen.",
+                          page.before_grades)
             if page.query.grades and getattr(page, "before_grades", 0):
                 hint = n_("The words are in {n:,} hadith, none of them of the grades chosen ({grades}).",
                           "The words are in {n:,} hadith, none of them of the grades chosen ({grades}).",
@@ -990,6 +1055,7 @@ class SearchPage(QWidget):
 
     def _update_summary(self) -> None:
         page = self._page
+        self.export_button.setVisible(bool(page.total) and self.kind() == "hadith")
         if page.total == 0:
             self.summary.setText("")
             return
@@ -999,6 +1065,9 @@ class SearchPage(QWidget):
                                              if getattr(self, "_meaning_stale", False) else "")
         if page.spellings:          # words found in another spelling (? and *, or one letter away)
             note += " · " + tr("near spellings: {spellings}", spellings=core.spellings_text(page.spellings))
+        if page.query.chapters and not page.query.grades:
+            note += " · " + tr("in the chapter: {total:,} / {all:,}", total=page.total,
+                               all=getattr(page, "before_grades", 0) or page.total)
         if page.query.grades:
             note += " · " + tr("of the grades chosen: {total:,} / {all:,}", total=page.total,
                                all=getattr(page, "before_grades", 0) or page.total)
@@ -1067,7 +1136,9 @@ class SearchPage(QWidget):
             self.body_layout.addWidget(empty)
             self.body_layout.addStretch(1)
             self.summary.setText("")
+            self.export_button.hide()
             return
+        self.export_button.hide()                      # narrators and scholars: no export of hadith
         self.more_button.setParent(None)
         last = self.body_layout.count() - 1
         if last >= 0 and self.body_layout.itemAt(last).spacerItem() is not None:

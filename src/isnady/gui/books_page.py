@@ -64,6 +64,7 @@ def _label(text: str, name: str = "", wrap: bool = True, rich: bool = False) -> 
 class BooksPage(QWidget):
     open_chain = Signal(int)
     open_narrator = Signal(int)
+    search_in_chapter = Signal(str, int, str)       # book key, chapter id, its title (SRCH-SEC1)
 
     def __init__(self, connection_getter, card_maker, parent=None) -> None:
         super().__init__(parent)
@@ -206,6 +207,15 @@ class BooksPage(QWidget):
         self.marks_menu.aboutToShow.connect(self._fill_marks_menu)
         self.marks_button.setMenu(self.marks_menu)
         where_row.addWidget(self.marks_button)
+        # search the words in the chapter being read, and the chapters under it (SRCH-SEC1, Bayram 2026-10-27:
+        # "Kitaplarin belli bolumlerinde ara eklenebilir mi?")
+        self.search_here = QToolButton()
+        self.search_here.setText("🔎 " + tr("Search in this chapter"))
+        self.search_here.setObjectName("Quiet")
+        self.search_here.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.search_here.setToolTip(tr("Search only in the chapter you are reading and the chapters under it"))
+        self.search_here.clicked.connect(self._search_here)
+        where_row.addWidget(self.search_here)
         right.addLayout(where_row)
         right.addWidget(chapters)
         right.addWidget(self.nav)
@@ -226,7 +236,8 @@ class BooksPage(QWidget):
         return self._conn_of()
 
     # ------------------------------------------------------------------ the shelf
-    def refresh(self) -> None:
+    def refresh(self, keep_open: bool = False) -> None:
+        """The shelf drawn again; keep_open: the book and chapter being read stay as they are (only the list)."""
         conn = self.conn
         if conn is None:
             return
@@ -284,6 +295,13 @@ class BooksPage(QWidget):
             return
         wanted = (self._work or {}).get("key") or config.state_get("reader.last_work") or shelf[0]["key"]
         keys = [w["key"] for w in shelf]
+        if keep_open and self._work and self._work.get("key") in keys:
+            for i in range(self.works.count()):              # the row of the book being read, marked again
+                if self.works.item(i).data(Qt.ItemDataRole.UserRole) == self._work["key"]:
+                    self.works.blockSignals(True)
+                    self.works.setCurrentRow(i)
+                    self.works.blockSignals(False)
+            return
         self.select_work(wanted if wanted in keys else keys[0])
 
     def set_shelf(self, tradition: str | None) -> None:
@@ -480,6 +498,9 @@ class BooksPage(QWidget):
                 self._remember_place(self._chapter, hid)
 
     def _fill_marks_menu(self) -> None:
+        """Put a marker here; then each marker with Go, Rename and Remove right under it, and each book's last place
+        with Go and Forget (BM3b, Bayram 2026-10-27: "ayraci kaldirma bulamadim" — Remove was a submenu at the
+        bottom, and the place a book was left could not be forgotten at all)."""
         menu = self.marks_menu
         menu.clear()
         here = menu.addAction(tr("Put a marker here…"))
@@ -488,28 +509,79 @@ class BooksPage(QWidget):
         titles = {w["key"]: w["title"] for w in core_works.list_works(self.conn)} if self.conn else {}
         mine = readmarks.marks()
         if mine:
-            menu.addSeparator()
             menu.addSection(tr("Your markers"))
             for m in mine:
-                act = menu.addAction(f"🔖 {m['name']}   —   {readmarks.describe(m, titles.get(m['book'], ''))}")
-                act.triggered.connect(lambda _c=False, m=m: self.go_to_mark(m))
+                sub = menu.addMenu(f"🔖 {m['name']}   —   {readmarks.describe(m, titles.get(m['book'], ''))}")
+                go = sub.addAction(tr("Go to this marker"))
+                go.triggered.connect(lambda _c=False, m=m: self.go_to_mark(m))
+                ren = sub.addAction(tr("Rename…"))
+                ren.triggered.connect(lambda _c=False, m=m: self._rename_mark(m))
+                sub.addSeparator()
+                rm = sub.addAction("✕  " + tr("Remove this marker"))
+                rm.triggered.connect(lambda _c=False, m=m: self._remove_mark(m))
         left = [p for p in readmarks.recent(10) if p["book"] in titles]
         if left:
-            menu.addSeparator()
             menu.addSection(tr("Where you left each book"))
             for p in left:
-                act = menu.addAction(readmarks.describe(p, titles.get(p["book"], "")))
-                act.triggered.connect(lambda _c=False, p=p: self.go_to_mark(p))
-        if mine:
+                sub = menu.addMenu(readmarks.describe(p, titles.get(p["book"], "")))
+                go = sub.addAction(tr("Go there"))
+                go.triggered.connect(lambda _c=False, p=p: self.go_to_mark(p))
+                sub.addSeparator()
+                fg = sub.addAction("✕  " + tr("Forget where I left this book"))
+                fg.triggered.connect(lambda _c=False, key=p["book"]: self._forget_place(key))
+        if mine or left:
             menu.addSeparator()
-            manage = menu.addMenu(tr("Remove a marker"))
-            for m in mine:
-                act = manage.addAction(m["name"])
-                act.triggered.connect(lambda _c=False, mid=m["id"]: readmarks.remove(mid))
-            rename = menu.addMenu(tr("Rename a marker"))
-            for m in mine:
-                act = rename.addAction(m["name"])
-                act.triggered.connect(lambda _c=False, m=m: self._rename_mark(m))
+        if mine:
+            every = menu.addAction("✕  " + tr("Remove all markers…"))
+            every.triggered.connect(self._remove_all_marks)
+        if left:
+            places = menu.addAction("✕  " + tr("Forget where I left every book…"))
+            places.triggered.connect(lambda: self._forget_place(None))
+
+    def _search_here(self) -> None:
+        if not (self._work and self._chapter):
+            return
+        if self._work.get("kind") not in (None, "hadith"):
+            self._say(tr("Only the books of hadith are searched; this is a book of narrators."))
+            return
+        trail = core_works.path(self.conn, self._chapter)
+        title = " › ".join(((n["label"] + ". ") if n["label"] else "") + (n["title"] or "") for n in trail)
+        self.search_in_chapter.emit(self._work["key"], self._chapter, title)   # the book shows beside it
+
+    def _remove_mark(self, mark: dict) -> None:
+        readmarks.remove(mark["id"])
+        self._say(tr("Marker removed: {name}", name=mark["name"]))
+
+    def _remove_all_marks(self) -> None:
+        from PySide6.QtWidgets import QMessageBox
+
+        mine = readmarks.marks()
+        if QMessageBox.question(self, tr("Remove all markers"),
+                                tr("Remove all {n} of your markers? Where you left each book is kept.", n=len(mine))
+                                ) != QMessageBox.StandardButton.Yes:
+            return
+        for m in mine:
+            readmarks.remove(m["id"])
+        self._say(tr("{n} markers removed", n=len(mine)))
+
+    def _forget_place(self, key: str | None) -> None:
+        """Forget where one book (key) or every book (None) was left; its "You left off at" line goes too."""
+        from PySide6.QtWidgets import QMessageBox
+
+        if key is None and QMessageBox.question(
+                self, tr("Forget where I left every book"),
+                tr("Forget where you left every book? Your named markers are kept.")) != QMessageBox.StandardButton.Yes:
+            return
+        n = readmarks.forget(key)
+        self._say(tr("Forgot where you left {n} books", n=n) if key is None else tr("Forgot where you left this book"))
+        self.refresh(keep_open=True)
+
+    def _say(self, text: str) -> None:
+        """A short word in the window's bottom line (the main window's footer), or nothing."""
+        try:
+            self.window()._set_footer(text)
+        except Exception:
+            pass
 
     def _add_mark(self) -> None:
         if not (self._work and self._chapter):

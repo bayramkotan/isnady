@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.5.7-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.5.8-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.5.7-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.5.8-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.5.7).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.5.8).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -343,6 +343,8 @@ without authentication (credentials are never stored), are read as well.
 | **Active books** | A book can be switched off in **Settings → Books and languages**: it stays imported but is left out of searches, book lists and statistics until switched on |
 | **Grades** | Shown under each hadith with the scholar's name, exactly as given, and explained when you point at them |
 | **Search by grade** | **Grade** beside Books: only sahih, only hasan, both, or any grades ticked — the Sunni scale (sahih, hasan, da'if, very weak, fabricated, not graded) and the Shia books' Imami scale (sahih, hasan, muwaththaq, da'if) apart, never matched to each other. A hadith is found when one of its graders gave a grade ticked, or — with *Every grader agrees* — only when all did. Al-Bukhari's and Muslim's hadith, which no grader grades, count as sahih by their compiler's condition (said so on each; one tick leaves them out). `iy search niyet --grade sahih --grade hasan`, `--every-grader`, `--no-sahihayn` |
+| **Search in a chapter** | **🔎 Search in this chapter** on Books: the Search page with that book and that chapter (and the chapters under it) alone, shown as 📖 beside Books — ✕ searches the whole book again. `iy search العلم --chapter bukhari:3`, `--chapter "bukhari:Knowledge"` |
+| **Export the results** | **⤓ Export these results** beside the count: every hadith found (up to 1,000) with the books, languages, grades and chapter chosen, to Word, PDF, Excel, CSV, JSON, EPUB …; the file says how they were found (the words, the books, the grades, the chapter). `iy export search العلم --in-chapter bukhari:3 --grade sahih -f docx` |
 | **Highlighting** | On the original, diacritised text, diacritics included |
 | **Recent searches** | The last twenty, under the examples on the start page — a click searches again, one link forgets them all; kept with your profile. `iy search --recent`, `iy search --clear-recent` |
 | **Home** | ⌂ beside the box (Alt+Home) brings the page back to how it opens: no words, every filter at its default. Esc empties the box |
@@ -770,9 +772,11 @@ bookmark survives a new import. `iy bookmark add hadith bukhari:1 --folder "Inte
 **Where you left off.** Each book remembers by itself the chapter and the hadith you had come to, and opens there
 again ("🔖 You left off at hadith 59" under it on the shelf). Put markers of your own wherever you like and name them
 ("Prayer reading", "Ramadan"), as many as you want, in any book; the 🔖 Markers menu of the Books page goes to any of
-them, or to where you left each book. They are kept with your profile, and the same from the command line:
-`iy book bukhari --resume`, `iy book bukhari 3 --mark "Knowledge"`, `iy book --marks`, `iy book --go knowledge`,
-`iy book --unmark knowledge`.
+them, or to where you left each book. Each marker in that menu opens to *Go to this marker*, *Rename…* and *Remove
+this marker*; each book's place to *Go there* and *Forget where I left this book*; and at the bottom *Remove all
+markers…* and *Forget where I left every book…*. They are kept with your profile, and the same from the command
+line: `iy book bukhari --resume`, `iy book bukhari 3 --mark "Knowledge"`, `iy book --marks`, `iy book --go knowledge`,
+`iy book --unmark knowledge` (`--unmark all`), `iy book --forget bukhari` (`--forget all`).
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/bookmarks.png" alt="Bookmarks — folders on the left, a hadith, a narrator, a scholar and a term with their folders and a note" width="850">
@@ -992,11 +996,11 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | Short | Example | What it does |
 |:------|:-----|:-------------|
 | `iy` | `isnady` | Open the window |
-| `iy search WORDS` | `iy search niyet --book abudawud` | Search; `--mode all\|any\|phrase\|meaning`, `--whole-words`, `--book`, `--language`, `--grade` (`sahih`, `hasan`, `daif` … `imami-sahih`, `muwaththaq` …), `--every-grader`, `--no-sahihayn`, `--limit`; `--in narrators\|scholars`, `--tradition sunni\|shia`; `--recent`, `--clear-recent` |
+| `iy search WORDS` | `iy search niyet --book abudawud` | Search; `--mode all\|any\|phrase\|meaning`, `--whole-words`, `--book`, `--language`, `--grade` (`sahih`, `hasan`, `daif` … `imami-sahih`, `muwaththaq` …), `--every-grader`, `--no-sahihayn`, `--chapter BOOK:CHAPTER`, `--limit`; `--in narrators\|scholars`, `--tradition sunni\|shia`; `--recent`, `--clear-recent` |
 | `iy chain BOOK NUMBER` | `iy chain kafi 5:1740` | One chain, narrator by narrator, with who each one is and whom it reaches, then said in Turkish and English (`--lang tr,en`); `--raw` adds the wording; without a number, the book's range |
 | `iy isnads` | `iy isnads --rebuild` | Read every chain and report per book: split, reaching the Prophet or a Ma'sum, identified |
 | `iy narrator NAME` | `iy narrator "Ibn Umar"` | A narrator: his critic's verdict (Ibn Hajar's rank, or the Imami terms), tabaqa, death year, books; `--limit 1` adds teachers, students and hadith; `--famous` lists the famous Companions by group (`--tradition shia`: Ashab al-Ijma'; `all`: both) |
-| `iy book [KEY [CHAPTER]]` | `iy book bukhari 2` | The books (the Sunni ones; `--tradition shia` or `all`); a book's chapters; a chapter read in order; `--resume` where you left it, `--mark NAME`, `--marks`, `--go NAME`, `--unmark NAME` |
+| `iy book [KEY [CHAPTER]]` | `iy book bukhari 2` | The books (the Sunni ones; `--tradition shia` or `all`); a book's chapters; a chapter read in order; `--resume` where you left it, `--mark NAME`, `--marks`, `--go NAME`, `--unmark NAME` (or `all`), `--forget KEY` (or `all`) |
 | `iy scholar [NAME]` | `iy scholar albani` | The scholars in the data (the Sunni ones; `--tradition shia` or `all`), or one of them with his measured statistics |
 | `iy tahric BOOK NUMBER` | `iy tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |
 | `iy stats [SECTION]` | `iy stats graders --book abudawud` | `corpus`, `narrators`, `chains`, `grades`, `books`, `graders`, `model`, `lab`; `--csv DIR`, `--recompute`; `--book @all` measures both roads; `--explain [TERM]` every measure in plain words |

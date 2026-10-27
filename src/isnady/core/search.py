@@ -212,6 +212,7 @@ class SearchQuery:
     grades: list[str] = field(default_factory=list)        # grade codes (core.grades.FILTER_CODES); empty = all
     every_grader: bool = False            # with grades: each grade the hadith was given among those chosen
     sahihayn: bool = True                 # with grades: al-Bukhari's and Muslim's own hadith count as sahih
+    chapters: list[int] = field(default_factory=list)      # chapter ids (work_nodes): only the hadith in them
     limit: int = 25
     offset: int = 0
 
@@ -414,7 +415,8 @@ def search(conn: sqlite3.Connection, query: SearchQuery) -> SearchPage:
     from isnady.core import cache, i18n
 
     key = (query.text, query.mode, query.whole_words, tuple(query.collections), tuple(query.languages),
-           tuple(query.grades), query.every_grader, query.sahihayn, query.limit, query.offset, i18n.language())
+           tuple(query.grades), query.every_grader, query.sahihayn, tuple(query.chapters), query.limit, query.offset,
+           i18n.language())
     return cache.memo(conn, "search", key, lambda: _search_counted(conn, query))
 
 
@@ -511,12 +513,19 @@ def _search_terms(conn: sqlite3.Connection, query: SearchQuery, terms: list[str]
 
 
 def grade_filter(conn: sqlite3.Connection, query: SearchQuery) -> set[int] | None:
-    """The hadith the grades chosen allow, or None when no grade was chosen."""
-    if not query.grades:
-        return None
-    from isnady.core import grades as core_grades
+    """The hadith the grades and the chapters chosen allow, or None when neither was chosen."""
+    allowed = None
+    if query.grades:
+        from isnady.core import grades as core_grades
 
-    return core_grades.allowed_ids(conn, query.grades, query.every_grader, query.sahihayn)
+        allowed = core_grades.allowed_ids(conn, query.grades, query.every_grader, query.sahihayn)
+    if query.chapters:
+        from isnady.core import cache, works
+
+        inside = cache.memo(conn, "chapter-hadith", tuple(query.chapters),
+                            lambda: works.hadith_under(conn, query.chapters))
+        allowed = inside if allowed is None else allowed & inside
+    return allowed
 
 
 def _load_result(conn: sqlite3.Connection, hadith_id: int, terms: list[str], query: SearchQuery) -> SearchResult:

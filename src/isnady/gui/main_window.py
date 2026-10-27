@@ -264,6 +264,7 @@ class MainWindow(QMainWindow):
         self.search_page.data_changed.connect(lambda: self._refresh_or_later("scholars"))
         self.books_page.open_chain.connect(self._open_chain)
         self.books_page.open_narrator.connect(self._open_narrator)
+        self.books_page.search_in_chapter.connect(self._search_in_chapter)
         self.search_page.open_book.connect(self._open_in_book)
         self.search_page.open_person.connect(self._open_person)
         self.search_page.open_scholar.connect(self._open_scholar)
@@ -273,6 +274,8 @@ class MainWindow(QMainWindow):
         self.search_page.wants_sources.connect(lambda: self._preferences("sources"))
         self.search_page.wants_languages.connect(lambda: self._preferences("books"))
         self.search_page.wants_export.connect(lambda ref: self.export_dialog("hadith", refs=ref))
+        self.search_page.wants_search_export.connect(
+            lambda words, filters: self.export_dialog("search", query=words, search=filters))
         self.search_page.retry_requested.connect(self.language_switched)   # main.py builds the window again
         self.search_page.data_changed.connect(lambda: setattr(self, "_books_loaded", False))
         self.nav.currentRowChanged.connect(self._load_books_when_shown)
@@ -864,6 +867,11 @@ class MainWindow(QMainWindow):
             self.nav.setCurrentRow(self._row("books"))
             self.books_page.refresh()
             self.books_page.select_work(key)
+
+    def _search_in_chapter(self, book: str, chapter_id: int, title: str) -> None:
+        """Books → "Search in this chapter": the Search page, that book and chapter only (SRCH-SEC1)."""
+        self.nav.setCurrentRow(self._row("search"))
+        self.search_page.set_chapter_scope(book, chapter_id, title)
 
     def _open_in_book(self, hadith_id: int) -> None:
         with self._place(('in_book', hadith_id)):

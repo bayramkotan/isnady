@@ -3,6 +3,28 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.5.8] — 2026-10-27
+
+- **Markers can be removed where they are (BM3b, Bayram 2026-10-27: "ayraci kaldirma bulamadim").** In the 🔖 Markers
+  menu of Books each marker now opens to *Go to this marker*, *Rename…* and *Remove this marker*, and each book's
+  last place to *Go there* and *Forget where I left this book* — the place a book was left could not be forgotten at
+  all before, and Remove was a submenu at the very bottom. *Remove all markers…* and *Forget where I left every
+  book…* ask first; forgetting keeps the book being read open where it is. `iy book --unmark all`, `iy book --forget
+  KEY` (or `all`).
+- **Search in a chapter (SRCH-SEC1, "Kitaplarin belli bolumlerinde ara eklenebilir mi?").** *🔎 Search in this chapter*
+  on Books opens Search with that book and that chapter — and the chapters under it — alone, shown as 📖 beside
+  Books; ✕ searches the whole book again. The count says how many of the hadith the words found are in the chapter,
+  and when none is, how many the words found. `iy search … --chapter bukhari:3` (by its number or the start of its
+  title, repeatable). Word search and search by meaning alike.
+- **The results exported as found (SRCH-EXP1, "Aramalari bir cikti olarak alabilir miyiz?").** *⤓ Export these
+  results* beside the count opens Export with the words and every choice of the Search page — books, languages,
+  match, grades, chapter — where before the export searched the words alone in every book. The file keeps how the
+  hadith were found (the words, the books, the grades and whether the two Sahihs counted as sahih, the chapter), for
+  a reader who checks the work. `iy export search … --grade --every-grader --no-sahihayn --in-chapter --book`.
+- **Opening the database no longer counts as a change of it (PERF-SRCH).** Every connection wrote the schema number
+  again; the window took that write — from a statistics job, a count of Learn, an `iy` command run beside it — for a
+  change of the data and checked everything again on its next search. It is written now only when it differs.
+
 ## [0.5.7] — 2026-10-27
 
 - **Learn → History and method (LRN-H1, Bayram 2026-10-27: "hadislerin toplanma … tarihçesini ve mantığını hatta

@@ -247,3 +247,29 @@ def chapter_of_hadith(conn: sqlite3.Connection, hadith_id: int) -> int | None:
 def chapter_of_person(conn: sqlite3.Connection, person_id: int) -> int | None:
     r = conn.execute("SELECT parent_id FROM work_nodes WHERE person_id = ? AND kind = 'entry' LIMIT 1", (person_id,)).fetchone()
     return r[0] if r else None
+
+
+def hadith_under(conn: sqlite3.Connection, node_ids) -> set[int]:
+    """Every hadith in these chapters and in the chapters under them (search in a chapter, SRCH-SEC1)."""
+    ids = [int(n) for n in node_ids or []]
+    if not ids:
+        return set()
+    rows = conn.execute(
+        f"""WITH RECURSIVE sub(id) AS (
+                SELECT id FROM work_nodes WHERE id IN ({','.join('?' * len(ids))})
+                UNION SELECT w.id FROM work_nodes w JOIN sub ON w.parent_id = sub.id)
+            SELECT w.hadith_id FROM work_nodes w JOIN sub ON sub.id = w.id WHERE w.hadith_id IS NOT NULL""", ids)
+    return {r[0] for r in rows}
+
+
+def chapter_named(conn: sqlite3.Connection, book: str, label: str) -> dict | None:
+    """A chapter of a book by its label as the book numbers it ("3", "1:2") or by the start of its title."""
+    work = find_work(conn, book)
+    if work is None:
+        return None
+    row = conn.execute("SELECT id FROM work_nodes WHERE work_id = ? AND label = ? AND hadith_id IS NULL "
+                       "ORDER BY id LIMIT 1", (work["id"], str(label))).fetchone()
+    if row is None:
+        row = conn.execute("SELECT id FROM work_nodes WHERE work_id = ? AND hadith_id IS NULL AND title LIKE ? "
+                           "ORDER BY id LIMIT 1", (work["id"], f"{label}%")).fetchone()
+    return node(conn, row[0]) if row else None

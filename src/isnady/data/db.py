@@ -426,7 +426,11 @@ def connect(path: Path | None = None, *, reset_old: bool = False) -> sqlite3.Con
     conn.execute("PRAGMA foreign_keys = ON")
     conn.execute("PRAGMA journal_mode = WAL")
     conn.executescript(SCHEMA)
-    conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+    # written only when it differs: writing it again (the same number) was a write to the database, and every other
+    # open connection — the window's — took it for a change of the data and checked everything again on its next
+    # search (PERF-SRCH, 2026-10-27)
+    if conn.execute("PRAGMA user_version").fetchone()[0] != SCHEMA_VERSION:
+        conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
     conn.commit()
     return conn
 
