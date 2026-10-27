@@ -1302,6 +1302,65 @@ def cmd_term(args) -> int:
     return 0
 
 
+def cmd_learn(args) -> int:
+    """Learn → History and method (LRN-H1): the articles, with their live numbers counted from this database."""
+    import textwrap
+
+    from isnady.core import learn_history as H
+
+    lang = args.lang or _ui_lang()
+    if not args.article:
+        for a in H.articles():
+            print(f"  {a['id']:10} {H.say(a['title'], lang)}")
+        print("Read one: iy learn tadwin   (writing, method, numbers; --lang tr|en|ar)")
+        return 0
+    a = H.get(args.article) or next(iter(H.search(args.article, lang)), None)
+    if a is None:
+        print(f"No article '{args.article}'. Try: iy learn", file=sys.stderr)
+        return 1
+    conn = None
+    width = args.width
+
+    def para(text: str, indent: str = "") -> None:
+        print(textwrap.fill(text, width=width, initial_indent=indent, subsequent_indent=indent))
+
+    print(H.say(a["title"], lang).upper())
+    print()
+    para(H.say(a.get("lead"), lang))
+    for sec in a["sections"]:
+        print()
+        print("## " + H.say(sec.get("heading"), lang))
+        for p in H.say(sec.get("text"), lang) or []:
+            print()
+            para(p, "  ")
+        if sec.get("block"):
+            if conn is None and sec["block"] != "timeline":
+                conn = _connect()
+            rows = H.block(conn, sec["block"], lang)
+            if rows:
+                print()
+                wide = max(len(r[0]) for r in rows)
+                for label, value, note in rows:
+                    line = f"    {label:<{wide}}  {value}" if value else f"  [{label}]"
+                    print(line + (f"   ({note})" if note and value else ""))
+    if a.get("sources"):
+        print()
+        para(H.label("sources", lang) + ": " + H.say(a["sources"], lang))
+    if conn is not None:
+        conn.close()
+    return 0
+
+
+def _ui_lang() -> str:
+    try:
+        from isnady.core import language
+
+        code = language.ui_language()
+        return code if code in ("en", "tr", "ar") else "en"
+    except Exception:
+        return "en"
+
+
 def cmd_shortcut(args) -> int:
     from isnady.core import shortcut
 
@@ -1981,6 +2040,12 @@ def build_parser() -> argparse.ArgumentParser:
     tm.add_argument("--search", help="words to look for in names and definitions")
     tm.add_argument("--lang", choices=["en", "tr", "ar"], default="en")
     tm.set_defaults(func=cmd_term)
+    ln = sub.add_parser("learn", help="history and method of hadith: how they were written down and gathered, the "
+                                     "logic of verification, the numbers of the books imported (counted live)")
+    ln.add_argument("article", nargs="?", help="tadwin, writing, method or numbers (none: the list)")
+    ln.add_argument("--lang", choices=["en", "tr", "ar"], help="the language (default: the interface language)")
+    ln.add_argument("--width", type=int, default=100, help="characters per line")
+    ln.set_defaults(func=cmd_learn)
     lf = sub.add_parser("life", help="the life of a Companion, a narrator or a scholar, in English, Turkish or Arabic")
     lf.add_argument("name", nargs="+", help="any part of the name, in Arabic or Latin letters")
     lf.add_argument("--lang", choices=["en", "tr", "ar"], help="the language (default: the interface language)")

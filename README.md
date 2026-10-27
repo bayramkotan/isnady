@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.5.6-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.5.7-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.5.6-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.5.7-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.5.6).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.5.7).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -683,6 +683,19 @@ category alone), the dot before each term, the band of the term's card, its "In 
 related terms; the card reads from the top: the term large with its Arabic, its names in the other languages,
 *In short*, *In detail*, the source, the related terms, and more of the same category to read on.
 
+**History and method** (the 📜 button at the top of Learn, and `iy learn`): four articles in English, Turkish and
+Arabic, each step with its source — *How the hadith were written down and gathered* (the Companions' written sheets,
+'Umar b. 'Abd al-'Aziz's order and al-Zuhri, the books by subject, the Musnads, the two Sahihs and the Sunans, the
+science and its commentaries, with a timeline), *Transmission in writing, and its numbers*, *The logic of the
+method* (the chain, the five conditions of the sahih, jarh and ta'dil, mutawatir and ahad, why the two Sahihs and
+not the Musnad stand first, why the sifting itself is the proof) and *Hadith in numbers*. Their numbers are counted
+live from the books you imported, each tradition apart: the chains that say a written text stood between two
+narrators (read to the teacher, sent in writing, found in a book, dictated, from his book; "akhbarana" in Muslim and
+al-Nasa'i by their own usage), the hadith of Hammam b. Munabbih's Sahifa, the texts that speak of writing, how many
+books and chains carry "Whoever lies about me deliberately", and the size of the corpus — books, hadith, chains,
+names, narrators by generation, the Companions most often at the end of the chains, the graders' grades.
+`iy learn writing --lang tr`.
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/learn.png" alt="Learn — the term mursal in its category's colour: Arabic, In short, In detail, source, related terms" width="850">
 </p>
@@ -974,6 +987,7 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | `iy tahric BOOK NUMBER` | `iy tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |
 | `iy stats [SECTION]` | `iy stats graders --book abudawud` | `corpus`, `narrators`, `chains`, `grades`, `books`, `graders`, `model`, `lab`; `--csv DIR`, `--recompute`; `--book @all` measures both roads; `--explain [TERM]` every measure in plain words |
 | `iy term [NAME]` | `iy term --search tadlis` | The glossary, English, Turkish or Arabic (`--lang tr`, `--lang ar`) |
+| `iy learn [ARTICLE]` | `iy learn writing --lang tr` | History and method: `tadwin`, `writing`, `method`, `numbers`, with the numbers counted live from your books |
 | `iy life NAME` | `iy life Abu Hurayra --lang tr` | The life of a Companion, a narrator or a scholar (`--lang en\|tr\|ar`, `--tradition`, `--limit`); `--source` downloads al-Dhahabi's *Siyar* and shows its entry |
 | `iy tree WHICH [NAME]` | `iy tree family "Ibn Umar"` | Genealogies: `prophets`, `quraysh`, a narrator's `family`, his line of `learning` (`--depth`, `--width`); `--hadith` the hadith that speak of a prophet |
 | `iy profile ACTION` | `iy profile new Ayşe --copy default` | Profiles: `list`, `new`, `use`, `rename`, `delete`, `export`, `import` |

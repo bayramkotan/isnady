@@ -3,6 +3,28 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.5.7] — 2026-10-27
+
+- **Learn → History and method (LRN-H1, Bayram 2026-10-27: "hadislerin toplanma … tarihçesini ve mantığını hatta
+  istatistikliklerini … hadislerin yazı ile de aktarıldığını ve bunun istatistikleri").** Four articles in English,
+  Turkish and Arabic, each step with its source, under a 📜 button at the top of Learn and `iy learn`: *How the hadith
+  were written down and gathered* — 'Abd Allah b. 'Amr's Sahifa (Abu Dawud 3646, al-Bukhari 113), "Write it for Abu
+  Shah" (al-Bukhari 2434), 'Ali's sheet (al-Bukhari 111), the report against writing and how the scholars reconciled
+  it, Hammam b. Munabbih's Sahifa and its manuscripts, 'Umar b. 'Abd al-'Aziz's order (al-Darimi 487–488) and
+  al-Zuhri, the books by subject, the Musnads, Sahihs and Sunans, the science and its commentaries, and a timeline;
+  *Transmission in writing, and its numbers*; *The logic of the method* — the chain, the five conditions of the
+  sahih, jarh and ta'dil, mutawatir and ahad and the degrees of certainty, why the two Sahihs and not the larger
+  Musnad stand first (and al-Daraqutni's criticisms), why the sifting of the weak and the fabricated is itself the
+  proof; *Hadith in numbers*. Their numbers are counted live from the books imported, each tradition apart and
+  never added to the other, each a lower bound: the chains whose own words say a written text stood between two
+  narrators (read to the teacher 574, sent in writing 168, found in a book 67, dictated 33, from his book 76 in the
+  Sunni books; "akhbarana" counted in Muslim and al-Nasa'i alone, by their own usage), at least 190 hadith of Hammam's
+  Sahifa, the texts that speak of written sheets, letters and writing, 78 hadith and 99 chains of "Whoever lies about
+  me deliberately" in ten books, and the size of the corpus — books, hadith, chains, names, narrators by generation,
+  the Companions most often at the end of the chains (Abu Hurayra, 'A'isha, Anas, Ibn 'Umar, Ibn 'Abbas, Jabir, Abu
+  Sa'id … as the classical lists of the most prolific have them), the graders' grades. The first count is made in a
+  thread of its own and kept with the other figures.
+
 ## [0.5.6] — 2026-10-27
 
 - **Search by grade (GR-FLT, Bayram 2026-10-27: "sadece sahih ya da hasen arayabilirim, ya da her ikisi, ya da daha

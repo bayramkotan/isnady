@@ -226,7 +226,7 @@ class MainWindow(QMainWindow):
         self.statistics_page = self._build('statistics', lambda: StatisticsPage(self.search_page.connection))
         from isnady.gui.learn_page import LearnPage
 
-        self.learn_page = self._build('learn', lambda: LearnPage())
+        self.learn_page = self._build('learn', lambda: LearnPage(conn_of=self.search_page.connection))
         from isnady.gui.books_page import BooksPage
         from isnady.gui.scholars_page import ScholarsPage
 
