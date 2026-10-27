@@ -42,6 +42,15 @@ class Tokens:
     sidebar_muted: str
     sidebar_selected: str
     pill: str
+    # the feel of a theme beside its colours (UI-FRESH, Bayram 2026-10-27: "cocuklarin bile guzel bulacagi temalar,
+    # araliklar"): its typefaces, how round its corners are, how much room its buttons and boxes have, and whether
+    # the sections of the sidebar carry a sign. The older themes keep the defaults: they look as they did.
+    ui_family: str = ""            # the interface's typeface ("": the system's)
+    heading_family: str = ""       # titles and the reading of translations ("": Amiri)
+    roundness: float = 1.0         # every corner radius × this
+    room: float = 1.0              # every padding × this
+    nav_signs: bool = False        # a sign before each section of the sidebar
+    latin_family: str = ""         # translations in Latin letters, while the reader has not chosen his own ("": Amiri)
 
 
 LIGHT = Tokens(
@@ -89,7 +98,33 @@ CONTRAST = Tokens(
     sidebar="#000000", sidebar_ink="#FFFFFF", sidebar_muted="#D4D4D4", sidebar_selected="#262626",
     pill="#1A1A1A",
 )
+# Friendlier themes (UI-FRESH): soft colours, round corners, more room, typefaces made for reading on a screen —
+# Nunito (round and warm), Baloo 2 (playful titles), Lexend (made for easy reading); Amiri stays for the Arabic.
+GARDEN = Tokens(
+    dark=False, window="#FFF7F2", surface="#FFFFFF", border="#F3DCD3", ink="#2E2433", muted="#7B6E80",
+    lapis="#D6457A", lapis_soft="#FDE6EE", gold="#E79A2E", gilt="#FFE6B3",
+    sidebar="#FFEFF3", sidebar_ink="#3B2A3F", sidebar_muted="#8C7590", sidebar_selected="#FFD9E5",
+    pill="#FBEDE6", ui_family="Nunito", heading_family="Baloo 2", roundness=1.7, room=1.25, nav_signs=True,
+    latin_family="Nunito",
+)
+SKY = Tokens(
+    dark=False, window="#EEF5FF", surface="#FFFFFF", border="#D6E4F7", ink="#1C2B44", muted="#5F7190",
+    lapis="#2F74D9", lapis_soft="#DDEBFF", gold="#F29F2E", gilt="#FFE9B8",
+    sidebar="#2F6CCB", sidebar_ink="#FFFFFF", sidebar_muted="#D4E4FF", sidebar_selected="#4A86E3",
+    pill="#E8F0FC", ui_family="Nunito", heading_family="Nunito ExtraBold", roundness=1.6, room=1.2, nav_signs=True,
+    latin_family="Nunito",
+)
+STARRY = Tokens(
+    dark=True, window="#1A1730", surface="#25213F", border="#3A3460", ink="#F1EEFF", muted="#B1A9D6",
+    lapis="#A493FF", lapis_soft="#342D5E", gold="#FFC76B", gilt="#5C4720",
+    sidebar="#131027", sidebar_ink="#F1EEFF", sidebar_muted="#9D95C4", sidebar_selected="#2C2652",
+    pill="#2E2950", ui_family="Lexend", heading_family="Baloo 2", roundness=1.6, room=1.2, nav_signs=True,
+    latin_family="Lexend",
+)
 THEMES = {   # key: (name, description, tokens)
+    "sky": (N_("Sky"), N_("Bright sky blue with sunny gold"), SKY),
+    "starry": (N_("Starry Night"), N_("A gentle dark of lavender and stars"), STARRY),
+    "garden": (N_("Rose Garden"), N_("Soft rose and cream, round and roomy"), GARDEN),
     "light": (N_("Lapis"), N_("Lapis and gold of illuminated manuscripts"), LIGHT),
     "dark": (N_("Lapis Night"), N_("The same, by night"), DARK),
     "paper": (N_("Paper"), N_("Warm cream and ink, for long reading"), PAPER),
@@ -98,6 +133,10 @@ THEMES = {   # key: (name, description, tokens)
     "midnight": (N_("Midnight"), N_("Deep dark with teal"), MIDNIGHT),
     "contrast": (N_("High Contrast"), N_("Black, white and yellow, for low vision"), CONTRAST),
 }
+
+# the sign of each section of the sidebar, for the themes that show them (nav_signs)
+NAV_SIGNS = {"search": "🔎", "books": "📚", "narrators": "👥", "chains": "🔗", "scholars": "🎓", "genealogy": "🌳",
+             "statistics": "📊", "bookmarks": "⭐", "learn": "💡"}
 
 _current: Tokens = LIGHT
 _SYSTEM_UI_FONT: QFont | None = None     # the platform's own UI font, before any user choice
@@ -165,6 +204,8 @@ def script_font(script: str, bold: bool = False, factor: float = 1.0) -> QFont:
     """The reader's font for one script: family and size from the settings, times the text scale."""
     script = script if script in config.SCRIPTS else "latin"
     family = config.get(f"text.{script}.family")
+    if script == "latin" and _current.latin_family and family == config.SCRIPTS["latin"][2]:
+        family = _current.latin_family          # the theme's reading face while the default is untouched
     font = QFont(family) if family else QFont(QApplication.font())
     font.setPointSizeF(float(config.get(f"text.{script}.size")) * factor * text_scale())
     font.setBold(bold)
@@ -188,17 +229,20 @@ def script_line_height(script: str) -> int:
 
 
 def load_fonts() -> bool:
+    """Every typeface bundled (SIL OFL): Amiri for the Arabic, and those the themes ask for."""
     ok = False
-    for name in ("Amiri-Regular.ttf", "Amiri-Bold.ttf"):
-        path = FONT_DIR / name
-        if path.exists() and QFontDatabase.addApplicationFont(str(path)) != -1:
-            ok = True
+    for path in sorted(FONT_DIR.glob("*.ttf")):
+        if QFontDatabase.addApplicationFont(str(path)) != -1:
+            ok = ok or path.name.startswith("Amiri")
     return ok
 
 
 def reading_font(point_size: float, bold: bool = False, scaled: bool = False) -> QFont:
-    """Amiri at the given size; scaled=True applies the reader's text size (View menu)."""
+    """The theme's heading face (Amiri by default) at the given size, Amiri still for any Arabic in it; scaled=True
+    applies the reader's text size (View menu)."""
     font = QFont(READING_FAMILY)
+    if _current.heading_family:
+        font.setFamilies([_current.heading_family, READING_FAMILY])
     font.setPointSizeF(point_size * (text_scale() if scaled else 1.0))
     font.setBold(bold)
     return font
@@ -240,6 +284,25 @@ def _icon(name: str, t: Tokens) -> str:
 
 
 def stylesheet(t: Tokens) -> str:
+    sheet = _sheet(t)
+    if t.nav_signs:              # the sections with their signs, a little larger
+        sheet += "\n    QListWidget#Nav {{ font-size: 10.5pt; }}\n".replace("{{", "{").replace("}}", "}")
+    if t.roundness == 1.0 and t.room == 1.0:
+        return sheet
+    import re
+
+    def radius(m):
+        return f"border-radius: {max(0, round(int(m.group(1)) * t.roundness))}px"
+
+    def padding(m):
+        parts = [f"{round(int(n) * t.room)}px" for n in re.findall(r"(\d+)px", m.group(1))]
+        return "padding: " + " ".join(parts) + ";"
+
+    sheet = re.sub(r"border-radius:\s*(\d+)px", radius, sheet)
+    return re.sub(r"padding:\s*((?:\d+px\s*)+);", padding, sheet)
+
+
+def _sheet(t: Tokens) -> str:
     chevron, check, up, down = _icon("chevron", t), _icon("check", t), _icon("up", t), _icon("down", t)
     return f"""
     QMainWindow, QWidget#Page {{ background: {t.window}; }}
@@ -442,8 +505,8 @@ def apply(app: QApplication, mode: str | None = None) -> Tokens:
     mode = mode or theme_mode()
     if mode in THEMES:
         base = THEMES[mode][2]
-    else:
-        base = DARK if _is_dark_scheme() else LIGHT
+    else:                               # "Follow system": Sky by day, Starry Night by night (UI-FRESH)
+        base = STARRY if _is_dark_scheme() else SKY
     if base in (LIGHT, DARK):           # the user's own colours belong to the Lapis pair
         which = "dark" if base.dark else "light"
         overrides = {token: config.get(f"colors.{which}.{token}") for token in config.COLOR_TOKENS}
@@ -451,7 +514,10 @@ def apply(app: QApplication, mode: str | None = None) -> Tokens:
     else:
         _current = base
     family, size = config.get("ui.family"), float(config.get("ui.size"))
+    family = family or _current.ui_family            # the user's own choice first, then the theme's face
     ui_font = QFont(family) if family else QFont(_SYSTEM_UI_FONT or app.font())
+    if family and not size:
+        ui_font.setPointSizeF((_SYSTEM_UI_FONT or app.font()).pointSizeF() + 0.5)
     if size:
         ui_font.setPointSizeF(size)
     if app.font() != ui_font:

@@ -3,6 +3,19 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.5.9] — 2026-10-27
+
+- **Friendlier themes: Sky, Starry Night and Rose Garden (UI-FRESH, Bayram 2026-10-27: "cok guzel cazip bir duzen
+  fontlar temalar, biraz daha insana yakin, cocuklarin bile guzel bulacagi temalar, araliklar").** A theme now
+  carries its feel beside its colours: its typefaces, how round its corners are, how much room its buttons and boxes
+  have, and whether the sections of the sidebar carry a sign (🔎 📚 👥 🔗 🎓 🌳 📊 ⭐ 💡). *Sky* — bright sky blue with
+  sunny gold, Nunito throughout; *Starry Night* — a gentle dark of lavender and gold, Lexend (made for easy reading)
+  with Baloo 2 titles; *Rose Garden* — soft rose and cream, Nunito with Baloo 2 titles. Translations in Latin letters
+  are set in the theme's face instead of Amiri (until the reader chooses a font of his own); the Arabic stays in
+  Amiri. "Follow system" is now Sky by day and Starry Night by night; Lapis, Lapis Night and the other themes are
+  kept as they were, and colours of one's own still apply to Lapis. Nunito, Lexend, Baloo 2 and Noto Naskh Arabic
+  are bundled (SIL Open Font License, their licences beside them), as fixed weights cut from the variable fonts.
+
 ## [0.5.8] — 2026-10-27
 
 - **Markers can be removed where they are (BM3b, Bayram 2026-10-27: "ayraci kaldirma bulamadim").** In the 🔖 Markers

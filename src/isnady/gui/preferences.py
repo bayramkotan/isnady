@@ -379,8 +379,8 @@ class PreferencesDialog(QDialog):
         grid = QGridLayout()
         grid.setHorizontalSpacing(16)
         grid.setVerticalSpacing(16)
-        tiles = [("system", tr("Follow system"), tr("Lapis by day, Lapis Night by night — as the system is set"),
-                  theme.LIGHT, theme.DARK)]
+        tiles = [("system", tr("Follow system"), tr("Sky by day, Starry Night by night — as the system is set"),
+                  theme.SKY, theme.STARRY)]
         tiles += [(k, tr(name), tr(text), tokens, None) for k, (name, text, tokens) in theme.THEMES.items()]
         for n, (key, name, text, tokens, second) in enumerate(tiles):
             tile = ThemeTile(key, name, text, tokens, second)

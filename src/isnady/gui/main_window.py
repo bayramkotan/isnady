@@ -427,10 +427,23 @@ class MainWindow(QMainWindow):
         while self.pages.count():
             self.pages.removeWidget(self.pages.widget(0))
         for key in self._order:
-            self.nav.addItem(tr(labels[key]))
-            self.nav.item(self.nav.count() - 1).setSizeHint(QSize(0, 38))
+            sign = theme.NAV_SIGNS.get(key, "") if theme.current().nav_signs else ""
+            self.nav.addItem((sign + "   " if sign else "") + tr(labels[key]))
+            self.nav.item(self.nav.count() - 1).setSizeHint(QSize(0, 44 if sign else 38))
             self.pages.addWidget(self._page_of[key])
         self.nav.blockSignals(False)
+
+    def _resign_sidebar(self) -> None:
+        """The sections' signs shown or taken away when the theme changes (UI-FRESH)."""
+        labels = {k: l for k, l, _t in SECTIONS}
+        signs = theme.current().nav_signs
+        for row, key in enumerate(getattr(self, "_order", [])):
+            item = self.nav.item(row)
+            if item is None:
+                continue
+            sign = theme.NAV_SIGNS.get(key, "") if signs else ""
+            item.setText((sign + "   " if sign else "") + tr(labels[key]))
+            item.setSizeHint(QSize(0, 44 if sign else 38))
 
     def apply_sidebar_order(self) -> None:
         """Preferences → Sidebar changed the order: the same page stays in view, the shortcuts follow the order."""
@@ -645,7 +658,7 @@ class MainWindow(QMainWindow):
         theme_menu = view_menu.addMenu(tr("Theme"))
         group = QActionGroup(self)
         self._theme_actions = {}
-        choices = ([("system", tr("Follow system (Lapis / Lapis Night)"))]
+        choices = ([("system", tr("Follow system (Sky / Starry Night)"))]
                    + [(k, tr(v[0])) for k, v in theme.THEMES.items()])
         for n, (mode, label) in enumerate(choices):
             action = self._action(theme_menu, label, lambda _c=False, m=mode: self._set_theme(m))
@@ -1291,6 +1304,7 @@ class MainWindow(QMainWindow):
         """Called when the theme, the text size or any appearance setting changes: the page in view is redrawn
         now, every other page when it is next opened (_retheme_when_shown)."""
         current = self.pages.currentWidget()
+        self._resign_sidebar()
         self._stale = {self.pages.widget(i) for i in range(self.pages.count())
                        if hasattr(self.pages.widget(i), "retheme")} - {current}
         if hasattr(current, "retheme"):
