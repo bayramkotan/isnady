@@ -259,8 +259,18 @@ def read(conn: sqlite3.Connection, person_id: int) -> dict | None:
     if rel["students"]:
         facts.append((t(FACTS["students"]), names(rel["students"][:3])))
     sources = [_in(SOURCES["najashi" if shia else "taqrib"]), t("the chains of the books imported here")]
+    entries = []
+    from isnady.core import huffaz
+
+    hafiz = None if shia else huffaz.of_key(who.get("key"))
+    if hafiz:
+        # al-Dhahabi counts him among the huffaz (HFZ1): where, and the entry itself on request
+        facts.append((t(FACTS["known"]), t("a hafiz of hadith: al-Dhahabi's Tadhkirat al-Huffaz, generation {tabaqa}",
+                                          tabaqa=hafiz["tabaqa"])))
+        sources.append(_in(SOURCES["tadhkira"]))
+        entries.append(huffaz.source_entry(hafiz, language()))
     return {"id": "", "title": title, "kind": t(KINDS["narrator"]), "road": "shia" if shia else "sunni",
-            "facts": facts, "paragraphs": paras, "sources": sources}
+            "facts": facts, "paragraphs": paras, "sources": sources, "entries": entries}
 
 
 def life(conn: sqlite3.Connection, person_id: int) -> tuple[dict | None, bool]:

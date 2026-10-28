@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.6.0-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.6.1-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.6.0-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.6.1-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -44,7 +44,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.6.0).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.6.1).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -606,6 +606,15 @@ the Imami terms. On Sunan Abi Dawud, for example, Zubair 'Ali Za'i grades most s
 agrees with al-Albani on 70% of the hadith; the page also flags a pair of graders whose 98%
 agreement suggests the source did not keep them independent.
 
+A fourth group, **Huffaz**, is al-Dhahabi's *Tadhkirat al-Huffaz* (d. 748 AH): the **1,176 masters of hadith**
+he counts, in his **21 generations**, from Abu Bakr al-Siddiq to his own teachers — each with his generation, his
+year of death (al-Dhahabi's, read from the entry; else the *Taqrib*'s, marked), al-Mizzi's signs of the six books
+he narrates in, and, for the **418** who are also narrators of the *Taqrib*, Ibn Hajar's verdict, the chains he
+is in here and a button to his narrator page (tied only when the name, the father, the grandfather and the two
+years of death agree). Above them the book at a glance: how many each generation holds and when they died, by
+century of the Hijra, beside al-Dhahabi's own count of a generation where he gives one. Only the index is
+bundled; al-Dhahabi's entry itself is downloaded once on request (OpenITI, about 3 MB) and opens on the card.
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/scholars.png" alt="Hadith Scholars — al-Albani: his grades on Sunan Abi Dawud and his agreement with the other graders" width="850">
 </p>
@@ -992,6 +1001,7 @@ command line never loads Qt. Every command that takes a book accepts its full na
 | `iy narrator NAME` | `iy narrator "Ibn Umar"` | A narrator: his critic's verdict (Ibn Hajar's rank, or the Imami terms), tabaqa, death year, books; `--limit 1` adds teachers, students and hadith; `--famous` lists the famous Companions by group (`--tradition shia`: Ashab al-Ijma'; `all`: both) |
 | `iy book [KEY [CHAPTER]]` | `iy book bukhari 2` | The books (the Sunni ones; `--tradition shia` or `all`); a book's chapters; a chapter read in order; `--resume` where you left it, `--mark NAME`, `--marks`, `--go NAME`, `--unmark NAME` (or `all`), `--forget KEY` (or `all`) |
 | `iy scholar [NAME]` | `iy scholar albani` | The scholars in the data (the Sunni ones; `--tradition shia` or `all`), or one of them with his measured statistics |
+| `iy scholar --huffaz [NAME]` | `iy scholar --huffaz zuhri --source` | al-Dhahabi's *Tadhkirat al-Huffaz*: the 21 generations at a glance, one generation (`--tabaqa N`), or one hafiz with his entry (`--source`) |
 | `iy tahric BOOK NUMBER` | `iy tahric bukhari 1` | Other narrations of a hadith in the imported books (takhrij) |
 | `iy stats [SECTION]` | `iy stats graders --book abudawud` | `corpus`, `narrators`, `chains`, `grades`, `books`, `graders`, `model`, `lab`; `--csv DIR`, `--recompute`; `--book @all` measures both roads; `--explain [TERM]` every measure in plain words |
 | `iy term [NAME]` | `iy term --search tadlis` | The glossary, English, Turkish or Arabic (`--lang tr`, `--lang ar`) |

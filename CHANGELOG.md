@@ -3,6 +3,23 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.6.1] — 2026-10-27
+
+- **The huffaz: al-Dhahabi's Tadhkirat al-Huffaz on the Hadith Scholars page (HFZ1, Bayram 2026-10-27: "hadis
+  alimleri az mi? … neden daha eskilerden … bu kadar az").** A fourth group beside All / Sunni / Shia: the 1,176
+  masters of hadith al-Dhahabi counts, in his 21 generations, from Abu Bakr al-Siddiq to his own teachers, with a
+  search by name (Arabic or Latin letters) and a generation filter. The book at a glance first: how many each
+  generation holds and when half of them died, and how many died in each century of the Hijra (363 in the third);
+  where al-Dhahabi gives a generation's count himself it is shown beside the count read here (106 and 106 in the
+  ninth). Each hafiz: his generation, his year of death (al-Dhahabi's, read from his words; else the Taqrib's,
+  marked; both when they differ), al-Mizzi's signs of the six books he narrates in, and — for the 418 who are also
+  narrators of Ibn Hajar's Taqrib — Ibn Hajar's verdict, the chain links he has here and *Open him as a narrator*.
+  A man is tied to the Taqrib only when his name, his father and his grandfather agree and the two years of death
+  are within three years (ten when four names agree); otherwise he is left untied. al-Dhahabi's entry itself is
+  downloaded once on request (OpenITI, about 3 MB) and opens on the card; only the index is bundled. A narrator
+  who is a hafiz now says so in his life on the Narrators page, with the same entry. In the terminal:
+  `iy scholar --huffaz [NAME] [--tabaqa N] [--source]`.
+
 ## [0.6.0] — 2026-10-27
 
 - **Every theme with the same measures and signs (Bayram 2026-10-27: "mevcut temalarina da ayni olculeri ve

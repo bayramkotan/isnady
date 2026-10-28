@@ -14,6 +14,7 @@ Examples
   iy search --mode meaning "komşu hakları"
   iy tahric bukhari 1
   iy scholar albani
+  iy scholar --huffaz zuhri --source
   iy book bukhari 2
   iy shortcut
   iy stats graders --book abudawud
@@ -1532,9 +1533,77 @@ def cmd_book(args) -> int:
     return 0
 
 
+def _huffaz(args) -> int:
+    """iy scholar --huffaz (HFZ1): al-Dhahabi's Tadhkirat al-Huffaz, generation by generation, tied to the Taqrib."""
+    from isnady.core import huffaz as H
+    from isnady.core import i18n, source_entries
+    from isnady.core.rijal import display_name
+
+    conn = _connect()
+    lang = i18n.language()
+
+    def reading(r):
+        return H.reading(r, "tr" if lang == "tr" else "en")
+
+    def died(r):
+        y, whose = H.death_of(r)
+        if not y:
+            return ""
+        other = r.get("taqrib_death")
+        note = " (Taqrib)" if whose == "taqrib" else (f" (Taqrib: {other})" if other and abs(other - y) > 0 else "")
+        return f"d. {y}{note}"
+
+    rows = H.find(conn, " ".join(args.name), args.tabaqa)
+    if not args.name:
+        print("al-Dhahabi (d. 748 AH), Tadhkirat al-Huffaz: the masters of hadith, generation by generation")
+        for g in H.generations(conn):
+            if args.tabaqa and g["tabaqa"] != args.tabaqa:
+                continue
+            stated = f", al-Dhahabi: {g['stated']}" if g["stated"] else ""
+            span = f"d. {g['from']}–{g['to']} AH (median {g['median']})" if g["median"] else ""
+            print(f"  generation {g['tabaqa']:2}: {g['count']:4} huffaz{stated}   {span}   in the Taqrib: {g['in_taqrib']}")
+        print("  died, by century AH: " + ", ".join(f"{c}: {n}" for c, n in H.by_century(conn)))
+        if not args.tabaqa:
+            print("\n(iy scholar --huffaz --tabaqa N lists one generation; iy scholar --huffaz NAME finds one man)")
+            conn.close()
+            return 0
+    if not rows:
+        print("No hafiz of that name in the Tadhkira.", file=sys.stderr)
+        conn.close()
+        return 1
+    if args.name and len(rows) == 1:
+        r = rows[0]
+        print(f"{reading(r)}  {r['head']}")
+        print(f"  Tadhkirat al-Huffaz no. {r['n']}, generation {r['tabaqa']}   {died(r)}")
+        if r["rumuz"]:
+            print("  narrates in: " + "; ".join(i18n.t(x) for x in H.rumuz_text(r["rumuz"])) + f"   [{' '.join(r['rumuz'])}]")
+        if r.get("person"):
+            print(f"  in the Taqrib: {display_name(r['taqrib_name'])} — in {r['in_chains']:,} chain links here "
+                  f"(iy narrator {r['person']})")
+        if args.source:
+            if not source_entries.available(H.WORK):
+                print(f"  … Downloading (≈{source_entries.WORKS[H.WORK]['size_mb']} MB, once)", file=sys.stderr)
+                source_entries.fetch(H.WORK, lambda m: print(f"  … {m}", file=sys.stderr))
+            found = source_entries.entry(H.WORK, 0, r["n"])
+            if found:
+                print(f"\n  {found['heading']}\n")
+                print(found["text"])
+        else:
+            print("  (--source prints al-Dhahabi's entry in his own words)")
+        conn.close()
+        return 0
+    for r in rows:
+        print(f"  {r['n']:5}  g{r['tabaqa']:<2}  {died(r):22} {reading(r)[:34]:34}  {r['name']}")
+    print(f"{len(rows)} huffaz")
+    conn.close()
+    return 0
+
+
 def cmd_scholar(args) -> int:
     from isnady.core import scholars as S
 
+    if args.huffaz or args.tabaqa:
+        return _huffaz(args)
     conn = _connect()
     people = S.present(conn)
     if not args.name:
@@ -2150,6 +2219,12 @@ def build_parser() -> argparse.ArgumentParser:
     sc.add_argument("name", nargs="*", help="part of a name, e.g. albani, bukhari; none = the list")
     sc.add_argument("--tradition", choices=("sunni", "shia", "all"), default="sunni",
                     help="the list: the Sunni scholars (default), the Shia ones, or all")
+    sc.add_argument("--huffaz", action="store_true",
+                    help="al-Dhahabi's Tadhkirat al-Huffaz: 1,176 huffaz in 21 generations, tied to the Taqrib; "
+                         "with a NAME, one hafiz")
+    sc.add_argument("--tabaqa", type=int, metavar="N", help="with --huffaz: only generation N (1-21)")
+    sc.add_argument("--source", action="store_true",
+                    help="with --huffaz NAME: al-Dhahabi's entry in his own words (downloaded once, about 3 MB)")
     sc.set_defaults(func=cmd_scholar)
     tk = sub.add_parser("tahric", help="other narrations of a hadith in the imported books (takhrij)")
     tk.add_argument("book")

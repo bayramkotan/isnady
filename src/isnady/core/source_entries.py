@@ -3,7 +3,8 @@
 Bayram (2026-10-17), on the lives written for isnady: "Nereden alıyorsun bu bilgileri?" The written lives are
 summaries; this module lets each of them be read beside the entry of the work it is summarised from, as the
 author wrote it. Today: al-Dhahabi's Siyar A'lam al-Nubala' (the Risala edition, in the OpenITI corpus), whose
-entries are numbered within each volume ("vol. 2, no. 126" is Abu Hurayra). The work is downloaded once, on request
+entries are numbered within each volume ("vol. 2, no. 126" is Abu Hurayra); and al-Dhahabi's Tadhkirat al-Huffaz
+(HFZ1), numbered through the whole work. The work is downloaded once, on request
 (about 22 MB), split into its entries and kept in the data folder (sources/<work>.db) — shared by every profile,
 never published (like the Taqrib: OpenITI gives no licence, so it stays on this computer).
 
@@ -30,8 +31,18 @@ WORKS = {
         "page": "https://github.com/OpenITI/0750AH/tree/master/data/0748Dhahabi/0748Dhahabi.SiyarAclamNubala",
         "size_mb": 22,
     },
+    # al-Dhahabi's Tadhkirat al-Huffaz (HFZ1): 1,176 huffaz in 21 generations, numbered through the whole work
+    "tadhkira": {
+        "title": {"en": "al-Dhahabi, Tadhkirat al-Huffaz", "tr": "Zehebî, Tezkiretü'l-huffâz",
+                  "ar": "الذهبي، تذكرة الحفاظ"},
+        "url": "https://raw.githubusercontent.com/OpenITI/0750AH/master/data/0748Dhahabi/0748Dhahabi.TadhkiratHuffaz/"
+               "0748Dhahabi.TadhkiratHuffaz.JK000532-ara1.mARkdown",
+        "page": "https://github.com/OpenITI/0750AH/tree/master/data/0748Dhahabi/0748Dhahabi.TadhkiratHuffaz",
+        "size_mb": 3,
+        "numbered": "whole",          # one numbering for the whole work: every entry is kept as volume 0
+    },
 }
-_HEAD = re.compile(r"^### \$+ (\d+) -\s*(.*)$", re.M)
+_HEAD = re.compile(r"^### \$+ (\d+)\s*-?\s*(.*)$", re.M)          # "### $ 126 - heading" (Siyar), "### $ 16 ع heading"
 _PAGE = re.compile(r"PageV(\d+)P(\d+)")
 _MARKUP = re.compile(r"PageV\d+P\d+|ms\d+|^~~|^#+ ?\|*|^# ", re.M)
 
@@ -54,8 +65,9 @@ def available(work: str) -> bool:
         return False
 
 
-def split(text: str) -> list[tuple[int, int, str, str]]:
-    """(volume, number, heading, text) of every entry of an OpenITI file whose entries are "### $ N - heading"."""
+def split(text: str, whole: bool = False) -> list[tuple[int, int, str, str]]:
+    """(volume, number, heading, text) of every entry of an OpenITI file whose entries are "### $ N - heading";
+    whole: the work numbers its entries through all its volumes (every entry is volume 0)."""
     body = text.split("#META#Header#End#", 1)[-1]
     heads = list(_HEAD.finditer(body))
     out = []
@@ -63,7 +75,7 @@ def split(text: str) -> list[tuple[int, int, str, str]]:
         end = heads[i + 1].start() if i + 1 < len(heads) else len(body)
         chunk = body[m.end():end]
         page = _PAGE.search(body, m.start(), min(len(body), m.start() + 200000))
-        volume = int(page.group(1)) if page else 0
+        volume = 0 if whole else (int(page.group(1)) if page else 0)
         chunk = re.sub(r"\n~~", " ", chunk)                 # a line the corpus wrapped: the same paragraph
         chunk = re.sub(r"\n# ", "\n", chunk)               # a new paragraph: a new line
         clean = _MARKUP.sub("", chunk)
@@ -83,7 +95,7 @@ def fetch(work: str, progress=None, location: str | None = None) -> int:
     say(f"Downloading {info['title']['en']} (about {info['size_mb']} MB)")
     raw = read_bytes(location or info["url"], timeout=600)
     say("Reading the entries")
-    entries = split(raw.decode("utf-8", "replace"))
+    entries = split(raw.decode("utf-8", "replace"), whole=info.get("numbered") == "whole")
     path = _db_path(work)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
