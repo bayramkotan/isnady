@@ -3,6 +3,20 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.6.2] — 2026-10-28
+
+- **The new themes can be chosen again (Bayram 2026-10-28: "Temalar calismiyor").** Sky, Starry Night and Rose
+  Garden were refused when chosen from the View menu or Preferences: the check of the settings still knew only the
+  older themes, so the choice raised an error and was not kept (`iy config set view.theme sky` was refused too).
+  And a theme chosen while isnady was open changed the colours but not the faces: the wordmark, the page titles and
+  the example words kept the previous theme's typeface until isnady was opened again. Both are mended.
+- **The buttons sit right again ("ana ekrandaki butonlar tuhaf duruyor").** The *Interface* and *Content* buttons
+  of the sidebar had lost their inner margin, so the text stood against the left edge (a style rule for the small
+  arrow of their menu made Qt drop the padding); the rounder corners of the themes grew larger than half the
+  height of the round chips — the example words and the recent searches — and Qt then draws such corners square;
+  and after a change of theme the second row of recent searches was cut in half. Each chip is round again, the
+  start page is drawn again in the new theme.
+
 ## [0.6.1] — 2026-10-27
 
 - **The huffaz: al-Dhahabi's Tadhkirat al-Huffaz on the Hadith Scholars page (HFZ1, Bayram 2026-10-27: "hadis

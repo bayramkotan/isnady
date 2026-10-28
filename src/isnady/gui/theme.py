@@ -248,8 +248,9 @@ def reading_font(point_size: float, bold: bool = False, scaled: bool = False) ->
     """The theme's heading face (Amiri by default) at the given size, Amiri still for any Arabic in it; scaled=True
     applies the reader's text size (View menu)."""
     font = QFont(READING_FAMILY)
-    if _current.heading_family:
-        font.setFamilies([_current.heading_family, READING_FAMILY])
+    # always two families, the theme's face then Amiri: so a new theme can find these headings and change their face
+    # (_refont), and never an Arabic text set in Amiri alone
+    font.setFamilies([_current.heading_family or READING_FAMILY, READING_FAMILY])
     font.setPointSizeF(point_size * (text_scale() if scaled else 1.0))
     font.setBold(bold)
     return font
@@ -299,7 +300,10 @@ def stylesheet(t: Tokens) -> str:
     import re
 
     def radius(m):
-        return f"border-radius: {max(0, round(int(m.group(1)) * t.roundness))}px"
+        # a radius larger than half the box is not drawn at all by Qt (the corners turn square): the pills (12px
+        # and more, already half their height) keep theirs, the smaller ones grow up to 12px
+        r = int(m.group(1))
+        return f"border-radius: {max(0, min(round(r * t.roundness), max(r, 12)))}px"
 
     def padding(m):
         parts = [f"{round(int(n) * t.room)}px" for n in re.findall(r"(\d+)px", m.group(1))]
@@ -465,7 +469,8 @@ def _sheet(t: Tokens) -> str:
                                    border-left: 3px solid transparent; }}
     QListWidget#StatsRail::item:hover {{ background: {t.lapis_soft}; color: {t.ink}; }}
     QListWidget#StatsRail::item:selected {{ background: {t.surface}; color: {t.ink}; border-left: 3px solid {t.gold}; }}
-    QPushButton#SidebarLang::menu-indicator {{ subcontrol-position: right center; right: 8px; }}
+    /* no ::menu-indicator rule for SidebarLang: any such rule makes Qt drop the button's padding, and the text
+       stood against the left edge (Bayram 2026-10-28: "butonlar tuhaf duruyor") */
     QLabel#ChainChipUnknown {{ background: transparent; color: {t.muted}; border: 1px dashed {t.border};
                                border-radius: 8px; padding: 1px 9px; }}
     QLabel#NodeFacts {{ color: {t.muted}; font-size: 9pt; }}
@@ -531,4 +536,20 @@ def apply(app: QApplication, mode: str | None = None) -> Tokens:
         app.setFont(ui_font)
     app.setPalette(_palette(_current))
     app.setStyleSheet(stylesheet(_current))
+    _refont(app)
     return _current
+
+
+def _refont(app: QApplication) -> None:
+    """The headings drawn before a change of theme take the new theme's face (Bayram 2026-10-28: "Temalar
+    calismiyor" — the wordmark, the titles and the example words kept the old face until isnady was opened again).
+    A heading is a font of reading_font(): two families, the second Amiri."""
+    face = _current.heading_family or READING_FAMILY
+    for w in app.allWidgets():
+        if not w.testAttribute(Qt.WidgetAttribute.WA_SetFont):
+            continue                    # it takes its parent's font; the parent is changed
+        f = w.font()
+        families = f.families()
+        if len(families) == 2 and families[1] == READING_FAMILY and families[0] != face:
+            f.setFamilies([face, READING_FAMILY])
+            w.setFont(f)

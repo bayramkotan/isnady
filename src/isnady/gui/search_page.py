@@ -891,6 +891,7 @@ class SearchPage(QWidget):
         """Remove every card; the "more" button is kept and re-added, never deleted."""
         self._batch_token = getattr(self, "_batch_token", 0) + 1     # cancels batches still queued
         self._pending = []
+        self._at_start = False
         while self.body_layout.count():
             item = self.body_layout.takeAt(0)
             widget = item.widget()
@@ -904,6 +905,7 @@ class SearchPage(QWidget):
 
     def _show_start(self) -> None:
         self._clear_body()
+        self._at_start = True
         self.summary.setText("")
         if hasattr(self, "export_button"):
             self.export_button.hide()
@@ -1196,6 +1198,11 @@ class SearchPage(QWidget):
 
     def retheme(self) -> None:
         """Redraw the results with the current theme and text size."""
+        if getattr(self, "_at_start", False):
+            # the start page drawn again in the new theme: its example words and recent searches are taller in a
+            # roomier theme, and the second row of recent searches was cut (Bayram 2026-10-28)
+            self._show_start()
+            return
         if self._found is not None:
             scroll = self.scroll.verticalScrollBar().value()
             shown = self._people_shown

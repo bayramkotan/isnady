@@ -162,7 +162,7 @@ def validate(key: str, value):
         return ""
     default = DEFAULTS[key]
     if key == "view.theme":
-        allowed = ("system", "light", "dark", "paper", "slate", "emerald", "midnight", "contrast")
+        allowed = ("system", "sky", "starry", "garden", "light", "dark", "paper", "slate", "emerald", "midnight", "contrast")   # every theme of gui.theme.THEMES (UI-FRESH added sky, starry, garden)
         if value not in allowed:
             raise ConfigError("view.theme must be one of: " + ", ".join(allowed))
         return value
