@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.6.3-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.6.4-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.6.3-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.6.4-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.6.3).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.6.4).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -932,7 +932,12 @@ nothing to restart. `iy config set view.ui_language tr`. The hadith texts keep t
 
 **Back and forward**, as in a browser: ◀ ▶ under the name in the sidebar, Alt+Left / Alt+Right, the mouse's back
 and forward buttons — every narrator, chain, book, scholar, term and tree opened is a step, and pointing at the
-button says where it goes.
+button says where it goes; so is every narrator, scholar, hafiz, book, chapter and term picked in a page's own list.
+
+**Right-click** a hadith, a book, a chapter, a narrator, a scholar or a hafiz for what can be done with it: open it
+in its book or its chain, the other narrations, where you left a book and its markers, search in a chapter, put a
+marker, his family and his line of learning, his entry in the rijal work, add to or remove from the bookmarks, copy
+(the reference, the Arabic, a translation, everything, a name) and export.
 
 **A new version starts clean:** what the earlier version kept for speed (`cache/`) is deleted once and computed
 again, and the footer says so; the saved statistics (`derived/`) stay while their data and analysis are the same; the settings, bookmarks, profiles, recent searches, the database and the downloaded

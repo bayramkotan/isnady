@@ -97,6 +97,8 @@ def _label(text: str, name: str = "", rich: bool = False, wrap: bool = True) -> 
 
 
 class LearnPage(QWidget):
+    visited = Signal(str)            # a term or article picked in the list → the window's back and forward (NAV2b)
+
     def __init__(self, parent=None, conn_of=None) -> None:
         super().__init__(parent)
         self._conn_of = conn_of or (lambda: None)
@@ -152,7 +154,7 @@ class LearnPage(QWidget):
         self.tree.setHeaderHidden(True)
         self.tree.setIndentation(14)
         self.tree.itemClicked.connect(lambda item, _c: item.data(0, Qt.ItemDataRole.UserRole) and
-                                      self.show_term(item.data(0, Qt.ItemDataRole.UserRole)))
+                                      self._picked(item.data(0, Qt.ItemDataRole.UserRole)))
         lbox.addWidget(self.tree, 1)
 
         self.body = QWidget()
@@ -276,6 +278,11 @@ class LearnPage(QWidget):
             head.setExpanded(True)
 
     # ------------------------------------------------------------------ the card
+    def _picked(self, term_id: str) -> None:
+        """A term or article clicked in the list: shown, and left in the window's back and forward (NAV2b)."""
+        self.show_term(term_id)
+        self.visited.emit(term_id)
+
     def show_term(self, term_id: str) -> None:
         if term_id and term_id.startswith(ARTICLE):
             self.show_article(term_id[len(ARTICLE):])

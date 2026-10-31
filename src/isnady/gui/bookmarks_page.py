@@ -62,6 +62,17 @@ def save(s: core.Store) -> None:
     HUB.changed.emit()
 
 
+def toggle(kind: str, ref: str, title: str, subtitle: str = "") -> None:
+    """Mark or unmark one thing — the star's click, for the right-click menus (CTX1)."""
+    s = store()
+    item = s.find(kind, ref)
+    if item:
+        s.remove(item.id)
+    else:
+        s.add(kind, ref, title, subtitle)
+    save(s)
+
+
 class BookmarkButton(QToolButton):
     """☆ / ★: marks or unmarks one thing. The reference and the title are given by the page that shows it."""
 
@@ -90,13 +101,7 @@ class BookmarkButton(QToolButton):
                         + tr("Bookmarks in the sidebar keeps them, in folders of your own."))
 
     def _toggle(self) -> None:
-        s = store()
-        item = s.find(self.kind, self.ref)
-        if item:
-            s.remove(item.id)
-        else:
-            s.add(self.kind, self.ref, self.title, self.subtitle)
-        save(s)
+        toggle(self.kind, self.ref, self.title, self.subtitle)
 
 
 class _ItemList(QListWidget):

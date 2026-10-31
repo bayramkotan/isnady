@@ -3,6 +3,25 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.6.4] — 2026-10-31
+
+- **Right-click menus (CTX1, Bayram 2026-10-27: "sag click yaptigimizda da menuler ciksin").** A hadith card: *In
+  its book*, *View chain*, *Also narrated in* (each other narration), add to or remove from the bookmarks, *Copy*
+  (the reference, the Arabic text, each translation, or everything with the grades) and *Export…*. A book in
+  Books: open it, go where you left it, its markers, from the first chapter, copy its name, forget where you left
+  it. A chapter of the contents: open it, search in it, put a marker there, bookmark it, copy its title. A narrator
+  in the list: open him, his family, his line of learning, his entry in the rijal work, bookmark, copy his name (in
+  Arabic, as read, the whole heading). A scholar: open him, as a narrator, his books, bookmark, copy his name; a
+  hafiz: open him, as a narrator, copy his name. Each menu offers the same actions as the page's own buttons.
+- **Back and forward inside a page (NAV2b, Bayram's 11 October list).** A narrator picked in the Narrators list, a
+  scholar or a hafiz on Hadith Scholars, a book or a chapter picked in Books and a term of Learn are now steps of
+  ◀ ▶ (Alt+Left / Alt+Right) as much as what is opened from another page; going back to a hafiz shows the huffaz.
+- **Years of death the Taqrib's printed text hid (NR-TQ1).** Slips of the text are read as the word they stand for
+  ("إحدى وعسرين" — 'Asim b. 'Ali al-Wasiti is d. 221, not 201; "ست عسرة", "عسر ومائتين"), "ثنتين" is two, and a year
+  after up to five words of place or manner is read ("استشهد في كائنة الزنج بالبصرة سنة سبع وخمسين"); a year that
+  only follows "it is said" is not taken as his ("مات أيام قتل عثمان وقيل سنة إحدى …" stays unread). Eleven narrators
+  have a year now or a right one; the years are read again once, when isnady opens.
+
 ## [0.6.3] — 2026-10-31
 
 - **The last row of recent searches is whole (Bayram 2026-10-31, screenshot: "hala butonlar yarim cikiyor").** On

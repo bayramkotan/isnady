@@ -79,6 +79,7 @@ class NarratorsPage(QWidget):
     open_in_book = Signal(int)      # person id → the rijal work, at his entry (Books)
     open_genealogy = Signal(int, str)   # person id, "family" | "learning" → Genealogies (GEN1)
     open_narrator = Signal(int)     # a teacher or student → shown here through the window, so Back returns (NAV2)
+    visited = Signal(int)           # a narrator picked in the list → the window's back and forward (NAV2b)
     open_book = Signal(str)         # a book his hadith are in (Ibn Hajar's mark) → Books
     find_name = Signal(str)         # a teacher or student named in his life → looked for among the narrators
 
@@ -157,7 +158,10 @@ class NarratorsPage(QWidget):
         self.list = QListWidget()
         self.list.setObjectName("NarratorList")
         self.list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.list.currentItemChanged.connect(lambda item, _p: item and self.show_person(item.data(Qt.ItemDataRole.UserRole)))
+        self.list.currentItemChanged.connect(lambda item, _p: item and self._picked(item.data(Qt.ItemDataRole.UserRole)))
+        # right-click (CTX1): open, his trees, his entry in the rijal work, bookmark, copy his name
+        self.list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.list.customContextMenuRequested.connect(self._person_menu)
         # the next narrators when the list is scrolled to its end (NR-B1)
         self.list.verticalScrollBar().valueChanged.connect(self._near_end)
         self.count = _label("", "Caption")
@@ -582,6 +586,41 @@ class NarratorsPage(QWidget):
         row.addStretch(1)
         box.addLayout(row)
         self.detail_box.addStretch(1)
+
+    def _picked(self, person_id) -> None:
+        if person_id is None:
+            return
+        self.show_person(person_id)
+        self.visited.emit(person_id)
+
+    def _person_menu(self, pos) -> None:
+        from isnady.core import bookmarks
+        from isnady.gui import context_menu as cm
+
+        item = self.list.itemAt(pos)
+        pid = item.data(Qt.ItemDataRole.UserRole) if item else None
+        conn = self.conn
+        if pid is None or conn is None:
+            return
+        row = conn.execute("SELECT name_ar, key FROM persons WHERE id = ?", (pid,)).fetchone()
+        if row is None:
+            return
+        reading, arabic = core_narrators.reading(conn, pid, row[0])
+        ref = bookmarks.narrator_ref(conn, pid)
+        cm.popup(self.list, self.list.viewport().mapToGlobal(pos), [
+            (tr("Open"), lambda: self._pick_row(item)),
+            (tr("His family"), lambda: self.open_genealogy.emit(pid, "family")),
+            (tr("His line of learning"), lambda: self.open_genealogy.emit(pid, "learning")),
+            (tr("His entry in the rijal work"), lambda: self.open_in_book.emit(pid)),
+            None,
+            cm.bookmark_entry("narrator", *ref) if ref else None,
+            (tr("Copy"), [(tr("His name in Arabic"), lambda: cm.copy(arabic or row[0])),
+                          *([(tr("His name as read"), lambda: cm.copy(reading))] if reading else []),
+                          (tr("The whole entry heading"), lambda: cm.copy(row[0]))]),
+        ])
+
+    def _pick_row(self, item) -> None:
+        self.list.setCurrentItem(item)
 
     def show_person(self, person_id: int | None) -> None:
         conn = self.conn

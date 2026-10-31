@@ -90,6 +90,7 @@ class ScholarsPage(QWidget):
     open_narrator = Signal(int)
     open_book = Signal(str)          # his book, as imported (2026-10-18: the books he compiled open)
     find_name = Signal(str)          # a teacher or student named in his life → looked for among the narrators
+    visited = Signal(str)            # a scholar or a hafiz picked in the list → the window's back and forward (NAV2b)
 
     def __init__(self, connection_getter, parent=None) -> None:
         super().__init__(parent)
@@ -129,7 +130,10 @@ class ScholarsPage(QWidget):
         self.list.setObjectName("NarratorList")
         self.list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.list.currentItemChanged.connect(lambda item, _p: item and item.data(Qt.ItemDataRole.UserRole)
-                                             and self.show_scholar(item.data(Qt.ItemDataRole.UserRole)))
+                                             and self._picked(item.data(Qt.ItemDataRole.UserRole)))
+        # right-click (CTX1): open, as a narrator, his books, bookmark, copy his name
+        self.list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.list.customContextMenuRequested.connect(self._scholar_menu)
         # the huffaz: a name to look for and a generation, shown only with them
         self._hafiz: int | None = None
         self.hafiz_query = QLineEdit()
@@ -303,8 +307,62 @@ class ScholarsPage(QWidget):
             bar.mousePressEvent = lambda _e, pid=r["id"]: self.open_narrator.emit(pid)
             box.addWidget(bar)
 
+    def _picked(self, scholar_id: str) -> None:
+        self.show_scholar(scholar_id)
+        if not scholar_id.startswith("tabaqa:"):
+            self.visited.emit(scholar_id)
+
+    def _scholar_menu(self, pos) -> None:
+        from isnady.core import huffaz
+        from isnady.gui import context_menu as cm
+
+        item = self.list.itemAt(pos)
+        sid = item.data(Qt.ItemDataRole.UserRole) if item else None
+        conn = self.conn
+        if not sid or conn is None or sid.startswith("tabaqa:"):
+            return
+        at = self.list.viewport().mapToGlobal(pos)
+        if sid.startswith("hafiz:"):
+            r = next((x for x in huffaz.people(conn) if x["n"] == int(sid[6:])), None)
+            if r is None:
+                return
+            reading = huffaz.reading(r, i18n.language())
+            cm.popup(self.list, at, [
+                (tr("Open"), lambda: self.list.setCurrentItem(item)),
+                (tr("Open him as a narrator"), (lambda: self.open_narrator.emit(r["person"])) if r.get("person") else None),
+                None,
+                (tr("Copy"), [(tr("His name in Arabic"), lambda: cm.copy(r["head"])),
+                              *([(tr("His name as read"), lambda: cm.copy(reading))] if reading else [])]),
+            ])
+            return
+        scholar = core_scholars.find(sid)
+        if scholar is None:
+            return
+        from isnady.core import titles
+
+        have = {k: n for k, n in conn.execute("SELECT key, name FROM collections")}
+        books = [(tr("Open {book}", book=titles.book(k, have[k])), lambda k=k: self.open_book.emit(k))
+                 for k in scholar.get("compiler_of", []) if k in have]
+        pid = core_scholars.as_narrator(conn, scholar)
+        name = core_scholars.short_name(scholar, i18n.language())
+        cm.popup(self.list, at, [
+            (tr("Open"), lambda: self.list.setCurrentItem(item)),
+            (tr("Open him as a narrator"), (lambda: self.open_narrator.emit(pid)) if pid else None),
+            *books,
+            None,
+            cm.bookmark_entry("scholar", scholar["id"], core_scholars.short_name(scholar), scholar.get("arabic", "")),
+            (tr("Copy"), [(tr("His name as read"), lambda: cm.copy(name)),
+                          *([(tr("His name in Arabic"), lambda: cm.copy(scholar["arabic"]))] if scholar.get("arabic") else []),
+                          *([(tr("His full name"), lambda: cm.copy(scholar["full"]))] if scholar.get("full") else [])]),
+        ])
+
     def show_scholar(self, scholar_id: str) -> None:
         if scholar_id.startswith("hafiz:"):
+            if self._tradition != "huffaz":
+                # opened from elsewhere (Back, a bookmark): the huffaz shown first, with him chosen
+                self._hafiz = int(scholar_id[6:])
+                self.set_tradition("huffaz")
+                return
             self.show_hafiz(int(scholar_id[6:]))
             return
         if scholar_id.startswith("tabaqa:"):
@@ -542,9 +600,10 @@ class ScholarsPage(QWidget):
             self.list.addItem(item)
             if r["n"] == self._hafiz:
                 current = item
-        self.list.blockSignals(False)
         if current is not None:
             self.list.setCurrentItem(current)
+        self.list.blockSignals(False)
+        if current is not None:
             self.list.scrollToItem(current)
             self.show_hafiz(self._hafiz)
         else:

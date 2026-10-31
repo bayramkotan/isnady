@@ -109,6 +109,9 @@ class ResultCard(QFrame):
                  on_person=None, on_name=None, on_end=None, on_languages=None, on_export=None) -> None:
         super().__init__()
         self.setObjectName("Card")
+        # kept for the right-click menu (CTX1): the same actions as the links of the card
+        self._result, self._open_chain, self._open_book, self._on_export = result, open_chain, open_book, on_export
+        self._related, self._folded = related or [], folded or []
         t = theme.current()
         box = QVBoxLayout(self)
         box.setContentsMargins(26, 20, 26, 20)
@@ -267,6 +270,42 @@ class ResultCard(QFrame):
             row.addWidget(settings_link)
             row.addStretch(1)
             box.addLayout(row)
+
+    def contextMenuEvent(self, event) -> None:  # noqa: N802
+        """Right-click on a hadith (CTX1): open it in its book or its chain, the other narrations, bookmark, copy, export."""
+        from isnady.gui import context_menu as cm
+
+        r = self._result
+        book = titles.book(r.collection_key, r.collection_name)
+        reference = f"{book}, " + tr("hadith {number}", number=r.number)
+        texts = list(r.texts) + list(self._folded)
+        arabic = [x for x in texts if x.direction == "rtl"]
+        others = [x for x in texts if x.direction != "rtl"]
+        first = next((x.text for x in others), arabic[0].text if arabic else "")
+
+        def whole() -> str:
+            parts = [reference] + [x.text for x in arabic] + [f"{x.text}\n({tr(x.language)}, {x.edition_key})" for x in others]
+            if r.grades:
+                parts.append("; ".join(f"{g}: {v}" for g, v in r.grades))
+            return "\n\n".join(parts)
+
+        copies = [(tr("Reference ({reference})", reference=reference), lambda: cm.copy(reference))]
+        copies += [(tr("Arabic text"), lambda x=x: cm.copy(x.text)) for x in arabic[:1]]
+        copies += [(tr("Translation: {language}", language=tr(x.language)), lambda x=x: cm.copy(x.text)) for x in others]
+        copies += [None, (tr("Everything: reference, texts and grades"), lambda: cm.copy(whole()))]
+        related = [(f"{x['book_name']} {x['number']}" + ("" if x["kind"] == "same" else "  ~"),
+                    (lambda hid=x["hadith_id"]: self._open_chain(int(hid))) if self._open_chain else None)
+                   for x in self._related[:20]]
+        cm.popup(self, event.globalPos(), [
+            *([(tr("In its book"), lambda: self._open_book(r.hadith_id))] if self._open_book else []),
+            (tr("View chain"), (lambda: self._open_chain(r.hadith_id)) if self._open_chain else None),
+            (tr("Also narrated in"), related),
+            None,
+            cm.bookmark_entry("hadith", f"{r.collection_key}:{r.number}", f"{book} {r.number}",
+                              " ".join((first or "").split())[:160]),
+            (tr("Copy"), copies),
+            (tr("Export…"), (lambda: self._on_export(f"{r.collection_key}:{r.number}")) if self._on_export else None),
+        ])
 
     @staticmethod
     def _add_text(box: QVBoxLayout, text, t) -> None:

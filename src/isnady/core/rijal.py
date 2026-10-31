@@ -120,6 +120,7 @@ def generation(tabaqa: int | None) -> str | None:
 
 # ---------------------------------------------------------- death years
 _UNITS = {"واحد": 1, "واحدة": 1, "إحدى": 1, "احدى": 1, "اثنتين": 2, "اثنين": 2, "اثنتي": 2, "اثني": 2,
+          "ثنتين": 2, "ثنتي": 2,
           "ثلاث": 3, "ثلاثة": 3, "أربع": 4, "اربع": 4, "أربعة": 4, "خمس": 5, "خمسة": 5, "ست": 6, "ستة": 6,
           "سبع": 7, "سبعة": 7, "ثمان": 8, "ثماني": 8, "ثمانية": 8, "تسع": 9, "تسعة": 9, "عشر": 10, "عشرة": 10}
 _TENS = {"عشرين": 20, "ثلاثين": 30, "أربعين": 40, "اربعين": 40, "خمسين": 50, "ستين": 60, "سبعين": 70,
@@ -192,16 +193,23 @@ def death_year(phrase: str, tabaqa: int | None) -> int | None:
 def year_of_death(note: str, tabaqa: int | None) -> int | None:
     """The year of Ibn Hajar's death phrase as the Taqrib gives it ("مات سنة سبع وخمسين", "قتل ظلما سنة …")."""
     words = re.sub(r"^(?:مات|قتل|استشهد|توفي)(?: سنة| في سنة)? ", "", note)
-    within = re.match(r"^((?:\S+ ){1,3}?)سنة (.+)$", words)       # "قتل ظلما سنة ..."
+    # slips of the printed text, read as the word they stand for (NR-TQ1): "إحدى وعسرين" ('Asim b. 'Ali, d. 221 —
+    # read 201 before), the dots of the shin left out
+    words = re.sub(r"(?<!\S)(و?)عسر(ين|ة)?(?!\S)", lambda m: f"{m.group(1)}عشر{m.group(2) or ''}", words)
+    # "قتل ظلما سنة ...", "استشهد في كائنة الزنج بالبصرة سنة ...": up to five words of place or manner before the year;
+    # more, and the sentence is about someone else ("استشهد بأحد ومات حذيفة في أول خلافة علي سنة ست وثلاثين")
+    within = re.match(r"^((?:\S+ ){1,5}?)سنة (.+)$", words)
     # not "سبع وقيل سنة ثمان …": the words before that "سنة" are already the year
-    if within and not re.match(r"(?:قبل|بعد|في حدود)", words) and parse_year_words(within.group(1))[0] is None:
+    # and not "مات أيام قتل عثمان وقيل سنة …": the year that follows "it is said" is the other report, not his
+    if within and not re.match(r"(?:قبل|بعد|في حدود)", words) and parse_year_words(within.group(1))[0] is None \
+            and not re.search(r"(?<!\S)(?:وقيل|ويقال|أو|او)(?!\S)", within.group(1)):
         words = within.group(2)
     if re.match(r"(?:قبل|بعد|في حدود|بضع|سنة بضع)", words):
         return None
     return death_year(words, tabaqa)
 
 
-DEATH_RULE = "4"        # the years read again once when the rule changes (2: the tens said once; 3: the century, BIO2)
+DEATH_RULE = "5"        # the years read again once when the rule changes (2: the tens said once; 3: the century, BIO2; 5: slips, NR-TQ1)
 
 
 def fix_death_years(conn) -> int:

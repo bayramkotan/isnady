@@ -65,6 +65,8 @@ class BooksPage(QWidget):
     open_chain = Signal(int)
     open_narrator = Signal(int)
     search_in_chapter = Signal(str, int, str)       # book key, chapter id, its title (SRCH-SEC1)
+    visited_book = Signal(str)                      # a book picked in the list → back and forward (NAV2b)
+    visited_chapter = Signal(int)                   # a chapter picked in the contents → back and forward
 
     def __init__(self, connection_getter, card_maker, parent=None) -> None:
         super().__init__(parent)
@@ -111,14 +113,19 @@ class BooksPage(QWidget):
         self.works.setMinimumHeight(250)
         self.works.setMaximumHeight(340)
         self.works.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.works.currentItemChanged.connect(lambda item, _p: item and self.open_work(item.data(Qt.ItemDataRole.UserRole)))
+        self.works.currentItemChanged.connect(lambda item, _p: item and self._picked_work(item.data(Qt.ItemDataRole.UserRole)))
+        # right-click (CTX1): open, where I left it, its markers, search in it, copy its name
+        self.works.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.works.customContextMenuRequested.connect(self._work_menu)
         lbox.addWidget(self.works)
         lbox.addWidget(_label(tr("Contents"), "FilterLabel"))
         self.tree = QTreeWidget()
         self.tree.setHeaderHidden(True)
         self.tree.setObjectName("Contents")
         self.tree.itemClicked.connect(lambda item, _c: item.data(0, Qt.ItemDataRole.UserRole) and
-                                      self.open_chapter(item.data(0, Qt.ItemDataRole.UserRole)))
+                                      self._picked_chapter(item.data(0, Qt.ItemDataRole.UserRole)))
+        self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._chapter_menu)
         lbox.addWidget(self.tree, 1)
 
         # the reading pane
@@ -537,6 +544,72 @@ class BooksPage(QWidget):
         if left:
             places = menu.addAction("✕  " + tr("Forget where I left every book…"))
             places.triggered.connect(lambda: self._forget_place(None))
+
+    def _picked_work(self, key: str) -> None:
+        self.open_work(key)
+        self.visited_book.emit(key)
+
+    def _picked_chapter(self, chapter_id: int) -> None:
+        self.open_chapter(chapter_id)
+        self.visited_chapter.emit(chapter_id)
+
+    # ------------------------------------------------------------------ right-click menus (CTX1)
+    def _work_menu(self, pos) -> None:
+        from isnady.gui import context_menu as cm
+
+        item = self.works.itemAt(pos)
+        key = item.data(Qt.ItemDataRole.UserRole) if item else None
+        conn = self.conn
+        work = core_works.find_work(conn, key) if key and conn else None
+        if work is None:
+            return
+        left_at = readmarks.last(key)
+        marks = [m for m in readmarks.marks() if m["book"] == key]
+        hadith = work["kind"] == "hadith"
+        root = self._first_chapter_of(work) if hadith else None
+        cm.popup(self.works, self.works.viewport().mapToGlobal(pos), [
+            (tr("Open"), lambda: self.select_work(key)),
+            (tr("Go where I left this book"), (lambda: self.go_to_mark(left_at)) if left_at else None),
+            (tr("Markers in this book"), [(f"🔖 {m['name']}", lambda m=m: self.go_to_mark(m)) for m in marks]),
+            (tr("From the first chapter"), (lambda: self._open_at(key, root)) if root else None),
+            None,
+            (tr("Copy the name of the book"), lambda: cm.copy(work["title"])),
+            *([("✕  " + tr("Forget where I left this book"), lambda: self._forget_place(key))] if left_at else []),
+        ])
+
+    def _first_chapter_of(self, work: dict) -> int | None:
+        order = core_works.reading_order(self.conn, work["id"])
+        return order[0] if order else None
+
+    def _open_at(self, key: str, chapter: int) -> None:
+        if not self._work or self._work["key"] != key:
+            self.select_work(key)
+        self.open_chapter(chapter)
+
+    def _chapter_menu(self, pos) -> None:
+        from isnady.core import bookmarks
+        from isnady.gui import context_menu as cm
+
+        item = self.tree.itemAt(pos)
+        if item is None or not self._work:
+            return
+        chapter = item.data(0, Qt.ItemDataRole.UserRole)
+        title = item.text(0).rsplit("   (", 1)[0]
+        ref = bookmarks.chapter_ref(self.conn, chapter) if chapter else None
+        hadith = self._work.get("kind") == "hadith"
+
+        def go(then=None):
+            self.open_chapter(chapter)
+            if then:
+                then()
+        cm.popup(self.tree, self.tree.viewport().mapToGlobal(pos), [
+            (tr("Open this chapter"), (lambda: go()) if chapter else None),
+            *([(tr("Search in this chapter"), (lambda: go(self._search_here)) if chapter else None)] if hadith else []),
+            (tr("Put a marker here…"), (lambda: go(self._add_mark)) if chapter else None),
+            None,
+            cm.bookmark_entry("chapter", ref[0], ref[1], ref[2]) if ref else None,
+            (tr("Copy the chapter title"), lambda: cm.copy(title)),
+        ])
 
     def _search_here(self) -> None:
         if not (self._work and self._chapter):

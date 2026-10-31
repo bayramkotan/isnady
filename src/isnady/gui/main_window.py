@@ -294,6 +294,13 @@ class MainWindow(QMainWindow):
         self.narrators_page.open_narrator.connect(self._open_narrator)
         self.narrators_page.open_book.connect(self._open_book)
         self.narrators_page.find_name.connect(self._find_narrator)
+        # what is picked inside a page goes into Back and Forward too (NAV2b, Bayram's 11 October list): a narrator in
+        # the list, a scholar or hafiz, a book and a chapter of Books, a term of Learn
+        for page, signal, kind in ((self.narrators_page, "visited", "narrator"), (self.scholars_page, "visited", "scholar"),
+                                   (self.books_page, "visited_book", "book"),
+                                   (self.books_page, "visited_chapter", "chapter"), (self.learn_page, "visited", "term")):
+            if hasattr(page, signal):     # a page that could not be built has none (ROB1)
+                getattr(page, signal).connect(lambda ref, k=kind: self._visited((k, ref)))
         self.scholars_page.find_name.connect(self._find_narrator)
         self.genealogy_page.find_name.connect(self._find_narrator)
         self.bookmarks_page.open_hadith.connect(self._open_in_book)
@@ -805,6 +812,10 @@ class MainWindow(QMainWindow):
     def _section_shown(self, row: int) -> None:
         if not self._opening and 0 <= row < len(self._order):
             self._record(("section", self._order[row]))
+
+    def _visited(self, entry: tuple) -> None:
+        if not self._opening:            # opened through the window, it is recorded by _place already
+            self._record(entry)
 
     def _record(self, entry: tuple) -> None:
         if self._replaying:
