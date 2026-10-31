@@ -76,6 +76,13 @@ class IsnadPage(QWidget):
         self.random_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.random_button.setToolTip(tr("A hadith of this book chosen at random, among those whose chain was read"))
         self.random_button.clicked.connect(self._random)
+        # a hadith chosen from the book's contents, its number unknown (CH2b)
+        self.contents_button = QPushButton("📖  " + tr("From the contents…"))
+        self.contents_button.setObjectName("Quiet")
+        self.contents_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.contents_button.setToolTip(tr("Choose a chapter of this book, then one of its hadith, without knowing its "
+                                           "number"))
+        self.contents_button.clicked.connect(self._from_contents)
         # the number, the last number, first / previous / next / last and the place in the book, on a line of their
         # own (NAV3, Bayram 2026-10-24: "Max hadis nerede???? … Isnad Chain de de ayni durum var!!!")
         self.nav = HadithNavigator(lambda: self.conn, tr("Show chain"))
@@ -89,6 +96,7 @@ class IsnadPage(QWidget):
         row.addWidget(_label(tr("Book"), "FilterLabel"))
         row.addWidget(self.book_combo, 1)
         row.addSpacing(8)
+        row.addWidget(self.contents_button)
         row.addWidget(self.random_button)
         top = QVBoxLayout()
         top.setSpacing(8)
@@ -166,6 +174,21 @@ class IsnadPage(QWidget):
         if rng:
             self.number_edit.setText(rng["first"])
             self._go()
+
+    def _from_contents(self) -> None:
+        from isnady.core import works as core_works
+        from isnady.gui.chapter_picker import ChapterPicker
+
+        book = self._book()
+        if not book or self.conn is None:
+            return
+        # opened at the chapter of the hadith shown, when it is of this book
+        here = None
+        if self._current and self._current.get("id"):
+            here = core_works.chapter_of_hadith(self.conn, self._current["id"])
+        picker = ChapterPicker(self.conn, book, self, chapter=here)
+        if picker.exec() and picker.hadith_id:
+            self.show_hadith(picker.hadith_id)
 
     def _random(self) -> None:
         book = self._book()

@@ -262,6 +262,35 @@ def hadith_under(conn: sqlite3.Connection, node_ids) -> set[int]:
     return {r[0] for r in rows}
 
 
+def chapter_hadith(conn: sqlite3.Connection, node_id: int, language: str | None = None, width: int = 90) -> list[dict]:
+    """The hadith of one chapter, in the book's order, to choose from without knowing their numbers (CH2b):
+    [{hadith_id, number, words, links}] — words: the start of its text in the language asked for (else Arabic),
+    links: how many narrators its chain was split into (0: not split)."""
+    rows = conn.execute(
+        """SELECT w.hadith_id, h.number FROM work_nodes w JOIN hadiths h ON h.id = w.hadith_id
+           WHERE w.parent_id = ? AND w.hadith_id IS NOT NULL ORDER BY w.ordinal""", (node_id,)).fetchall()
+    if not rows:
+        return []
+    ids = [r[0] for r in rows]
+    marks = ",".join("?" * len(ids))
+    words: dict[int, tuple[int, str]] = {}
+    for hid, lang, text in conn.execute(
+            f"""SELECT t.hadith_id, e.language, t.text FROM texts t JOIN editions e ON e.id = t.edition_id
+                WHERE t.hadith_id IN ({marks})""", ids):
+        rank = 0 if language and lang == language else (1 if lang == "Arabic" else 2)
+        if hid not in words or rank < words[hid][0]:
+            words[hid] = (rank, " ".join((text or "").split()))
+    links = {hid: n for hid, n in conn.execute(
+        f"""SELECT i.hadith_id, COUNT(l.position) FROM isnads i LEFT JOIN isnad_links l ON l.isnad_id = i.id
+            WHERE i.hadith_id IN ({marks}) GROUP BY i.hadith_id""", ids)}
+    out = []
+    for hid, number in rows:
+        text = words.get(hid, (0, ""))[1]
+        out.append({"hadith_id": hid, "number": number, "links": links.get(hid, 0),
+                    "words": text if len(text) <= width else text[:width].rsplit(" ", 1)[0] + " …"})
+    return out
+
+
 def chapter_named(conn: sqlite3.Connection, book: str, label: str) -> dict | None:
     """A chapter of a book by its label as the book numbers it ("3", "1:2") or by the start of its title."""
     work = find_work(conn, book)

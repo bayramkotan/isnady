@@ -243,6 +243,9 @@ class BookmarksPage(QWidget):
         self.list.setSpacing(4)
         self.list.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.list.itemDoubleClicked.connect(lambda it: self._open(it.data(Qt.ItemDataRole.UserRole)))
+        # right-click on a bookmark (CTX1-2): open, note, file in a folder, take out, copy its title
+        self.list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.list.customContextMenuRequested.connect(self._item_menu)
         rbox.addWidget(self.list, 1)
         self.empty = _label("", "Lead")
         rbox.addWidget(self.empty)
@@ -429,6 +432,26 @@ class BookmarksPage(QWidget):
         if with_item:
             s.file_in(with_item, folder.id)
         save(s)
+
+    def _item_menu(self, pos) -> None:
+        from isnady.gui import context_menu as cm
+
+        node = self.list.itemAt(pos)
+        item_id = node.data(Qt.ItemDataRole.UserRole) if node else None
+        s = store()
+        item = s.item(item_id) if item_id else None
+        if item is None:
+            return
+        folders = [(s.path_of(f.id), lambda fid=f.id: self._file([item_id], fid)) for f in s.folders]
+        cm.popup(self.list, self.list.viewport().mapToGlobal(pos), [
+            (tr("Open"), lambda: self._open(item_id)),
+            (tr("Note…"), lambda: self._note(item_id)),
+            (tr("File in a folder"), folders),
+            (tr("New folder with it…"), lambda: self._new_folder(None, item_id)),
+            None,
+            (tr("Copy the title"), lambda: cm.copy(item.title)),
+            ("✕  " + tr("Remove from bookmarks"), lambda: self._remove(item_id)),
+        ])
 
     def _folder_menu(self, pos) -> None:
         node = self.tree.itemAt(pos)

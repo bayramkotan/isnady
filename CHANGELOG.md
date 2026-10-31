@@ -3,6 +3,23 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.6.5] — 2026-10-31
+
+- **A hadith chosen from the contents, its number unknown (CH2b).** Isnad Chains has **📖 From the contents…**: the
+  book's chapters on one side, on the other the hadith of the chapter chosen, each with its number, the start of its
+  text (in the first language chosen for the texts, else Arabic) and how many narrators its chain was read into, a
+  word to look for among them; a double click or *Show chain* opens it. It opens at the chapter of the hadith shown.
+  In the terminal: `iy chain BOOK --chapter CH` (its number as the book gives it, or the start of its title).
+- **Right-click, everywhere else (CTX1-2).** A narrator of a chain (on every card and on Isnad Chains): open him,
+  the narrators of that name, copy the name as the chain gives it or as the rijal work does. A narrator or a scholar
+  found on Search: open, bookmark (a scholar), copy his name. A bookmark: open, note, file it in a folder, a new folder
+  with it, copy its title, remove it. A term of Learn: open, bookmark, copy its name.
+- **The README's CLI is written out in full (Bayram 2026-10-31: "CLI kismini da detaylica yaz readmelere").** Every
+  command with what it does, worked examples of each option, real output and the tables of options: searching;
+  chains, books and other narrations; narrators, scholars, the huffaz and the genealogies; the glossary and the
+  history of hadith; the statistics; data, books and sources; bookmarks, profiles, settings, export and import;
+  installation and upkeep. The same text on GitHub, PyPI and npm.
+
 ## [0.6.4] — 2026-10-31
 
 - **Right-click menus (CTX1, Bayram 2026-10-27: "sag click yaptigimizda da menuler ciksin").** A hadith card: *In

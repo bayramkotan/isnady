@@ -48,12 +48,19 @@ def _arabic(text: str, factor: float, bold: bool = False) -> QLabel:
 class _ClickCard(QFrame):
     """A card that opens something when clicked anywhere (text stays readable, not selectable)."""
 
-    def __init__(self, on_click, tip: str) -> None:
+    def __init__(self, on_click, tip: str, menu=None) -> None:
         super().__init__()
         self.setObjectName("PersonCard")
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setToolTip(tip)
         self._on_click = on_click
+        self._menu = menu               # a function giving the right-click entries (CTX1-2)
+
+    def contextMenuEvent(self, event) -> None:  # noqa: N802
+        if self._menu is not None:
+            from isnady.gui import context_menu as cm
+
+            cm.popup(self, event.globalPos(), self._menu())
 
     def mouseReleaseEvent(self, event) -> None:  # noqa: N802 (Qt name)
         if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(event.position().toPoint()):
@@ -104,12 +111,22 @@ def _facts(box: QVBoxLayout, tags: list[tuple[str, str]], parts: list[tuple[str,
 def person_card(row: dict, open_person) -> QFrame:
     """A narrator found by Search, from either tradition (core.narrators.find)."""
     shia = row["tradition"] == "shia"
+    view = row["view"]
+
+    def menu():
+        from isnady.gui import context_menu as cm
+
+        reading = view["reading"] or view["full_reading"]
+        return [(tr("Open in Narrators"), lambda: open_person(row["id"], row["tradition"])),
+                None,
+                (tr("Copy"), [(tr("His name in Arabic"), lambda: cm.copy(view["arabic"] or row["name"])),
+                              *([(tr("His name as read"), lambda: cm.copy(reading))] if reading else []),
+                              (tr("The whole entry heading"), lambda: cm.copy(row["name"]))])]
     card = _ClickCard(lambda: open_person(row["id"], row["tradition"]),
-                      tr("Open {name} on the Narrators page", name=row["name"]))
+                      tr("Open {name} on the Narrators page", name=row["name"]), menu)
     box = QVBoxLayout(card)
     box.setContentsMargins(22, 14, 22, 12)
     box.setSpacing(4)
-    view = row["view"]
     known = view["reading"] or view["full_reading"]
     full = view["full_reading"] if view["full_reading"] and view["full_reading"] != known else ""
     _head(box, known, view["arabic"] or row["name"], full)
@@ -171,8 +188,17 @@ def scholar_card(scholar: dict, open_scholar) -> QFrame:
     from isnady.core import i18n
 
     shown = core_scholars.short_name(scholar)          # in the interface language, as on the Hadith Scholars page
+    def menu():
+        from isnady.gui import context_menu as cm
+
+        return [(tr("Open in Hadith Scholars"), lambda: open_scholar(scholar["id"])),
+                None,
+                cm.bookmark_entry("scholar", scholar["id"], shown, scholar.get("arabic", "")),
+                (tr("Copy"), [(tr("His name as read"), lambda: cm.copy(shown)),
+                              *([(tr("His name in Arabic"), lambda: cm.copy(scholar["arabic"]))]
+                                if scholar.get("arabic") else [])])]
     card = _ClickCard(lambda: open_scholar(scholar["id"]),
-                      tr("Open {name} on the Hadith Scholars page", name=shown))
+                      tr("Open {name} on the Hadith Scholars page", name=shown), menu)
     box = QVBoxLayout(card)
     box.setContentsMargins(22, 14, 22, 12)
     box.setSpacing(4)

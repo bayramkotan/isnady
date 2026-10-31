@@ -41,8 +41,14 @@ def end_node(key: str) -> str | None:
     return node if node in genealogy.written("quraysh").nodes else None
 
 
-def _chip(text: str, name: str, tip: str = "", on_click=None, click_tip: str = "") -> QLabel:
+def _chip(text: str, name: str, tip: str = "", on_click=None, click_tip: str = "", menu=None) -> QLabel:
+    """menu: a function giving the right-click entries of this link (CTX1-2, gui.context_menu)."""
     chip = QLabel(text)
+    if menu is not None:
+        from isnady.gui import context_menu as cm
+
+        chip.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        chip.customContextMenuRequested.connect(lambda pos, c=chip, m=menu: cm.popup(c, c.mapToGlobal(pos), m()))
     chip.setObjectName(name)
     chip.setFont(theme.script_font("arabic", factor=0.625))
     if on_click is not None:
@@ -180,6 +186,22 @@ class ChainStrip(QWidget):
                                  tr("Taken from the hadith before it: the book says \"وعنه\" / \"وبهذا الإسناد\". "
                                     "Not counted in the statistics.")))
             flow.addWidget(_arrow())
+        from isnady.gui import context_menu as cm
+
+        def link_menu(raw: str, person: dict | None):
+            # a narrator of the chain, right-clicked (CTX1-2): open him, the narrators of that name, copy
+            def entries():
+                short = core_isnad.short_name(raw)
+                return [
+                    *([(tr("Open this narrator"), lambda: on_person(person["id"]))] if person and on_person else []),
+                    *([(tr("Look for this name among the narrators"), lambda: on_name(short))] if on_name else []),
+                    None,
+                    (tr("Copy"), [(tr("The name as the chain gives it"), lambda: cm.copy(raw)),
+                                  *([(tr("His name in the rijal work"), lambda: cm.copy(person["display_name"]))]
+                                    if person and person.get("display_name") else [])]),
+                ]
+            return entries
+
         for i, link in enumerate(chain["links"]):
             arabic, meaning, _why = core_isnad.term_label(link["transmission"])
             if i:
@@ -188,13 +210,14 @@ class ChainStrip(QWidget):
             if not person and link.get("candidates") is None:
                 # no rijal work imported (or not matched yet): a plain chip, not a "not identified" one
                 flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChip",
-                                     f"{link['raw_name']}\n{arabic}: {meaning}", open_name(link["raw_name"]), name_tip))
+                                     f"{link['raw_name']}\n{arabic}: {meaning}", open_name(link["raw_name"]), name_tip,
+                                     link_menu(link["raw_name"], None)))
                 continue
             if person:
                 tip = f"{person['display_name']}\n{person_summary(person)}\n{arabic}: {meaning}"
                 flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChip", tip,
                                      (lambda pid=person["id"]: on_person(pid)) if on_person else None,
-                                     tr("Click to open this narrator.")))
+                                     tr("Click to open this narrator."), link_menu(link["raw_name"], person)))
             else:
                 n = link.get("candidates")
                 why = core_isnad.link_note(link["raw_name"]) or (tr("not identified yet") if n is None else
@@ -203,7 +226,8 @@ class ChainStrip(QWidget):
                 note = core_isnad.link_note(link["raw_name"])
                 flow.addWidget(_chip(core_isnad.short_name(link["raw_name"]), "ChainChipUnknown",
                                      f"{link['raw_name']}\n{why}\n{arabic}: {meaning}",
-                                     None if note else open_name(link["raw_name"]), name_tip))
+                                     None if note else open_name(link["raw_name"]), name_tip,
+                                     None if note else link_menu(link["raw_name"], None)))
         if direct:
             flow.addWidget(_chip("…", "ChainChipUnknown", tr("The compiler gives no narrators between himself and "
                                                                "whom the words are from")))

@@ -155,6 +155,9 @@ class LearnPage(QWidget):
         self.tree.setIndentation(14)
         self.tree.itemClicked.connect(lambda item, _c: item.data(0, Qt.ItemDataRole.UserRole) and
                                       self._picked(item.data(0, Qt.ItemDataRole.UserRole)))
+        # right-click on a term (CTX1-2): open, bookmark, copy its name
+        self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self._term_menu)
         lbox.addWidget(self.tree, 1)
 
         self.body = QWidget()
@@ -278,6 +281,23 @@ class LearnPage(QWidget):
             head.setExpanded(True)
 
     # ------------------------------------------------------------------ the card
+    def _term_menu(self, pos) -> None:
+        from isnady.gui import context_menu as cm
+
+        item = self.tree.itemAt(pos)
+        term_id = item.data(0, Qt.ItemDataRole.UserRole) if item else None
+        if not term_id:
+            return
+        name = " ".join(item.text(0).split())
+        article = term_id.startswith(ARTICLE)
+        cm.popup(self.tree, self.tree.viewport().mapToGlobal(pos), [
+            (tr("Open"), lambda: self._picked(term_id)),
+            None,
+            None if article or not learn.get(term_id) else
+            cm.bookmark_entry("term", term_id, learn.name(learn.get(term_id), "en"), learn.get(term_id)["ar"]),
+            (tr("Copy the name"), lambda: cm.copy(name)),
+        ])
+
     def _picked(self, term_id: str) -> None:
         """A term or article clicked in the list: shown, and left in the window's back and forward (NAV2b)."""
         self.show_term(term_id)

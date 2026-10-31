@@ -1707,8 +1707,36 @@ def _no_number(conn, book: str, number: str) -> None:
              " See: iy book"), file=sys.stderr)
 
 
+def _chain_chapter(conn, args) -> int:
+    """iy chain BOOK --chapter CH (CH2b): the hadith of one chapter with the start of their text and how far each chain
+    was read, to choose one without knowing its number."""
+    from isnady.core import language, works
+
+    node = works.chapter_named(conn, args.book, args.chapter)
+    if node is None:
+        print(f"No chapter '{args.chapter}' in '{args.book}'. See: iy book {args.book}", file=sys.stderr)
+        return 1
+    wanted = [x for x in language.content_languages() if x != "Arabic"]
+    rows = works.chapter_hadith(conn, node["id"], wanted[0] if wanted else None, width=70)
+    if not rows:
+        print(f"{node['label']}. {node['title']}: no hadith directly under it — choose one of its chapters "
+              f"(iy book {args.book})")
+        return 0
+    print(f"{args.book} — {node['label']}. {node['title']}: {len(rows)} hadith")
+    for r in rows:
+        read = f"{r['links']:2} narrators" if r["links"] else "  not read  "
+        print(f"  {r['number']:>8}  {read}  {r['words']}")
+    print(f"\n(iy chain {args.book} NUMBER shows one of them)")
+    return 0
+
+
 def cmd_chain(args) -> int:
     conn = _connect()
+    if getattr(args, "chapter", None):
+        try:
+            return _chain_chapter(conn, args)
+        finally:
+            conn.close()
     if not args.number:                     # CH2: the book's numbers, to choose from
         rng = core_isnad.number_range(conn, args.book)
         if rng is None:
@@ -2297,6 +2325,9 @@ def build_parser() -> argparse.ArgumentParser:
     ch.add_argument("book", help="collection key, e.g. bukhari")
     ch.add_argument("number", nargs="?", help="hadith number, e.g. 1; none = the book's numbers, first to last")
     ch.add_argument("--raw", action="store_true", help="also print the chain as written")
+    ch.add_argument("--chapter", metavar="CH", help="the hadith of one chapter (its number as the book gives it, e.g. 3 "
+                                                   "or 1:2, or the start of its title), with how far each chain was "
+                                                   "read — to choose one without knowing its number")
     ch.add_argument("--lang", help="the chain in words in these languages, e.g. tr,en (default: the languages the "
                                    "texts are shown in; Turkish and English so far)")
     ch.set_defaults(func=cmd_chain)
