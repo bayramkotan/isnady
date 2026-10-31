@@ -3,6 +3,15 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.6.3] — 2026-10-31
+
+- **The last row of recent searches is whole (Bayram 2026-10-31, screenshot: "hala butonlar yarim cikiyor").** On
+  Search the last row of recent searches was still cut in half — most often with names written with their vowels
+  (أَبِي شُرَيْحٍ الْعَدَوِيِّ). The explanation above them is three lines in a narrower column, but its height was
+  counted at the full width of the page, as two lines, so the page was one line too short for what came under it.
+  A word-wrapped label is now measured at the width it really has, and a row of chips that grows asks the page to
+  make room once the layout is done.
+
 ## [0.6.2] — 2026-10-28
 
 - **The new themes can be chosen again (Bayram 2026-10-28: "Temalar calismiyor").** Sky, Starry Night and Rose

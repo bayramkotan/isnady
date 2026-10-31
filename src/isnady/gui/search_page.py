@@ -69,7 +69,9 @@ def _highlight(text: str, spans: list[tuple[int, int]], gilt: str) -> str:
 
 
 def _label(text: str = "", name: str = "", wrap: bool = False, selectable: bool = False) -> QLabel:
-    label = QLabel(text)
+    from isnady.gui.widgets import WrapLabel
+
+    label = WrapLabel(text) if wrap else QLabel(text)
     if name:
         label.setObjectName(name)
     label.setWordWrap(wrap)

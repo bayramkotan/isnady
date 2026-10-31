@@ -1,8 +1,30 @@
 """Small reusable widgets."""
 
-from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
-from PySide6.QtWidgets import QLayout, QSizePolicy, QWidget
+from PySide6.QtCore import QPoint, QRect, QSize, Qt, QTimer, Signal
+from PySide6.QtWidgets import QLabel, QLayout, QSizePolicy, QWidget
 from isnady.core.i18n import tr
+
+
+class WrapLabel(QLabel):
+    """A word-wrapped label whose height is asked at the width it is really given: Qt asks heightForWidth at the full
+    width of the layout even when the label is narrower (setMaximumWidth), so a text of three lines was counted as two
+    and the last row of what came under it was cut (Bayram 2026-10-31, the recent searches on Search)."""
+
+    def heightForWidth(self, width: int) -> int:  # noqa: N802
+        return super().heightForWidth(min(width, self.maximumWidth()))
+
+
+def _grow_parents(widget) -> None:
+    """Every layout from the widget up to its window computes its size again (a minimum changed during a layout pass)."""
+    try:
+        w = widget
+        while w is not None:
+            if w.layout() is not None:
+                w.layout().invalidate()
+            w.updateGeometry()
+            w = w.parentWidget()
+    except RuntimeError:
+        pass                            # the widget was deleted before the timer came
 
 
 class FlowLayout(QLayout):
@@ -48,6 +70,10 @@ class FlowLayout(QLayout):
             need = height + margins.top() + margins.bottom()
             if owner.minimumHeight() != need:
                 owner.setMinimumHeight(need)
+                # asked inside the parent's own layout pass, the new minimum is not seen until something else moves:
+                # the last row stayed cut (Bayram 2026-10-31, screenshot — the recent searches with harakat). Ask
+                # the parents again once this pass is over.
+                QTimer.singleShot(0, lambda o=owner: _grow_parents(o))
 
     def sizeHint(self) -> QSize:  # noqa: N802
         return self.minimumSize()
