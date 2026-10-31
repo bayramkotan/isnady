@@ -40,6 +40,10 @@ SECTIONS = [
                                       "and whether each link could have met the next.")),
     ("scholars", N_("Hadith Scholars"), N_("The scholars of hadith: their lives, books, teachers and students, "
                                            "and what their collections contain.")),
+    ("companions", N_("Companions and the Household"), N_("The ten promised Paradise, the people of the cloak and the "
+                                                          "Mothers of the Believers on the Sunni road; the Fourteen "
+                                                          "Infallibles on the Shia road — each with the hadith that "
+                                                          "names them and what the books hold of them.")),
     ("genealogy", N_("Genealogies"), N_("The prophets' lineage, Quraysh and the Prophet's family, a narrator's family "
                                        "and his line of learning, drawn as trees.")),
     ("statistics", N_("Statistics"), N_("Narrators, books and grades counted and compared.")),
@@ -238,16 +242,23 @@ class MainWindow(QMainWindow):
         from isnady.gui.genealogy_page import GenealogyPage
 
         self.genealogy_page = self._build('genealogy', lambda: GenealogyPage(self.search_page.connection))
+        from isnady.gui.companions_page import CompanionsPage
+
+        self.companions_page = self._build('companions', lambda: CompanionsPage(self.search_page.connection,
+                                                                                self.search_page.make_card))
         self.bookmarks_page = self._build('bookmarks', lambda: BookmarksPage(self.search_page.connection))
         self._page_of = {"search": self.search_page, "chains": self.isnad_page, "narrators": self.narrators_page,
                          "scholars": self.scholars_page, "books": self.books_page, "statistics": self.statistics_page,
-                         "learn": self.learn_page, "genealogy": self.genealogy_page, "bookmarks": self.bookmarks_page}
+                         "learn": self.learn_page, "genealogy": self.genealogy_page, "bookmarks": self.bookmarks_page,
+                         "companions": self.companions_page}
         self._fill_sidebar()
         self.search_page.open_chain.connect(self._open_chain)
         # pages drawn when first opened, not at start (Bayram 2026-10-12: "çok hızlı"); a change of the data marks
         # them to be drawn again when next opened (the one in view at once)
         self._lazy = {"chains": self.isnad_page.refresh, "narrators": self.narrators_page.refresh,
                       "scholars": self.scholars_page.refresh}
+        if hasattr(self.companions_page, "refresh"):
+            self._lazy["companions"] = self.companions_page.refresh
         self._pending = set(self._lazy)
         self.nav.currentRowChanged.connect(self._refresh_pending)
         self.search_page.data_changed.connect(lambda: self._refresh_or_later("chains"))
@@ -259,12 +270,17 @@ class MainWindow(QMainWindow):
         self.isnad_page.open_tree.connect(self._open_tree)
         self.isnad_page.find_narrator.connect(self._find_narrator)
         self.scholars_page.open_narrator.connect(self._open_narrator)
+        if hasattr(self.companions_page, "open_narrator"):
+            self.companions_page.open_narrator.connect(self._open_narrator)
+            self.companions_page.open_tree.connect(self._open_tree)
         self.scholars_page.open_chain.connect(self._open_chain)
         self.scholars_page.open_book.connect(self._open_book)
         self.search_page.data_changed.connect(lambda: self._refresh_or_later("scholars"))
         self.books_page.open_chain.connect(self._open_chain)
         self.books_page.open_narrator.connect(self._open_narrator)
         self.books_page.search_in_chapter.connect(self._search_in_chapter)
+        self.books_page.wants_export.connect(
+            lambda key, chapter: self.export_dialog("book", book=key, format="pdf", chapter=chapter or None))
         self.search_page.open_book.connect(self._open_in_book)
         self.search_page.open_person.connect(self._open_person)
         self.search_page.open_scholar.connect(self._open_scholar)
@@ -298,7 +314,8 @@ class MainWindow(QMainWindow):
         # the list, a scholar or hafiz, a book and a chapter of Books, a term of Learn
         for page, signal, kind in ((self.narrators_page, "visited", "narrator"), (self.scholars_page, "visited", "scholar"),
                                    (self.books_page, "visited_book", "book"),
-                                   (self.books_page, "visited_chapter", "chapter"), (self.learn_page, "visited", "term")):
+                                   (self.books_page, "visited_chapter", "chapter"), (self.learn_page, "visited", "term"),
+                                   (self.companions_page, "visited", "group")):
             if hasattr(page, signal):     # a page that could not be built has none (ROB1)
                 getattr(page, signal).connect(lambda ref, k=kind: self._visited((k, ref)))
         self.scholars_page.find_name.connect(self._find_narrator)
@@ -797,7 +814,7 @@ class MainWindow(QMainWindow):
     # --------------------------------------------------------------- back and forward (NAV2)
     _PLACE_SECTION = {"person_in_book": "books", "book": "books", "in_book": "books", "chapter": "books",
                       "narrator": "narrators", "scholar": "scholars", "term": "learn", "chain": "chains",
-                      "tree": "genealogy", "genealogy": "genealogy", "find": "search"}
+                      "tree": "genealogy", "genealogy": "genealogy", "find": "search", "group": "companions"}
 
     @contextmanager
     def _place(self, entry: tuple):
@@ -861,7 +878,8 @@ class MainWindow(QMainWindow):
                            "in_book": self._open_in_book, "narrator": self._open_narrator,
                            "scholar": self._open_scholar, "term": self._open_term, "chapter": self._open_chapter,
                            "chain": self._open_chain, "tree": self._open_tree,
-                           "genealogy": self._open_genealogy, "find": self._find_narrator}[entry[0]]
+                           "genealogy": self._open_genealogy, "find": self._find_narrator,
+                           "group": self._open_group}[entry[0]]
                 handler(*entry[1:])
         except Exception:                 # a place that is gone (a book removed): stay where we are
             pass
@@ -932,6 +950,11 @@ class MainWindow(QMainWindow):
         with self._place(('genealogy', person_id, which)):
             self.nav.setCurrentRow(self._row("genealogy"))
             self.genealogy_page.show_person(person_id, which)
+
+    def _open_group(self, group_id: str) -> None:
+        with self._place(('group', group_id)):
+            self.nav.setCurrentRow(self._row("companions"))
+            self.companions_page.select(group_id)
 
     def _open_term(self, term_id: str) -> None:
         with self._place(('term', term_id)):

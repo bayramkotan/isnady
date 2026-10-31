@@ -1650,6 +1650,51 @@ def cmd_scholar(args) -> int:
     return 0
 
 
+def cmd_group(args) -> int:
+    """iy group [ID] (AM1, EB1): the ten promised Paradise, the people of the cloak, the Mothers of the Believers; on
+    the Shia road the Fourteen Infallibles — the hadith that name them and what the books hold of each member."""
+    import textwrap
+
+    from isnady.core import sahaba as C
+    from isnady.core import i18n, language
+
+    i18n.set_language(args.lang or language.ui_language())
+    road = None if args.tradition == "all" else args.tradition
+    if not args.id:
+        for g in C.groups(road):
+            print(f"  {g['id']:10} {g['road']:6} {C.text(g['title'])}")
+        print("\n(iy group ID shows one: its members and the hadith that name them)")
+        return 0
+    group = C.find(args.id)
+    if group is None:
+        print(f"No group '{args.id}'. See: iy group --tradition all", file=sys.stderr)
+        return 1
+    conn = _connect()
+    width = args.width
+    print(C.text(group["title"]) + f"   [{group['road']}]\n")
+    print(textwrap.fill(C.text(group["lead"]), width) + "\n")
+    for m in C.members(conn, group):
+        line = f"  {m['name']}  {m['arabic']}"
+        print(line)
+        facts = [m["died"]] if m.get("died") else []
+        if group["road"] == "shia":
+            facts.append(f"{m.get('ends', 0):,} chains end here in the Shia books")
+        elif m.get("person"):
+            facts.append(f"in {m.get('links', 0):,} chain links, of {m.get('hadith', 0):,} hadith")
+        if facts:
+            print("     " + " · ".join(facts))
+    if group["road"] == "shia":
+        shared = C.shared_ends(conn)
+        if shared:
+            print(f"\n  {shared:,} more chains end at an Imam not named or named by a shared kunya (Abu al-Hasan)")
+    found = C.hadith(conn, group)
+    if group.get("hadith"):
+        print("\nThe hadith that name them: " + (", ".join(f"{b} {n}" for b, n, _h in found) or "none imported")
+              + (f"   (iy chain {found[0][0]} {found[0][1]})" if found else ""))
+    conn.close()
+    return 0
+
+
 def cmd_tahric(args) -> int:
     from isnady.core import takhrij
 
@@ -2243,6 +2288,13 @@ def build_parser() -> argparse.ArgumentParser:
     bk.add_argument("--unmark", metavar="NAME", help="remove a marker (all: every marker)")
     bk.add_argument("--forget", metavar="KEY", help="forget where you left a book (all: every book); markers are kept")
     bk.set_defaults(func=cmd_book)
+    gr = sub.add_parser("group", help="the ten promised Paradise, the people of the cloak, the Mothers of the Believers; "
+                                      "the Fourteen Infallibles on the Shia road")
+    gr.add_argument("id", nargs="?", help="ten, kisa, mothers, masumin; none = the list")
+    gr.add_argument("--tradition", choices=("sunni", "shia", "all"), default="all", help="the list: one road, or both")
+    gr.add_argument("--lang", choices=("en", "tr", "ar"), help="the language (default: the interface language)")
+    gr.add_argument("--width", type=int, default=100, help="characters per line")
+    gr.set_defaults(func=cmd_group)
     sc = sub.add_parser("scholar", help="the hadith scholars in the data: compilers, graders, critics, with measured statistics")
     sc.add_argument("name", nargs="*", help="part of a name, e.g. albani, bukhari; none = the list")
     sc.add_argument("--tradition", choices=("sunni", "shia", "all"), default="sunni",

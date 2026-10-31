@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.6.5-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.6.6-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.6.5-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.6.6-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -33,6 +33,7 @@
   <a href="#-narrators">Narrators</a> •
   <a href="#-books">Books</a> •
   <a href="#-hadith-scholars">Scholars</a> •
+  <a href="#-companions-and-the-household">Companions</a> •
   <a href="#-statistics">Statistics</a> •
   <a href="#-learn">Learn</a> •
   <a href="#-search-by-meaning-ai">Meaning (AI)</a> •
@@ -45,7 +46,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.6.5).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.6.6).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -573,7 +574,9 @@ al-Najashi's *Rijal* read entry by entry, each narrator a click away. Go to a ch
 or to the first, previous, next or last one; in a hadith collection go to any hadith by its number, with the
 book's last number beside it and the same ⏮ ‹ › ⏭ as on Isnad Chains. Find within a chapter, and isnady remembers
 where you were. From any search result, **In its
-book** opens the hadith where it stands, among the hadith of its chapter.
+book** opens the hadith where it stands, among the hadith of its chapter. **⤓ PDF** writes the book, or the chapter
+being read, as a PDF in the languages you choose — or as Word, EPUB, HTML and the other formats of File → Export
+(`iy export book bukhari --chapter 3 -f pdf --language Turkish`).
 
 Book and chapter titles follow the interface language: the sources give chapter titles in English only, so
 isnady carries its own — all 642 chapter titles of the 33 books in Turkish and in Arabic ("Vahyin Başlangıcı",
@@ -635,6 +638,22 @@ bundled; al-Dhahabi's entry itself is downloaded once on request (OpenITI, about
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/scholars.png" alt="Hadith Scholars — al-Albani: his grades on Sunan Abi Dawud and his agreement with the other graders" width="850">
 </p>
+
+---
+
+## 🌿 Companions and the Household
+
+Groups of the Companions and of the Prophet's family ﷺ as the hadith name them, each on its own road (Sunni and Shia
+apart, as everywhere in isnady). On the Sunni road: **the ten promised Paradise** (al-'Ashara al-Mubashshara: 'Abd
+al-Rahman b. 'Awf's list in al-Tirmidhi, Sa'id b. Zayd's in Abu Dawud, and how they differ), **the people of the cloak**
+(the hadith of the cloak in Muslim and al-Tirmidhi with al-Ahzab 33:33, what the Sunni scholars read in it, and Zayd
+b. Arqam's word on the household in the hadith of the two weighty things) and **the Mothers of the Believers**. On the
+Shia road: **the Fourteen Infallibles** — the Prophet ﷺ, Fatima and the twelve Imams, with al-Kafi's hadith on
+al-Nisa' 4:59 and the years of al-Mufid's al-Irshad. Each member has his years, his life, a button to him among the
+narrators and to his box in the family tree, and what the imported books hold of him: on the Sunni road how many
+chain links and hadith he is in (Abu Bakr 54 hadith, 'Ali 518, 'A'isha 5,976), on the Shia road how many chains end at
+him (Ja'far al-Sadiq 12,007; al-Baqir 2,969). The hadith that name each group are shown in full, chain and text, from
+the books imported here. In the terminal: `iy group`, `iy group ten --lang tr`, `iy group masumin`.
 
 ---
 
@@ -1031,7 +1050,7 @@ command.
 | `iy` | Open the window |
 | [`iy search`](#-searching) | Search hadith text, narrators or scholars |
 | [`iy chain`](#-chains-books-and-other-narrations) · [`iy tahric`](#-chains-books-and-other-narrations) · [`iy book`](#-chains-books-and-other-narrations) | One chain read link by link · the other narrations of a hadith · read a book in its order |
-| [`iy narrator`](#-narrators-scholars-and-their-lives) · [`iy life`](#-narrators-scholars-and-their-lives) · [`iy scholar`](#-narrators-scholars-and-their-lives) · [`iy tree`](#-narrators-scholars-and-their-lives) | A narrator · a life · the scholars and the huffaz · the genealogies |
+| [`iy narrator`](#-narrators-scholars-and-their-lives) · [`iy life`](#-narrators-scholars-and-their-lives) · [`iy scholar`](#-narrators-scholars-and-their-lives) · [`iy group`](#-narrators-scholars-and-their-lives) · [`iy tree`](#-narrators-scholars-and-their-lives) | A narrator · a life · the scholars and the huffaz · the Companions and the Household · the genealogies |
 | [`iy term`](#-the-sciences-of-hadith) · [`iy learn`](#-the-sciences-of-hadith) | The glossary · the history and method of hadith |
 | [`iy stats`](#-statistics-1) | Every statistic of the Statistics page, with its plain-words explanation |
 | [`iy catalog`](#-data-books-and-sources) · [`iy repo`](#-data-books-and-sources) · [`iy database`](#-data-books-and-sources) · [`iy import`](#-data-books-and-sources) · [`iy sources`](#-data-books-and-sources) · [`iy remove`](#-data-books-and-sources) · [`iy isnads`](#-data-books-and-sources) · [`iy ai`](#-data-books-and-sources) · [`iy formats`](#-data-books-and-sources) | Books and data: import, repositories, a ready database, your own files |
@@ -1152,7 +1171,7 @@ iy narrator --famous                 # the famous Companions by group (the four 
                                      # Believers, the household, those who narrated most)
 iy narrator --famous --tradition shia    # road B: the Ashab al-Ijma'
 iy life "Abu Hurayra" --lang tr      # a life: written for isnady, or read from the rijal work and the chains
-iy life Zuhri --source               # also his entry in al-Dhahabi's Siyar, in its own words (downloaded once)
+iy life Zuhri --source               # also his entries in al-Dhahabi's Siyar and Tadhkirat al-Huffaz (downloaded once)
 iy life "Zurara" --tradition shia    # only among one road's narrators
 iy scholar                           # the scholars whose work is imported: compilers, graders, critics
 iy scholar albani                    # one scholar measured: grades, agreement, kappa, strictness
@@ -1160,6 +1179,9 @@ iy scholar --tradition shia          # the Shia scholars, by their own road
 iy scholar --huffaz                  # al-Dhahabi's Tadhkirat al-Huffaz: 21 generations, deaths by century
 iy scholar --huffaz --tabaqa 3       # one generation
 iy scholar --huffaz zuhri --source   # one hafiz: generation, death, al-Mizzi's signs, his Taqrib entry, his entry
+iy group                             # the groups: ten, kisa, mothers (Sunni), masumin (Shia)
+iy group ten --lang tr               # the ten promised Paradise: the hadith, what each road reads, each member
+iy group masumin                     # the Fourteen Infallibles: how many chains of the Shia books end at each
 iy tree prophets                     # the prophets' lineage (--hadith: the hadith that speak of one)
 iy tree quraysh "Abu Bakr"           # the tree of Quraysh, with someone found in it
 iy tree family "Ibn Umar"            # a narrator's family among the narrators

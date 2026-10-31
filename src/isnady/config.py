@@ -61,7 +61,8 @@ _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 # the sidebar's sections in isnady's own order (Bayram, 2026-10-11: Books second, Learn last); the user may reorder
 # them (Preferences → Sidebar, or iy config set view.sidebar books,search,…)
-SIDEBAR = ("search", "books", "narrators", "chains", "scholars", "genealogy", "statistics", "bookmarks", "learn")
+SIDEBAR = ("search", "books", "narrators", "chains", "scholars", "companions", "genealogy", "statistics", "bookmarks",
+           "learn")
 
 
 def sidebar_order() -> list[str]:

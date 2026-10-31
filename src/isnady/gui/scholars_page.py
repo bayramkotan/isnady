@@ -572,6 +572,11 @@ class ScholarsPage(QWidget):
         if self._tradition != "huffaz" or conn is None:
             return
         rows = huffaz.find(conn, self.hafiz_query.text().strip(), self.hafiz_tabaqa.currentData())
+        from PySide6.QtGui import QPalette
+
+        pal = self.list.palette()            # plain rows: the chosen one keeps the theme's ink (not white on light)
+        pal.setColor(QPalette.ColorRole.HighlightedText, QColor(theme.current().ink))
+        self.list.setPalette(pal)
         gens = {g["tabaqa"]: g for g in huffaz.generations(conn)}
         self.list.blockSignals(True)
         self.list.clear()

@@ -173,8 +173,20 @@ def view(life: dict, lang: str | None = None) -> dict:
         "read": [{"kind": r.get("kind", "url"), "book": r.get("book"), "url": r.get("url"), "text": _in(r, lang)}
                  for r in life.get("read", [])],
         # the entries of the classical works it is summarised from, to be read in their own words (BIO2b)
-        "entries": _entries(life["id"], lang),
+        "entries": _entries(life["id"], lang) + _hafiz_entry(life, lang),
     }
+
+
+def _hafiz_entry(life: dict, lang: str | None) -> list[dict]:
+    """The life's man in al-Dhahabi's Tadhkirat al-Huffaz, when he is there (BIO2c): the four Caliphs, who have no
+    entry in the Siyar, and the huffaz among the Successors and the imams."""
+    from isnady.core import huffaz
+
+    for key in life.get("persons") or []:
+        h = huffaz.of_key(key)
+        if h:
+            return [huffaz.source_entry(h, lang or language())]
+    return []
 
 
 def _entries(life_id: str, lang: str | None) -> list[dict]:

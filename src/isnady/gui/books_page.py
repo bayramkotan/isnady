@@ -66,6 +66,7 @@ class BooksPage(QWidget):
     open_narrator = Signal(int)
     search_in_chapter = Signal(str, int, str)       # book key, chapter id, its title (SRCH-SEC1)
     visited_book = Signal(str)                      # a book picked in the list → back and forward (NAV2b)
+    wants_export = Signal(str, str)                 # book key, chapter number ("" = the whole book) → PDF (PDF1)
     visited_chapter = Signal(int)                   # a chapter picked in the contents → back and forward
 
     def __init__(self, connection_getter, card_maker, parent=None) -> None:
@@ -223,6 +224,17 @@ class BooksPage(QWidget):
         self.search_here.setToolTip(tr("Search only in the chapter you are reading and the chapters under it"))
         self.search_here.clicked.connect(self._search_here)
         where_row.addWidget(self.search_here)
+        # the book as a PDF in the languages chosen (PDF1, Bayram's 11 October list: "Kitaplari dillerine gore PDF
+        # olarak indirmek"): File → Export with this book, its chapter and PDF already chosen
+        self.pdf_button = QToolButton()
+        self.pdf_button.setText("⤓ " + tr("PDF"))
+        self.pdf_button.setObjectName("Quiet")
+        self.pdf_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.pdf_button.setToolTip(tr("This book, or the chapter you are reading, as a PDF in the languages you choose "
+                                      "(or Word, EPUB, HTML …)"))
+        self.pdf_button.clicked.connect(lambda: self._work and self.wants_export.emit(
+            self._work["key"], self._chapter_number() or ""))
+        where_row.addWidget(self.pdf_button)
         right.addLayout(where_row)
         right.addWidget(chapters)
         right.addWidget(self.nav)
@@ -544,6 +556,14 @@ class BooksPage(QWidget):
         if left:
             places = menu.addAction("✕  " + tr("Forget where I left every book…"))
             places.triggered.connect(lambda: self._forget_place(None))
+
+    def _chapter_number(self) -> str | None:
+        """The number the export knows the chapter being read by (its section number), when it has one."""
+        if not (self._work and self._chapter) or self._work.get("kind") != "hadith":
+            return None
+        trail = core_works.path(self.conn, self._chapter)       # the book (kitab) the chapter is in: the export's unit
+        label = trail[0].get("label") if trail else None
+        return str(label) if label and str(label).isdigit() else None
 
     def _picked_work(self, key: str) -> None:
         self.open_work(key)

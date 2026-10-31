@@ -3,6 +3,25 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.6.6] — 2026-11-01
+
+- **Companions and the Household (AM1, EB1 — Bayram's 11 October list: "Ehl-i Beyt ve şeceresi, Aşere-i
+  mübeşşere").** A new section of the sidebar, each road on its own. Sunni: *the ten promised Paradise* ('Abd
+  al-Rahman b. 'Awf's list in al-Tirmidhi and Sa'id b. Zayd's in Abu Dawud, and how they differ), *the people of the
+  cloak* (the hadith of the cloak in Muslim and al-Tirmidhi with al-Ahzab 33:33, the Sunni reading of the verse
+  among those addressed to the Prophet's wives, and Zayd b. Arqam's word on the household in the hadith of the two
+  weighty things) and *the Mothers of the Believers*. Shia: *the Fourteen Infallibles*, with al-Kafi's hadith on
+  al-Nisa' 4:59 and the years of al-Mufid's al-Irshad. Every member with his life, his narrator page and his box in
+  the family tree, and what the imported books hold of him: how many chain links and hadith he is in (Sunni road),
+  or how many chains end at him (Shia road: Ja'far al-Sadiq 12,007, al-Baqir 2,969; 2,909 more end at an Imam not
+  named or named by a shared kunya, counted apart). The hadith that name each group are shown in full from the
+  books imported here. In the terminal: `iy group [ten|kisa|mothers|masumin]`.
+- **A book or a chapter as a PDF (PDF1).** Books has **⤓ PDF**: File → Export opens with the book, the chapter being
+  read and PDF already chosen, in the languages of your choice (Word, EPUB, HTML and the rest one click away).
+- **The four Caliphs and 61 more written lives have al-Dhahabi's entry (BIO2c, in part).** A written life whose man is
+  in the Tadhkirat al-Huffaz now shows that entry beside the Siyar's — Abu Bakr, 'Umar, 'Uthman and 'Ali, who have no
+  entry in the Siyar, among them (downloaded once on request, as the Siyar).
+
 ## [0.6.5] — 2026-10-31
 
 - **A hadith chosen from the contents, its number unknown (CH2b).** Isnad Chains has **📖 From the contents…**: the

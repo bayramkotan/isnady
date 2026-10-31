@@ -283,6 +283,15 @@ class ExportDialog(QDialog):
         self.kind.setCurrentIndex(max(0, i))
         self._fill_chapters()
         self._kind_changed()
+        # chosen by the page that opened it (PDF1: Books → PDF): a format, a chapter of the book
+        if preset.get("format"):
+            f = self.format.findData(preset["format"])
+            if f >= 0:
+                self.format.setCurrentIndex(f)
+        if preset.get("chapter"):
+            c = self.chapter.findData(int(preset["chapter"]) if str(preset["chapter"]).isdigit() else preset["chapter"])
+            if c >= 0:
+                self.chapter.setCurrentIndex(c)
 
     def _filters_text(self) -> str:
         """What the Search page had chosen with these words, said in a line (or that the words alone are used)."""
