@@ -2,7 +2,7 @@
  "schema": "isnady-catalog/1",
  "id": "isnady",
  "name": "isnady — all sources (default)",
- "description": "isnady's own repository: every hadith collection and rijal work isnady reads, Sunni and Shia, in one place and one format.",
+ "description": "isnady's own repository: the Qur'an and its translations, every Sunni and Shia hadith collection, the sira, the lives of the scholars and the rijal works isnady reads, in one place and one format.",
  "homepage": "https://github.com/bayramkotan/isnady-data",
  "url": "https://raw.githubusercontent.com/bayramkotan/isnady-data/main/catalog.json",
  "default": true,
@@ -1438,5 +1438,128 @@
     "sha256": "2b1fa57c6dbd067ea76e50e5a5496627b655e2d1fbcc59a49844502177387dbd"
    }
   ]
- }
+ },
+ "library": [
+  {
+   "id": "al_quran_al_karim",
+   "aliases": [
+    "quran"
+   ],
+   "kind": "quran",
+   "category": "quran",
+   "format": "isnady-quran",
+   "title": "The Holy Qur'an",
+   "title_ar": "القرآن الكريم",
+   "tradition": "all",
+   "location": "quran/index.json",
+   "license": "Tanzil (verbatim); translations as their sources give",
+   "languages": [
+    "Albanian",
+    "Azerbaijani",
+    "Bengali",
+    "Bosnian",
+    "English",
+    "French",
+    "German",
+    "Indonesian",
+    "Kazakh",
+    "Malay",
+    "Persian",
+    "Russian",
+    "Spanish",
+    "Tamil",
+    "Tatar",
+    "Turkish",
+    "Urdu",
+    "Uzbek"
+   ],
+   "translations": 60,
+   "size": 77770410,
+   "description": "The Arabic text (Tanzil, verbatim) and 60 translations in 18 languages; the Arabic and one translation in the interface language are downloaded, the others when chosen."
+  },
+  {
+   "id": "al_sira_al_nabawiyya_ibn_hisham",
+   "aliases": [
+    "sira",
+    "ibn-hisham"
+   ],
+   "kind": "sira",
+   "category": "sira",
+   "format": "openiti-work",
+   "title": "al-Sira al-Nabawiyya — Ibn Hisham",
+   "title_ar": "السيرة النبوية لابن هشام",
+   "tradition": "sunni",
+   "location": "sira/al_sira_al_nabawiyya_ibn_hisham.md",
+   "book": "al_sira_al_nabawiyya_ibn_hisham",
+   "license": null,
+   "compiler": "Ibn Hisham (d. 218; 213 in some sources), from Ibn Ishaq (d. 151)",
+   "description": "Compiled by Ibn Hisham (d. 218; 213 in some sources), from Ibn Ishaq (d. 151). The life of the Prophet ﷺ as Ibn Ishaq told it and Ibn Hisham edited it: his lineage, birth, the revelation, Mecca, the Hijra, the campaigns and his death — 264 chapters, 2,109 sections, each report with its chain as the author gives it.",
+   "origin": {
+    "name": "OpenITI corpus",
+    "url": "https://github.com/OpenITI"
+   },
+   "fallback": {
+    "format": "openiti-work",
+    "location": "https://raw.githubusercontent.com/OpenITI/0225AH/master/data/0213IbnHisham/0213IbnHisham.SiraNabawiyya/0213IbnHisham.SiraNabawiyya.Shamela0023833-ara1.completed"
+   },
+   "size": 2654027,
+   "sha256": "8e0d274c7bf5433d0c160aceca7e446f545be02a054035239b2dd349b5c399cd"
+  },
+  {
+   "id": "siyar_alam_al_nubala_al_dhahabi",
+   "aliases": [
+    "siyar"
+   ],
+   "kind": "tabaqat",
+   "category": "tabaqat",
+   "format": "openiti-work",
+   "title": "Siyar A'lam al-Nubala' — al-Dhahabi",
+   "title_ar": "سير أعلام النبلاء",
+   "tradition": "sunni",
+   "location": "tabaqat/siyar_alam_al_nubala_al_dhahabi.md",
+   "book": "siyar_alam_al_nubala_al_dhahabi",
+   "license": null,
+   "compiler": "al-Dhahabi (d. 748)",
+   "description": "Compiled by al-Dhahabi (d. 748). The lives of the Companions, the Successors and the scholars after them, generation by generation, to al-Dhahabi's own time — 5,851 entries; the source of the written lives isnady shows beside a narrator.",
+   "origin": {
+    "name": "OpenITI corpus",
+    "url": "https://github.com/OpenITI"
+   },
+   "fallback": {
+    "format": "openiti-work",
+    "location": "https://raw.githubusercontent.com/OpenITI/0750AH/master/data/0748Dhahabi/0748Dhahabi.SiyarAclamNubala/0748Dhahabi.SiyarAclamNubala.Shamela0010906-ara1.mARkdown"
+   },
+   "entries": "siyar",
+   "size": 21905214,
+   "sha256": "7ae7f691ffe236f5b888f5dfdf18becd9e5ea17ab6b5851528db5efd333886c0"
+  },
+  {
+   "id": "tadhkirat_al_huffaz_al_dhahabi",
+   "aliases": [
+    "tadhkira"
+   ],
+   "kind": "tabaqat",
+   "category": "tabaqat",
+   "format": "openiti-work",
+   "title": "Tadhkirat al-Huffaz — al-Dhahabi",
+   "title_ar": "تذكرة الحفاظ",
+   "tradition": "sunni",
+   "location": "tabaqat/tadhkirat_al_huffaz_al_dhahabi.md",
+   "book": "tadhkirat_al_huffaz_al_dhahabi",
+   "license": null,
+   "compiler": "al-Dhahabi (d. 748)",
+   "description": "Compiled by al-Dhahabi (d. 748). The 1,176 hadith masters (huffaz) from Abu Bakr to al-Dhahabi's teachers, in 21 generations; the source of the Huffaz of the Scholars page.",
+   "origin": {
+    "name": "OpenITI corpus",
+    "url": "https://github.com/OpenITI"
+   },
+   "fallback": {
+    "format": "openiti-work",
+    "location": "https://raw.githubusercontent.com/OpenITI/0750AH/master/data/0748Dhahabi/0748Dhahabi.TadhkiratHuffaz/0748Dhahabi.TadhkiratHuffaz.JK000532-ara1.mARkdown"
+   },
+   "entries": "tadhkira",
+   "size": 3033818,
+   "sha256": "b7d5740bf357700439fbe4ce8509e0893240839a1a62cc8ae39d320a9cd81d69"
+  }
+ ]
 }

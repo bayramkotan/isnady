@@ -4,9 +4,10 @@ Bayram (2026-10-17), on the lives written for isnady: "Nereden alıyorsun bu bil
 summaries; this module lets each of them be read beside the entry of the work it is summarised from, as the
 author wrote it. Today: al-Dhahabi's Siyar A'lam al-Nubala' (the Risala edition, in the OpenITI corpus), whose
 entries are numbered within each volume ("vol. 2, no. 126" is Abu Hurayra); and al-Dhahabi's Tadhkirat al-Huffaz
-(HFZ1), numbered through the whole work. The work is downloaded once, on request
-(about 22 MB), split into its entries and kept in the data folder (sources/<work>.db) — shared by every profile,
-never published (like the Taqrib: OpenITI gives no licence, so it stays on this computer).
+(HFZ1), numbered through the whole work. The work is downloaded once, on request (about 22 MB) — from isnady-data,
+which keeps both (LIB1), else from the OpenITI corpus — split into its entries and kept in the data folder
+(sources/<work>.db), shared by every profile. Imported in Data sources, the same work is also a book to read in Books
+(data.importers.openiti_work), and its entries are kept here at the same time.
 
 Which entry belongs to which written life is a hand-checked table (assets/sources/lives.json); nothing is guessed.
 """
@@ -86,16 +87,51 @@ def split(text: str, whole: bool = False) -> list[tuple[int, int, str, str]]:
     return out
 
 
+def _own_location(work: str) -> str | None:
+    """Where isnady-data keeps this work (its catalog's library), or None."""
+    try:
+        from isnady.core import repositories as R
+
+        for repo in (R.selected(), R.find(R.DEFAULT_ID)):
+            if repo is None:
+                continue
+            cat, _where = R.catalog(repo)
+            for item in cat.get("library", []):
+                if item.get("entries") == work and item.get("location"):
+                    return R.absolute(R.base_of(repo), item["location"])
+    except Exception:  # noqa: BLE001 — the corpus is read instead
+        return None
+    return None
+
+
 def fetch(work: str, progress=None, location: str | None = None) -> int:
-    """Download a work (or read it from a file, location) and keep its entries; returns how many."""
+    """Download a work (or read it from a file, location) and keep its entries; returns how many. From isnady-data
+    first (LIB1), from the OpenITI corpus when isnady-data cannot give it."""
     from isnady.data.fetch import read_bytes
 
     say = progress or (lambda _m: None)
     info = WORKS[work]
     say(f"Downloading {info['title']['en']} (about {info['size_mb']} MB)")
-    raw = read_bytes(location or info["url"], timeout=600)
+    places = [location] if location else [p for p in (_own_location(work), info["url"]) if p]
+    raw, last = None, None
+    for place in places:
+        try:
+            raw = read_bytes(place, timeout=600)
+            location = place
+            break
+        except Exception as exc:  # noqa: BLE001
+            last = exc
+    if raw is None:
+        raise last  # type: ignore[misc]
+    return store(work, raw.decode("utf-8", "replace"), location, say)
+
+
+def store(work: str, text: str, location: str, progress=None) -> int:
+    """Keep the entries of a work's text (already read); returns how many."""
+    say = progress or (lambda _m: None)
+    info = WORKS[work]
     say("Reading the entries")
-    entries = split(raw.decode("utf-8", "replace"), whole=info.get("numbered") == "whole")
+    entries = split(text, whole=info.get("numbered") == "whole")
     path = _db_path(work)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
@@ -106,7 +142,7 @@ def fetch(work: str, progress=None, location: str | None = None) -> int:
                  "PRIMARY KEY (volume, number))")
     conn.executemany("INSERT OR IGNORE INTO entries VALUES (?, ?, ?, ?)", entries)
     conn.execute("CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)")
-    conn.execute("INSERT INTO meta VALUES ('source', ?)", (location or info["url"],))
+    conn.execute("INSERT INTO meta VALUES ('source', ?)", (location,))
     conn.commit()
     conn.close()
     tmp.replace(path)

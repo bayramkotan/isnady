@@ -447,6 +447,9 @@ def cmd_catalog(args) -> int:
             return 1
         for kind, title in (("builtin", f"Sources of {repo.name}"), ("user", "Your sources (User Resources)")):
             entries = catalog.builtin_entries(repo.id) if kind == "builtin" else catalog.user_entries()
+            if kind == "builtin":                 # the Qur'an first, then hadith, sira, tabaqat, rijal (LIB1)
+                entries = sorted(entries, key=lambda e: catalog.KIND_ORDER.index(e.kind)
+                                 if e.kind in catalog.KIND_ORDER else 9)
             print(f"\n{title}")
             if not entries:
                 print("  none yet — add one: iy catalog add TITLE FORMAT FILE-OR-URL")
@@ -455,7 +458,8 @@ def cmd_catalog(args) -> int:
                 state = ("imported" + (f" ({', '.join(catalog.language_label(l) if len(l) == 3 else l for l in st['languages'])})"
                                        if st["languages"] else "") + f", {st['count']:,}"
                          if st["imported"] else "not imported")
-                print(f"  {e.id:18} {e.tradition if e.builtin else '':6} {e.title:46} {state}")
+                kind = e.kind if e.kind != "hadith" else (e.tradition if e.builtin else "")
+                print(f"  {e.id:34} {kind:7} {e.title:44} {state}")
         conn.close()
         return 0
     if args.action == "add":
@@ -1466,9 +1470,10 @@ def cmd_book(args) -> int:
         # the Sunni books unless the other road, or both, are asked for (NR-DEF1), as the Books page opens
         road = None if args.tradition == "all" else args.tradition
         for w in works.list_works(conn):
-            if road and w["tradition"] != road:
+            if road and w["tradition"] != road and w["kind"] not in ("sira", "tabaqat"):
                 continue
-            print(f"  {w['key']:12} {w['title']:32} {w['kind']:8} {w['leaves']:6,} items, {w['chapters']} chapters")
+            short = next((a for a, k in works.ALIASES.items() if k == w["key"]), w["key"])
+            print(f"  {short:12} {w['title']:36} {w['kind']:8} {w['leaves']:6,} items, {w['chapters']} chapters")
         conn.close()
         return 0
     from isnady.core import books as core_books
@@ -1524,6 +1529,14 @@ def cmd_book(args) -> int:
             for t in r.texts:
                 body = " ".join(t.text.split())
                 print(f"  [{t.language}] {body[: args.width] + (' ...' if len(body) > args.width else '')}")
+        elif work["kind"] in ("sira", "tabaqat"):
+            # a section of the sira, a life of the tabaqat (LIB1): its heading, then its whole text, to be read
+            import textwrap
+
+            head = " ".join(x for x in ((f"#{it['label']}" if it["label"] else ""), it["title"] or "") if x)
+            print(f"\n── {head}" if head else "\n──")
+            for para in (it["text"] or "").split("\n\n"):
+                print(textwrap.fill(" ".join(para.split()), args.width, initial_indent="  ", subsequent_indent="  "))
         else:
             body = " ".join((it["text"] or it["title"] or "").split())
             print(f"\n{('#' + it['label']) if it['label'] else '→'} {body[: args.width] + (' ...' if len(body) > args.width else '')}")

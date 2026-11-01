@@ -3,6 +3,28 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.6.9] — 2026-11-01
+
+- **Every book from isnady-data, every book in Data sources (LIB1 — Bayram: "kitapların hepsini isnady-data repoya
+  koyalım ve data import kısmına da tüm kitapları (hadis, Kur'an, siyer…) koyalım… oradan çeksin").** isnady-data
+  now keeps, besides the hadith and the rijal, the Qur'an (`quran/`), Ibn Hisham's *al-Sira al-Nabawiyya*
+  (`sira/`) and al-Dhahabi's *Siyar A'lam al-Nubala'* and *Tadhkirat al-Huffaz* (`tabaqat/`), listed in the
+  catalog's new `library` (an older isnady reads only `entries` and is not disturbed). **Data sources** shows what
+  the repository holds at a glance — the Qur'an, Sunni and Shia hadith, the sira, the tabaqat, the rijal, one tile
+  each — and every one of them as a card, imported with one click or all at once; the Qur'an's card opens
+  **➕ Translations…**. `iy catalog import quran | sira | siyar | tadhkira`, and `--all` takes them too.
+- **The sira and the tabaqat in Books (SIY1, first part).** A new importer (`openiti-work`) reads a work of the
+  OpenITI corpus as it is marked — its headings as chapters, its entries and sections as they stand, nothing
+  summarised — into a book of Books: Ibn Hisham's Sira in 264 chapters and 2,109 sections, each under its own
+  heading; the Siyar's 5,851 lives and the Tadhkira's 1,176 huffaz, generation by generation. They stand under
+  **Sira and tabaqat** on every shelf. `iy book sira`, `iy book sira 12`, `iy book siyar 3`.
+- The written lives read al-Dhahabi's entries from isnady-data first (the OpenITI corpus when it cannot give them);
+  importing the Siyar or the Tadhkira keeps their entries for the lives at the same time, with no second download.
+  A saved catalog that lacks the library is read again at once, not a day later.
+- `tools/build_data_repo.py --library DIR` builds `quran/`, `sira/`, `tabaqat/` and the catalog's library (a later
+  `--mirror` keeps them); the isnady-data README gains a "Sira and tabaqat" section. README: what isnady-data
+  holds, as one table; new screenshots of Data sources and of the Sira in Books.
+
 ## [0.6.8] — 2026-11-01
 
 - **The Qur'an from isnady-data (Q1b — Bayram: "Neden fawazahmed0'den çektin Kur'an'ı?").** The Arabic (Tanzil's

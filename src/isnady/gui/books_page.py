@@ -44,6 +44,9 @@ FIRST = 4            # the first few drawn at once, the rest after the window ha
 PAGE = 60            # items per "show more"
 
 
+LIBRARY = ("sira", "tabaqat")                 # works of the library (LIB1), on a shelf of their own
+
+
 def _unhighlight(widget) -> None:
     """Remove the brief highlight — unless the card is gone already (another chapter was opened meanwhile)."""
     try:
@@ -277,20 +280,24 @@ class BooksPage(QWidget):
         if conn is None:
             return
         core_works.ensure_collection_works(conn)
-        shelf = [w for w in core_works.list_works(conn)
-                 if self._shelf_tradition is None or w["tradition"] == self._shelf_tradition]
+        every = core_works.list_works(conn)
+        # the sira and the tabaqat (LIB1) stand after the Qur'an under a heading of their own, on every shelf
+        library = [w for w in every if w["kind"] in LIBRARY]
+        shelf = library + [w for w in every if w["kind"] not in LIBRARY
+                           and (self._shelf_tradition is None or w["tradition"] == self._shelf_tradition)]
         self.works.blockSignals(True)
         self.works.clear()
         self._add_quran_row()
         heading = None
         for w in shelf:
-            if w["tradition"] != heading:
-                heading = w["tradition"]
+            group = "library" if w["kind"] in LIBRARY else w["tradition"]
+            if group != heading:
+                heading = group
                 head = QListWidgetItem()
                 head.setFlags(Qt.ItemFlag.NoItemFlags)          # a heading, not a book
-                text = {"sunni": N_("Sunni books · {count}"), "shia": N_("Shia books · {count}")}.get(
-                    heading, N_("Other books · {count}"))
-                count = sum(1 for x in shelf if x["tradition"] == heading)
+                text = {"sunni": N_("Sunni books · {count}"), "shia": N_("Shia books · {count}"),
+                        "library": N_("Sira and tabaqat · {count}")}.get(heading, N_("Other books · {count}"))
+                count = sum(1 for x in shelf if ("library" if x["kind"] in LIBRARY else x["tradition"]) == heading)
                 label = _label(tr(text, count=count), "FilterTitle", wrap=False)
                 label.setContentsMargins(10, 10, 10, 2)
                 if heading == "shia":
@@ -308,11 +315,12 @@ class BooksPage(QWidget):
             name.setFont(theme.reading_font(14, bold=True))
             box.addWidget(name)
             author = find_scholar(w["author"]) if w["author"] else None
-            leaves = (tr("{n:,} hadith", n=w["leaves"]) if w["kind"] == "hadith" else tr("{n:,} entries", n=w["leaves"]))
+            leaves = (tr("{n:,} hadith", n=w["leaves"]) if w["kind"] == "hadith" else
+                      tr("{n:,} sections", n=w["leaves"]) if w["kind"] == "sira" else tr("{n:,} entries", n=w["leaves"]))
             facts = [tr(core_works.KIND_LABELS.get(w["kind"], "Book")), leaves, tr("{n} chapters", n=w["chapters"])]
             if author:
                 facts.insert(0, html.escape(author.get("tr") or author["name"]))
-            if w["tradition"] == "shia":
+            if w["tradition"] == "shia" and w["kind"] not in LIBRARY:
                 facts.insert(0, f"<span style='color:{theme.current().gold}'><b>{tr('Shia')}</b></span>")
             box.addWidget(_label(" · ".join(facts), "Caption", wrap=False, rich=True))
             left_at = readmarks.last(w["key"])
@@ -360,7 +368,7 @@ class BooksPage(QWidget):
             self.open_quran()
             return
         w = next((x for x in core_works.list_works(self.conn) if x["key"] == key), None) if self.conn else None
-        if w and self._shelf_tradition and w["tradition"] != self._shelf_tradition:
+        if w and self._shelf_tradition and w["tradition"] != self._shelf_tradition and w["kind"] not in LIBRARY:
             self._shelf_tradition = w["tradition"]           # a book of the other tradition was asked for: its shelf
             for b in self._shelf_buttons.buttons():
                 b.setChecked(b.property("tradition") == self._shelf_tradition)
@@ -457,6 +465,9 @@ class BooksPage(QWidget):
         self.chapter_count.setText("/ " + f"{len(self._order):,}")
         self.chapter_count.setToolTip(tr("{n} chapters in this book", n=f"{len(self._order):,}"))
         self.nav.setVisible(work["kind"] == "hadith")
+        # the export and the search across hadith are a hadith collection's (a sira is read, and found with "Find")
+        self.pdf_button.setVisible(work["kind"] == "hadith")
+        self.search_here.setVisible(work["kind"] == "hadith")
         self.nav.set_book(work["key"] if work["kind"] == "hadith" else None)
         self.tree.clear()
 
@@ -863,6 +874,21 @@ class BooksPage(QWidget):
             note = TextBlock(item["text"] or "", theme.script_font("arabic", factor=0.7), rtl=True)
             box.addWidget(_label(tr("Cross-reference"), "Caption"))
             box.addWidget(note)
+            return card
+        if item["kind"] == "paragraph" or (item["kind"] == "entry" and not item["person_id"]):
+            # a section of the sira, a life of the tabaqat (LIB1): its number and its heading, then its text
+            if item.get("title") or item.get("label"):
+                top = QHBoxLayout()
+                if item.get("label"):
+                    top.addWidget(_label(f"#{item['label']}", "CardNumber", wrap=False))
+                if item.get("title"):
+                    heading = TextBlock(f"<b>{html.escape(item['title'])}</b>",
+                                        theme.script_font("arabic", factor=0.95), rtl=True)
+                    top.addWidget(heading, 1)
+                else:
+                    top.addStretch(1)
+                box.addLayout(top)
+            box.addWidget(TextBlock(item["text"] or "", theme.script_font("arabic", factor=0.85), rtl=True))
             return card
         head = QHBoxLayout()
         head.addWidget(_label(f"#{item['label']}" if item["label"] else "", "CardNumber", wrap=False))

@@ -30,13 +30,15 @@ FAWAZ_KEY = "fawazahmed0-hadith-api"
 LANGUAGE_NAMES = {"ara": N_("Arabic"), "tur": N_("Turkish"), "eng": N_("English"), "urd": N_("Urdu"), "ind": N_("Indonesian"),
                   "ben": N_("Bengali"), "fra": N_("French"), "rus": N_("Russian"), "tam": N_("Tamil")}
 DEFAULT_LANGUAGES = ["ara", "tur", "eng"]
+LIBRARY_KINDS = ("quran", "sira", "tabaqat")      # what is neither hadith nor rijal (LIB1)
+KIND_ORDER = ("quran", "hadith", "sira", "tabaqat", "rijal")
 
 
 @dataclass
 class Entry:
     id: str
     title: str
-    kind: str                       # hadith | rijal
+    kind: str                       # hadith | rijal | quran | sira | tabaqat (the last three: the library, LIB1)
     format_id: str
     location: str
     description: str
@@ -60,6 +62,14 @@ class Entry:
     origin_url: str = ""
     aliases: list[str] = field(default_factory=list)
     hadith: int | None = None       # how many, as the source says (before import)
+    compiler: str = ""              # the library's works: who wrote it
+    entries_work: str | None = None  # a work whose entries the written lives quote (core.source_entries)
+    size: int | None = None         # bytes to download, as the catalog says
+    translations: int | None = None  # the Qur'an: how many translations the repository keeps
+
+    @property
+    def library(self) -> bool:
+        return self.kind in LIBRARY_KINDS
 
 
 def entry_from_catalog(raw: dict, repo, base: str) -> Entry:
@@ -79,11 +89,15 @@ def entry_from_catalog(raw: dict, repo, base: str) -> Entry:
     return Entry(
         id=raw["id"], title=raw["title"], kind=raw.get("kind", "hadith"), format_id=raw["format"],
         location=absolute(base, raw["location"]), description=raw.get("description", ""),
-        license=raw.get("license"), source_name=raw.get("source_name") or origin.get("name") or raw["title"],
+        license=raw.get("license"),
+        source_name=raw.get("source_name") or (raw["title"] if raw.get("kind") in LIBRARY_KINDS else
+                                               origin.get("name") or raw["title"]),
         source_key=raw.get("source_key") or raw["id"], book=raw.get("book"), languages=raw.get("languages", []),
         builtin=True, title_ar=raw.get("title_ar", ""), tradition=raw.get("tradition", "sunni"), repo=repo.id,
         mapping=raw.get("mapping"), parts=parts, fallback=raw.get("fallback"), origin_name=origin.get("name", ""),
-        origin_url=origin.get("url", ""), aliases=raw.get("aliases", []), hadith=raw.get("hadith"))
+        origin_url=origin.get("url", ""), aliases=raw.get("aliases", []), hadith=raw.get("hadith"),
+        compiler=raw.get("compiler", ""), entries_work=raw.get("entries"), size=raw.get("size"),
+        translations=raw.get("translations"))
 
 
 def builtin_entries(repo_id: str | None = None) -> list[Entry]:
@@ -182,9 +196,21 @@ def find(entry_id: str) -> Entry | None:
 # ------------------------------------------------------------------ status and actions
 def status(conn: sqlite3.Connection, entry: Entry) -> dict:
     """What of this entry is in the database now."""
+    if entry.kind == "quran":
+        from isnady.core import quran
+
+        if not quran.available():
+            return {"imported": False, "languages": [], "when": None, "count": 0}
+        eds = [e for e in quran.editions() if e["key"] != quran.ARABIC]
+        return {"imported": True, "languages": [f"{e['language']} — {e['author']}" for e in eds], "when": None,
+                "count": len(eds), "tier": None}
     src = conn.execute("SELECT id, imported_at, tier FROM sources WHERE key = ?", (entry.source_key,)).fetchone()
     if src is None:
         return {"imported": False, "languages": [], "when": None, "count": 0}
+    if entry.kind in ("sira", "tabaqat"):
+        count = conn.execute("SELECT COUNT(*) FROM work_nodes n JOIN works w ON w.id = n.work_id WHERE w.source_id = ? "
+                             "AND n.kind IN ('entry', 'paragraph')", (src["id"],)).fetchone()[0]
+        return {"imported": count > 0, "languages": [], "when": src["imported_at"], "count": count, "tier": src["tier"]}
     if entry.book:
         langs = [r[0] for r in conn.execute(
             """SELECT DISTINCT e.language FROM editions e JOIN collections c ON c.id = e.collection_id
@@ -196,6 +222,7 @@ def status(conn: sqlite3.Connection, entry: Entry) -> dict:
                 "tier": src["tier"]}
     if entry.kind == "rijal":
         count = conn.execute("SELECT COUNT(*) FROM persons WHERE source_id = ?", (src["id"],)).fetchone()[0]
+
     else:
         count = conn.execute("SELECT COALESCE(SUM(text_count), 0) FROM editions WHERE source_id = ?",
                              (src["id"],)).fetchone()[0]
@@ -208,7 +235,10 @@ def request_for(entry: Entry, languages: list[str] | None = None, auth: Auth | N
     format_id, location = entry.format_id, entry.location
     if use_fallback and entry.fallback:
         format_id, location = entry.fallback.get("format", format_id), entry.fallback["location"]
-    if format_id == "table":
+    if format_id == "openiti-work":
+        options = {"book": entry.book or entry.id, "kind": entry.kind, "title": entry.title,
+                   "title_ar": entry.title_ar, "entries": entry.entries_work}
+    elif format_id == "table":
         options = {"mapping": entry.mapping or {}, "book": entry.book or entry.id, "title": entry.title,
                    "tradition": entry.tradition, "source_key": entry.source_key}
         if entry.parts and not use_fallback:
@@ -235,7 +265,9 @@ def import_all(conn: sqlite3.Connection, languages: dict[str, list[str]] | list[
 
     languages: one list for every book, or {entry id: [codes]}; missing = the defaults.
     """
-    entries = sorted(builtin_entries(), key=lambda e: e.kind != "hadith")
+    everything = builtin_entries()
+    entries = sorted([e for e in everything if e.kind != "quran"], key=lambda e: KIND_ORDER.index(e.kind)
+                     if e.kind in KIND_ORDER else len(KIND_ORDER))
     requests = []
     for e in entries:
         langs = languages.get(e.id) if isinstance(languages, dict) else languages
@@ -253,11 +285,20 @@ def import_all(conn: sqlite3.Connection, languages: dict[str, list[str]] | list[
         failed = [f for f in failed if f[0] not in done]
     for e in entries:
         _set_tradition(conn, e)
+    for e in everything:                      # the Qur'an: the Arabic and a translation in the interface language
+        if e.kind == "quran":
+            try:
+                report, _n = import_entry(conn, e, None, None, progress)
+                imported.append((e.title, report))
+            except Exception as exc:  # noqa: BLE001 — said with the others
+                failed.append((e.title, str(exc)))
     return imported, failed, narrators
 
 
 def import_entry(conn: sqlite3.Connection, entry: Entry, languages: list[str] | None = None,
                  auth: Auth | None = None, progress=None):
+    if entry.kind == "quran":
+        return _import_quran(languages, progress)
     # a user's own file: its language comes from the file itself, never from our defaults (request_for)
     try:
         result = run_import(conn, request_for(entry, languages, auth), progress)
@@ -271,8 +312,36 @@ def import_entry(conn: sqlite3.Connection, entry: Entry, languages: list[str] | 
     return result
 
 
+def _import_quran(editions: list[str] | None = None, progress=None):
+    """The Qur'an (Q1b): the Arabic and these translations (keys), else one in the interface language."""
+    from isnady.core import i18n, quran
+    from isnady.data.importers import ImportReport
+
+    wanted = [k for k in (editions or []) if "-" in k] or quran.DEFAULTS.get(i18n.language(), []) or \
+        quran.DEFAULTS["en"]
+    kept = quran.fetch(wanted, progress)
+    report = ImportReport(source_key="quran", editions=kept, texts=len(quran.editions()))
+    return report, {}
+
+
 def remove_entry(conn: sqlite3.Connection, entry: Entry) -> bool:
     """Remove what this entry imported (for one book of a shared source: that book only)."""
+    if entry.kind == "quran":
+        from isnady.core import quran
+
+        if not quran.path().exists():
+            return False
+        quran.path().unlink()
+        quran._cached.cache_clear()
+        return True
+    if entry.kind in ("sira", "tabaqat"):
+        src = conn.execute("SELECT id FROM sources WHERE key = ?", (entry.source_key,)).fetchone()
+        if src is None:
+            return False
+        with conn:
+            conn.execute("DELETE FROM works WHERE source_id = ?", (src["id"],))
+            conn.execute("DELETE FROM sources WHERE id = ?", (src["id"],))
+        return True
     src = conn.execute("SELECT id FROM sources WHERE key = ?", (entry.source_key,)).fetchone()
     if src is None:
         return False

@@ -8,6 +8,10 @@
     python tools/build_data_repo.py --quran ../isnady-data
                                           build only quran/: the Arabic (Tanzil) and the translations chosen in
                                           QURAN, in isnady's format, and the catalog's "quran" section
+    python tools/build_data_repo.py --library ../isnady-data
+                                          the Qur'an (--quran) and the works that are neither hadith nor rijal:
+                                          sira/ (Ibn Hisham) and tabaqat/ (al-Dhahabi's Siyar and Tadhkira),
+                                          and the catalog's "library"
     python tools/build_data_repo.py --catalogs
                                           write the catalogs of the optional repositories shipped with isnady
 
@@ -399,10 +403,13 @@ def own_entries(counts: dict | None = None, langs: dict | None = None) -> list[d
     return out
 
 
+OWN_DESCRIPTION = ("isnady's own repository: the Qur'an and its translations, every Sunni and Shia hadith collection, "
+                   "the sira, the lives of the scholars and the rijal works isnady reads, in one place and one format.")
+
+
 def own_catalog(counts: dict | None = None, langs: dict | None = None) -> dict:
     return {"schema": SCHEMA, "id": "isnady", "name": "isnady — all sources (default)",
-            "description": "isnady's own repository: every hadith collection and rijal work isnady reads, Sunni and "
-                           "Shia, in one place and one format.",
+            "description": OWN_DESCRIPTION,
             "homepage": OWN, "url": OWN_CATALOG, "default": True, "entries": own_entries(counts, langs)}
 
 
@@ -714,6 +721,106 @@ def build_quran(target: Path) -> dict:
     return section
 
 
+# ------------------------------------------------------------------ the library: sira and tabaqat (LIB1)
+# Books that are neither hadith collections nor rijal: the Prophet's life (sira) and the lives of the scholars by
+# generation (tabaqat). Kept in isnady-data verbatim, under our names; isnady reads them into its Books section
+# (format "openiti-work": its headings as chapters, its entries and paragraphs as they stand). Listed in the
+# catalog's "library" (not in "entries": an isnady before 0.6.9 reads only "entries" and would not know them).
+OPENITI_RAW = f"{RAW}/OpenITI"
+LIBRARY = [
+    {"id": "al_sira_al_nabawiyya_ibn_hisham", "aliases": ["sira", "ibn-hisham"], "kind": "sira", "category": "sira",
+     "title": "al-Sira al-Nabawiyya — Ibn Hisham", "title_ar": "السيرة النبوية لابن هشام",
+     "compiler": "Ibn Hisham (d. 218; 213 in some sources), from Ibn Ishaq (d. 151)",
+     "location": "sira/al_sira_al_nabawiyya_ibn_hisham.md",
+     "origin_location": f"{OPENITI_RAW}/0225AH/master/data/0213IbnHisham/0213IbnHisham.SiraNabawiyya/"
+                        "0213IbnHisham.SiraNabawiyya.Shamela0023833-ara1.completed",
+     "edition": "ed. Mustafa al-Saqqa, Ibrahim al-Abyari and 'Abd al-Hafiz al-Shalabi (Cairo: al-Halabi, 1955)",
+     "description": "The life of the Prophet ﷺ as Ibn Ishaq told it and Ibn Hisham edited it: his lineage, birth, "
+                    "the revelation, Mecca, the Hijra, the campaigns and his death — 264 chapters, 2,109 sections, "
+                    "each report with its chain as the author gives it."},
+    {"id": "siyar_alam_al_nubala_al_dhahabi", "aliases": ["siyar"], "kind": "tabaqat", "category": "tabaqat", "entries": "siyar",
+     "title": "Siyar A'lam al-Nubala' — al-Dhahabi", "title_ar": "سير أعلام النبلاء",
+     "compiler": "al-Dhahabi (d. 748)",
+     "location": "tabaqat/siyar_alam_al_nubala_al_dhahabi.md",
+     "origin_location": f"{OPENITI_RAW}/0750AH/master/data/0748Dhahabi/0748Dhahabi.SiyarAclamNubala/"
+                        "0748Dhahabi.SiyarAclamNubala.Shamela0010906-ara1.mARkdown",
+     "edition": "the Risala edition",
+     "description": "The lives of the Companions, the Successors and the scholars after them, generation by "
+                    "generation, to al-Dhahabi's own time — 5,851 entries; the source of the written lives isnady "
+                    "shows beside a narrator."},
+    {"id": "tadhkirat_al_huffaz_al_dhahabi", "aliases": ["tadhkira"], "kind": "tabaqat", "category": "tabaqat", "entries": "tadhkira",
+     "title": "Tadhkirat al-Huffaz — al-Dhahabi", "title_ar": "تذكرة الحفاظ",
+     "compiler": "al-Dhahabi (d. 748)",
+     "location": "tabaqat/tadhkirat_al_huffaz_al_dhahabi.md",
+     "origin_location": f"{OPENITI_RAW}/0750AH/master/data/0748Dhahabi/0748Dhahabi.TadhkiratHuffaz/"
+                        "0748Dhahabi.TadhkiratHuffaz.JK000532-ara1.mARkdown",
+     "edition": "",
+     "description": "The 1,176 hadith masters (huffaz) from Abu Bakr to al-Dhahabi's teachers, in 21 generations; "
+                    "the source of the Huffaz of the Scholars page."},
+]
+
+
+def library_entries(target: Path | None = None) -> list[dict]:
+    """The catalog's "library": the Qur'an (when quran/ is built) and the works above, each with its size and sha256
+    when the folder holds it."""
+    import hashlib
+
+    out = []
+    q = quran_section(target) if target else None
+    if q:
+        texts = [e for e in q["editions"] if e["key"] != q["arabic"]]
+        out.append({"id": "al_quran_al_karim", "aliases": ["quran"], "kind": "quran", "category": "quran",
+                    "format": "isnady-quran",
+                    "title": "The Holy Qur'an", "title_ar": "القرآن الكريم", "tradition": "all",
+                    "location": "quran/index.json", "license": "Tanzil (verbatim); translations as their sources give",
+                    "languages": sorted({e["language"] for e in texts}), "translations": len(texts),
+                    "size": sum(e.get("size", 0) for e in q["editions"]),
+                    "description": f"The Arabic text (Tanzil, verbatim) and {len(texts)} translations in "
+                                   f"{len({e['language'] for e in texts})} languages; the Arabic and one translation "
+                                   "in the interface language are downloaded, the others when chosen."})
+    for item in LIBRARY:
+        e = {"id": item["id"], "aliases": item["aliases"], "kind": item["kind"], "category": item["category"],
+             "format": "openiti-work",
+             "title": item["title"], "title_ar": item["title_ar"], "tradition": "sunni", "location": item["location"],
+             "book": item["id"], "license": None, "compiler": item["compiler"],
+             "description": f"Compiled by {item['compiler']}. " + item["description"],
+             "origin": OPENITI_ORIGIN, "fallback": {"format": "openiti-work", "location": item["origin_location"]}}
+        if item.get("entries"):
+            e["entries"] = item["entries"]
+        path = (target / item["location"]) if target else None
+        if path and path.exists():
+            raw = path.read_bytes()
+            e["size"], e["sha256"] = len(raw), hashlib.sha256(raw).hexdigest()
+        out.append(e)
+    return out
+
+
+def build_library(target: Path) -> list[dict]:
+    """sira/ and tabaqat/ in isnady-data: each work as the corpus gives it (verbatim), under our names."""
+    for item in LIBRARY:
+        path = target / item["location"]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        raw = fetch(item["origin_location"])
+        path.write_bytes(raw)
+        print(f"  {item['location']}  ({len(raw) / 2**20:.1f} MB)")
+    return library_entries(target)
+
+
+def library_into_catalogs(target: Path) -> None:
+    """The "library" (and the "quran" section) into the folder's catalog.json and the copy shipped with isnady."""
+    library = library_entries(target)
+    for path in (target / "catalog.json", BUNDLED / "isnady.json"):
+        cat = json.loads(path.read_text(encoding="utf-8")) if path.exists() else own_catalog()
+        cat["library"] = library
+        cat["description"] = OWN_DESCRIPTION
+        if quran_section(target):
+            cat["quran"] = quran_section(target)
+        write_json(path, cat)
+    if (target / "catalog.json").exists():
+        (target / "README.md").write_text(readme(json.loads((target / "catalog.json").read_text(encoding="utf-8"))),
+                                          encoding="utf-8", newline="\n")
+
+
 def quran_section(target: Path) -> dict | None:
     path = target / "quran" / "index.json"
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
@@ -724,6 +831,8 @@ def quran_into_catalogs(target: Path, section: dict) -> None:
     for path in (target / "catalog.json", BUNDLED / "isnady.json"):
         cat = json.loads(path.read_text(encoding="utf-8")) if path.exists() else own_catalog()
         cat["quran"] = section
+        cat["library"] = library_entries(target)
+        cat["description"] = OWN_DESCRIPTION
         write_json(path, cat)
     if (target / "catalog.json").exists():
         (target / "README.md").write_text(readme(json.loads((target / "catalog.json").read_text(encoding="utf-8"))),
@@ -734,7 +843,7 @@ def mirror(target: Path, languages: set[str] | None) -> None:
     """Build isnady-data in target: every book in isnady's format under our names, the rijal works, the catalog."""
     target.mkdir(parents=True, exist_ok=True)
     for child in target.iterdir():                 # a clean tree each time (the history stays in .git)
-        if child.name not in (".git", ".gitignore", "derived", "database.json", "release", "quran"):   # DB1, Q1b
+        if child.name not in (".git", ".gitignore", "derived", "database.json", "release", "quran", "sira", "tabaqat"):   # DB1, Q1b, LIB1
             import shutil
             shutil.rmtree(child) if child.is_dir() else child.unlink()
     counts, langs = {}, {}
@@ -755,6 +864,9 @@ def mirror(target: Path, languages: set[str] | None) -> None:
     cat = own_catalog(counts, langs)
     if quran_section(target):                      # the Qur'an is built on its own (--quran) and kept
         cat["quran"] = quran_section(target)
+    if not all((target / item["location"]).exists() for item in LIBRARY):
+        build_library(target)
+    cat["library"] = library_entries(target)
     write_json(target / "catalog.json", cat)
     (target / "README.md").write_text(readme(cat), encoding="utf-8", newline="\n")
     (target / ".gitattributes").write_text("*.json -diff\n*.md -diff\nREADME.md diff\n", encoding="utf-8", newline="\n")
@@ -908,6 +1020,17 @@ def readme(cat: dict) -> str:
              "verses), `quran/<language>/<key>.json` (`{\"schema\": \"isnady-quran/1\", \"key\", \"language\", "
              "\"translator\", \"direction\", \"verses\": [[sura, verse, text], …]}`), and the `quran` section of "
              "catalog.json listing them."])
+    works = [e for e in cat.get("library", []) if e["kind"] in ("sira", "tabaqat")]
+    if works:
+        add(["", "## 📜 Sira and tabaqat", "",
+             "The life of the Prophet ﷺ and the lives of the scholars, generation by generation — read in isnady's "
+             "**Books** like the hadith collections, chapter by chapter; al-Dhahabi's two works also give the text "
+             "beside a narrator's written life and the Huffaz of the Scholars page.", "",
+             "| Work | | Compiler | What it holds | Import id |", "|---|---|---|---|---|"])
+        for e in works:
+            what = e["description"].split(". ", 1)[-1]
+            add([f"| **{e['title'].split(' — ')[0]}** | {e['title_ar']} | {e.get('compiler', '')} | {what} | "
+                 f"`{e['id']}` |"])
     add(["", "---", "",
          "## 🧩 The formats", "",
          "<details>", "<summary><b>catalog.json — <code>isnady-catalog/1</code></b></summary>", "",
@@ -963,7 +1086,7 @@ def readme(cat: dict) -> str:
          "| Musnad Ahmad, Sunan al-Darimi — voweled text | Open Hadith Data | ODbL 1.0 (a database made from it stays under the ODbL) |",
          "| Riyad al-Salihin, al-Shama'il, Bulugh al-Maram, al-Adab al-Mufrad, Mishkat — text and English | sunnah.com, via AhmedBaset/hadith-json | not stated |",
          "| The Shia collections — text, English, grades | thaqalayn.net, via MohammedArab1/ThaqalaynAPI | not stated |",
-         "| The Taqrib, al-Najashi's Rijal | the OpenITI corpus | not stated |",
+         "| The Taqrib, al-Najashi's Rijal; Ibn Hisham's Sira; al-Dhahabi's Siyar and Tadhkira | the OpenITI corpus | not stated |",
          "| The Qur'an — the Arabic and the translations | fawazahmed0/quran-api; the Arabic from tanzil.net, the "
          "translations from Tanzil, QuranEnc and others, each named in catalog.json | The Unlicense (the collection); "
          "Tanzil's text verbatim, as its terms ask |", "",
@@ -995,10 +1118,19 @@ def main() -> int:
     ap.add_argument("--languages", help="with --mirror: only these languages of the translated books, e.g. ara,eng,tur")
     ap.add_argument("--quran", metavar="DIR", help="build only quran/ in the isnady-data folder DIR: the Arabic and the "
                                                    "translations chosen above, and its section of the catalog")
+    ap.add_argument("--library", metavar="DIR", help="build quran/, sira/ and tabaqat/ in the isnady-data folder DIR "
+                                                     "and the catalog's library (everything that is not hadith or rijal)")
     ap.add_argument("--readme", metavar="DIR", help="write only the README of the isnady-data folder DIR, from its catalog")
     a = ap.parse_args()
     if a.readme:
         write_readme(Path(a.readme).expanduser())
+        return 0
+    if a.library:
+        target = Path(a.library).expanduser()
+        quran_into_catalogs(target, build_quran(target))
+        build_library(target)
+        library_into_catalogs(target)
+        print(f"The library written to {target}: the Qur'an, {len(LIBRARY)} works, the catalog and its shipped copy")
         return 0
     if a.quran:
         target = Path(a.quran).expanduser()

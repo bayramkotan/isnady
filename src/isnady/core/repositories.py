@@ -232,6 +232,14 @@ def catalog(repo: Repository, refresh: bool = False) -> tuple[dict, str]:
         return _LAST[repo.id]
     cache = _cache_path(repo.id)
     fresh = cache.exists() and time.time() - cache.stat().st_mtime < REFRESH_SECONDS
+    if fresh and repo.id in bundled():
+        # the copy shipped with this isnady knows parts the saved one lacks (the library, LIB1): read it again now,
+        # not a day later
+        try:
+            saved = json.loads(cache.read_text(encoding="utf-8"))
+            fresh = not any(k in bundled()[repo.id] and k not in saved for k in ("library", "quran"))
+        except (OSError, ValueError):
+            fresh = False
     result = None
     if repo.url and (refresh or not fresh):
         try:
@@ -269,7 +277,8 @@ def entries(repo: Repository, refresh: bool = False) -> list:
     cat, _where = catalog(repo, refresh)
     base = base_of(repo)
     out = []
-    for raw in cat.get("entries", []):
+    # "library" (LIB1): the Qur'an, the sira, the tabaqat — apart from "entries", which an older isnady reads alone
+    for raw in cat.get("entries", []) + cat.get("library", []):
         try:
             out.append(entry_from_catalog(raw, repo, base))
         except (KeyError, TypeError, ValueError):

@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.6.8-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.6.9-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.6.8-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.6.9-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.6.8).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.6.9).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -57,8 +57,8 @@ isnady is two repositories that work as one:
 
 | | [**bayramkotan/isnady**](https://github.com/bayramkotan/isnady) — the application | [**bayramkotan/isnady-data**](https://github.com/bayramkotan/isnady-data) — the data |
 |---|---|---|
-| **What it is** | The program: a desktop window and a command line on one engine | Every hadith collection and rijal work isnady reads, in one format |
-| **What is in it** | Search, the chain reader (Sunni and Shia), narrator identification, books, scholars, statistics, the glossary, meaning search | **17 Sunni and 16 Shia hadith collections — 99,746 hadith** — in Arabic and up to eight translations, with their grades; **Ibn Hajar's *Taqrib*** (8,824 narrators) and **al-Najashi's *Rijal*** (1,266) |
+| **What it is** | The program: a desktop window and a command line on one engine | Every book isnady reads — the Qur'an, the hadith, the sira, the lives of the scholars, the rijal — in one format |
+| **What is in it** | Search, the chain reader (Sunni and Shia), narrator identification, books, scholars, statistics, the glossary, meaning search | **The Qur'an** with 60 translations in 18 languages · **17 Sunni and 16 Shia hadith collections — 99,746 hadith** — in Arabic and up to eight translations, with their grades · **Ibn Hisham's *Sira*** · **al-Dhahabi's *Siyar* and *Tadhkira*** · **Ibn Hajar's *Taqrib*** (8,824 narrators) and **al-Najashi's *Rijal*** (1,266) |
 | **How you get it** | [PyPI](https://pypi.org/project/isnady/) (`pip install isnady`), the desktop applications of the [Releases](https://github.com/bayramkotan/isnady/releases/latest), or the one-line installers | Nothing to download by hand: isnady lists its books in **Data sources** and imports them in one click — or clone it and read it offline, or take a whole [ready database](https://github.com/bayramkotan/isnady-data/releases) |
 | **Licence** | MIT | each book its own, recorded with it (Help → Licences) |
 
@@ -66,8 +66,9 @@ isnady is two repositories that work as one:
    bayramkotan/isnady-data                         bayramkotan/isnady
    ───────────────────────                         ──────────────────
    catalog.json ─────────────── Data sources ───▶  import ─▶ isnady.db ─▶ search · chains · narrators
-   sunni/<book>/  shia/<book>/                       (your data folder)      books · scholars · statistics
-   rijal/sunni/   rijal/shia/                                                 window  and  command line
+   quran/                                            (your data folder)      books · scholars · statistics
+   sunni/<book>/  shia/<book>/                                                window  and  command line
+   sira/  tabaqat/  rijal/sunni/  rijal/shia/
    Releases: isnady-db-<date>.zip ── Use a ready database… ──▶ isnady.db
 ```
 
@@ -228,7 +229,19 @@ written, and the search index, the chains and the narrators are built once, at t
 ## 📚 isnady-data — the data
 
 **[bayramkotan/isnady-data](https://github.com/bayramkotan/isnady-data)** is isnady's own data
-repository and its default: every source isnady reads, converted once into isnady's own format.
+repository and its default: every book isnady reads, kept once in isnady's own format, and every one of them is
+listed in **Data sources** and imported from there with one click — or all of them with **Import all**
+(`iy catalog import --all`).
+
+| What | Books | Read in isnady |
+|---|---|---|
+| 📖 **The Qur'an** | The Arabic (Tanzil's text, verbatim) and **60 translations in 18 languages** — Turkish 20 (Diyanet İşleri, Diyanet Vakfı, Elmalılı Hamdi Yazır, Ali Bulaç, Süleyman Ateş, Hasan Basri Çantay …), English 12 (Saheeh International, Abdel Haleem, Mustafa Khattab …), Urdu, Indonesian, Bengali, French, Russian, Tamil, German, Persian, Spanish, Bosnian, Albanian, Azerbaijani, Uzbek, Kazakh, Tatar, Malay | Books → The Qur'an: each verse with the translations chosen, and the hadith that name it |
+| 📚 **Hadith** | 17 Sunni and 16 Shia collections — 99,746 hadith (below) | Search, Books, Isnad Chains, Statistics |
+| 🕌 **Sira** | Ibn Hisham, *al-Sira al-Nabawiyya* (from Ibn Ishaq) — 264 chapters, 2,109 sections | Books, chapter by chapter |
+| 👥 **Tabaqat** | al-Dhahabi, *Siyar A'lam al-Nubala'* (5,851 lives) and *Tadhkirat al-Huffaz* (1,176 huffaz in 21 generations) | Books; the text beside a narrator's written life; Hadith Scholars → Huffaz |
+| ⚖ **Rijal** | Ibn Hajar, *Taqrib al-Tahdhib* (8,824) · al-Najashi, *Rijal* (1,266) | Narrators, and every chain's narrators identified |
+
+The hadith collections, Sunni and Shia apart:
 
 | | Sunni | Shia |
 |---|---|---|
@@ -239,12 +252,16 @@ repository and its default: every source isnady reads, converted once into isnad
 
 ```
 isnady-data/
-├── catalog.json                    the list isnady reads (isnady-catalog/1)
+├── catalog.json                    the list isnady reads (isnady-catalog/1): "entries" and the "library"
+├── quran/                          suras.json, the Arabic and the translations (quran/tur/tur-diyanetisleri.json …)
 ├── sunni/sahih_al_bukhari/         book.json (numbers, chapters, references, grades) + ara.json, eng.json, tur.json …
 ├── sunni/musnad_ahmad_ibn_hanbal/
 ├── shia/al_kafi_al_kulayni/
 ├── rijal/sunni/taqrib_al_tahdhib_ibn_hajar_al_asqalani.md
 ├── rijal/shia/rijal_al_najashi_ahmad_ibn_ali_al_najashi.md
+├── sira/al_sira_al_nabawiyya_ibn_hisham.md
+├── tabaqat/siyar_alam_al_nubala_al_dhahabi.md
+├── tabaqat/tadhkirat_al_huffaz_al_dhahabi.md
 ├── derived/                        statistics and models already computed, as JSON
 └── database.json                   the ready database of the latest Release
 ```
@@ -285,7 +302,7 @@ must match the `database.json` beside it), puts it in place at the next start an
 previous database beside it (`isnady.<date-time>.bak.db`). Nothing is deleted.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/data-sources.png" alt="Settings → Data sources — isnady-data by default, a folder on this computer, or another repository; its books, Sunni and Shia apart" width="760">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/data-sources.png" alt="Settings → Data sources — isnady-data by default: what it holds at a glance (the Qur'an, Sunni and Shia hadith, the sira, the tabaqat, the rijal), each imported with one click or all at once" width="760">
 </p>
 
 ### Other repositories
@@ -556,7 +573,14 @@ Sunni narrators filter by tabaqa, rank and book; Shia narrators by the Imami ass
 isnady is not only for searching: the **Books** section opens every imported work and reads it in
 its own order. A hadith collection reads chapter by chapter, each hadith with its card (chain,
 narrators, other narrations, grades) and the languages you choose; Ibn Hajar's *Taqrib* and
-al-Najashi's *Rijal* read entry by entry, each narrator a click away. Go to a chapter by its number ("34 / 57")
+al-Najashi's *Rijal* read entry by entry, each narrator a click away. Under **Sira and tabaqat**, on every shelf,
+stand Ibn Hisham's *Sira* — the life of the Prophet ﷺ in 264 chapters, each section under its own heading, each
+report with its chain as Ibn Ishaq gives it — and al-Dhahabi's *Siyar A'lam al-Nubala'* and *Tadhkirat al-Huffaz*,
+life by life, generation by generation: the author's text as the edition gives it, nothing summarised.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/books-sira.png" alt="Books — Ibn Hisham's Sira, chapter 20 of 264: each section under its own heading, the reports with their chains as Ibn Ishaq and Ibn Hisham give them; on the shelf the Qur'an and, under Sira and tabaqat, al-Dhahabi's Siyar and Tadhkira" width="850">
+</p> Go to a chapter by its number ("34 / 57")
 or to the first, previous, next or last one; in a hadith collection go to any hadith by its number, with the
 book's last number beside it and the same ⏮ ‹ › ⏭ as on Isnad Chains. Find within a chapter, and isnady remembers
 where you were. From any search result, **In its
@@ -1251,7 +1275,10 @@ iy stats corpus --recompute          # compute again
 ```bash
 iy catalog list                      # the books of the repository in use, and what is imported
 iy catalog import sahih_muslim --language tur --language eng   # one book, in these languages
-iy catalog import --all              # every book, then the rijal works
+iy catalog import --all              # everything: the Qur'an, the hadith, the sira, the tabaqat, the rijal
+iy catalog import quran              # the Qur'an (the Arabic and a translation); more: iy quran download KEY
+iy catalog import sira               # Ibn Hisham's Sira; siyar, tadhkira: al-Dhahabi's two works
+iy book sira                         # its 264 chapters; iy book sira 12: read chapter 12; iy book siyar 3
 iy catalog languages add tr en       # one language for every book (Arabic always stays)
 iy catalog remove sahih_muslim       # remove what was imported of it
 iy catalog add "My notes" isnady ~/notes/book.json --license CC-BY-4.0   # a book of your own in the list

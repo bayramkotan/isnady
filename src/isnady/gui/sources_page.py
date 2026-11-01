@@ -87,6 +87,10 @@ class Worker(QThread):
             report, narrators = catalog.import_entry(conn, self.entry, self.languages, self.auth, self.progress.emit)
             message = (tr("Imported {title}: {n:,} narrators", title=self.entry.title, n=report.texts)
                        if self.entry.kind == "rijal" else
+                       tr("Downloaded {title}: the Arabic and {n} translation(s)", title=self.entry.title,
+                          n=max(0, report.texts - 1)) if self.entry.kind == "quran" else
+                       tr("Imported {title}: {n:,} entries and sections — read it in Books", title=self.entry.title,
+                          n=report.texts) if self.entry.kind in ("sira", "tabaqat") else
                        tr("Imported {title}: {n:,} texts", title=self.entry.title, n=report.texts))
             if narrators.get("links"):
                 message += "; " + tr("{identified:,} of {links:,} narrators in chains identified ({share:.1f}%)",
@@ -200,10 +204,11 @@ class SourcesPage(QWidget):
         self._lang_checks = {}
         conn = db.connect()
         try:
-            intro = QLabel(tr("isnady reads its sources from a REPOSITORY: its own by default, which lists every Sunni and Shia "
-                             "collection and rijal work it can read. Choose another, or add your own, and import with one "
-                             "click. Your own files (User Resources) stay on this computer. The same from the command line: iy "
-                             "repo, iy catalog."))
+            intro = QLabel(tr("isnady reads every book from a REPOSITORY: its own by default (isnady-data), which keeps the "
+                             "Qur'an and its translations, every Sunni and Shia hadith collection, the sira, the lives of "
+                             "the scholars and the rijal works. Choose another, or add your own, and import with one "
+                             "click. Your own files (User Resources) stay on this computer. The same from the command "
+                             "line: iy repo, iy catalog."))
             intro.setObjectName("Lead")
             intro.setWordWrap(True)
             self.box.addWidget(intro)
@@ -216,6 +221,7 @@ class SourcesPage(QWidget):
                 entries = []
                 self.status.setText(tr("The repository cannot be read: {exc}", exc=exc))
             if entries:
+                self.box.addWidget(self._holds_card(entries))
                 self.box.addWidget(self._languages_card(conn))
             head = QHBoxLayout()
             title = QLabel(tr("Sources of {name}", name=repositories.selected().name))
@@ -232,13 +238,10 @@ class SourcesPage(QWidget):
             self._buttons.append(all_button)
             head.addWidget(all_button)
             self.box.addLayout(head)
-            groups = [(tr("Sunni hadith collections"), [e for e in entries if e.kind == "hadith" and e.tradition != "shia"]),
-                      (tr("Shia hadith collections"), [e for e in entries if e.kind == "hadith" and e.tradition == "shia"]),
-                      (tr("Narrators (rijal)"), [e for e in entries if e.kind == "rijal"])]
-            for heading, group in groups:
+            for heading, sign, group in self._groups(entries):
                 if not group:
                     continue
-                sub = QLabel(f"{heading}  ·  {len(group)}")
+                sub = QLabel(f"{sign}  {heading}  ·  {len(group)}")
                 sub.setObjectName("FilterTitle")
                 self.box.addWidget(sub)
                 for entry in group:
@@ -268,6 +271,53 @@ class SourcesPage(QWidget):
         finally:
             conn.close()
         self._set_busy(self._worker is not None)
+
+    @staticmethod
+    def _groups(entries) -> list[tuple[str, str, list]]:
+        """The repository's books by what they are: the Qur'an, the Sunni and the Shia hadith (never mixed, SH1),
+        the sira, the lives of the scholars, the rijal works."""
+        return [(tr("The Holy Qur'an"), "📖", [e for e in entries if e.kind == "quran"]),
+                (tr("Sunni hadith collections"), "📚", [e for e in entries if e.kind == "hadith" and e.tradition != "shia"]),
+                (tr("Shia hadith collections"), "📚", [e for e in entries if e.kind == "hadith" and e.tradition == "shia"]),
+                (tr("Sira — the life of the Prophet ﷺ"), "🕌", [e for e in entries if e.kind == "sira"]),
+                (tr("Tabaqat — the lives of the scholars"), "👥", [e for e in entries if e.kind == "tabaqat"]),
+                (tr("Narrators (rijal)"), "⚖", [e for e in entries if e.kind == "rijal"])]
+
+    def _holds_card(self, entries) -> QFrame:
+        """What the repository holds, at a glance: one tile per kind of book, a click goes to its cards."""
+        card = QFrame()
+        card.setObjectName("Card")
+        box = QVBoxLayout(card)
+        box.setContentsMargins(18, 12, 18, 12)
+        box.setSpacing(8)
+        title = QLabel(tr("What it holds"))
+        title.setObjectName("CardTitle")
+        title.setFont(theme.reading_font(13.5, bold=True))
+        box.addWidget(title)
+        bar = QWidget()
+        flow = FlowLayout(bar, spacing=10)
+        t = theme.current()
+        for heading, sign, group in self._groups(entries):
+            if not group:
+                continue
+            if group[0].kind == "quran":
+                e = group[0]
+                big = tr("{n} translations", n=e.translations) if e.translations else tr("Arabic text")
+            elif group[0].kind == "hadith":
+                big = tr("{n} books · {hadith:,} hadith", n=len(group), hadith=sum(e.hadith or 0 for e in group))
+            elif len(group) == 1:
+                big = group[0].title.split(" — ")[0]
+            else:
+                big = tr("{n} works", n=len(group))
+            tile = QLabel(f"<span style='font-size:18px'>{sign}</span>&nbsp; <b>{heading}</b><br>"
+                          f"<span style='color:{t.muted}'>{big}</span>")
+            tile.setTextFormat(Qt.TextFormat.RichText)
+            tile.setObjectName("PersonCard")
+            tile.setMinimumWidth(170)
+            tile.setContentsMargins(12, 8, 12, 8)
+            flow.addWidget(tile)
+        box.addWidget(bar)
+        return card
 
     def _languages_card(self, conn) -> QFrame:
         """One language for every book at once (LANG2): added to or taken out of all the imported books that offer
@@ -425,13 +475,23 @@ class SourcesPage(QWidget):
             tag_bar = QWidget()
             tags = FlowLayout(tag_bar, spacing=8)        # wraps on a narrow window instead of widening the page
             ours = entry.repo == repositories.DEFAULT_ID
-            items = [(tr("Shia") if entry.tradition == "shia" else tr("Sunni"),
-                      "TagGold" if entry.tradition == "shia" else "Tag",
-                      tr("The tradition of the collection: Shia books are kept apart from Sunni ones, and their grades "
-                         "and narrators are read in their own terms.")),
-                     (entry.license or tr("licence not stated"), "TagMuted",
-                      tr("May be shared further (tier A/B)") if db.tier_for_license(entry.license) in "AB"
-                      else tr("No licence allowing it to be shared further: for this computer (tier C)"))]
+            licence = (entry.license or tr("licence not stated"), "TagMuted",
+                       tr("May be shared further (tier A/B)") if db.tier_for_license(entry.license) in "AB"
+                       else tr("No licence allowing it to be shared further: for this computer (tier C)"))
+            if entry.library:
+                kind = {"quran": tr("Qur'an"), "sira": tr("Sira"), "tabaqat": tr("Tabaqat")}[entry.kind]
+                items = [(kind, "Tag", tr("Read in Books, beside the hadith collections")), licence]
+                if entry.compiler:
+                    items.append((entry.compiler, "TagMuted", ""))
+                if entry.size:
+                    items.append((tr("about {mb} MB", mb=max(1, round(entry.size / 2**20))), "TagMuted",
+                                  tr("Downloaded once; the Qur'an's translations each when chosen")
+                                  if entry.kind == "quran" else tr("Downloaded once")))
+            else:
+                items = [(tr("Shia") if entry.tradition == "shia" else tr("Sunni"),
+                          "TagGold" if entry.tradition == "shia" else "Tag",
+                          tr("The tradition of the collection: Shia books are kept apart from Sunni ones, and their "
+                             "grades and narrators are read in their own terms.")), licence]
             if not ours and entry.origin_url:
                 items.append((tr("read from its publisher"), "TagMuted",
                               f"{entry.origin_name}\n{entry.origin_url}" if entry.origin_url else ""))
@@ -477,6 +537,13 @@ class SourcesPage(QWidget):
         imp.clicked.connect(lambda _c=False, e=entry, cs=checks: self._import(e, cs))
         row.addWidget(imp)
         self._buttons.append(imp)
+        if entry.kind == "quran":
+            more = QPushButton("➕ " + tr("Translations…"))
+            more.setObjectName("Quiet")
+            more.setToolTip(tr("Choose the translations to download, of 98 languages; untick one to remove it"))
+            more.clicked.connect(self._quran_translations)
+            row.addWidget(more)
+            self._buttons.append(more)
         if st["imported"]:
             rem = QPushButton(tr("Remove data"))
             rem.setObjectName("Quiet")
@@ -492,10 +559,33 @@ class SourcesPage(QWidget):
         box.addLayout(row)
         return card
 
+    def _quran_translations(self) -> None:
+        """The Qur'an's translations window (gui.quran_view): those ticked are downloaded here, with the page's bar."""
+        from isnady.core import quran
+        from isnady.gui.quran_view import AddTranslations
+
+        dialog = AddTranslations(self)
+        if not dialog.exec():
+            return
+        for key in dialog.removed:
+            quran.remove(key)
+        if dialog.chosen:
+            entry = next((e for e in catalog.builtin_entries() if e.kind == "quran"), None)
+            if entry is not None:
+                self._start(Worker("import", entry, dialog.chosen), tr("Downloading the translations…"))
+                return
+        self.refresh()
+
     @staticmethod
     def _state_text(entry, st) -> str:
+        if entry.kind == "quran":
+            return (tr("Downloaded: the Arabic and {n} translation(s)", n=st["count"]) if st["imported"]
+                    else tr("Not downloaded"))
         if not st["imported"]:
             return tr("Not imported")
+        if entry.kind in ("sira", "tabaqat"):
+            when = f" · {st['when'][:10]}" if st.get("when") else ""
+            return tr("Imported: {n:,} entries and sections", n=st["count"]) + when
         what = (tr("Imported: {n:,} narrators", n=st["count"]) if entry.kind == "rijal" else
                 tr("Imported: {n:,} hadith", n=st["count"]) if entry.book else tr("Imported: {n:,} texts", n=st["count"]))
         langs = f" · {', '.join(st['languages'])}" if st["languages"] else ""

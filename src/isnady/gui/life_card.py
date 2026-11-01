@@ -189,8 +189,9 @@ class SourceEntry(QFrame):
                 self._body.addWidget(_label(tr("This entry is not in the downloaded copy."), "Caption"))
                 return
             size = source_entries.WORKS[e["work"]]["size_mb"]
-            note = _label(tr("Read his entry in the author's own words (Arabic): the work is downloaded once from the "
-                             "OpenITI corpus (about {mb} MB) and kept on this computer.", mb=size), "Caption")
+            note = _label(tr("Read his entry in the author's own words (Arabic): the work is downloaded once from "
+                             "isnady-data (about {mb} MB) and kept on this computer — or import it in Data sources, "
+                             "and read the whole work in Books.", mb=size), "Caption")
             self._body.addWidget(note)
             get = self._QPushButton(tr("Download {work}", work=e["title"]))
             get.setObjectName("Link")

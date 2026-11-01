@@ -16,7 +16,8 @@ from isnady.core.i18n import N_, t
 CONTAINERS = ("volume", "kitab", "bab", "section")
 LEAVES = ("hadith", "entry", "reference", "paragraph")
 _WRITTEN_HERE = (N_("Chapter {n}"), N_("Without a chapter in the source"))    # titles isnady writes, shown translated
-KIND_LABELS = {"hadith": N_("Hadith collection"), "rijal": N_("Narrators (rijal)"), "fiqh": N_("Fiqh"),
+KIND_LABELS = {"hadith": N_("Hadith collection"), "rijal": N_("Narrators (rijal)"), "sira": N_("Sira"),
+               "tabaqat": N_("Lives of the scholars (tabaqat)"), "fiqh": N_("Fiqh"),
                "commentary": N_("Commentary"), "other": N_("Book")}
 
 
@@ -135,7 +136,13 @@ def list_works(conn: sqlite3.Connection) -> list[dict]:
                                         core_books.sort_name(w["title"] or "")))
 
 
+# the short names of the library's works (LIB1): iy book sira, iy book siyar 3
+ALIASES = {"sira": "al_sira_al_nabawiyya_ibn_hisham", "ibn-hisham": "al_sira_al_nabawiyya_ibn_hisham",
+           "siyar": "siyar_alam_al_nubala_al_dhahabi", "tadhkira": "tadhkirat_al_huffaz_al_dhahabi"}
+
+
 def find_work(conn: sqlite3.Connection, key: str) -> dict | None:
+    key = ALIASES.get(key, key)
     return next((w for w in list_works(conn) if w["key"] == key), None)
 
 
