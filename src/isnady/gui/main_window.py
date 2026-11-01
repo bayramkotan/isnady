@@ -282,6 +282,9 @@ class MainWindow(QMainWindow):
         self.books_page.wants_export.connect(
             lambda key, chapter: self.export_dialog("book", book=key, format="pdf", chapter=chapter or None))
         self.search_page.open_book.connect(self._open_in_book)
+        self.search_page.open_verse.connect(self._open_verse)
+        if hasattr(self.books_page, "quran"):
+            self.books_page.quran.open_hadith.connect(self._open_in_book)
         self.search_page.open_person.connect(self._open_person)
         self.search_page.open_scholar.connect(self._open_scholar)
         self.search_page.open_narrator.connect(self._open_narrator)
@@ -814,7 +817,8 @@ class MainWindow(QMainWindow):
     # --------------------------------------------------------------- back and forward (NAV2)
     _PLACE_SECTION = {"person_in_book": "books", "book": "books", "in_book": "books", "chapter": "books",
                       "narrator": "narrators", "scholar": "scholars", "term": "learn", "chain": "chains",
-                      "tree": "genealogy", "genealogy": "genealogy", "find": "search", "group": "companions"}
+                      "tree": "genealogy", "genealogy": "genealogy", "find": "search", "group": "companions",
+                      "verse": "books"}
 
     @contextmanager
     def _place(self, entry: tuple):
@@ -879,7 +883,7 @@ class MainWindow(QMainWindow):
                            "scholar": self._open_scholar, "term": self._open_term, "chapter": self._open_chapter,
                            "chain": self._open_chain, "tree": self._open_tree,
                            "genealogy": self._open_genealogy, "find": self._find_narrator,
-                           "group": self._open_group}[entry[0]]
+                           "group": self._open_group, "verse": self._open_verse}[entry[0]]
                 handler(*entry[1:])
         except Exception:                 # a place that is gone (a book removed): stay where we are
             pass
@@ -950,6 +954,12 @@ class MainWindow(QMainWindow):
         with self._place(('genealogy', person_id, which)):
             self.nav.setCurrentRow(self._row("genealogy"))
             self.genealogy_page.show_person(person_id, which)
+
+    def _open_verse(self, sura: int, ayah: int | None = None) -> None:
+        with self._place(('verse', sura, ayah)):
+            self._books_loaded = True
+            self.nav.setCurrentRow(self._row("books"))
+            self.books_page.show_verse(sura, ayah)
 
     def _open_group(self, group_id: str) -> None:
         with self._place(('group', group_id)):

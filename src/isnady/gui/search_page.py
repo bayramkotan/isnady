@@ -106,12 +106,14 @@ class ResultCard(QFrame):
     def __init__(self, result: core.SearchResult, chain: dict | None = None, open_chain=None,
                  people: dict | None = None, score: float | None = None, related: list | None = None,
                  open_book=None, folded: list | None = None, chains: list | None = None,
-                 on_person=None, on_name=None, on_end=None, on_languages=None, on_export=None) -> None:
+                 on_person=None, on_name=None, on_end=None, on_languages=None, on_export=None,
+                 verses: list | None = None, on_verse=None) -> None:
         super().__init__()
         self.setObjectName("Card")
         # kept for the right-click menu (CTX1): the same actions as the links of the card
         self._result, self._open_chain, self._open_book, self._on_export = result, open_chain, open_book, on_export
         self._related, self._folded = related or [], folded or []
+        self._verses, self._on_verse = verses or [], on_verse
         t = theme.current()
         box = QVBoxLayout(self)
         box.setContentsMargins(26, 20, 26, 20)
@@ -185,6 +187,21 @@ class ResultCard(QFrame):
             if open_chain is not None:
                 also.linkActivated.connect(lambda hid: open_chain(int(hid)))
             box.addWidget(also)
+        if verses and on_verse is not None:
+            # the verses its translation marks (Q2, GEN1-H2): each opens in the Qur'an
+            from isnady.core import i18n
+            from isnady.core import quran as core_quran
+
+            t = theme.current()
+            links = " · ".join(f"<a href='{s}:{a}' style='color:{t.lapis};text-decoration:none'>"
+                               f"{html.escape(core_quran.label(s, a, b, i18n.language()))}</a>" for s, a, b in verses)
+            ayat = _label("📖 " + tr("Verses it names:") + " " + links, "Caption", wrap=True)
+            ayat.setTextFormat(Qt.TextFormat.RichText)
+            ayat.setToolTip(tr("The verses this hadith's translation marks as the ones it quotes or explains — the "
+                               "translator's mark. Click one to read it in the Qur'an, with the other hadith that "
+                               "name it."))
+            ayat.linkActivated.connect(lambda ref: on_verse(*(int(x) for x in ref.split(":"))))
+            box.addWidget(ayat)
         drawn = [c for c in (chains or ([chain] if chain else [])) if c["links"] or c.get("problem") == core_isnad.DIRECT]
         if drawn:
             if len(drawn) > 1:
@@ -300,6 +317,9 @@ class ResultCard(QFrame):
             *([(tr("In its book"), lambda: self._open_book(r.hadith_id))] if self._open_book else []),
             (tr("View chain"), (lambda: self._open_chain(r.hadith_id)) if self._open_chain else None),
             (tr("Also narrated in"), related),
+            (tr("Verses it names"), [(f"{s}:{a}" + (f"-{b}" if b != a else ""),
+                                      lambda s=s, a=a: self._on_verse(s, a)) for s, a, b in self._verses]
+             if self._on_verse else []),
             None,
             cm.bookmark_entry("hadith", f"{r.collection_key}:{r.number}", f"{book} {r.number}",
                               " ".join((first or "").split())[:160]),
@@ -371,6 +391,7 @@ class _CatchUp(QThread):
 class SearchPage(QWidget):
     open_chain = Signal(int)          # hadith id; the main window shows it on the Isnad Chains page
     open_book = Signal(int)           # hadith id; the main window opens its book at its chapter (Books)
+    open_verse = Signal(int, int)     # sura, verse a hadith names → the Qur'an in Books (Q2)
     open_person = Signal(int, str)    # person id, tradition; Narrators shows him
     open_scholar = Signal(str)        # scholar id; Hadith Scholars shows him
     open_narrator = Signal(int)       # a narrator of a chain on a card (Search, Books) → Narrators
@@ -1301,11 +1322,15 @@ class SearchPage(QWidget):
         people: dict = {}
         for c in chains:
             people.update(self._people(c))
+        from isnady.core import quran as core_quran
+
+        verses = core_quran.verses_of(self._conn, result.hadith_id) if core_quran.available() else []
         card = ResultCard(result, chain, self.open_chain.emit, people, score, self._related(result.hadith_id),
                           None if in_book else self.open_book.emit, folded, chains,
                           on_person=self.open_narrator.emit, on_name=self.find_narrator.emit,
                           on_end=lambda node: self.open_tree.emit("quraysh", node),
-                          on_languages=self.wants_languages.emit, on_export=self.wants_export.emit)
+                          on_languages=self.wants_languages.emit, on_export=self.wants_export.emit,
+                          verses=verses, on_verse=self.open_verse.emit)
         card.setProperty("hadith_id", result.hadith_id)
         return card
 

@@ -3,6 +3,24 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.6.7] — 2026-11-01
+
+- **The Qur'an, in Books (Q1, Bayram's 13 October list: "Kur'ân-ı Kerîm, Kitaplar'ın altında, her dilde bir
+  meal").** First on the shelf, downloaded once on request (about 3 MB): the Arabic (Tanzil's text) with a translation
+  in the interface language; **➕ Translations…** adds any of some 440 translations in 98 languages, each with its
+  source (fawazahmed0/quran-api, Unlicense — the same author as the hadith editions). The contents list the 114 suras;
+  a sura shows its verses with the translations ticked, previous and next sura, and a search through the whole text
+  in Arabic or in a translation's words. Nothing of it is bundled; it is kept in sources/quran.db in the data folder.
+  In the terminal: `iy quran [SURA[:VERSE[-VERSE]]]`, `iy quran search WORDS`, `iy quran download [KEY …]`,
+  `iy quran editions [--language L | --installed]`, `iy quran remove KEY`.
+- **The verses the hadith name (Q2, GEN1-H2).** The translations of the hadith mark a verse they quote or explain —
+  "(33:33)", "[43:67]", "(Al-Qur'an 66:1)", "(Ahzab 33/51)"; these marks are read (a bare "(1/2)" is a fraction, not a
+  verse), each checked against the number of verses of its sura: 2,280 hadith name 1,960 verses. Every hadith card
+  shows **📖 Verses it names**, each a link to the verse in the Qur'an; under each verse of the Qur'an stand the hadith
+  that name it, the Sunni and the Shia books each on a line of their own, each a link to it in its book (al-Ahzab 33:33:
+  al-Tirmidhi 3205 and 3787; al-Kafi 1:754, 1:762 …). It is the translator's mark, and the page says so.
+  `iy quran 33:33 --hadith`.
+
 ## [0.6.6] — 2026-11-01
 
 - **Companions and the Household (AM1, EB1 — Bayram's 11 October list: "Ehl-i Beyt ve şeceresi, Aşere-i

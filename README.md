@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.6.6-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.6.7-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.6.6-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.6.7-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.6.6).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.6.7).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -564,6 +564,17 @@ book** opens the hadith where it stands, among the hadith of its chapter. **⤓ 
 being read, as a PDF in the languages you choose — or as Word, EPUB, HTML and the other formats of File → Export
 (`iy export book bukhari --chapter 3 -f pdf --language Turkish`).
 
+**The Qur'an** stands first on the shelf. It is downloaded once, on request (about 3 MB): the Arabic (Tanzil's text)
+with a translation in the interface language, and **➕ Translations…** adds any of the others — some 440 translations in
+98 languages, from fawazahmed0/quran-api (Unlicense; each edition says its source: Tanzil, the King Fahd Complex,
+QuranEnc …). The contents list the 114 suras; a sura shows its verses in Arabic with the translations ticked above
+it, ⟨ ⟩ go to the previous and next sura, and the search looks through the whole text, in Arabic or in a
+translation's words. Under each verse stand **the hadith that name it** — those whose translation marks the verse as
+the one it quotes or explains, "(33:33)", "[43:67]", "(Ahzab 33/51)": the translator's mark, each checked against the
+number of verses of its sura (2,280 hadith name 1,960 verses), the Sunni and the Shia books each on a line of their
+own; a click reads the hadith in its book. And on every hadith card **📖 Verses it names** opens the verse in the
+Qur'an. In the terminal: `iy quran`, `iy quran 33:33 --hadith`, `iy quran search sabır`.
+
 Book and chapter titles follow the interface language: the sources give chapter titles in English only, so
 isnady carries its own — all 642 chapter titles of the 33 books in Turkish and in Arabic ("Vahyin Başlangıcı",
 "كتاب بدء الوحي" for "Revelation"), and the Arabic titles a source gives itself where it has them (al-Adab
@@ -1035,7 +1046,7 @@ command.
 |:--------|:-------------|
 | `iy` | Open the window |
 | [`iy search`](#-searching) | Search hadith text, narrators or scholars |
-| [`iy chain`](#-chains-books-and-other-narrations) · [`iy tahric`](#-chains-books-and-other-narrations) · [`iy book`](#-chains-books-and-other-narrations) | One chain read link by link · the other narrations of a hadith · read a book in its order |
+| [`iy chain`](#-chains-books-and-other-narrations) · [`iy tahric`](#-chains-books-and-other-narrations) · [`iy book`](#-chains-books-and-other-narrations) · [`iy quran`](#-chains-books-and-other-narrations) | One chain read link by link · the other narrations of a hadith · read a book in its order · the Qur'an and the hadith that name each verse |
 | [`iy narrator`](#-narrators-scholars-and-their-lives) · [`iy life`](#-narrators-scholars-and-their-lives) · [`iy scholar`](#-narrators-scholars-and-their-lives) · [`iy group`](#-narrators-scholars-and-their-lives) · [`iy tree`](#-narrators-scholars-and-their-lives) | A narrator · a life · the scholars and the huffaz · the Companions and the Household · the genealogies |
 | [`iy term`](#-the-sciences-of-hadith) · [`iy learn`](#-the-sciences-of-hadith) | The glossary · the history and method of hadith |
 | [`iy stats`](#-statistics-1) | Every statistic of the Statistics page, with its plain-words explanation |
@@ -1135,6 +1146,20 @@ iy book --go Knowledge               # open a marker
 iy book --unmark Knowledge           # remove it (all: every marker)
 iy book --forget bukhari             # forget where you left a book (all: every book)
 iy book taqrib 1                     # the rijal works read the same way, entry by entry
+```
+
+`iy quran` reads the Qur'an (downloaded once on request) with its translations and the hadith that name each verse.
+
+```bash
+iy quran download                    # the Arabic and a translation in the interface language (about 3 MB, once)
+iy quran editions --language Turkish # the translations offered in a language (98 languages)
+iy quran download tur-elmalilihamdiya eng-abdelhaleem   # more translations
+iy quran editions --installed        # those downloaded ; iy quran remove KEY
+iy quran                             # the 114 suras
+iy quran 1                           # a sura
+iy quran 2:255-257 --edition tur-diyanetisleri         # verses, in one translation
+iy quran 33:33 --hadith              # with the hadith that name each verse, Sunni and Shia books apart
+iy quran search sabır                # search the whole text, in Arabic or a translation's words
 ```
 
 ### 👥 Narrators, scholars and their lives

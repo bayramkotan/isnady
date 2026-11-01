@@ -36,6 +36,7 @@ from isnady.core.scholars import find as find_scholar
 from isnady.gui import theme
 from isnady.gui.hadith_nav import HadithNavigator
 from isnady.gui.widgets import FlowLayout, TextBlock
+from isnady.core import i18n
 from isnady.core.i18n import N_, tr
 
 BATCH = 12           # items drawn at a time, so a long chapter never freezes the window
@@ -244,11 +245,26 @@ class BooksPage(QWidget):
         self.more.setObjectName("Quiet")
         self.more.clicked.connect(self._more)
 
+        # the reader of the books, and in its place the Qur'an (Q1) when it is chosen on the shelf
+        from PySide6.QtWidgets import QStackedWidget
+
+        from isnady.gui.quran_view import QuranView
+
+        reader = QWidget()
+        reader.setLayout(right)
+        right.setContentsMargins(0, 0, 0, 0)
+        self.quran = QuranView()
+        self.quran.set_connection(lambda: self.conn)
+        self.quran.downloaded.connect(self._quran_downloaded)
+        self.right_stack = QStackedWidget()
+        self.right_stack.addWidget(reader)
+        self.right_stack.addWidget(self.quran)
+        self._quran_mode = False
         root = QHBoxLayout(self)
         root.setContentsMargins(24, 22, 24, 22)
         root.setSpacing(18)
         root.addWidget(left)
-        root.addLayout(right, 1)
+        root.addWidget(self.right_stack, 1)
 
     @property
     def conn(self):
@@ -265,6 +281,7 @@ class BooksPage(QWidget):
                  if self._shelf_tradition is None or w["tradition"] == self._shelf_tradition]
         self.works.blockSignals(True)
         self.works.clear()
+        self._add_quran_row()
         heading = None
         for w in shelf:
             if w["tradition"] != heading:
@@ -312,8 +329,11 @@ class BooksPage(QWidget):
             self.where.setText("")
             self.body_layout.addWidget(_label(tr("No books yet: import a collection (File → Data Sources)."), "Lead"))
             return
-        wanted = (self._work or {}).get("key") or config.state_get("reader.last_work") or shelf[0]["key"]
-        keys = [w["key"] for w in shelf]
+        wanted = ("quran" if self._quran_mode else (self._work or {}).get("key")) or \
+            config.state_get("reader.last_work") or shelf[0]["key"]
+        keys = [w["key"] for w in shelf] + ["quran"]
+        if keep_open and self._quran_mode:
+            return
         if keep_open and self._work and self._work.get("key") in keys:
             for i in range(self.works.count()):              # the row of the book being read, marked again
                 if self.works.item(i).data(Qt.ItemDataRole.UserRole) == self._work["key"]:
@@ -331,6 +351,14 @@ class BooksPage(QWidget):
         self.refresh()
 
     def select_work(self, key: str) -> None:
+        if key == "quran":
+            for i in range(self.works.count()):
+                if self.works.item(i).data(Qt.ItemDataRole.UserRole) == "quran":
+                    self.works.blockSignals(True)
+                    self.works.setCurrentRow(i)
+                    self.works.blockSignals(False)
+            self.open_quran()
+            return
         w = next((x for x in core_works.list_works(self.conn) if x["key"] == key), None) if self.conn else None
         if w and self._shelf_tradition and w["tradition"] != self._shelf_tradition:
             self._shelf_tradition = w["tradition"]           # a book of the other tradition was asked for: its shelf
@@ -344,7 +372,78 @@ class BooksPage(QWidget):
                 self.works.blockSignals(False)
         self.open_work(key)
 
+    # ------------------------------------------------------------------ the Qur'an (Q1)
+    def _add_quran_row(self) -> None:
+        from isnady.core import quran
+
+        head = QListWidgetItem()
+        head.setFlags(Qt.ItemFlag.NoItemFlags)
+        label = _label(tr("The Qur'an"), "FilterTitle", wrap=False)
+        label.setContentsMargins(10, 10, 10, 2)
+        head.setSizeHint(label.sizeHint())
+        self.works.addItem(head)
+        self.works.setItemWidget(head, label)
+        item = QListWidgetItem()
+        item.setData(Qt.ItemDataRole.UserRole, "quran")
+        row = QWidget()
+        box = QVBoxLayout(row)
+        box.setContentsMargins(10, 7, 10, 7)
+        box.setSpacing(1)
+        name = _label(tr("The Holy Qur'an") + "   القرآن الكريم", "RowTitle", wrap=False)
+        name.setFont(theme.reading_font(14, bold=True))
+        box.addWidget(name)
+        if quran.available():
+            eds = [e for e in quran.editions() if e["key"] != quran.ARABIC]
+            facts = tr("114 suras · 6,236 verses · {n} translations", n=len(eds))
+        else:
+            facts = tr("Not downloaded yet: click to download it (about 3 MB)")
+        box.addWidget(_label(facts, "Caption", wrap=False))
+        item.setSizeHint(row.sizeHint())
+        self.works.addItem(item)
+        self.works.setItemWidget(item, row)
+
+    def open_quran(self, sura: int | None = None, ayah: int | None = None) -> None:
+        from isnady.core import quran
+
+        self._quran_mode = True
+        self._work = None
+        config.state_set("reader.last_work", "quran")
+        self.right_stack.setCurrentWidget(self.quran)
+        self.tree.clear()
+        lang = i18n.language()
+        for s in quran.suras():
+            name = {"tr": s["tr"], "ar": s["arabic"]}.get(lang) or s["name"]
+            item = QTreeWidgetItem([f"{s['n']}. {name}   ({s['verses']})"])
+            item.setData(0, Qt.ItemDataRole.UserRole, -s["n"])         # a sura: below zero, never a chapter's node
+            self.tree.addTopLevelItem(item)
+        target = sura or int(config.state_get("quran.sura") or 1)
+        self.quran.show_sura(target, ayah)
+        self._select_sura(target)
+
+    def _select_sura(self, n: int) -> None:
+        for i in range(self.tree.topLevelItemCount()):
+            it = self.tree.topLevelItem(i)
+            if it.data(0, Qt.ItemDataRole.UserRole) == -n:
+                self.tree.setCurrentItem(it)
+                self.tree.scrollToItem(it)
+
+    def _quran_downloaded(self) -> None:
+        self.refresh(keep_open=True)
+        self.open_quran()
+
+    def show_verse(self, sura: int, ayah: int | None = None) -> None:
+        """A verse a hadith names, opened in the Qur'an (Q2)."""
+        if self.works.count() == 0:
+            self.refresh()
+        self.select_work("quran") if not self._quran_mode else None
+        self.open_quran(sura, ayah)
+
     def open_work(self, key: str, chapter: int | None = None) -> None:
+        if key == "quran":
+            self.open_quran()
+            return
+        self._quran_mode = False
+        self.right_stack.setCurrentWidget(self.right_stack.widget(0))
         conn = self.conn
         work = core_works.find_work(conn, key)
         if work is None:
@@ -570,6 +669,11 @@ class BooksPage(QWidget):
         self.visited_book.emit(key)
 
     def _picked_chapter(self, chapter_id: int) -> None:
+        if chapter_id < 0:                       # a sura of the Qur'an
+            config.state_set("quran.sura", -chapter_id)
+            self.quran.show_sura(-chapter_id)
+            self.visited_chapter.emit(chapter_id)
+            return
         self.open_chapter(chapter_id)
         self.visited_chapter.emit(chapter_id)
 
@@ -867,7 +971,10 @@ class BooksPage(QWidget):
             self.star_box.addWidget(BookmarkButton("chapter", *ref))
 
     def show_chapter(self, chapter_id: int) -> None:
-        """Open a chapter by its node (a bookmark)."""
+        """Open a chapter by its node (a bookmark); below zero, a sura of the Qur'an (Back and Forward)."""
+        if chapter_id < 0:
+            self.show_verse(-chapter_id)
+            return
         conn = self.conn
         if self.works.count() == 0:
             self.refresh()

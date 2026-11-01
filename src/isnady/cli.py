@@ -1650,6 +1650,93 @@ def cmd_scholar(args) -> int:
     return 0
 
 
+def cmd_quran(args) -> int:
+    """iy quran (Q1, Q2): the suras, a sura or verses with the translations chosen and the hadith that name each verse,
+    a search; download, editions, remove."""
+    import re
+    import textwrap
+
+    from isnady.core import i18n, language
+    from isnady.core import quran as Q
+
+    i18n.set_language(args.lang or language.ui_language())
+    lang = i18n.language()
+    words = args.what or []
+    say = lambda m: print(f"  … {m}", file=sys.stderr)  # noqa: E731
+    if words[:1] == ["download"]:
+        wanted = words[1:] or Q.DEFAULTS.get(lang, []) or ["eng-ummmuhammad"]
+        kept = Q.fetch(wanted, say)
+        print(f"Downloaded: {', '.join(kept) or 'nothing new'} — {Q.path()}")
+        return 0
+    if words[:1] == ["editions"]:
+        if args.installed or not words[1:] and not args.language:
+            for e in Q.editions():
+                print(f"  {e['key']:28} {e['language']:12} {e['author']}")
+            if not Q.available():
+                print("The Qur'an is not downloaded: iy quran download")
+            return 0
+        for key, v in sorted(Q.catalog(say).items(), key=lambda kv: (kv[1]["language"], kv[1]["author"])):
+            if args.language and args.language.lower() not in (v["language"].lower(), key[:3]):
+                continue
+            if key.endswith("-la"):
+                continue
+            print(f"  {key:30} {v['language']:12} {v['author']}   {v['source']}")
+        return 0
+    if words[:1] == ["remove"]:
+        for key in words[1:]:
+            print(f"{key}: {'removed' if Q.remove(key) else 'not downloaded (the Arabic is always kept)'}")
+        return 0
+    if not Q.available():
+        print("The Qur'an is not downloaded yet (about 3 MB, once): iy quran download\n"
+              "  more translations: iy quran editions --language Turkish, then iy quran download KEY …")
+        return 1
+    chosen = args.edition or [e["key"] for e in Q.editions() if e["key"] != Q.ARABIC][:2]
+    eds = {e["key"]: e for e in Q.editions()}
+    if words[:1] == ["search"]:
+        text = " ".join(words[1:])
+        found = Q.search(text, chosen)
+        for r in found[: args.limit]:
+            print(f"  {Q.label(r['sura'], r['ayah'], r['ayah'], lang):24} {r['text'][:args.width]}")
+        print(f"{len(found)} verses" + (" (the first 200)" if len(found) >= 200 else ""))
+        return 0
+    if not words:
+        for x in Q.suras():
+            name = {"tr": x["tr"], "ar": x["arabic"]}.get(lang) or f"{x['name']} ({x['english']})"
+            print(f"  {x['n']:3}. {name:34} {x['verses']:3} verses  {'Meccan' if x['place'] == 'Mecca' else 'Medinan'}")
+        print("\n(iy quran 2, iy quran 2:255, iy quran 33:28-34 --hadith, iy quran search WORDS)")
+        return 0
+    m = re.fullmatch(r"(\d{1,3})(?::(\d{1,3})(?:-(\d{1,3}))?)?", words[0])
+    if not m or not 1 <= int(m[1]) <= 114:
+        print("Write a sura, or a verse: iy quran 2, iy quran 2:255, iy quran 2:255-257", file=sys.stderr)
+        return 1
+    sura = int(m[1])
+    start = int(m[2]) if m[2] else 1
+    end = int(m[3]) if m[3] else (start if m[2] else None)
+    conn = _connect() if args.hadith else None
+    print(f"{sura}. {Q.sura_name(sura, lang)}  {Q.sura_name(sura, 'ar')}\n")
+    for v in Q.verses(sura, chosen, start, end):
+        print(f"  {sura}:{v['ayah']}  {v['texts'].get(Q.ARABIC, '')}")
+        for key in chosen:
+            if v["texts"].get(key):
+                print(textwrap.fill(v["texts"][key], args.width, initial_indent="      ", subsequent_indent="      ")
+                      + f"   [{eds.get(key, {}).get('author', key)}]")
+        if conn is not None:
+            hids = Q.hadith_of(conn, sura, v["ayah"])
+            if hids:
+                rows = conn.execute(
+                    f"SELECT c.key, h.number, COALESCE(c.tradition, 'sunni') FROM hadiths h JOIN collections c "
+                    f"ON c.id = h.collection_id WHERE h.id IN ({','.join('?' * len(hids))})", hids).fetchall()
+                for road in ("sunni", "shia"):
+                    mine = [f"{k} {n}" for k, n, r in rows if r == road]
+                    if mine:
+                        print(f"      named in the {road.capitalize()} books: " + ", ".join(mine[:15])
+                              + (f" … +{len(mine) - 15}" if len(mine) > 15 else ""))
+        print()
+    if conn is not None:
+        conn.close()
+    return 0
+
+
 def cmd_group(args) -> int:
     """iy group [ID] (AM1, EB1): the ten promised Paradise, the people of the cloak, the Mothers of the Believers; on
     the Shia road the Fourteen Infallibles — the hadith that name them and what the books hold of each member."""
@@ -2288,6 +2375,20 @@ def build_parser() -> argparse.ArgumentParser:
     bk.add_argument("--unmark", metavar="NAME", help="remove a marker (all: every marker)")
     bk.add_argument("--forget", metavar="KEY", help="forget where you left a book (all: every book); markers are kept")
     bk.set_defaults(func=cmd_book)
+    qu = sub.add_parser("quran", help="the Qur'an with its translations, and the hadith that name each verse "
+                                      "(downloaded once on request)")
+    qu.add_argument("what", nargs="*", help="none: the suras; 2 / 2:255 / 2:255-257: verses; search WORDS; download "
+                                            "[EDITION …]; editions [--language L | --installed]; remove EDITION")
+    qu.add_argument("--edition", action="append", help="the translations to show (keys from iy quran editions "
+                                                       "--installed); default: those downloaded")
+    qu.add_argument("--hadith", action="store_true", help="under each verse, the hadith that name it (Sunni and "
+                                                          "Shia books apart)")
+    qu.add_argument("--language", help="editions: only this language, e.g. Turkish")
+    qu.add_argument("--installed", action="store_true", help="editions: only those downloaded")
+    qu.add_argument("--lang", choices=("en", "tr", "ar"), help="the language of the sura names")
+    qu.add_argument("--limit", type=int, default=30, help="search: how many verses to show")
+    qu.add_argument("--width", type=int, default=100, help="characters per line")
+    qu.set_defaults(func=cmd_quran)
     gr = sub.add_parser("group", help="the ten promised Paradise, the people of the cloak, the Mothers of the Believers; "
                                       "the Fourteen Infallibles on the Shia road")
     gr.add_argument("id", nargs="?", help="ten, kisa, mothers, masumin; none = the list")
