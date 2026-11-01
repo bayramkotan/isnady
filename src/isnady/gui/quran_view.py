@@ -40,6 +40,15 @@ def _label(text: str, name: str = "", wrap: bool = True, rich: bool = False) -> 
     return label
 
 
+_RUNNING: set = set()                # threads kept alive until they end, whatever window started them closes
+
+
+def _keep(job: QThread) -> QThread:
+    _RUNNING.add(job)
+    job.finished.connect(lambda j=job: _RUNNING.discard(j))
+    return job
+
+
 class _Fetch(QThread):
     said = Signal(str)
     ended = Signal(str)                  # "" when done, else what went wrong
@@ -47,12 +56,14 @@ class _Fetch(QThread):
     def __init__(self, editions: list[str], info: dict | None = None) -> None:
         super().__init__()
         self._editions, self._info = editions, info
+        self.kept: list[str] = []
 
     def run(self) -> None:
         try:
-            core.fetch(self._editions, self.said.emit, self._info)
+            self.kept = core.fetch(self._editions, self.said.emit, self._info)
             self.ended.emit("")
         except Exception as exc:  # noqa: BLE001 — said to the reader, the rest of isnady goes on
+            core._log().exception("The Qur'an could not be downloaded")
             self.ended.emit(f"{type(exc).__name__}: {exc}")
 
 
@@ -63,76 +74,110 @@ class _Catalog(QThread):
         try:
             self.ready.emit(core.catalog())
         except Exception as exc:  # noqa: BLE001
+            core._log().exception("The list of the Qur'an's translations could not be read")
             self.ready.emit(exc)
 
 
 class AddTranslations(QDialog):
-    """The translations the source offers, by language; the ones ticked are downloaded."""
+    """The translations there are, by language — isnady-data's first, then the source's; the ones ticked are
+    downloaded, a downloaded one unticked is removed."""
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setWindowTitle(tr("Translations of the Qur'an"))
-        self.resize(620, 560)
+        self.resize(660, 580)
         self.chosen: list[str] = []
+        self.removed: list[str] = []
+        self.info: dict = {}
         self._info: dict = {}
+        self._have: set[str] = {e["key"] for e in core.editions()}
+        self._ticks: dict[str, bool] = {}
         box = QVBoxLayout(self)
-        box.addWidget(_label(tr("The translations of fawazahmed0/quran-api (from Tanzil, the King Fahd Complex, QuranEnc "
-                                "and others; each says its source). Choose a language, tick the translations, and "
-                                "they are downloaded (each about 1 MB)."), "Caption"))
+        box.addWidget(_label(tr("The translations isnady-data keeps come first (★); the others, of 98 languages, are "
+                                "read from fawazahmed0/quran-api (each from Tanzil, the King Fahd Complex, QuranEnc or "
+                                "another source it names). Tick a translation to download it (about 1 MB); untick one "
+                                "downloaded to remove it."), "Caption"))
         self.language = QComboBox()
         self.language.currentIndexChanged.connect(lambda _i: self._fill())
         box.addWidget(self.language)
         self.list = QListWidget()
+        self.list.itemChanged.connect(self._ticked)
         box.addWidget(self.list, 1)
         self.status = _label(tr("Reading the list of translations …"), "Caption")
         box.addWidget(self.status)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
-        self.ok = buttons.addButton(tr("Download"), QDialogButtonBox.ButtonRole.AcceptRole)
+        self.ok = buttons.addButton(tr("Apply"), QDialogButtonBox.ButtonRole.AcceptRole)
         self.ok.setEnabled(False)
         buttons.accepted.connect(self._accept)
         buttons.rejected.connect(self.reject)
         box.addWidget(buttons)
-        self._job = _Catalog()
+        self._job = _keep(_Catalog())
         self._job.ready.connect(self._loaded)
         self._job.start()
+
+    def done(self, result: int) -> None:
+        try:                                   # closed before the list came: the thread ends on its own
+            self._job.ready.disconnect(self._loaded)
+        except (RuntimeError, TypeError):
+            pass
+        super().done(result)
 
     def _loaded(self, info) -> None:
         if isinstance(info, Exception):
             self.status.setText(tr("The list could not be read: {error}", error=str(info)))
             return
         self._info = info
-        have = {e["key"] for e in core.editions()}
-        self._have = have
-        langs = sorted({v["language"] for k, v in info.items() if not k.endswith("_la") and not k.endswith("-la")})
-        mine = {"tr": "Turkish", "en": "English", "ar": "Arabic"}.get(i18n.language(), "English")
+        langs = sorted({v["language"] for k, v in info.items() if not k.endswith("_la") and not k.endswith("-la")
+                        and k != core.ARABIC},
+                       key=lambda lang: (not any(v["origin"] == core.OWN for k, v in info.items()
+                                                 if v["language"] == lang and k != core.ARABIC), tr(lang)))
+        mine = {"tr": "Turkish", "en": "English", "ar": "English"}.get(i18n.language(), "English")
         self.language.blockSignals(True)
         for lang in langs:
-            self.language.addItem(tr(lang), lang)
+            n = sum(1 for k, v in info.items() if v["language"] == lang and v["origin"] == core.OWN
+                    and k != core.ARABIC)
+            self.language.addItem(tr(lang) + (f"  ★{n}" if n else ""), lang)
         self.language.setCurrentIndex(max(0, self.language.findData(mine)))
         self.language.blockSignals(False)
-        self.status.setText(tr("{n} translations in {languages} languages", n=len(info), languages=len(langs)))
+        own = sum(1 for k, v in info.items() if v["origin"] == core.OWN and k != core.ARABIC)
+        self.status.setText(tr("{n} translations in {languages} languages", n=len(info), languages=len(langs))
+                            + (" · " + tr("{n} of them in isnady-data", n=own) if own else
+                               " · " + tr("isnady-data has none yet: all are read from the source")))
         self.ok.setEnabled(True)
         self._fill()
 
     def _fill(self) -> None:
+        self.list.blockSignals(True)
         self.list.clear()
         lang = self.language.currentData()
-        for key, v in sorted(self._info.items(), key=lambda kv: kv[1]["author"]):
-            if v["language"] != lang or key.endswith("-la") or key == core.ARABIC:
-                continue
+        rows = [(k, v) for k, v in self._info.items()
+                if v["language"] == lang and not k.endswith("-la") and k != core.ARABIC]
+        rows.sort(key=lambda kv: (kv[1]["origin"] != core.OWN, kv[1]["author"].lower()))
+        for key, v in rows:
+            star = "★ " if v["origin"] == core.OWN else ""
+            where = v.get("source") or v["origin"]
             note = f" — {v['comments']}" if v.get("comments") else ""
-            item = QListWidgetItem(f"{v['author']}   ({v['source'] or key}){note}")
+            have = key in self._have
+            item = QListWidgetItem(f"{star}{v['author']}   ({where}){note}"
+                                   + ("   ✓ " + tr("downloaded") if have else ""))
             item.setData(Qt.ItemDataRole.UserRole, key)
+            item.setToolTip(tr("Read from {origin}", origin=v["origin"]) + (f"\n{v['url']}" if v.get("url") else ""))
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            item.setCheckState(Qt.CheckState.Checked if key in self._have else Qt.CheckState.Unchecked)
-            if key in self._have:
-                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
+            on = self._ticks.get(key, have)
+            item.setCheckState(Qt.CheckState.Checked if on else Qt.CheckState.Unchecked)
             self.list.addItem(item)
+        if not rows:
+            self.list.addItem(QListWidgetItem(tr("No translation in this language")))
+        self.list.blockSignals(False)
+
+    def _ticked(self, item: QListWidgetItem) -> None:
+        key = item.data(Qt.ItemDataRole.UserRole)
+        if key:
+            self._ticks[key] = item.checkState() == Qt.CheckState.Checked
 
     def _accept(self) -> None:
-        self.chosen = [self.list.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.list.count())
-                       if self.list.item(i).checkState() == Qt.CheckState.Checked
-                       and self.list.item(i).data(Qt.ItemDataRole.UserRole) not in self._have]
+        self.chosen = [k for k, on in self._ticks.items() if on and k not in self._have]
+        self.removed = [k for k, on in self._ticks.items() if not on and k in self._have]
         self.info = self._info
         self.accept()
 
@@ -217,13 +262,13 @@ class QuranView(QWidget):
     def _chosen(self) -> list[str]:
         from isnady import config
 
-        saved = [k for k in str(config.state_get("quran.editions") or "").split(",") if k]
+        raw = config.state_get("quran.editions")
         have = [e["key"] for e in core.editions() if e["key"] != core.ARABIC]
-        chosen = [k for k in saved if k in have]
-        if not chosen and not saved:
+        if raw is None:                          # never chosen: the interface language's translation
             mine = core.DEFAULTS.get(i18n.language(), [])
-            chosen = [k for k in have if k in mine] or have[:1]
-        return chosen
+            return [k for k in have if k in mine] or have[:1]
+        saved = [k for k in str(raw).split(",") if k]
+        return [k for k in saved if k in have]   # "," — every translation unticked: the Arabic alone
 
     def _fill_langs(self) -> None:
         while self._langs_flow.count():
@@ -237,7 +282,8 @@ class QuranView(QWidget):
                 continue
             check = QCheckBox(f"{tr(e['language'])} — {e['author']}")
             check.setChecked(e["key"] in chosen)
-            check.setToolTip(tr("Source: {source}", source=e["source"] or core.PAGE))
+            check.setToolTip(tr("Source: {source}", source=e["source"] or e["origin"]) + "\n"
+                             + tr("Read from {origin}", origin=e["origin"]))
             check.toggled.connect(lambda on, k=e["key"]: self._toggle(k, on))
             self._langs_flow.addWidget(check)
 
@@ -246,6 +292,7 @@ class QuranView(QWidget):
 
         chosen = [k for k in self._chosen() if k != key] + ([key] if on else [])
         config.state_set("quran.editions", ",".join(chosen) or ",")
+        core._log().info("Qur'an translations shown: %s", ",".join(chosen) or "the Arabic alone")
         self.show_sura(self._sura, keep=True)
 
     # ------------------------------------------------------------------ downloading
@@ -268,10 +315,10 @@ class QuranView(QWidget):
         card.setObjectName("Card")
         box = QVBoxLayout(card)
         box.setContentsMargins(24, 18, 24, 18)
-        box.addWidget(_label(tr("The text of the Qur'an and its translations are downloaded once, on request: the Arabic "
-                                "(Tanzil's text) with a translation in the interface language, about 3 MB; more "
-                                "translations in 98 languages can be added afterwards. Source: fawazahmed0/quran-api "
-                                "(Unlicense), each edition with its own source."), "Lead"))
+        box.addWidget(_label(tr("The text of the Qur'an and its translations are downloaded once, on request, from "
+                                "isnady-data: the Arabic (Tanzil's text) with a translation in the interface language, "
+                                "about 3 MB; more translations can be added afterwards, of 98 languages (those "
+                                "isnady-data does not keep are read from fawazahmed0/quran-api)."), "Lead"))
         go = QPushButton(tr("Download the Qur'an"))
         go.setObjectName("Primary")
         go.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -290,7 +337,7 @@ class QuranView(QWidget):
             return
         if button is not None:
             button.setEnabled(False)
-        self._job = _Fetch(editions, info)
+        self._job = _keep(_Fetch(editions, info))
         status = getattr(self, "_status", None)
         self._job.said.connect(lambda m: status and status.setText(m))
         self._job.ended.connect(self._fetched)
@@ -301,19 +348,35 @@ class QuranView(QWidget):
             status = getattr(self, "_status", None)
             if status is not None:
                 status.setText(tr("Not downloaded: {error}", error=error))
+            if core.available():
+                self._warn(tr("Not downloaded: {error}", error=error))
             return
         self.downloaded.emit()
         self.show_sura(self._sura)
 
-    def _add_translations(self) -> None:
-        dialog = AddTranslations(self)
-        if dialog.exec() and dialog.chosen:
-            from isnady import config
+    def _warn(self, text: str) -> None:
+        from PySide6.QtWidgets import QMessageBox
 
-            config.state_set("quran.editions", ",".join(self._chosen() + dialog.chosen))
+        QMessageBox.warning(self, tr("Translations of the Qur'an"),
+                            text + "\n\n" + tr("The details are in the log: iy log --level warning"))
+
+    def _add_translations(self) -> None:
+        from isnady import config
+
+        dialog = AddTranslations(self)
+        if not dialog.exec():
+            return
+        if dialog.removed:
+            for key in dialog.removed:
+                core.remove(key)
+            config.state_set("quran.editions", ",".join(k for k in self._chosen() if k not in dialog.removed) or ",")
+        if dialog.chosen:
+            config.state_set("quran.editions", ",".join(dict.fromkeys(self._chosen() + dialog.chosen)))
             self._status = self.facts
             self.facts.setText(tr("Downloading …"))
             self._fetch(dialog.chosen, info=dialog.info)
+        elif dialog.removed:
+            self.show_sura(self._sura, keep=True)
 
     # ------------------------------------------------------------------ a sura
     def show_sura(self, n: int, ayah: int | None = None, keep: bool = False) -> None:

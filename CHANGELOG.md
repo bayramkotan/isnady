@@ -3,6 +3,26 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.6.8] — 2026-11-01
+
+- **The Qur'an from isnady-data (Q1b — Bayram: "Neden fawazahmed0'den çektin Kur'an'ı?").** The Arabic (Tanzil's
+  text, verbatim) and 60 translations in 18 languages are now kept in isnady's own repository, under `quran/`, each
+  under the name its readers know it by (Diyanet İşleri, Diyanet Vakfı, Elmalılı Hamdi Yazır, Ali Bulaç, Süleyman Ateş,
+  Hasan Basri Çantay …; Saheeh International, Abdel Haleem, Mustafa Khattab …), listed in the `quran` section of
+  catalog.json with their size and sha256. isnady reads the Qur'an from there first; any other of some 440
+  translations in 98 languages is still read from fawazahmed0/quran-api, and so is a text isnady-data cannot give at
+  that moment (a file not found, or not the one the catalog lists). A translation downloaded earlier keeps its text and
+  takes its new name. `tools/build_data_repo.py --quran DIR` builds `quran/` and the catalog's section (a later
+  `--mirror` keeps them); the isnady-data README gains a Qur'an section and its credit.
+- **➕ Translations… mended (Bayram: "Translation kısmı da çalışmıyor").** Unticking the last translation shown brought
+  the default back at once, so it could not be unticked; now the Arabic stands alone until one is ticked again. The
+  window lists isnady-data's translations first (★, and how many in each language), and a downloaded translation can
+  be unticked there to remove it. Closing the window before its list came could stop isnady (a thread destroyed while
+  running); every download thread is now kept until it ends. A translation that cannot be downloaded no longer stops
+  the others: it is said in a message and written to the log (`iy log --level warning`).
+- `iy quran editions` marks isnady-data's translations with ★ and says where each downloaded one was read from;
+  `--own` lists only isnady-data's.
+
 ## [0.6.7] — 2026-11-01
 
 - **The Qur'an, in Books (Q1, Bayram's 13 October list: "Kur'ân-ı Kerîm, Kitaplar'ın altında, her dilde bir

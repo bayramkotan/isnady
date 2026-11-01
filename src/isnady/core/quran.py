@@ -1,15 +1,18 @@
-"""The Qur'an (Q1) and the verses the hadith name (Q2, GEN1-H2).
+"""The Qur'an (Q1, Q1b) and the verses the hadith name (Q2, GEN1-H2).
 
-The text and its translations come from fawazahmed0/quran-api (the same author as the hadith editions isnady reads;
-released under the Unlicense, its texts taken from Tanzil, the King Fahd Complex, QuranEnc and others — each
-edition says its source). Nothing of it is bundled: it is downloaded on request into sources/quran.db in the data
-folder, the Arabic first, then the translations the reader chooses, any of the 98 languages.
+Where the text comes from: isnady-data first — isnady's own repository keeps the Arabic (Tanzil's text, verbatim) and
+a chosen set of translations under the names their readers know them by, listed in the "quran" section of its
+catalog. Any other translation, of the 98 languages, is read from fawazahmed0/quran-api (the same author as the
+hadith editions; the Unlicense; each edition names its own source: Tanzil, the King Fahd Complex, QuranEnc …), and a
+text isnady-data cannot give at the moment is read from there too. Nothing is bundled: it is downloaded on request
+into sources/quran.db in the data folder.
 
 Verses named in the hadith: the translations of the hadith mark a verse they quote as "(33:33)", "[43:67]",
 "(Al-Qur'an 66:1)" or "(Ahzab 33/51)". These marks are read, each checked against the number of verses of its
 sura, and kept as the hadith's verse — what the translation says, not a reading of isnady's own.
 """
 
+import hashlib
 import json
 import re
 import sqlite3
@@ -20,6 +23,8 @@ from isnady.data.paths import data_dir
 
 BASE = "https://raw.githubusercontent.com/fawazahmed0/quran-api/1"
 PAGE = "https://github.com/fawazahmed0/quran-api"
+OWN_PAGE = "https://github.com/bayramkotan/isnady-data"
+OWN, SOURCE = "isnady-data", "fawazahmed0/quran-api"     # where an edition is read from
 ARABIC = "ara-quransimple"                # Tanzil's simple script: every Arabic face draws it, search reads it
 DEFAULTS = {"tr": ["tur-diyanetisleri"], "en": ["eng-ummmuhammad"], "ar": []}
 
@@ -37,6 +42,12 @@ TR_NAMES = (
     "Kâfirûn", "Nasr", "Tebbet", "İhlâs", "Felak", "Nâs")
 
 
+def _log():
+    from isnady.core import log
+
+    return log.get("quran")
+
+
 def path() -> Path:
     return data_dir() / "sources" / "quran.db"
 
@@ -51,6 +62,8 @@ def _connect() -> sqlite3.Connection:
                  "direction TEXT, source TEXT, comments TEXT, imported_at TEXT)")
     conn.execute("CREATE TABLE IF NOT EXISTS verses (edition TEXT, sura INTEGER, ayah INTEGER, text TEXT, "
                  "PRIMARY KEY (edition, sura, ayah))")
+    if "origin" not in {r[1] for r in conn.execute("PRAGMA table_info(editions)")}:
+        conn.execute("ALTER TABLE editions ADD COLUMN origin TEXT")        # Q1b: isnady-data or the source
     return conn
 
 
@@ -67,51 +80,181 @@ def available() -> bool:
         return False
 
 
-def catalog(progress=None) -> dict[str, dict]:
-    """Every edition the source offers: {key: {language, author, direction, source, comments}} (downloaded)."""
+# ------------------------------------------------------------------ where the text is read from (Q1b)
+def own() -> tuple[dict, str] | None:
+    """(the "quran" section of isnady-data's catalog, what its locations are relative to), or None when the
+    repository chosen and isnady-data have none."""
+    from isnady.core import repositories as R
+
+    seen = set()
+    for repo in [R.selected(), R.find(R.DEFAULT_ID)]:
+        if repo is None or repo.id in seen:
+            continue
+        seen.add(repo.id)
+        try:
+            cat, _where = R.catalog(repo)
+        except Exception:  # noqa: BLE001 — the source is read instead
+            continue
+        q = cat.get("quran")
+        if isinstance(q, dict) and q.get("editions"):
+            return q, R.base_of(repo)
+    return None
+
+
+def _own_editions() -> tuple[dict[str, dict], dict | None, str]:
+    found = own()
+    if found is None:
+        return {}, None, ""
+    q, base = found
+    from isnady.core.repositories import absolute
+
+    out = {}
+    for e in q["editions"]:
+        out[e["key"]] = {"language": e.get("language", ""), "author": e.get("author", e["key"]),
+                         "direction": e.get("direction", "ltr"), "source": e.get("source", ""),
+                         "comments": e.get("comments", ""), "origin": OWN, "size": e.get("size"),
+                         "sha256": e.get("sha256"), "url": absolute(base, e["location"])}
+    return out, q, base
+
+
+def _source_editions() -> dict[str, dict]:
     from isnady.data.fetch import read_bytes
 
-    (progress or (lambda _m: None))("Reading the list of translations")
     raw = json.loads(read_bytes(f"{BASE}/editions.json", timeout=120))
-    return {v["name"]: {k: v.get(k, "") for k in ("language", "author", "direction", "source", "comments")}
+    return {v["name"]: {**{k: v.get(k, "") for k in ("language", "author", "direction", "source", "comments")},
+                        "origin": SOURCE, "url": f"{BASE}/editions/{v['name']}.min.json"}
             for v in raw.values()}
 
 
-def fetch(editions: list[str] | None = None, progress=None, info: dict | None = None) -> list[str]:
-    """Download the Arabic (once) and these editions (keys as "tur-diyanetisleri"); returns the keys kept."""
-    from datetime import datetime, timezone
+def catalog(progress=None, source: bool = True) -> dict[str, dict]:
+    """Every edition there is to download: {key: {language, author, direction, source, comments, origin, url}} —
+    isnady-data's first, then (source=True) the rest of fawazahmed0/quran-api's. Raises only when neither is read."""
+    say = progress or (lambda _m: None)
+    say("Reading the list of translations")
+    mine, _q, _base = _own_editions()
+    out = dict(mine)
+    if source:
+        try:
+            for key, v in _source_editions().items():
+                out.setdefault(key, v)
+        except Exception as exc:  # noqa: BLE001
+            _log().warning("The list of %s could not be read: %s", SOURCE, exc)
+            if not mine:
+                raise
+    if mine:
+        _rename(mine)
+    return out
 
+
+def _rename(mine: dict[str, dict]) -> None:
+    """The translations downloaded before keep their text but take the names isnady-data gives them."""
+    if not path().exists():
+        return
+    try:
+        conn = _connect()
+        conn.executemany("UPDATE editions SET author = ? WHERE key = ? AND author != ?",
+                         [(v["author"], k, v["author"]) for k, v in mine.items()])
+        changed = conn.total_changes
+        conn.commit()
+        conn.close()
+        if changed:
+            _cached.cache_clear()
+    except sqlite3.Error:
+        pass
+
+
+def _verses_of(data: dict) -> list[tuple[int, int, str]]:
+    if "verses" in data:                                   # isnady-quran/1
+        return [(int(s), int(a), t) for s, a, t in data["verses"]]
+    return [(v["chapter"], v["verse"], v["text"]) for v in data["quran"]]
+
+
+def _read(about: dict, key: str) -> tuple[list, str]:
+    """The verses of an edition and where they came from: its own address first, the source's after."""
     from isnady.data.fetch import read_bytes
+
+    tries = [(about.get("url") or f"{BASE}/editions/{key}.min.json", about.get("origin", SOURCE), about.get("sha256"))]
+    if about.get("origin") == OWN:
+        tries.append((f"{BASE}/editions/{key}.min.json", SOURCE, None))
+    last = None
+    for url, origin, sha in tries:
+        try:
+            raw = read_bytes(url, timeout=600)
+            if sha and hashlib.sha256(raw).hexdigest() != sha:
+                raise ValueError(f"{url}: the file is not the one the catalog lists (sha256)")
+            rows = _verses_of(json.loads(raw.decode("utf-8-sig")))
+            if len(rows) < 6000:
+                raise ValueError(f"{url}: {len(rows)} verses")
+            return rows, origin
+        except Exception as exc:  # noqa: BLE001 — the next place is tried, the last error said
+            _log().warning("Qur'an text %s not read from %s: %s", key, url, exc)
+            last = exc
+    raise last  # type: ignore[misc]
+
+
+def _suras_rows(q: dict | None, base: str) -> list[tuple]:
+    from isnady.data.fetch import read_bytes
+
+    if q and q.get("suras"):
+        from isnady.core.repositories import absolute
+
+        try:
+            data = json.loads(read_bytes(absolute(base, q["suras"]), timeout=120))
+            return [(x["n"], x["name"], x["english"], x["arabic"], x["place"], x["verses"]) for x in data["suras"]]
+        except Exception as exc:  # noqa: BLE001
+            _log().warning("The suras not read from %s: %s", OWN, exc)
+    meta = json.loads(read_bytes(f"{BASE}/info.json", timeout=120))
+    return [(c["chapter"], c["name"], c["englishname"], c["arabicname"], c["revelation"], len(c["verses"]))
+            for c in meta["chapters"]]
+
+
+def fetch(editions: list[str] | None = None, progress=None, info: dict | None = None) -> list[str]:
+    """Download the Arabic (once) and these editions (keys as "tur-diyanetisleri"); returns the keys kept. A text
+    that cannot be read is said (progress, the log) and the others are still downloaded; raises only when none was."""
+    from datetime import datetime, timezone
 
     say = progress or (lambda _m: None)
     conn = _connect()
     try:
+        mine, q, base = _own_editions()
         if not conn.execute("SELECT COUNT(*) FROM suras").fetchone()[0]:
             say("Reading the suras")
-            meta = json.loads(read_bytes(f"{BASE}/info.json", timeout=120))
-            conn.executemany("INSERT OR REPLACE INTO suras VALUES (?, ?, ?, ?, ?, ?)", [
-                (c["chapter"], c["name"], c["englishname"], c["arabicname"], c["revelation"], len(c["verses"]))
-                for c in meta["chapters"]])
-        wanted = ([ARABIC] if not available() else []) + [e for e in (editions or []) if e != ARABIC]
-        if any(e not in (info or {}) for e in wanted):
-            info = {**catalog(say), **(info or {})}
-        kept = []
+            conn.executemany("INSERT OR REPLACE INTO suras VALUES (?, ?, ?, ?, ?, ?)", _suras_rows(q, base))
+            conn.commit()
+        wanted = ([ARABIC] if not available() else []) + [e for e in dict.fromkeys(editions or []) if e != ARABIC]
+        info = {**(info or {}), **mine}
+        if any(e not in info for e in wanted):
+            try:
+                info = {**_source_editions(), **info}
+            except Exception as exc:  # noqa: BLE001
+                _log().warning("The list of %s could not be read: %s", SOURCE, exc)
+        kept, failed = [], []
         for key in wanted:
             about = info.get(key)
             if about is None:
-                say(f"No translation '{key}' in the source")
+                say(f"No translation '{key}'")
+                failed.append(f"{key}: not listed")
                 continue
             say(f"Downloading {about['language']} — {about['author']}")
-            data = json.loads(read_bytes(f"{BASE}/editions/{key}.min.json", timeout=600))
-            rows = [(key, v["chapter"], v["verse"], v["text"]) for v in data["quran"]]
+            try:
+                rows, origin = _read(about, key)
+            except Exception as exc:  # noqa: BLE001
+                failed.append(f"{about['author']}: {exc}")
+                say(f"Not downloaded: {about['author']} ({exc})")
+                continue
             conn.execute("DELETE FROM verses WHERE edition = ?", (key,))
-            conn.executemany("INSERT OR REPLACE INTO verses VALUES (?, ?, ?, ?)", rows)
-            conn.execute("INSERT OR REPLACE INTO editions VALUES (?, ?, ?, ?, ?, ?, ?)",
-                         (key, about["language"], about["author"], about["direction"], about["source"],
-                          about.get("comments", ""), datetime.now(timezone.utc).isoformat(timespec="seconds")))
+            conn.executemany("INSERT OR REPLACE INTO verses VALUES (?, ?, ?, ?)", [(key, s, a, t) for s, a, t in rows])
+            conn.execute("INSERT OR REPLACE INTO editions (key, language, author, direction, source, comments, "
+                         "imported_at, origin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                         (key, about["language"], about["author"], about.get("direction") or "ltr",
+                          about.get("source") or "", about.get("comments") or "",
+                          datetime.now(timezone.utc).isoformat(timespec="seconds"), origin))
             conn.commit()
             kept.append(key)
+            _log().info("Qur'an text %s downloaded from %s", key, origin)
         _cached.cache_clear()
+        if failed and not kept:
+            raise RuntimeError("; ".join(failed))
         return kept
     finally:
         conn.close()
@@ -137,8 +280,11 @@ def _cached() -> tuple[list[dict], list[dict]]:
     suras = [{"n": n, "name": name, "english": english, "arabic": arabic, "place": place, "verses": verses,
               "tr": TR_NAMES[n - 1] if 0 < n <= len(TR_NAMES) else name}
              for n, name, english, arabic, place, verses in conn.execute("SELECT * FROM suras ORDER BY n")]
-    eds = [{"key": k, "language": lang, "author": author, "direction": d, "source": s, "comments": c}
-           for k, lang, author, d, s, c, _at in conn.execute("SELECT * FROM editions ORDER BY language, author")]
+    eds = [{"key": k, "language": lang, "author": author, "direction": d, "source": s, "comments": c,
+            "origin": o or SOURCE}
+           for k, lang, author, d, s, c, o in conn.execute(
+               "SELECT key, language, author, direction, source, comments, origin FROM editions "
+               "ORDER BY language, author")]
     conn.close()
     return suras, eds
 

@@ -1671,16 +1671,24 @@ def cmd_quran(args) -> int:
     if words[:1] == ["editions"]:
         if args.installed or not words[1:] and not args.language:
             for e in Q.editions():
-                print(f"  {e['key']:28} {e['language']:12} {e['author']}")
+                print(f"  {e['key']:28} {e['language']:12} {e['author']:40} [{e['origin']}]")
             if not Q.available():
                 print("The Qur'an is not downloaded: iy quran download")
             return 0
-        for key, v in sorted(Q.catalog(say).items(), key=lambda kv: (kv[1]["language"], kv[1]["author"])):
+        everything = Q.catalog(say, source=not args.own)
+        shown = 0
+        for key, v in sorted(everything.items(),
+                             key=lambda kv: (kv[1]["language"], kv[1]["origin"] != Q.OWN, kv[1]["author"].lower())):
             if args.language and args.language.lower() not in (v["language"].lower(), key[:3]):
                 continue
             if key.endswith("-la"):
                 continue
-            print(f"  {key:30} {v['language']:12} {v['author']}   {v['source']}")
+            star = "★" if v["origin"] == Q.OWN else " "
+            print(f"  {star} {key:30} {v['language']:12} {v['author']}   {v['source'] or v['origin']}")
+            shown += 1
+        own = sum(1 for v in everything.values() if v["origin"] == Q.OWN)
+        print(f"{shown} shown · ★ {own} kept in isnady-data" if own else
+              f"{shown} shown · isnady-data has none yet: every text is read from {Q.SOURCE}")
         return 0
     if words[:1] == ["remove"]:
         for key in words[1:]:
@@ -2385,6 +2393,7 @@ def build_parser() -> argparse.ArgumentParser:
                                                           "Shia books apart)")
     qu.add_argument("--language", help="editions: only this language, e.g. Turkish")
     qu.add_argument("--installed", action="store_true", help="editions: only those downloaded")
+    qu.add_argument("--own", action="store_true", help="editions: only those isnady-data keeps (★)")
     qu.add_argument("--lang", choices=("en", "tr", "ar"), help="the language of the sura names")
     qu.add_argument("--limit", type=int, default=30, help="search: how many verses to show")
     qu.add_argument("--width", type=int, default=100, help="characters per line")

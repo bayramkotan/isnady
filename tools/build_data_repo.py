@@ -5,6 +5,9 @@
                                           isnady's own format under our names (sunni/bukhari/, shia/kafi/,
                                           rijal/sunni/…), catalog.json and README.md; its catalog is also written as
                                           the copy shipped with isnady. Then commit and push that folder.
+    python tools/build_data_repo.py --quran ../isnady-data
+                                          build only quran/: the Arabic (Tanzil) and the translations chosen in
+                                          QURAN, in isnady's format, and the catalog's "quran" section
     python tools/build_data_repo.py --catalogs
                                           write the catalogs of the optional repositories shipped with isnady
 
@@ -612,11 +615,126 @@ def convert_tq(target: Path, key: str):
                       {"ara": {"texts": ara}, "eng": {"texts": eng, "sections": sections}})
 
 
+# ------------------------------------------------------------------ the Qur'an (Q1b)
+QURAN_RAW = f"{RAW}/fawazahmed0/quran-api/1"
+QURAN_ORIGIN = {"name": "fawazahmed0/quran-api", "url": "https://github.com/fawazahmed0/quran-api"}
+QURAN_ARABIC = "ara-quransimple"
+# the translations kept in isnady-data, each under the name its readers know it by (the source's own key kept, so a
+# translation downloaded earlier stays the same one); any other of the 98 languages isnady still reads from the
+# source itself (core.quran)
+QURAN = {
+    "Turkish": {
+        "tur-diyanetisleri": "Diyanet İşleri", "tur-diyanetvakfi": "Diyanet Vakfı",
+        "tur-elmalilihamdiya": "Elmalılı Hamdi Yazır", "tur-elmallsadelesti": "Elmalılı Hamdi Yazır (sadeleştirilmiş)",
+        "tur-alibulac": "Ali Bulaç", "tur-suleymanates": "Süleyman Ateş", "tur-hasanbasricanta": "Hasan Basri Çantay",
+        "tur-abdulbakigolpin": "Abdülbâki Gölpınarlı", "tur-ademugur": "Adem Uğur", "tur-alifikriyavuz": "Ali Fikri Yavuz",
+        "tur-celalyldrm": "Celal Yıldırım", "tur-suatyildirim": "Suat Yıldırım", "tur-muhammedesed": "Muhammed Esed",
+        "tur-ibnikesir": "İbn Kesîr (meal)", "tur-fizilalilkuran": "Fî Zılâli'l-Kur'ân", "tur-tefhimulkuran":
+        "Tefhîmü'l-Kur'ân", "tur-gultekinonan": "Gültekin Onan", "tur-muhammetabay": "Muhammet Abay",
+        "tur-sabanpiris": "Şaban Piriş", "tur-yasarnuriozturk": "Yaşar Nuri Öztürk",
+    },
+    "English": {
+        "eng-ummmuhammad": "Saheeh International (Umm Muhammad)", "eng-abdelhaleem": "M. A. S. Abdel Haleem",
+        "eng-mustafakhattaba": "Mustafa Khattab (The Clear Quran)", "eng-muftitaqiusmani": "Mufti Taqi Usmani",
+        "eng-muhammadtaqiudd": "al-Hilali and Muhsin Khan", "eng-mohammedmarmadu": "Marmaduke Pickthall",
+        "eng-abdullahyusufal": "Abdullah Yusuf Ali", "eng-muhammadasad": "Muhammad Asad",
+        "eng-wahiduddinkhan": "Wahiduddin Khan", "eng-aliquliqarai": "Ali Quli Qara'i",
+        "eng-mohammadhabibsh": "Mohammad Habib Shakir", "eng-muhammadsarwar": "Muhammad Sarwar",
+    },
+    "Urdu": {"urd-fatehmuhammadja": "Fateh Muhammad Jalandhry", "urd-muhammadjunagar": "Muhammad Junagarhi",
+             "urd-abulaalamaududi": "Abul A'la Maududi"},
+    "Indonesian": {"ind-indonesianislam": "Kementerian Agama RI", "ind-kingfahdcomplex": "King Fahd Complex"},
+    "Bengali": {"ben-muhiuddinkhan": "Muhiuddin Khan", "ben-abubakrzakaria": "Abu Bakr Zakaria"},
+    "French": {"fra-muhammadhamidul": "Muhammad Hamidullah", "fra-rashidmaash": "Rachid Maach"},
+    "Russian": {"rus-elmirkuliev": "Elmir Kuliev", "rus-abuadel": "Abu Adel"},
+    "Tamil": {"tam-janturstfoundat": "Jan Trust Foundation", "tam-abdulhameedbaqa": "Abdulhameed Baqavi"},
+    "German": {"deu-asfbubenheimand": "A. S. F. Bubenheim and N. Elyas", "deu-amirzaidan": "Amir Zaidan"},
+    "Persian": {"fas-hussainansarian": "Hussain Ansarian", "fas-mohammadmahdifo": "Mohammad Mahdi Fooladvand",
+                "fas-nasermakaremshi": "Naser Makarem Shirazi"},
+    "Spanish": {"spa-juliocortes": "Julio Cortés", "spa-muhammadisagarc": "Muhammad Isa García"},
+    "Bosnian": {"bos-besimkorkut": "Besim Korkut"},
+    "Albanian": {"sqi-sherifahmeti": "Sherif Ahmeti"},
+    "Azerbaijani": {"aze-vasimmammadaliy": "Vasim Mammadaliyev and Ziya Bunyadov", "aze-alikhanmusayev": "Alikhan Musayev"},
+    "Uzbek": {"uzb-muhammadsodikmu": "Muhammad Sodik Muhammad Yusuf"},
+    "Kazakh": {"kaz-khalifahaltai": "Khalifah Altai"},
+    "Tatar": {"tat-yakubibnnugman": "Yakub ibn Nugman"},
+    "Malay": {"msa-abdullahmuhamma": "Abdullah Muhammad Basmeih"},
+}
+QURAN_TR = (    # the suras' names in Turkish, as the Diyanet gives them (core.quran.TR_NAMES)
+    "Fâtiha", "Bakara", "Âl-i İmrân", "Nisâ", "Mâide", "En'âm", "A'râf", "Enfâl", "Tevbe", "Yûnus", "Hûd", "Yûsuf",
+    "Ra'd", "İbrâhîm", "Hicr", "Nahl", "İsrâ", "Kehf", "Meryem", "Tâhâ", "Enbiyâ", "Hac", "Mü'minûn", "Nûr", "Furkân",
+    "Şuarâ", "Neml", "Kasas", "Ankebût", "Rûm", "Lokmân", "Secde", "Ahzâb", "Sebe'", "Fâtır", "Yâsîn", "Sâffât", "Sâd",
+    "Zümer", "Mü'min", "Fussilet", "Şûrâ", "Zuhruf", "Duhân", "Câsiye", "Ahkâf", "Muhammed", "Fetih", "Hucurât", "Kâf",
+    "Zâriyât", "Tûr", "Necm", "Kamer", "Rahmân", "Vâkıa", "Hadîd", "Mücâdele", "Haşr", "Mümtehine", "Saf", "Cuma",
+    "Münâfikûn", "Teğâbün", "Talâk", "Tahrîm", "Mülk", "Kalem", "Hâkka", "Meâric", "Nûh", "Cin", "Müzzemmil",
+    "Müddessir", "Kıyâme", "İnsân", "Mürselât", "Nebe'", "Nâziât", "Abese", "Tekvîr", "İnfitâr", "Mutaffifîn",
+    "İnşikâk", "Bürûc", "Târık", "A'lâ", "Gâşiye", "Fecr", "Beled", "Şems", "Leyl", "Duhâ", "İnşirâh", "Tîn", "Alak",
+    "Kadr", "Beyyine", "Zilzâl", "Âdiyât", "Kâria", "Tekâsür", "Asr", "Hümeze", "Fîl", "Kureyş", "Mâûn", "Kevser",
+    "Kâfirûn", "Nasr", "Tebbet", "İhlâs", "Felak", "Nâs")
+QURAN_TERMS = ("The Arabic text is Tanzil's (tanzil.net), copied verbatim as its terms ask; each translation is its "
+               "translator's, as its source gives it.")
+
+
+def build_quran(target: Path) -> dict:
+    """quran/ in isnady-data: the suras, the Arabic and the translations above, each verse as the source gives it,
+    in isnady's format (isnady-quran/1); returns the catalog's "quran" section (also kept as quran/index.json)."""
+    import hashlib
+
+    folder = target / "quran"
+    index = fetch_json(f"{QURAN_RAW}/editions.json")
+    by_key = {v["name"]: v for v in index.values()}
+    info = fetch_json(f"{QURAN_RAW}/info.json")
+    suras = [{"n": c["chapter"], "name": c["name"], "english": c["englishname"], "arabic": c["arabicname"],
+              "tr": QURAN_TR[c["chapter"] - 1], "place": c["revelation"], "verses": len(c["verses"])}
+             for c in info["chapters"]]
+    write_json(folder / "suras.json", {"schema": "isnady-quran-suras/1", "suras": suras})
+    wanted = [("Arabic", QURAN_ARABIC, "The Qur'an — Tanzil (simple script)")] + \
+        [(lang, key, name) for lang, keys in QURAN.items() for key, name in keys.items()]
+    editions = []
+    for lang, key, name in wanted:
+        about = by_key.get(key)
+        if about is None:
+            print(f"  quran: no edition {key} in the source — left out")
+            continue
+        data = fetch_json(f"{QURAN_RAW}/editions/{key}.min.json")
+        verses = [[v["chapter"], v["verse"], v["text"]] for v in data["quran"]]
+        code = key.split("-")[0]
+        path = folder / code / f"{key}.json"
+        write_json(path, {"schema": "isnady-quran/1", "key": key, "language": lang, "translator": name,
+                          "direction": about.get("direction", "ltr"), "verses": verses}, compact=True)
+        raw = path.read_bytes()
+        editions.append({"key": key, "language": lang, "author": name, "direction": about.get("direction", "ltr"),
+                         "source": about.get("source") or "", "comments": about.get("comments") or "",
+                         "location": f"quran/{code}/{key}.json", "verses": len(verses), "size": len(raw),
+                         "sha256": hashlib.sha256(raw).hexdigest()})
+        print(f"  quran/{code}/{key}.json  {lang:12} {name}  ({len(verses)} verses)")
+    section = {"schema": "isnady-quran/1", "suras": "quran/suras.json", "arabic": QURAN_ARABIC, "terms": QURAN_TERMS,
+               "editions": editions}
+    write_json(folder / "index.json", section)
+    return section
+
+
+def quran_section(target: Path) -> dict | None:
+    path = target / "quran" / "index.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+def quran_into_catalogs(target: Path, section: dict) -> None:
+    """The "quran" section into the folder's catalog.json and the copy shipped with isnady."""
+    for path in (target / "catalog.json", BUNDLED / "isnady.json"):
+        cat = json.loads(path.read_text(encoding="utf-8")) if path.exists() else own_catalog()
+        cat["quran"] = section
+        write_json(path, cat)
+    if (target / "catalog.json").exists():
+        (target / "README.md").write_text(readme(json.loads((target / "catalog.json").read_text(encoding="utf-8"))),
+                                          encoding="utf-8", newline="\n")
+
+
 def mirror(target: Path, languages: set[str] | None) -> None:
     """Build isnady-data in target: every book in isnady's format under our names, the rijal works, the catalog."""
     target.mkdir(parents=True, exist_ok=True)
     for child in target.iterdir():                 # a clean tree each time (the history stays in .git)
-        if child.name not in (".git", ".gitignore", "derived", "database.json", "release"):   # DB1 keeps these
+        if child.name not in (".git", ".gitignore", "derived", "database.json", "release", "quran"):   # DB1, Q1b
             import shutil
             shutil.rmtree(child) if child.is_dir() else child.unlink()
     counts, langs = {}, {}
@@ -635,6 +753,8 @@ def mirror(target: Path, languages: set[str] | None) -> None:
         path.write_bytes(fetch(e["location"]))
         print(f"  rijal/{e['tradition']}/{path.name}")
     cat = own_catalog(counts, langs)
+    if quran_section(target):                      # the Qur'an is built on its own (--quran) and kept
+        cat["quran"] = quran_section(target)
     write_json(target / "catalog.json", cat)
     (target / "README.md").write_text(readme(cat), encoding="utf-8", newline="\n")
     (target / ".gitattributes").write_text("*.json -diff\n*.md -diff\nREADME.md diff\n", encoding="utf-8", newline="\n")
@@ -770,6 +890,24 @@ def readme(cat: dict) -> str:
     for e in rijal:
         add([f"| **{e['title']}** | {e['title_ar']} | {e['tradition'].capitalize()} | {n_rijal[e['id']]} | "
              f"{uses.get(e['tradition'], '')} | `{e['id']}` |"])
+    q = cat.get("quran")
+    if q:
+        by_lang: dict[str, list] = {}
+        for e in q["editions"]:
+            if e["key"] != q["arabic"]:
+                by_lang.setdefault(e["language"], []).append(e["author"])
+        add(["", "## 📖 The Qur'an", "",
+             "The text isnady shows in **Books → The Qur'an**, downloaded only when the reader asks for it: the Arabic "
+             f"(Tanzil's simple script) and **{sum(len(v) for v in by_lang.values())} translations in "
+             f"{len(by_lang)} languages**, each verse as its translator gave it. isnady can also read any other "
+             "translation of the 98 languages from the source named in the credits.", "",
+             "| Language | Translations |", "|---|---|"])
+        for lang, names in by_lang.items():
+            add([f"| {lang} | {', '.join(names)} |"])
+        add(["", "Layout: `quran/suras.json` (the 114 suras: names in Arabic, English and Turkish, Meccan or Medinan, "
+             "verses), `quran/<language>/<key>.json` (`{\"schema\": \"isnady-quran/1\", \"key\", \"language\", "
+             "\"translator\", \"direction\", \"verses\": [[sura, verse, text], …]}`), and the `quran` section of "
+             "catalog.json listing them."])
     add(["", "---", "",
          "## 🧩 The formats", "",
          "<details>", "<summary><b>catalog.json — <code>isnady-catalog/1</code></b></summary>", "",
@@ -825,7 +963,10 @@ def readme(cat: dict) -> str:
          "| Musnad Ahmad, Sunan al-Darimi — voweled text | Open Hadith Data | ODbL 1.0 (a database made from it stays under the ODbL) |",
          "| Riyad al-Salihin, al-Shama'il, Bulugh al-Maram, al-Adab al-Mufrad, Mishkat — text and English | sunnah.com, via AhmedBaset/hadith-json | not stated |",
          "| The Shia collections — text, English, grades | thaqalayn.net, via MohammedArab1/ThaqalaynAPI | not stated |",
-         "| The Taqrib, al-Najashi's Rijal | the OpenITI corpus | not stated |", "",
+         "| The Taqrib, al-Najashi's Rijal | the OpenITI corpus | not stated |",
+         "| The Qur'an — the Arabic and the translations | fawazahmed0/quran-api; the Arabic from tanzil.net, the "
+         "translations from Tanzil, QuranEnc and others, each named in catalog.json | The Unlicense (the collection); "
+         "Tanzil's text verbatim, as its terms ask |", "",
          "isnady itself is MIT-licensed: [bayramkotan/isnady](https://github.com/bayramkotan/isnady).", ""])
     return "\n".join(L)
 
@@ -852,10 +993,18 @@ def main() -> int:
     ap.add_argument("--mirror", metavar="DIR", help="build the isnady-data repository in DIR (its catalog is also "
                                                     "written as the copy shipped with isnady)")
     ap.add_argument("--languages", help="with --mirror: only these languages of the translated books, e.g. ara,eng,tur")
+    ap.add_argument("--quran", metavar="DIR", help="build only quran/ in the isnady-data folder DIR: the Arabic and the "
+                                                   "translations chosen above, and its section of the catalog")
     ap.add_argument("--readme", metavar="DIR", help="write only the README of the isnady-data folder DIR, from its catalog")
     a = ap.parse_args()
     if a.readme:
         write_readme(Path(a.readme).expanduser())
+        return 0
+    if a.quran:
+        target = Path(a.quran).expanduser()
+        section = build_quran(target)
+        quran_into_catalogs(target, section)
+        print(f"quran/ written to {target}: {len(section['editions'])} texts (the catalog and its shipped copy too)")
         return 0
     if not (a.catalogs or a.mirror):
         ap.print_help()

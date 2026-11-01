@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.6.7-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.6.8-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.6.7-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.6.8-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -45,7 +45,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.6.7).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.6.8).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -564,10 +564,12 @@ book** opens the hadith where it stands, among the hadith of its chapter. **⤓ 
 being read, as a PDF in the languages you choose — or as Word, EPUB, HTML and the other formats of File → Export
 (`iy export book bukhari --chapter 3 -f pdf --language Turkish`).
 
-**The Qur'an** stands first on the shelf. It is downloaded once, on request (about 3 MB): the Arabic (Tanzil's text)
-with a translation in the interface language, and **➕ Translations…** adds any of the others — some 440 translations in
-98 languages, from fawazahmed0/quran-api (Unlicense; each edition says its source: Tanzil, the King Fahd Complex,
-QuranEnc …). The contents list the 114 suras; a sura shows its verses in Arabic with the translations ticked above
+**The Qur'an** stands first on the shelf. It is downloaded once, on request (about 3 MB), from **isnady-data**: the
+Arabic (Tanzil's text, verbatim) with a translation in the interface language. **➕ Translations…** adds or removes
+the others: the 60 translations isnady-data keeps in 18 languages come first, marked ★, under the names their readers
+know them by (Diyanet İşleri, Elmalılı Hamdi Yazır, Ali Bulaç, Süleyman Ateş, Hasan Basri Çantay …; Saheeh
+International, Abdel Haleem, Mustafa Khattab …); any other of some 440 translations in 98 languages is read from the
+source isnady-data's are taken from, and so is a text isnady-data cannot give at that moment. The contents list the 114 suras; a sura shows its verses in Arabic with the translations ticked above
 it, ⟨ ⟩ go to the previous and next sura, and the search looks through the whole text, in Arabic or in a
 translation's words. Under each verse stand **the hadith that name it** — those whose translation marks the verse as
 the one it quotes or explains, "(33:33)", "[43:67]", "(Ahzab 33/51)": the translator's mark, each checked against the
@@ -1152,7 +1154,8 @@ iy book taqrib 1                     # the rijal works read the same way, entry 
 
 ```bash
 iy quran download                    # the Arabic and a translation in the interface language (about 3 MB, once)
-iy quran editions --language Turkish # the translations offered in a language (98 languages)
+iy quran editions --language Turkish # the translations of a language, ★ those isnady-data keeps (98 languages)
+iy quran editions --own              # only isnady-data's (60 translations, 18 languages)
 iy quran download tur-elmalilihamdiya eng-abdelhaleem   # more translations
 iy quran editions --installed        # those downloaded ; iy quran remove KEY
 iy quran                             # the 114 suras
