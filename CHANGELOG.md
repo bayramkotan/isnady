@@ -3,6 +3,20 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.7.0] — 2026-11-01
+
+- **The Qur'an in the languages you read (Q1d — Bayram, with a screenshot: an English translation under a Turkish
+  interface).** The translation downloaded with the Arabic was chosen by the interface language of the moment; a
+  download started from the terminal (or an English window) brought an English one to a Turkish reader. Now the
+  Qur'an follows the languages the reader reads: the interface language first, then the content languages (the
+  sidebar's "Content"), one translation each — the one its readers know best, kept in isnady-data (Turkish: Diyanet
+  İşleri; English: Saheeh International; Urdu: Jalandhry; Indonesian: Kementerian Agama …, 18 languages). The
+  translations shown follow the same order, the interface language first. A language the reader reads with no
+  translation downloaded yet is offered above the verses — **Download Turkish**, **Another translation…**, or ✕ not
+  to be asked again — and the ticks above the verses stand in the order they are read.
+- The same everywhere: Data sources (the Qur'an's card and Import all), `iy catalog import quran`,
+  `iy quran download` and `iy quran 1` (the translations shown) choose by the reader's languages.
+
 ## [0.6.9] — 2026-11-01
 
 - **Every book from isnady-data, every book in Data sources (LIB1 — Bayram: "kitapların hepsini isnady-data repoya

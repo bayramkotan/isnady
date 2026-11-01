@@ -26,7 +26,51 @@ PAGE = "https://github.com/fawazahmed0/quran-api"
 OWN_PAGE = "https://github.com/bayramkotan/isnady-data"
 OWN, SOURCE = "isnady-data", "fawazahmed0/quran-api"     # where an edition is read from
 ARABIC = "ara-quransimple"                # Tanzil's simple script: every Arabic face draws it, search reads it
-DEFAULTS = {"tr": ["tur-diyanetisleri"], "en": ["eng-ummmuhammad"], "ar": []}
+DEFAULTS = {"tr": ["tur-diyanetisleri"], "en": ["eng-ummmuhammad"], "ar": []}     # kept for older callers
+# the translation each language starts with (Q1d): the one its readers know best, kept in isnady-data
+DEFAULT_OF = {
+    "Turkish": "tur-diyanetisleri", "English": "eng-ummmuhammad", "Urdu": "urd-fatehmuhammadja",
+    "Indonesian": "ind-indonesianislam", "Bengali": "ben-muhiuddinkhan", "French": "fra-muhammadhamidul",
+    "Russian": "rus-elmirkuliev", "Tamil": "tam-janturstfoundat", "German": "deu-asfbubenheimand",
+    "Persian": "fas-hussainansarian", "Spanish": "spa-juliocortes", "Bosnian": "bos-besimkorkut",
+    "Albanian": "sqi-sherifahmeti", "Azerbaijani": "aze-vasimmammadaliy", "Uzbek": "uzb-muhammadsodikmu",
+    "Kazakh": "kaz-khalifahaltai", "Tatar": "tat-yakubibnnugman", "Malay": "msa-abdullahmuhamma"}
+
+
+def wanted_languages() -> list[str]:
+    """The languages the reader reads (Q1d, Bayram 2026-11-01: an English translation shown to a Turkish
+    interface): the interface language first, then the content languages chosen (View → Content), Arabic aside."""
+    from isnady.core import i18n, language
+
+    out = [i18n.LANGUAGES.get(language.ui_language(), ("", "English", False))[1]]
+    out += language.content_languages()
+    return [lang for lang in dict.fromkeys(out) if lang and lang != "Arabic"]
+
+
+def default_editions() -> list[str]:
+    """The translations downloaded with the Arabic: one in each language the reader reads."""
+    return [DEFAULT_OF[lang] for lang in wanted_languages() if lang in DEFAULT_OF] or [DEFAULT_OF["English"]]
+
+
+def missing_languages() -> list[str]:
+    """The languages the reader reads that have no translation downloaded yet (and one isnady-data keeps)."""
+    have = {e["language"] for e in editions()}
+    return [lang for lang in wanted_languages() if lang in DEFAULT_OF and lang not in have]
+
+
+def shown(saved: str | None) -> list[str]:
+    """The translations shown beside the Arabic. saved: the reader's own choice ("quran.editions"; "," = none);
+    None (never chosen): those downloaded in the languages the reader reads, the interface language first."""
+    have = [e for e in editions() if e["key"] != ARABIC]
+    keys = [e["key"] for e in have]
+    if saved is not None:
+        return [k for k in str(saved).split(",") if k in keys]
+    out = []
+    for lang in wanted_languages():
+        mine = [e["key"] for e in have if e["language"] == lang]
+        mine.sort(key=lambda k: k != DEFAULT_OF.get(lang))
+        out += mine[:1]
+    return out or keys[:1]
 
 # the suras' names in Turkish, as the Diyanet gives them
 TR_NAMES = (

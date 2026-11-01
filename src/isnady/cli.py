@@ -1677,7 +1677,7 @@ def cmd_quran(args) -> int:
     words = args.what or []
     say = lambda m: print(f"  … {m}", file=sys.stderr)  # noqa: E731
     if words[:1] == ["download"]:
-        wanted = words[1:] or Q.DEFAULTS.get(lang, []) or ["eng-ummmuhammad"]
+        wanted = words[1:] or Q.default_editions()
         kept = Q.fetch(wanted, say)
         print(f"Downloaded: {', '.join(kept) or 'nothing new'} — {Q.path()}")
         return 0
@@ -1711,7 +1711,9 @@ def cmd_quran(args) -> int:
         print("The Qur'an is not downloaded yet (about 3 MB, once): iy quran download\n"
               "  more translations: iy quran editions --language Turkish, then iy quran download KEY …")
         return 1
-    chosen = args.edition or [e["key"] for e in Q.editions() if e["key"] != Q.ARABIC][:2]
+    from isnady import config
+
+    chosen = args.edition or Q.shown(config.state_get("quran.editions"))
     eds = {e["key"]: e for e in Q.editions()}
     if words[:1] == ["search"]:
         text = " ".join(words[1:])

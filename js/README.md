@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.6.9-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.7.0-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.6.9-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.7.0-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -46,7 +46,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.6.9).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.7.0).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -603,7 +603,9 @@ being read, as a PDF in the languages you choose — or as Word, EPUB, HTML and 
 (`iy export book bukhari --chapter 3 -f pdf --language Turkish`).
 
 **The Qur'an** stands first on the shelf. It is downloaded once, on request (about 3 MB), from **isnady-data**: the
-Arabic (Tanzil's text, verbatim) with a translation in the interface language. **➕ Translations…** adds or removes
+Arabic (Tanzil's text, verbatim) with a translation in each language you read — the interface language first, then
+the content languages (Turkish: Diyanet İşleri; English: Saheeh International …), shown in that order. A language you
+read with no translation yet is offered above the verses in one click. **➕ Translations…** adds or removes
 the others: the 60 translations isnady-data keeps in 18 languages come first, marked ★, under the names their readers
 know them by (Diyanet İşleri, Elmalılı Hamdi Yazır, Ali Bulaç, Süleyman Ateş, Hasan Basri Çantay …; Saheeh
 International, Abdel Haleem, Mustafa Khattab …); any other of some 440 translations in 98 languages is read from the
@@ -1191,7 +1193,7 @@ iy book taqrib 1                     # the rijal works read the same way, entry 
 `iy quran` reads the Qur'an (downloaded once on request) with its translations and the hadith that name each verse.
 
 ```bash
-iy quran download                    # the Arabic and a translation in the interface language (about 3 MB, once)
+iy quran download                    # the Arabic and a translation in each language you read (about 1 MB each, once)
 iy quran editions --language Turkish # the translations of a language, ★ those isnady-data keeps (98 languages)
 iy quran editions --own              # only isnady-data's (60 translations, 18 languages)
 iy quran download tur-elmalilihamdiya eng-abdelhaleem   # more translations

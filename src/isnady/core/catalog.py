@@ -313,12 +313,11 @@ def import_entry(conn: sqlite3.Connection, entry: Entry, languages: list[str] | 
 
 
 def _import_quran(editions: list[str] | None = None, progress=None):
-    """The Qur'an (Q1b): the Arabic and these translations (keys), else one in the interface language."""
-    from isnady.core import i18n, quran
+    """The Qur'an (Q1b): the Arabic and these translations (keys), else one in each language the reader reads (Q1d)."""
+    from isnady.core import quran
     from isnady.data.importers import ImportReport
 
-    wanted = [k for k in (editions or []) if "-" in k] or quran.DEFAULTS.get(i18n.language(), []) or \
-        quran.DEFAULTS["en"]
+    wanted = [k for k in (editions or []) if "-" in k] or quran.default_editions()
     kept = quran.fetch(wanted, progress)
     report = ImportReport(source_key="quran", editions=kept, texts=len(quran.editions()))
     return report, {}

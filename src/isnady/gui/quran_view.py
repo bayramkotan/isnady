@@ -253,6 +253,14 @@ class QuranView(QWidget):
         box.addLayout(head)
         box.addLayout(nav)
         box.addWidget(self.langs)
+        # a language the reader reads with no translation downloaded yet (Q1d): offered in one click
+        self.offer = QFrame()
+        self.offer.setObjectName("Card")
+        self._offer_box = QHBoxLayout(self.offer)
+        self._offer_box.setContentsMargins(16, 8, 16, 8)
+        self._offer_box.setSpacing(8)
+        self.offer.setVisible(False)
+        box.addWidget(self.offer)
         box.addWidget(self.scroll, 1)
 
     def set_connection(self, conn_of) -> None:
@@ -260,15 +268,10 @@ class QuranView(QWidget):
 
     # ------------------------------------------------------------------ the languages shown
     def _chosen(self) -> list[str]:
+        """The translations shown: the reader's own ticks, else one in each language the reader reads (Q1d)."""
         from isnady import config
 
-        raw = config.state_get("quran.editions")
-        have = [e["key"] for e in core.editions() if e["key"] != core.ARABIC]
-        if raw is None:                          # never chosen: the interface language's translation
-            mine = core.DEFAULTS.get(i18n.language(), [])
-            return [k for k in have if k in mine] or have[:1]
-        saved = [k for k in str(raw).split(",") if k]
-        return [k for k in saved if k in have]   # "," — every translation unticked: the Arabic alone
+        return core.shown(config.state_get("quran.editions"))
 
     def _fill_langs(self) -> None:
         while self._langs_flow.count():
@@ -277,15 +280,66 @@ class QuranView(QWidget):
                 w.setParent(None)
                 w.deleteLater()
         chosen = self._chosen()
-        for e in core.editions():
-            if e["key"] == core.ARABIC:
-                continue
+        langs = core.wanted_languages()
+        # in the order they are read: those shown first as shown, then the reader's languages, then the rest
+        eds = sorted((e for e in core.editions() if e["key"] != core.ARABIC),
+                     key=lambda e: (chosen.index(e["key"]) if e["key"] in chosen else len(chosen),
+                                    langs.index(e["language"]) if e["language"] in langs else len(langs),
+                                    e["language"], e["author"]))
+        for e in eds:
             check = QCheckBox(f"{tr(e['language'])} — {e['author']}")
             check.setChecked(e["key"] in chosen)
             check.setToolTip(tr("Source: {source}", source=e["source"] or e["origin"]) + "\n"
                              + tr("Read from {origin}", origin=e["origin"]))
             check.toggled.connect(lambda on, k=e["key"]: self._toggle(k, on))
             self._langs_flow.addWidget(check)
+
+    def _fill_offer(self) -> None:
+        from isnady import config
+
+        while self._offer_box.count():
+            w = self._offer_box.takeAt(0).widget()
+            if w is not None:
+                w.setParent(None)
+                w.deleteLater()
+        skipped = [x for x in str(config.state_get("quran.skip") or "").split(",") if x]
+        missing = [lang for lang in core.missing_languages() if lang not in skipped]
+        self.offer.setVisible(bool(missing) and core.available())
+        if not missing:
+            return
+        names = ", ".join(tr(lang) for lang in missing)
+        self._offer_box.addWidget(_label("📥 " + tr("No translation in {languages} is downloaded yet.", languages=names),
+                                         "Lead"), 1)
+        for lang in missing:
+            key = core.DEFAULT_OF[lang]
+            go = QPushButton(tr("Download {language}", language=tr(lang)))
+            go.setObjectName("Primary")
+            go.setCursor(Qt.CursorShape.PointingHandCursor)
+            go.setToolTip(tr("The translation readers of {language} know best, from isnady-data; others with ➕ "
+                             "Translations…", language=tr(lang)))
+            go.clicked.connect(lambda _c=False, k=key, b=go: self._get_default(k, b))
+            self._offer_box.addWidget(go)
+        other = QPushButton(tr("Another translation…"))
+        other.setObjectName("Quiet")
+        other.setCursor(Qt.CursorShape.PointingHandCursor)
+        other.clicked.connect(self._add_translations)
+        self._offer_box.addWidget(other)
+        close = QPushButton("✕")
+        close.setObjectName("Quiet")
+        close.setToolTip(tr("Do not offer it again"))
+        close.clicked.connect(lambda: (config.state_set("quran.skip", ",".join(skipped + missing)),
+                                       self.offer.setVisible(False)))
+        self._offer_box.addWidget(close)
+
+    def _get_default(self, key: str, button) -> None:
+        from isnady import config
+
+        saved = config.state_get("quran.editions")
+        if saved is not None:                        # the reader's own ticks: the new one joins them
+            config.state_set("quran.editions", ",".join(dict.fromkeys(core.shown(saved) + [key])))
+        self._status = self.facts
+        self.facts.setText(tr("Downloading …"))
+        self._fetch([key], button)
 
     def _toggle(self, key: str, on: bool) -> None:
         from isnady import config
@@ -309,21 +363,22 @@ class QuranView(QWidget):
         self.title.setText(tr("The Qur'an"))
         self.arabic_title.setText("القرآن الكريم")
         self.facts.setText("")
-        for w in (self.prev, self.next, self.find, self.add, self.langs):
+        for w in (self.prev, self.next, self.find, self.add, self.langs, self.offer):
             w.setVisible(False)
         card = QFrame()
         card.setObjectName("Card")
         box = QVBoxLayout(card)
         box.setContentsMargins(24, 18, 24, 18)
         box.addWidget(_label(tr("The text of the Qur'an and its translations are downloaded once, on request, from "
-                                "isnady-data: the Arabic (Tanzil's text) with a translation in the interface language, "
-                                "about 3 MB; more translations can be added afterwards, of 98 languages (those "
-                                "isnady-data does not keep are read from fawazahmed0/quran-api)."), "Lead"))
+                                "isnady-data: the Arabic (Tanzil's text) with a translation in each language you read "
+                                "— {languages} — about 1 MB each; more translations can be added afterwards, of 98 "
+                                "languages (those isnady-data does not keep are read from fawazahmed0/quran-api).",
+                                languages=", ".join(tr(lang) for lang in core.wanted_languages())), "Lead"))
         go = QPushButton(tr("Download the Qur'an"))
         go.setObjectName("Primary")
         go.setCursor(Qt.CursorShape.PointingHandCursor)
         self._status = _label("", "Caption")
-        go.clicked.connect(lambda: self._fetch(core.DEFAULTS.get(i18n.language(), []) or ["eng-ummmuhammad"], go))
+        go.clicked.connect(lambda: self._fetch(core.default_editions(), go))
         row = QHBoxLayout()
         row.addWidget(go)
         row.addStretch(1)
@@ -402,6 +457,7 @@ class QuranView(QWidget):
         self.prev.setEnabled(n > 1)
         self.next.setEnabled(n < 114)
         self._fill_langs()
+        self._fill_offer()
         self._rows = core.verses(n, self._chosen())
         self._clear()
         self._shown = 0
