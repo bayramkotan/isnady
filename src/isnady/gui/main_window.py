@@ -44,6 +44,12 @@ SECTIONS = [
                                                           "Mothers of the Believers on the Sunni road; the Fourteen "
                                                           "Infallibles on the Shia road — each with the hadith that "
                                                           "names them and what the books hold of them.")),
+    ("sira", N_("Sira"), N_("The life of the Prophet ﷺ on one line, from the Year of the Elephant to his death: "
+                            "each event with its date, place and verses, Ibn Hisham's chapter and the hadith that "
+                            "name it.")),
+    ("sahifa", N_("Written sources"), N_("Hammam's sahifa as it stands in the Musnad, beside its parallels; the "
+                                         "writings that live in later books; writing in the chains — the Sunni "
+                                         "road and the Shia road apart.")),
     ("genealogy", N_("Genealogies"), N_("The prophets' lineage, Quraysh and the Prophet's family, a narrator's family "
                                        "and his line of learning, drawn as trees.")),
     ("statistics", N_("Statistics"), N_("Narrators, books and grades counted and compared.")),
@@ -246,11 +252,19 @@ class MainWindow(QMainWindow):
 
         self.companions_page = self._build('companions', lambda: CompanionsPage(self.search_page.connection,
                                                                                 self.search_page.make_card))
+        from isnady.gui.sira_page import SiraPage
+
+        self.sira_page = self._build('sira', lambda: SiraPage(self.search_page.connection))
+        from isnady.gui.sahifa_page import SahifaPage
+
+        self.sahifa_page = self._build('sahifa', lambda: SahifaPage(self.search_page.connection,
+                                                                    self.search_page.make_card))
         self.bookmarks_page = self._build('bookmarks', lambda: BookmarksPage(self.search_page.connection))
         self._page_of = {"search": self.search_page, "chains": self.isnad_page, "narrators": self.narrators_page,
                          "scholars": self.scholars_page, "books": self.books_page, "statistics": self.statistics_page,
                          "learn": self.learn_page, "genealogy": self.genealogy_page, "bookmarks": self.bookmarks_page,
-                         "companions": self.companions_page}
+                         "companions": self.companions_page, "sahifa": self.sahifa_page,
+                         "sira": self.sira_page}
         self._fill_sidebar()
         self.search_page.open_chain.connect(self._open_chain)
         # pages drawn when first opened, not at start (Bayram 2026-10-12: "çok hızlı"); a change of the data marks
@@ -259,6 +273,16 @@ class MainWindow(QMainWindow):
                       "scholars": self.scholars_page.refresh}
         if hasattr(self.companions_page, "refresh"):
             self._lazy["companions"] = self.companions_page.refresh
+        if hasattr(self.sira_page, "refresh"):
+            self._lazy["sira"] = self.sira_page.refresh
+            self.sira_page.open_chapter.connect(self._open_chapter)
+            self.sira_page.open_verse.connect(self._open_verse)
+            self.sira_page.search.connect(self._search_phrase)
+            self.search_page.data_changed.connect(lambda: self._refresh_or_later("sira"))
+        if hasattr(self.sahifa_page, "refresh"):
+            self._lazy["sahifa"] = self.sahifa_page.refresh
+            self.sahifa_page.open_hadith.connect(self._open_in_book)
+            self.search_page.data_changed.connect(lambda: self._refresh_or_later("sahifa"))
         self._pending = set(self._lazy)
         self.nav.currentRowChanged.connect(self._refresh_pending)
         self.search_page.data_changed.connect(lambda: self._refresh_or_later("chains"))
@@ -318,7 +342,8 @@ class MainWindow(QMainWindow):
         for page, signal, kind in ((self.narrators_page, "visited", "narrator"), (self.scholars_page, "visited", "scholar"),
                                    (self.books_page, "visited_book", "book"),
                                    (self.books_page, "visited_chapter", "chapter"), (self.learn_page, "visited", "term"),
-                                   (self.companions_page, "visited", "group")):
+                                   (self.companions_page, "visited", "group"),
+                                   (self.sahifa_page, "visited", "sahifa"), (self.sira_page, "visited", "sira")):
             if hasattr(page, signal):     # a page that could not be built has none (ROB1)
                 getattr(page, signal).connect(lambda ref, k=kind: self._visited((k, ref)))
         self.scholars_page.find_name.connect(self._find_narrator)
@@ -817,7 +842,7 @@ class MainWindow(QMainWindow):
     # --------------------------------------------------------------- back and forward (NAV2)
     _PLACE_SECTION = {"person_in_book": "books", "book": "books", "in_book": "books", "chapter": "books",
                       "narrator": "narrators", "scholar": "scholars", "term": "learn", "chain": "chains",
-                      "tree": "genealogy", "genealogy": "genealogy", "find": "search", "group": "companions",
+                      "tree": "genealogy", "genealogy": "genealogy", "find": "search", "group": "companions", "sahifa": "sahifa", "sira": "sira",
                       "verse": "books"}
 
     @contextmanager
@@ -883,7 +908,8 @@ class MainWindow(QMainWindow):
                            "scholar": self._open_scholar, "term": self._open_term, "chapter": self._open_chapter,
                            "chain": self._open_chain, "tree": self._open_tree,
                            "genealogy": self._open_genealogy, "find": self._find_narrator,
-                           "group": self._open_group, "verse": self._open_verse}[entry[0]]
+                           "group": self._open_group, "verse": self._open_verse,
+                           "sahifa": self._open_sahifa, "sira": self._open_sira}[entry[0]]
                 handler(*entry[1:])
         except Exception:                 # a place that is gone (a book removed): stay where we are
             pass
@@ -960,6 +986,23 @@ class MainWindow(QMainWindow):
             self._books_loaded = True
             self.nav.setCurrentRow(self._row("books"))
             self.books_page.show_verse(sura, ayah)
+
+    def _open_sira(self, event_id: str) -> None:
+        with self._place(('sira', event_id)):
+            self.nav.setCurrentRow(self._row("sira"))
+            self.sira_page.select(event_id)
+
+    def _search_phrase(self, phrase: str) -> None:
+        """Sira → the hadith that name an event: the Search page with that phrase."""
+        self.nav.setCurrentRow(self._row("search"))
+        combo = self.search_page.mode_combo           # the words in that order, as the count on the Sira page
+        combo.setCurrentIndex(max(0, combo.findData("phrase")))
+        self.search_page.search_for(phrase, "hadith")
+
+    def _open_sahifa(self, source_id: str) -> None:
+        with self._place(('sahifa', source_id)):
+            self.nav.setCurrentRow(self._row("sahifa"))
+            self.sahifa_page.select(source_id)
 
     def _open_group(self, group_id: str) -> None:
         with self._place(('group', group_id)):

@@ -1760,6 +1760,99 @@ def cmd_quran(args) -> int:
     return 0
 
 
+def cmd_sira(args) -> int:
+    """iy sira [EVENT] (SIY1): the life of the Prophet ﷺ as a timeline — every event with its date, or one event with
+    its place, verses, Ibn Hisham's chapter and the hadith that name it."""
+    import textwrap
+
+    from isnady.core import i18n, language, quran
+    from isnady.core import sira as S
+
+    i18n.set_language(args.lang or language.ui_language())
+    if not args.event:
+        for period in S.PERIODS:
+            print(f"\n{S.text(S.PERIODS[period])}")
+            for e in S.events(period):
+                print(f"  {e['id']:12} {S.year_label(e):38} {S.text(e['title'])}")
+        print("\n(iy sira EVENT: its date, place, verses, Ibn Hisham's chapter and the hadith that name it)")
+        return 0
+    e = S.find(args.event)
+    if e is None:
+        print(f"No event '{args.event}'. See: iy sira", file=sys.stderr)
+        return 1
+    print(f"{S.text(e['title'])}   {e['title'].get('ar', '')}")
+    print(f"{S.year_label(e)} · {S.text(e['when'])} · {S.text(e['place'])} · age {S.age(e)}\n")
+    print(textwrap.fill(S.text(e["text"]), args.width))
+    if e.get("differ"):
+        print(textwrap.fill("Reports differ: " + S.text(e["differ"]), args.width))
+    if e["quran"]:
+        print("\nVerses: " + ", ".join(quran.label(s, a, b, i18n.language()) for s, a, b in e["quran"]))
+    conn = _connect()
+    try:
+        from isnady.core import works
+
+        chapter = S.sira_chapter(conn, e)
+        work = works.find_work(conn, S.SIRA_WORK) if chapter else None
+        order = works.reading_order(conn, work["id"]) if work else []
+        if e.get("sira"):
+            print(f"Ibn Hisham: {e['sira']}" + (f"  (iy book sira {order.index(chapter) + 1})" if chapter in order
+                                               else "  (import it: iy catalog import sira)"))
+        if e.get("phrase"):
+            n = S.hadith_counts(conn).get(e["id"], 0)
+            print(f"Hadith that say \"{e['phrase']}\": about {n:,} in the Sunni books "
+                  f"(iy search \"{e['phrase']}\" --mode phrase)")
+    finally:
+        conn.close()
+    return 0
+
+
+def cmd_sahifa(args) -> int:
+    """iy sahifa [ID] (SHF1): the written sources — Hammam's sahifa in the Musnad with its parallels, the writings
+    that live in later books, writing in the chains; the Sunni road and the Shia road apart."""
+    import textwrap
+
+    from isnady.core import i18n, language
+    from isnady.core import sahifa as S
+
+    i18n.set_language(args.lang or language.ui_language())
+    conn = _connect()
+    try:
+        if not args.id:
+            counts = {r["id"]: r for r in S.summary(conn)}
+            for road in ("sunni", "shia"):
+                if args.tradition not in ("all", road):
+                    continue
+                print(f"\n{road.capitalize()} road")
+                for s in S.sources(road):
+                    r = counts[s["id"]]
+                    extra = (f", {r['with_parallels']} with parallels ({r['parallels']} hadith)"
+                             if s["id"] == "hammam" else "")
+                    print(f"  {s['id']:14} {S.text(s['title']):52} {r['count']:5,} hadith{extra}")
+            print("\n(iy sahifa ID: what it is, where it lives, its hadith)")
+            return 0
+        s = S.find(args.id)
+        if s is None:
+            print(f"No written source '{args.id}'. See: iy sahifa", file=sys.stderr)
+            return 1
+        print(S.text(s["title"]) + f"   [{s['road']} road]\n")
+        print(textwrap.fill(S.text(s["lead"]), args.width))
+        print(textwrap.fill("How isnady finds it: " + S.text(s["how"]), args.width) + "\n")
+        ids = S.hadith(conn, s["id"])
+        print(f"{len(ids):,} hadith in the books imported here: "
+              + ", ".join(f"{k} {n:,}" for k, _name, n in S.by_book(conn, ids)))
+        for i, (hid, key, num) in enumerate(S.refs(conn, ids)[: args.limit], 1):
+            line = f"  {i:4}. {key} {num}"
+            if s["id"] == "hammam":
+                par = S.refs(conn, S.parallels(conn, hid))
+                line += "   ← " + (", ".join(f"{k} {n}" for _h, k, n in par) if par else "no parallel through Hammam")
+            print(line)
+        if len(ids) > args.limit:
+            print(f"  … {len(ids) - args.limit:,} more (--limit)")
+        return 0
+    finally:
+        conn.close()
+
+
 def cmd_group(args) -> int:
     """iy group [ID] (AM1, EB1): the ten promised Paradise, the people of the cloak, the Mothers of the Believers; on
     the Shia road the Fourteen Infallibles — the hadith that name them and what the books hold of each member."""
@@ -2420,6 +2513,21 @@ def build_parser() -> argparse.ArgumentParser:
     gr.add_argument("--lang", choices=("en", "tr", "ar"), help="the language (default: the interface language)")
     gr.add_argument("--width", type=int, default=100, help="characters per line")
     gr.set_defaults(func=cmd_group)
+    si = sub.add_parser("sira", help="the life of the Prophet as a timeline: events, dates, verses, Ibn Hisham's chapter "
+                                     "and the hadith that name each")
+    si.add_argument("event", nargs="?", help="badr, uhud, hijra, revelation …; none = the timeline")
+    si.add_argument("--lang", choices=("en", "tr", "ar"), help="the language (default: the interface language)")
+    si.add_argument("--width", type=int, default=100, help="characters per line")
+    si.set_defaults(func=cmd_sira)
+    sh = sub.add_parser("sahifa", help="the written sources: Hammam's sahifa with its parallels, the writings that live in "
+                                       "later books, writing in the chains (Sunni and Shia apart)")
+    sh.add_argument("id", nargs="?", help="hammam, sadiqa, ali, zakat, hazm, chains-sunni; kitab-ali, jamia, fatima, "
+                                          "chains-shia; none = the list")
+    sh.add_argument("--tradition", choices=("sunni", "shia", "all"), default="all", help="the list: one road, or both")
+    sh.add_argument("--limit", type=int, default=40, help="how many hadith to list")
+    sh.add_argument("--lang", choices=("en", "tr", "ar"), help="the language (default: the interface language)")
+    sh.add_argument("--width", type=int, default=100, help="characters per line")
+    sh.set_defaults(func=cmd_sahifa)
     sc = sub.add_parser("scholar", help="the hadith scholars in the data: compilers, graders, critics, with measured statistics")
     sc.add_argument("name", nargs="*", help="part of a name, e.g. albani, bukhari; none = the list")
     sc.add_argument("--tradition", choices=("sunni", "shia", "all"), default="sunni",

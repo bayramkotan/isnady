@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.7.0-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.7.1-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.7.0-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.7.1-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -33,6 +33,8 @@
   <a href="#-books">Books</a> •
   <a href="#-hadith-scholars">Scholars</a> •
   <a href="#-companions-and-the-household">Companions</a> •
+  <a href="#-sira">Sira</a> •
+  <a href="#-written-sources">Written sources</a> •
   <a href="#-statistics">Statistics</a> •
   <a href="#-learn">Learn</a> •
   <a href="#-search-by-meaning-ai">Meaning (AI)</a> •
@@ -45,7 +47,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.7.0).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.7.1).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -682,6 +684,53 @@ the books imported here. In the terminal: `iy group`, `iy group ten --lang tr`, 
 
 ---
 
+## 🕌 Sira
+
+The life of the Prophet ﷺ on one line, from the Year of the Elephant to his death, in its three periods — before the
+mission, Mecca, Medina. Thirty-eight events, each a dot on the line and a row in the list: the birth, Halima and the
+desert, the first revelation in Hira, the emigration to Abyssinia, the boycott, al-Ta'if, the Night Journey, the pledges
+of al-'Aqaba, the Hijra, the change of the qibla, Badr, Uhud, the Trench, al-Hudaybiya, Khaybar, the conquest of Mecca,
+Hunayn, Tabuk, the Farewell Pilgrimage and his death. Each event gives its date in the Hijri and the Common Era years,
+his age, the place, and **where the reports differ, says so beside it** (the day of his birth, the year of the Trench,
+how long the boycott lasted …). Under it: **the verses revealed about it** (each opens the Qur'an at the verse), **the
+chapter of Ibn Hisham's Sira that tells it** (read in Books when the Sira is imported) and **the hadith that name it**
+— those of the Sunni books with its phrase ("يوم بدر": 204 in the full data), opened in Search. The dates follow Ibn
+Ishaq as Ibn Hisham edited him. In the terminal: `iy sira`, `iy sira badr`.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/sira.png" alt="Sira — the life of the Prophet on one line in three periods; the battle of Badr with its date, place, his age, the verses of al-Anfal and Al 'Imran, Ibn Hisham's chapter and the hadith that say 'the day of Badr'" width="850">
+</p>
+
+---
+
+## 📜 Written sources
+
+Most hadith came down by word of mouth, but some were written in the first generations, and the page shows where that
+writing lives in the books imported here — the Sunni road and the Shia road apart.
+
+- **Came down whole: the Sahifa of Hammam b. Munabbih.** Hammam wrote what Abu Hurayra told him; Ahmad b. Hanbal
+  copied the sahifa into his Musnad under one chain ('Abd al-Razzaq ← Ma'mar ← Hammam ← Abu Hurayra), the first hadith
+  with the chain and the rest "And the Messenger of God ﷺ said …". isnady finds those runs in the imported Musnad —
+  **138 hadith, the number of Hamidullah's edition of the manuscript** — and shows beside each its parallels in the
+  other books that narrate it through Hammam: 84 of them in al-Bukhari, Muslim, Abu Dawud, al-Tirmidhi and al-Adab
+  al-Mufrad (128 hadith), matched by wording.
+- **Lives in later books:** 'Abdullah b. 'Amr's *al-Sahifa al-Sadiqa* ('Amr b. Shu'ayb from his father from his
+  grandfather — 253 hadith), the sahifa of 'Ali, Abu Bakr's letter on zakat, the letter for 'Amr b. Hazm; on the
+  Shia road the Book of 'Ali (68), al-Jami'a and what the Shia books relate of Mushaf Fatima — each in the words of
+  its own books.
+- **Writing in the chains:** the links that say the text came in writing — "he wrote to me", "I found in the book of
+  …" ('Abdullah b. Ahmad's "I found in my father's book, in his hand"), "I read in the book of …"; on the Shia road
+  the letters to the Imams.
+
+Every list is isnady's reading of the texts — a chain or a wording — and the page says how each was found. In the
+terminal: `iy sahifa`, `iy sahifa hammam`, `iy sahifa kitab-ali`.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/written-sources.png" alt="Written sources — the Sahifa of Hammam b. Munabbih: 138 hadith in the Musnad, 84 with parallels in al-Bukhari, Muslim and the others" width="850">
+</p>
+
+---
+
 ## 📊 Statistics
 
 Measured in depth, each figure with what it means in plain words and how sure it is — on two roads:
@@ -1075,7 +1124,7 @@ command.
 | `iy` | Open the window |
 | [`iy search`](#-searching) | Search hadith text, narrators or scholars |
 | [`iy chain`](#-chains-books-and-other-narrations) · [`iy tahric`](#-chains-books-and-other-narrations) · [`iy book`](#-chains-books-and-other-narrations) · [`iy quran`](#-chains-books-and-other-narrations) | One chain read link by link · the other narrations of a hadith · read a book in its order · the Qur'an and the hadith that name each verse |
-| [`iy narrator`](#-narrators-scholars-and-their-lives) · [`iy life`](#-narrators-scholars-and-their-lives) · [`iy scholar`](#-narrators-scholars-and-their-lives) · [`iy group`](#-narrators-scholars-and-their-lives) · [`iy tree`](#-narrators-scholars-and-their-lives) | A narrator · a life · the scholars and the huffaz · the Companions and the Household · the genealogies |
+| [`iy narrator`](#-narrators-scholars-and-their-lives) · [`iy life`](#-narrators-scholars-and-their-lives) · [`iy scholar`](#-narrators-scholars-and-their-lives) · [`iy group`](#-narrators-scholars-and-their-lives) · [`iy sira`](#-narrators-scholars-and-their-lives) · [`iy sahifa`](#-narrators-scholars-and-their-lives) · [`iy tree`](#-narrators-scholars-and-their-lives) | A narrator · a life · the scholars and the huffaz · the Companions and the Household · the Sira · the written sources · the genealogies |
 | [`iy term`](#-the-sciences-of-hadith) · [`iy learn`](#-the-sciences-of-hadith) | The glossary · the history and method of hadith |
 | [`iy stats`](#-statistics-1) | Every statistic of the Statistics page, with its plain-words explanation |
 | [`iy catalog`](#-data-books-and-sources) · [`iy repo`](#-data-books-and-sources) · [`iy database`](#-data-books-and-sources) · [`iy import`](#-data-books-and-sources) · [`iy sources`](#-data-books-and-sources) · [`iy remove`](#-data-books-and-sources) · [`iy isnads`](#-data-books-and-sources) · [`iy ai`](#-data-books-and-sources) · [`iy formats`](#-data-books-and-sources) | Books and data: import, repositories, a ready database, your own files |
@@ -1222,6 +1271,10 @@ iy scholar --huffaz zuhri --source   # one hafiz: generation, death, al-Mizzi's 
 iy group                             # the groups: ten, kisa, mothers (Sunni), masumin (Shia)
 iy group ten --lang tr               # the ten promised Paradise: the hadith, what each road reads, each member
 iy group masumin                     # the Fourteen Infallibles: how many chains of the Shia books end at each
+iy sira                              # the life of the Prophet: 38 events in three periods, with their dates
+iy sira badr                         # one event: date, place, age, verses, Ibn Hisham's chapter, the hadith naming it
+iy sahifa                            # the written sources, Sunni and Shia apart, with how many hadith each
+iy sahifa hammam                     # Hammam's sahifa in the Musnad (138), each hadith with its parallels
 iy tree prophets                     # the prophets' lineage (--hadith: the hadith that speak of one)
 iy tree quraysh "Abu Bakr"           # the tree of Quraysh, with someone found in it
 iy tree family "Ibn Umar"            # a narrator's family among the narrators

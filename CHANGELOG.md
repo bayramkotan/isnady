@@ -3,6 +3,29 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.7.1] — 2026-11-02
+
+- **Sira: the life of the Prophet ﷺ as a timeline (SIY1 — Bayram, 2026-10-11: "SİYER de ekleyelim!! Bu harika
+  olur!").** A new section of the sidebar. The whole life on one line in its three periods (before the mission, Mecca,
+  Medina), thirty-eight events from the Year of the Elephant to his death, each a dot on the line and a row in the
+  list. Each event: its date in Hijri and Common Era years, his age, the place, and where the reports differ it says
+  so beside it (the day of the birth, the year of the Trench and of al-Muraysi', how long the boycott lasted, when the
+  Night Journey was …); the verses revealed about it, each opening the Qur'an at the verse; the chapter of Ibn Hisham's
+  Sira that tells it, opened in Books (found by its heading when the Sira is imported); and the hadith of the Sunni
+  books that name it, by a phrase of their own wording ("يوم بدر"), opened in Search as an exact phrase. The dates
+  follow Ibn Ishaq as Ibn Hisham edited him. Back and forward remember the events. `iy sira`, `iy sira badr`.
+- **Written sources (SHF1 — Bayram, 2026-10-18).** A new section, the Sunni road and the Shia road apart. *Came down
+  whole:* the Sahifa of Hammam b. Munabbih, found in the imported Musnad — the runs under 'Abd al-Razzaq ← Ma'mar ←
+  Hammam that go on with "And the Messenger of God ﷺ said" — 138 hadith, the number of Hamidullah's edition, each with
+  its parallels in the other books whose chain passes through Hammam, matched by wording (84 of the 138; al-Bukhari
+  56, Muslim 56, Abu Dawud 8, al-Tirmidhi 6, al-Adab al-Mufrad 2). *Lives in later books:* 'Abdullah b. 'Amr's
+  al-Sahifa al-Sadiqa ('Amr b. Shu'ayb from his father from his grandfather), the sahifa of 'Ali, Abu Bakr's letter on
+  zakat, the letter for 'Amr b. Hazm; on the Shia road the Book of 'Ali, al-Jami'a and what the Shia books relate of
+  Mushaf Fatima. *Writing in the chains:* "he wrote to me", "I found in the book of …", "I read in the book of …", and
+  on the Shia road the letters to the Imams. Every list says how it was found (a chain or a wording: isnady's reading).
+  Counted once per change of the database and kept. `iy sahifa`, `iy sahifa hammam`.
+- README: the two new sections with their screenshots, and their commands in the CLI section.
+
 ## [0.7.0] — 2026-11-01
 
 - **The Qur'an in the languages you read (Q1d — Bayram, with a screenshot: an English translation under a Turkish

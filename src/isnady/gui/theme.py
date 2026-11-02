@@ -143,7 +143,7 @@ THEMES = {   # key: (name, description, tokens)
 
 # the sign of each section of the sidebar, for the themes that show them (nav_signs)
 NAV_SIGNS = {"search": "🔎", "books": "📚", "narrators": "👥", "chains": "🔗", "scholars": "🎓", "companions": "🌿",
-             "genealogy": "🌳",
+             "sira": "🕌", "sahifa": "📜", "genealogy": "🌳",
              "statistics": "📊", "bookmarks": "⭐", "learn": "💡"}
 
 _current: Tokens = LIGHT
