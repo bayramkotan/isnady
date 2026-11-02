@@ -447,19 +447,29 @@ def cmd_catalog(args) -> int:
             return 1
         for kind, title in (("builtin", f"Sources of {repo.name}"), ("user", "Your sources (User Resources)")):
             entries = catalog.builtin_entries(repo.id) if kind == "builtin" else catalog.user_entries()
-            if kind == "builtin":                 # the Qur'an first, then hadith, sira, tabaqat, rijal (LIB1)
-                entries = sorted(entries, key=lambda e: catalog.KIND_ORDER.index(e.kind)
-                                 if e.kind in catalog.KIND_ORDER else 9)
+            heads = {}
+            if kind == "builtin":                 # the Qur'an, then the Sunni road, then the Shia road (LIB1, SH1)
+                def road(e):
+                    return "" if e.kind == "quran" else ("shia" if e.tradition == "shia" else "sunni")
+                entries = sorted(entries, key=lambda e: (("", "sunni", "shia").index(road(e)),
+                                                         catalog.KIND_ORDER.index(e.kind)
+                                                         if e.kind in catalog.KIND_ORDER else 9))
+                for e in entries:
+                    heads.setdefault(road(e), e.id)
+                heads = {v: {"": "The Qur'an", "sunni": "The Sunni road", "shia": "The Shia road"}[k]
+                         for k, v in heads.items()}
             print(f"\n{title}")
             if not entries:
                 print("  none yet — add one: iy catalog add TITLE FORMAT FILE-OR-URL")
             for e in entries:
+                if e.id in heads:
+                    print(f"\n  — {heads[e.id]} —")
                 st = catalog.status(conn, e)
                 state = ("imported" + (f" ({', '.join(catalog.language_label(l) if len(l) == 3 else l for l in st['languages'])})"
                                        if st["languages"] else "") + f", {st['count']:,}"
                          if st["imported"] else "not imported")
-                kind = e.kind if e.kind != "hadith" else (e.tradition if e.builtin else "")
-                print(f"  {e.id:34} {kind:7} {e.title:44} {state}")
+                kind = e.kind if e.builtin or e.kind != "hadith" else ""
+                print(f"  {e.id:38} {kind:7} {e.title:46} {state}")
         conn.close()
         return 0
     if args.action == "add":

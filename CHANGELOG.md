@@ -3,6 +3,28 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.7.2] — 2026-11-02
+
+- **Every written source is a book of its own, in isnady-data and in Data sources (SHF1b — Bayram, 2026-11-02: "simdi
+  bu kitaplar nerede???? Repoda ve Veri Kaynaklarinda da olmali … Sunni ve Sii ayirimi da olsun. Hepsi ayri ayri
+  gosterilsin").** isnady-data gains `sahifa/sunni/` and `sahifa/shia/`: ten files in a new format, `isnady-sahifa/1`,
+  each listing `[book, number]` for the hadith of one written source — the Sahifa of Hammam b. Munabbih (138, with its
+  parallels by book), al-Sahifa al-Sadiqa (253), the sahifa of 'Ali, Abu Bakr's letter on zakat, the letter for 'Amr
+  b. Hazm, writing in the chains; on the Shia road the Book of 'Ali, al-Jami'a, Mushaf Fatima as the Shia books relate
+  it, and the letters to the Imams. Each is an entry of the catalog (`iy catalog import hammam`). Importing one copies
+  nothing: it makes a book of Books whose chapters are the collections it lives in (Hammam: Musnad Ahmad 138, then
+  "Its parallels in Sahih al-Bukhari" 56, "in Sahih Muslim" 56 …), each leaf the hadith in its own collection, so
+  search and the statistics still count it once. `iy book sahifat_hammam_ibn_munabbih`.
+- **Data sources, the Sunni road and the Shia road apart.** The Qur'an, then the Sunni road (hadith collections,
+  written sources, sira, tabaqat, rijal), then the Shia road (hadith collections, written sources, rijal), each group
+  under its heading; *All · Sunni · Shia* on top, and the tiles of "What it holds" take you to their group. Book titles
+  are in the interface language (Turkish, Arabic), as is each written source's description. `iy catalog list` is
+  grouped the same way.
+- **Books:** the written sources on the shelf in their own groups ("Sunni written sources · 6", "Shia written sources ·
+  4"); a library book not yet imported (the written sources, Siyar, Tadhkira) waits on the shelf — one click imports
+  it. The Written sources page opens its source as a book ("Read it as a book in Books"), or sends you to Data sources.
+- **Preferences** can be maximized and minimized, and resized from its corner.
+
 ## [0.7.1] — 2026-11-02
 
 - **Sira: the life of the Prophet ﷺ as a timeline (SIY1 — Bayram, 2026-10-11: "SİYER de ekleyelim!! Bu harika

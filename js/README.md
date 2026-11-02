@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.7.1-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.7.2-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.7.1-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.7.2-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -48,7 +48,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.7.1).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.7.2).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -253,6 +253,7 @@ listed in **Data sources** and imported from there with one click — or all of 
 |---|---|---|
 | 📖 **The Qur'an** | The Arabic (Tanzil's text, verbatim) and **60 translations in 18 languages** — Turkish 20 (Diyanet İşleri, Diyanet Vakfı, Elmalılı Hamdi Yazır, Ali Bulaç, Süleyman Ateş, Hasan Basri Çantay …), English 12 (Saheeh International, Abdel Haleem, Mustafa Khattab …), Urdu, Indonesian, Bengali, French, Russian, Tamil, German, Persian, Spanish, Bosnian, Albanian, Azerbaijani, Uzbek, Kazakh, Tatar, Malay | Books → The Qur'an: each verse with the translations chosen, and the hadith that name it |
 | 📚 **Hadith** | 17 Sunni and 16 Shia collections — 99,746 hadith (below) | Search, Books, Isnad Chains, Statistics |
+| 📜 **Written sources** | 6 Sunni (the Sahifa of Hammam b. Munabbih 138, al-Sahifa al-Sadiqa 253, the sahifa of 'Ali, Abu Bakr's letter on zakat, the letter for 'Amr b. Hazm, writing in the chains) and 4 Shia (the Book of 'Ali, al-Jami'a, Mushaf Fatima as the Shia books relate it, the letters to the Imams) — each a list of where its hadith stand in the collections | Books, as a book of its own; Written sources |
 | 🕌 **Sira** | Ibn Hisham, *al-Sira al-Nabawiyya* (from Ibn Ishaq) — 264 chapters, 2,109 sections | Books, chapter by chapter |
 | 👥 **Tabaqat** | al-Dhahabi, *Siyar A'lam al-Nubala'* (5,851 lives) and *Tadhkirat al-Huffaz* (1,176 huffaz in 21 generations) | Books; the text beside a narrator's written life; Hadith Scholars → Huffaz |
 | ⚖ **Rijal** | Ibn Hajar, *Taqrib al-Tahdhib* (8,824) · al-Najashi, *Rijal* (1,266) | Narrators, and every chain's narrators identified |
@@ -275,6 +276,8 @@ isnady-data/
 ├── shia/al_kafi_al_kulayni/
 ├── rijal/sunni/taqrib_al_tahdhib_ibn_hajar_al_asqalani.md
 ├── rijal/shia/rijal_al_najashi_ahmad_ibn_ali_al_najashi.md
+├── sahifa/sunni/sahifat_hammam_ibn_munabbih.json   a written source: [book, number] of its hadith (isnady-sahifa/1)
+├── sahifa/shia/kitab_ali_fi_al_kutub_al_shiiyya.json
 ├── sira/al_sira_al_nabawiyya_ibn_hisham.md
 ├── tabaqat/siyar_alam_al_nubala_al_dhahabi.md
 ├── tabaqat/tadhkirat_al_huffaz_al_dhahabi.md
@@ -291,7 +294,13 @@ isnady-data/
   per language with the chapter titles and the texts. The formats are described in the
   [isnady-data README](https://github.com/bayramkotan/isnady-data#-the-formats).
 - **Sunni and Shia apart.** Every book says its tradition, and isnady keeps them on their own roads
-  (below).
+  (below). **Data sources** shows them that way too: the Qur'an, then *the Sunni road* (hadith, written sources,
+  sira, tabaqat, rijal), then *the Shia road* (hadith, written sources, rijal), with *All · Sunni · Shia* on top
+  and a tile for each group that takes you to it.
+- **A written source is a book that copies nothing.** Its file lists `[book, number]` for each of its hadith;
+  importing it makes a book of **Books** whose chapters are the collections it lives in (for Hammam: Musnad Ahmad
+  138, then its parallels in al-Bukhari, Muslim …), each leaf the hadith itself in its own collection. Search and the
+  statistics still count every hadith once. Not imported yet? It waits on the shelf of Books: one click imports it.
 - **Your own data stays yours.** What you import from your own files is never written into a
   ready database for isnady-data: it does not leave your computer.
 
@@ -318,7 +327,7 @@ must match the `database.json` beside it), puts it in place at the next start an
 previous database beside it (`isnady.<date-time>.bak.db`). Nothing is deleted.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/data-sources.png" alt="Settings → Data sources — isnady-data by default: what it holds at a glance (the Qur'an, Sunni and Shia hadith, the sira, the tabaqat, the rijal), each imported with one click or all at once" width="760">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/data-sources.png" alt="Settings → Data sources — the Sunni road and the Shia road apart: the hadith collections, then the Sunni written sources (the Sahifa of Hammam b. Munabbih, al-Sahifa al-Sadiqa …), each imported with one click" width="760">
 </p>
 
 ### Other repositories
@@ -739,6 +748,17 @@ writing lives in the books imported here — the Sunni road and the Shia road ap
 Every list is isnady's reading of the texts — a chain or a wording — and the page says how each was found. In the
 terminal: `iy sahifa`, `iy sahifa hammam`, `iy sahifa kitab-ali`.
 
+**Each one is also a book.** isnady-data keeps every written source as its own entry — under `sahifa/sunni/` and
+`sahifa/shia/` — and **Data sources** lists them in their own groups, *Sunni written sources* and *Shia written
+sources*. Imported, it stands on the shelf of **Books** with them (*Sunni written sources · 6*, *Shia written sources ·
+4*) and reads chapter by chapter: the Sahifa of Hammam opens with Musnad Ahmad (138), then *Its parallels in Sahih
+al-Bukhari* (56), *in Sahih Muslim* (56) … Nothing is copied — each leaf is the hadith in its own collection. From the
+terminal: `iy catalog import hammam`, `iy book sahifat_hammam_ibn_munabbih`.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/books-sahifa.png" alt="Books — the Sahifa of Hammam b. Munabbih as a book: Musnad Ahmad 138, then its parallels in al-Bukhari, Muslim, al-Adab al-Mufrad, al-Tirmidhi and Abu Dawud" width="850">
+</p>
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/written-sources.png" alt="Written sources — the Sahifa of Hammam b. Munabbih: 138 hadith in the Musnad, 84 with parallels in al-Bukhari, Muslim and the others" width="850">
 </p>
@@ -999,6 +1019,8 @@ and Lexend for the interface and the translations, Baloo 2 for the titles — wh
 Then *Lapis* (lapis and gold of illuminated manuscripts) and *Lapis Night*; *Paper* (warm cream and ink, for long
 reading); *Slate*; *Emerald*; *Midnight*; and *High Contrast* (black, white and yellow, for low vision). Every theme has
 the same round corners, room and sidebar signs; each keeps its own colours and typefaces.
+The Preferences window maximizes and minimizes like any other (and can be resized from its corner), so Data sources
+and the long lists have the whole screen when they need it.
 
 Every script has its own reading font, size, colour and line spacing — Arabic, Latin, Cyrillic,
 Bengali and Tamil today. The light and the dark theme each keep their own colours, and the interface
@@ -1342,11 +1364,13 @@ iy stats corpus --recompute          # compute again
 ### 📚 Data, books and sources
 
 ```bash
-iy catalog list                      # the books of the repository in use, and what is imported
+iy catalog list                      # the books of the repository: the Qur'an, the Sunni road, the Shia road
 iy catalog import sahih_muslim --language tur --language eng   # one book, in these languages
 iy catalog import --all              # everything: the Qur'an, the hadith, the sira, the tabaqat, the rijal
 iy catalog import quran              # the Qur'an (the Arabic and a translation); more: iy quran download KEY
 iy catalog import sira               # Ibn Hisham's Sira; siyar, tadhkira: al-Dhahabi's two works
+iy catalog import hammam             # a written source as a book: hammam, sadiqa, ali, kitab-ali, jamia, fatima …
+iy book sahifat_hammam_ibn_munabbih  # its chapters: Musnad Ahmad 138, then its parallels in each book
 iy book sira                         # its 264 chapters; iy book sira 12: read chapter 12; iy book siyar 3
 iy catalog languages add tr en       # one language for every book (Arabic always stays)
 iy catalog remove sahih_muslim       # remove what was imported of it

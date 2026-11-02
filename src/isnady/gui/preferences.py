@@ -181,6 +181,10 @@ class PreferencesDialog(QDialog):
     def __init__(self, parent=None, start_tab: str = "") -> None:
         super().__init__(parent)
         self.setWindowTitle(tr("Preferences"))
+        # a window of its own size: maximise and restore like the main window (Bayram, 2026-11-02)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowMaximizeButtonHint
+                            | Qt.WindowType.WindowMinimizeButtonHint)
+        self.setSizeGripEnabled(True)
         # room for the Data sources page (Bayram, 2026-10-24: "pencereyi genisletmemiz gerekiyor"): most of the screen
         screen = QApplication.primaryScreen().availableGeometry() if QApplication.primaryScreen() else None
         if screen is not None:

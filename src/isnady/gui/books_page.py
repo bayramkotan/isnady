@@ -281,30 +281,49 @@ class BooksPage(QWidget):
             return
         core_works.ensure_collection_works(conn)
         every = core_works.list_works(conn)
-        # the sira and the tabaqat (LIB1) stand after the Qur'an under a heading of their own, on every shelf
-        library = [w for w in every if w["kind"] in LIBRARY]
-        shelf = library + [w for w in every if w["kind"] not in LIBRARY
-                           and (self._shelf_tradition is None or w["tradition"] == self._shelf_tradition)]
+        # the books of the repository not imported yet (LIB2, Bayram 2026-11-02: "bu kitaplar nerede?"): on the shelf
+        # in their place, a click imports them
+        have = {w["key"] for w in every}
+        for e in self._waiting():
+            if e.book not in have:
+                every.append({"id": None, "key": "import:" + e.id, "kind": e.kind, "title": e.title, "title_ar": e.title_ar,
+                              "author": None, "leaves": e.hadith or 0, "chapters": 0, "tradition": e.tradition,
+                              "waiting": e})
+
+        def group(w):
+            if w["kind"] in LIBRARY:
+                return "library"
+            return f"{w['tradition']}-sahifa" if w["kind"] == "sahifa" else w["tradition"]
+        order = ["library", "sunni", "sunni-sahifa", "shia", "shia-sahifa"]
+        # the sira and the tabaqat (LIB1) after the Qur'an, on every shelf; each road's books, then its written
+        # sources (SHF1b), the Sunni and the Shia road apart (SH1)
+        shelf = [w for w in every if w["kind"] in LIBRARY
+                 or self._shelf_tradition is None or w["tradition"] == self._shelf_tradition]
+        shelf.sort(key=lambda w: order.index(group(w)) if group(w) in order else len(order))
         self.works.blockSignals(True)
         self.works.clear()
         self._add_quran_row()
         heading = None
         for w in shelf:
-            group = "library" if w["kind"] in LIBRARY else w["tradition"]
-            if group != heading:
-                heading = group
+            if group(w) != heading:
+                heading = group(w)
                 head = QListWidgetItem()
                 head.setFlags(Qt.ItemFlag.NoItemFlags)          # a heading, not a book
                 text = {"sunni": N_("Sunni books · {count}"), "shia": N_("Shia books · {count}"),
-                        "library": N_("Sira and tabaqat · {count}")}.get(heading, N_("Other books · {count}"))
-                count = sum(1 for x in shelf if ("library" if x["kind"] in LIBRARY else x["tradition"]) == heading)
+                        "library": N_("Sira and tabaqat · {count}"),
+                        "sunni-sahifa": N_("Sunni written sources · {count}"),
+                        "shia-sahifa": N_("Shia written sources · {count}")}.get(heading, N_("Other books · {count}"))
+                count = sum(1 for x in shelf if group(x) == heading)
                 label = _label(tr(text, count=count), "FilterTitle", wrap=False)
                 label.setContentsMargins(10, 10, 10, 2)
-                if heading == "shia":
+                if heading.startswith("shia"):
                     label.setStyleSheet(f"color: {theme.current().gold};")
                 head.setSizeHint(label.sizeHint())
                 self.works.addItem(head)
                 self.works.setItemWidget(head, label)
+            if w.get("waiting"):
+                self._add_waiting_row(w)
+                continue
             item = QListWidgetItem()
             item.setData(Qt.ItemDataRole.UserRole, w["key"])
             row = QWidget()
@@ -315,7 +334,7 @@ class BooksPage(QWidget):
             name.setFont(theme.reading_font(14, bold=True))
             box.addWidget(name)
             author = find_scholar(w["author"]) if w["author"] else None
-            leaves = (tr("{n:,} hadith", n=w["leaves"]) if w["kind"] == "hadith" else
+            leaves = (tr("{n:,} hadith", n=w["leaves"]) if w["kind"] in ("hadith", "sahifa") else
                       tr("{n:,} sections", n=w["leaves"]) if w["kind"] == "sira" else tr("{n:,} entries", n=w["leaves"]))
             facts = [tr(core_works.KIND_LABELS.get(w["kind"], "Book")), leaves, tr("{n} chapters", n=w["chapters"])]
             if author:
@@ -332,14 +351,14 @@ class BooksPage(QWidget):
             self.works.addItem(item)
             self.works.setItemWidget(item, row)
         self.works.blockSignals(False)
-        if not shelf:
+        if not [w for w in shelf if not w.get("waiting")]:
             self._clear()
             self.where.setText("")
             self.body_layout.addWidget(_label(tr("No books yet: import a collection (File → Data Sources)."), "Lead"))
             return
+        keys = [w["key"] for w in shelf if not w.get("waiting")] + ["quran"]
         wanted = ("quran" if self._quran_mode else (self._work or {}).get("key")) or \
-            config.state_get("reader.last_work") or shelf[0]["key"]
-        keys = [w["key"] for w in shelf] + ["quran"]
+            config.state_get("reader.last_work") or keys[0]
         if keep_open and self._quran_mode:
             return
         if keep_open and self._work and self._work.get("key") in keys:
@@ -350,6 +369,69 @@ class BooksPage(QWidget):
                     self.works.blockSignals(False)
             return
         self.select_work(wanted if wanted in keys else keys[0])
+
+    def _waiting(self) -> list:
+        """The books of the library (sira, tabaqat, written sources) the repository has and this computer has not
+        imported; [] when the repository cannot be read."""
+        try:
+            from isnady.core import catalog
+
+            return [e for e in catalog.builtin_entries() if e.kind in ("sira", "tabaqat", "sahifa")]
+        except Exception:  # noqa: BLE001 — the shelf never waits on the network
+            return []
+
+    def _add_waiting_row(self, w: dict) -> None:
+        from isnady.core import titles
+
+        e = w["waiting"]
+        item = QListWidgetItem()
+        item.setData(Qt.ItemDataRole.UserRole, w["key"])
+        row = QWidget()
+        box = QVBoxLayout(row)
+        box.setContentsMargins(10, 7, 10, 7)
+        box.setSpacing(1)
+        name = _label(titles.book(e.book or e.id, e.title), "RowTitle", wrap=False)
+        name.setFont(theme.reading_font(14, bold=True))
+        name.setStyleSheet(f"color: {theme.current().muted};")
+        box.addWidget(name)
+        size = f" · {tr('about {mb} MB', mb=max(1, round(e.size / 2**20)))}" if e.size else ""
+        box.addWidget(_label("⤓ " + tr("Not imported yet: click to import it") + size, "Caption", wrap=False))
+        item.setSizeHint(row.sizeHint())
+        item.setToolTip(e.description)
+        self.works.addItem(item)
+        self.works.setItemWidget(item, row)
+
+    def _import_waiting(self, entry_id: str) -> None:
+        """A book of the shelf not imported yet: imported here, in the background, then opened."""
+        from PySide6.QtWidgets import QMessageBox
+
+        from isnady.core import catalog, titles
+        from isnady.gui.sources_page import _LIVE_WORKERS, Worker
+
+        entry = next((e for e in catalog.builtin_entries() if e.id == entry_id), None)
+        if entry is None:
+            return
+        name = titles.book(entry.book or entry.id, entry.title)
+        if QMessageBox.question(self, tr("Import"), tr("Import {title} from the repository?", title=name)) \
+                != QMessageBox.StandardButton.Yes:
+            return
+        job = Worker("import", entry, None, None)
+        _LIVE_WORKERS.add(job)
+        job.finished.connect(lambda j=job: _LIVE_WORKERS.discard(j))
+        self._clear()
+        self.where.setText(html.escape(name))
+        status = _label(tr("Importing {title}…", title=name), "Lead")
+        self.body_layout.addWidget(status)
+        job.progress.connect(lambda m: status.setText(m))
+        job.done.connect(lambda ok, msg, key=entry.book: self._imported_waiting(ok, msg, key))
+        self._import_job = job
+        job.start()
+
+    def _imported_waiting(self, ok: bool, message: str, key: str | None) -> None:
+        self.refresh(keep_open=False)
+        if ok and key:
+            self.select_work(key)
+        self._say(message)
 
     def set_shelf(self, tradition: str | None) -> None:
         """Show every book, or only the Sunni or only the Shia ones."""
@@ -676,6 +758,9 @@ class BooksPage(QWidget):
         return str(label) if label and str(label).isdigit() else None
 
     def _picked_work(self, key: str) -> None:
+        if key and key.startswith("import:"):
+            self._import_waiting(key[len("import:"):])
+            return
         self.open_work(key)
         self.visited_book.emit(key)
 

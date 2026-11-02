@@ -778,6 +778,30 @@ def library_entries(target: Path | None = None) -> list[dict]:
                     "description": f"The Arabic text (Tanzil, verbatim) and {len(texts)} translations in "
                                    f"{len({e['language'] for e in texts})} languages; the Arabic and one translation "
                                    "in the interface language are downloaded, the others when chosen."})
+    files = []
+    for path in sorted((target / "sahifa").glob("*/*.json")) if target else []:
+        data = json.loads(path.read_bytes())
+        files.append((path, data))
+    try:
+        from isnady.core.sahifa import SOURCES as order
+        rank = {x["id"]: i for i, x in enumerate(order)}
+    except ImportError:
+        rank = {}
+    files.sort(key=lambda pd: (pd[1].get("road") == "shia", pd[1].get("layer") or 9, rank.get(pd[1].get("source"), 99)))
+    for path, data in files:
+        import hashlib
+
+        raw = path.read_bytes()
+        road = data.get("road", "sunni")
+        n = len(data.get("hadith", []))
+        layer = {1: "came down whole", 2: "lives in later books", 3: "writing in the chains"}.get(data.get("layer"), "")
+        out.append({"id": data["id"], "kind": "sahifa", "category": "sahifa", "format": "isnady-sahifa",
+                    "title": data["title"]["en"], "title_ar": data["title"].get("ar", ""), "tradition": road,
+                    "location": f"sahifa/{road}/{path.name}", "book": data["id"], "aliases": [data.get("source", "")],
+                    "license": "CC-BY-4.0", "hadith": n, "layer": data.get("layer"), "size": len(raw),
+                    "sha256": hashlib.sha256(raw).hexdigest(),
+                    "description": f"A written source ({layer}): {n:,} hadith, each pointed at where it stands in "
+                                   "the books of this repository; imported, it is a book of Books."})
     for item in LIBRARY:
         e = {"id": item["id"], "aliases": item["aliases"], "kind": item["kind"], "category": item["category"],
              "format": "openiti-work",
@@ -793,6 +817,25 @@ def library_entries(target: Path | None = None) -> list[dict]:
             e["size"], e["sha256"] = len(raw), hashlib.sha256(raw).hexdigest()
         out.append(e)
     return out
+
+
+def build_sahifa(target: Path, database: Path) -> int:
+    """sahifa/<road>/<book>.json in isnady-data (SHF1b): every written source isnady finds, read from a database in
+    which the books are imported (core.sahifa) — its texts and its hadith as [book, number]."""
+    import sqlite3
+
+    from isnady.core import sahifa
+
+    conn = sqlite3.connect(database)
+    try:
+        books = sahifa.export(conn)
+    finally:
+        conn.close()
+    for data in books:
+        path = target / "sahifa" / data["road"] / f"{data['id']}.json"
+        write_json(path, data)
+        print(f"  sahifa/{data['road']}/{path.name}  {len(data['hadith']):,} hadith")
+    return len(books)
 
 
 def build_library(target: Path) -> list[dict]:
@@ -843,7 +886,7 @@ def mirror(target: Path, languages: set[str] | None) -> None:
     """Build isnady-data in target: every book in isnady's format under our names, the rijal works, the catalog."""
     target.mkdir(parents=True, exist_ok=True)
     for child in target.iterdir():                 # a clean tree each time (the history stays in .git)
-        if child.name not in (".git", ".gitignore", "derived", "database.json", "release", "quran", "sira", "tabaqat"):   # DB1, Q1b, LIB1
+        if child.name not in (".git", ".gitignore", "derived", "database.json", "release", "quran", "sira", "tabaqat", "sahifa"):   # DB1, Q1b, LIB1, SHF1b
             import shutil
             shutil.rmtree(child) if child.is_dir() else child.unlink()
     counts, langs = {}, {}
@@ -1031,6 +1074,20 @@ def readme(cat: dict) -> str:
             what = e["description"].split(". ", 1)[-1]
             add([f"| **{e['title'].split(' — ')[0]}** | {e['title_ar']} | {e.get('compiler', '')} | {what} | "
                  f"`{e['id']}` |"])
+    sah = [e for e in cat.get("library", []) if e["kind"] == "sahifa"]
+    if sah:
+        add(["", "## 📜 Written sources (sahifa)", "",
+             "The hadith that were written down early, and where that writing lives in the books — the Sunni road and "
+             "the Shia road apart. Each file lists its hadith as `[book, number]` of the books here; imported, it is "
+             "a book of isnady's **Books** whose hadith are those of the books themselves (nothing is copied). Only "
+             "Hammam's sahifa came down whole; the others live in later books and are named so.", ""])
+        for road in ("sunni", "shia"):
+            rows = [e for e in sah if e["tradition"] == road]
+            if rows:
+                add(["", f"**{road.capitalize()}**", "", "| Written source | | Hadith | Import id |",
+                     "|---|---|--:|---|"])
+                for e in rows:
+                    add([f"| **{e['title']}** | {e.get('title_ar', '')} | {e.get('hadith') or 0:,} | `{e['id']}` |"])
     add(["", "---", "",
          "## 🧩 The formats", "",
          "<details>", "<summary><b>catalog.json — <code>isnady-catalog/1</code></b></summary>", "",
@@ -1120,10 +1177,26 @@ def main() -> int:
                                                    "translations chosen above, and its section of the catalog")
     ap.add_argument("--library", metavar="DIR", help="build quran/, sira/ and tabaqat/ in the isnady-data folder DIR "
                                                      "and the catalog's library (everything that is not hadith or rijal)")
+    ap.add_argument("--sahifa", metavar="DIR", help="build sahifa/ in the isnady-data folder DIR: the written sources "
+                                                    "read from --database, and the catalog's library")
+    ap.add_argument("--database", metavar="FILE", help="with --sahifa: an isnady.db with the books imported "
+                    "(without it, the sahifa/ files already in DIR are listed in the catalog)")
     ap.add_argument("--readme", metavar="DIR", help="write only the README of the isnady-data folder DIR, from its catalog")
     a = ap.parse_args()
+    sys.path.insert(0, str(ROOT / "src"))          # this repository's isnady, not an installed one
     if a.readme:
         write_readme(Path(a.readme).expanduser())
+        return 0
+    if a.sahifa:
+        target = Path(a.sahifa).expanduser()
+        if a.database:                       # read again from a database; without one, the files already there
+            n = build_sahifa(target, Path(a.database).expanduser())
+        else:
+            n = len(list((target / "sahifa").glob("*/*.json")))
+            if not n:
+                ap.error("no sahifa/ in that folder: give --database (an isnady.db with the books imported)")
+        library_into_catalogs(target)
+        print(f"sahifa/ written to {target}: {n} written sources, the catalog and its shipped copy")
         return 0
     if a.library:
         target = Path(a.library).expanduser()

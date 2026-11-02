@@ -40,6 +40,8 @@ def _label(text: str, name: str = "", wrap: bool = True, rich: bool = False) -> 
 
 class SahifaPage(QWidget):
     open_hadith = Signal(int)                # a hadith → in its book
+    open_book = Signal(str)                  # the written source as a book of Books (SHF1b)
+    wants_sources = Signal()                 # not imported yet → Data sources
     visited = Signal(str)                    # a source picked → back and forward (NAV2b)
 
     def __init__(self, connection_getter, card_maker, parent=None) -> None:
@@ -201,6 +203,16 @@ class SahifaPage(QWidget):
         box.addLayout(tags)
         box.addWidget(_label(core.text(s["lead"]), "Lead"))
         box.addWidget(_label("🔎 " + core.text(s["how"]), "Caption"))
+        as_book = conn.execute("SELECT 1 FROM works WHERE key = ?", (s["book"],)).fetchone()
+        go = QPushButton("📚 " + (tr("Read it as a book in Books") if as_book else
+                                  tr("Import it as a book (Data sources)")))
+        go.setObjectName("Quiet")
+        go.setCursor(Qt.CursorShape.PointingHandCursor)
+        go.clicked.connect((lambda: self.open_book.emit(s["book"])) if as_book else self.wants_sources.emit)
+        row = QHBoxLayout()
+        row.addWidget(go)
+        row.addStretch(1)
+        box.addLayout(row)
 
         self._ids = core.hadith(conn, source_id)
         _card, box = self._card()

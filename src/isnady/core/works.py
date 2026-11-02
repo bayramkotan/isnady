@@ -17,7 +17,8 @@ CONTAINERS = ("volume", "kitab", "bab", "section")
 LEAVES = ("hadith", "entry", "reference", "paragraph")
 _WRITTEN_HERE = (N_("Chapter {n}"), N_("Without a chapter in the source"))    # titles isnady writes, shown translated
 KIND_LABELS = {"hadith": N_("Hadith collection"), "rijal": N_("Narrators (rijal)"), "sira": N_("Sira"),
-               "tabaqat": N_("Lives of the scholars (tabaqat)"), "fiqh": N_("Fiqh"),
+               "tabaqat": N_("Lives of the scholars (tabaqat)"), "sahifa": N_("Written source (sahifa)"),
+               "fiqh": N_("Fiqh"),
                "commentary": N_("Commentary"), "other": N_("Book")}
 
 
@@ -114,9 +115,11 @@ def list_works(conn: sqlite3.Connection) -> list[dict]:
 
     # counted once per change of the database and kept (core.cache): counting every hadith of every book
     # again on each click of the Books page made it slow on a full database (2026-10-12)
-    rows = cache.kept(conn, "works", lambda c: [list(r) for r in c.execute(
+    # a written source's parallels (its "par:" chapters) are not its own hadith and are not counted (SHF1b)
+    rows = cache.kept(conn, "works-2", lambda c: [list(r) for r in c.execute(
         """SELECT w.id, w.key, w.kind, w.title, w.title_ar, w.author,
-                  (SELECT COUNT(*) FROM work_nodes n WHERE n.work_id = w.id AND n.kind IN ('hadith', 'entry', 'paragraph')),
+                  (SELECT COUNT(*) FROM work_nodes n WHERE n.work_id = w.id AND n.kind IN ('hadith', 'entry', 'paragraph')
+                     AND NOT EXISTS (SELECT 1 FROM work_nodes p WHERE p.id = n.parent_id AND p.label LIKE 'par:%')),
                   (SELECT COUNT(*) FROM work_nodes n WHERE n.work_id = w.id AND n.parent_id IS NULL),
                   COALESCE((SELECT c.tradition FROM collections c WHERE c.id = w.collection_id),
                            (SELECT p.tradition FROM persons p WHERE p.source_id = w.source_id LIMIT 1), 'sunni')
@@ -127,7 +130,14 @@ def list_works(conn: sqlite3.Connection) -> list[dict]:
     off = core_books.disabled()
     from isnady.core import titles
 
-    works = [{"id": r[0], "key": r[1], "kind": r[2], "title": titles.book(r[1], r[3]) if r[2] == "hadith" else r[3],
+    from isnady.core import sahifa as core_sahifa
+
+    shia_sahifa = set(core_sahifa.book_ids("shia"))
+    for r in rows:                          # a written source walks its own road (SH1)
+        if r[2] == "sahifa":
+            r[8] = "shia" if r[1] in shia_sahifa else "sunni"
+    works = [{"id": r[0], "key": r[1], "kind": r[2],
+              "title": titles.book(r[1], r[3]) if r[2] in ("hadith", "sahifa", "sira", "tabaqat") else r[3],
               "title_ar": r[4], "author": r[5],
               "leaves": r[6], "chapters": r[7], "tradition": r[8] if r[8] in ("sunni", "shia") else "other"}
              for r in rows if not (r[2] == "hadith" and r[1] in off)]
@@ -175,6 +185,11 @@ def _work_key(conn: sqlite3.Connection, work_id: int) -> str | None:
 def _shown(conn: sqlite3.Connection, work_id: int, kind: str, label, title):
     """A chapter's title as shown: in the interface language where isnady has it; the titles isnady writes itself
     ("Chapter 3", "Without a chapter in the source") translated."""
+    if kind == "kitab" and label and str(label).startswith(("book:", "par:")):
+        from isnady.core import titles as core_titles
+
+        name = core_titles.book(str(label)[5:] if str(label).startswith("book:") else str(label)[4:], title)
+        return name if str(label).startswith("book:") else t("Its parallels in {book}", book=name)
     if kind == "kitab" and label is not None:
         own = _chapter_titles(conn, work_id).get(str(label))
         if own:

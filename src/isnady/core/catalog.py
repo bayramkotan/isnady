@@ -30,15 +30,15 @@ FAWAZ_KEY = "fawazahmed0-hadith-api"
 LANGUAGE_NAMES = {"ara": N_("Arabic"), "tur": N_("Turkish"), "eng": N_("English"), "urd": N_("Urdu"), "ind": N_("Indonesian"),
                   "ben": N_("Bengali"), "fra": N_("French"), "rus": N_("Russian"), "tam": N_("Tamil")}
 DEFAULT_LANGUAGES = ["ara", "tur", "eng"]
-LIBRARY_KINDS = ("quran", "sira", "tabaqat")      # what is neither hadith nor rijal (LIB1)
-KIND_ORDER = ("quran", "hadith", "sira", "tabaqat", "rijal")
+LIBRARY_KINDS = ("quran", "sahifa", "sira", "tabaqat")      # what is neither hadith nor rijal (LIB1, SHF1b)
+KIND_ORDER = ("quran", "hadith", "sahifa", "sira", "tabaqat", "rijal")
 
 
 @dataclass
 class Entry:
     id: str
     title: str
-    kind: str                       # hadith | rijal | quran | sira | tabaqat (the last three: the library, LIB1)
+    kind: str                       # hadith | rijal | quran | sahifa | sira | tabaqat (the last four: the library)
     format_id: str
     location: str
     description: str
@@ -207,9 +207,10 @@ def status(conn: sqlite3.Connection, entry: Entry) -> dict:
     src = conn.execute("SELECT id, imported_at, tier FROM sources WHERE key = ?", (entry.source_key,)).fetchone()
     if src is None:
         return {"imported": False, "languages": [], "when": None, "count": 0}
-    if entry.kind in ("sira", "tabaqat"):
+    if entry.kind in ("sira", "tabaqat", "sahifa"):
         count = conn.execute("SELECT COUNT(*) FROM work_nodes n JOIN works w ON w.id = n.work_id WHERE w.source_id = ? "
-                             "AND n.kind IN ('entry', 'paragraph')", (src["id"],)).fetchone()[0]
+                             "AND n.kind IN ('entry', 'paragraph', 'hadith') AND (n.label IS NULL OR n.parent_id NOT IN "
+                             "(SELECT id FROM work_nodes WHERE label LIKE 'par:%'))", (src["id"],)).fetchone()[0]
         return {"imported": count > 0, "languages": [], "when": src["imported_at"], "count": count, "tier": src["tier"]}
     if entry.book:
         langs = [r[0] for r in conn.execute(
@@ -333,7 +334,7 @@ def remove_entry(conn: sqlite3.Connection, entry: Entry) -> bool:
         quran.path().unlink()
         quran._cached.cache_clear()
         return True
-    if entry.kind in ("sira", "tabaqat"):
+    if entry.kind in ("sira", "tabaqat", "sahifa"):
         src = conn.execute("SELECT id FROM sources WHERE key = ?", (entry.source_key,)).fetchone()
         if src is None:
             return False

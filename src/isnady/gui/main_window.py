@@ -282,6 +282,8 @@ class MainWindow(QMainWindow):
         if hasattr(self.sahifa_page, "refresh"):
             self._lazy["sahifa"] = self.sahifa_page.refresh
             self.sahifa_page.open_hadith.connect(self._open_in_book)
+            self.sahifa_page.open_book.connect(self._open_book)
+            self.sahifa_page.wants_sources.connect(lambda: self._preferences("sources"))
             self.search_page.data_changed.connect(lambda: self._refresh_or_later("sahifa"))
         self._pending = set(self._lazy)
         self.nav.currentRowChanged.connect(self._refresh_pending)

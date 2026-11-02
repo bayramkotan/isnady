@@ -29,7 +29,7 @@ HAMMAM_NAME = "همام بن منبه"             # Hammam b. Munabbih, as Ibn 
 
 SOURCES: list[dict] = [
     {
-        "id": "hammam", "road": "sunni", "layer": 1,
+        "id": "hammam", "book": "sahifat_hammam_ibn_munabbih", "road": "sunni", "layer": 1,
         "title": {"en": "The Sahifa of Hammam b. Munabbih", "tr": "Hemmâm b. Münebbih'in Sahîfesi",
                   "ar": "صحيفة همام بن منبه"},
         "lead": {
@@ -62,7 +62,7 @@ SOURCES: list[dict] = [
                       "والنظائر أحاديث الكتب الأخرى التي يمر إسنادها بهمام، تُطابَق بألفاظها (قراءة isnady)."},
     },
     {
-        "id": "sadiqa", "road": "sunni", "layer": 2,
+        "id": "sadiqa", "book": "al_sahifa_al_sadiqa_abd_allah_ibn_amr", "road": "sunni", "layer": 2,
         "title": {"en": "al-Sahifa al-Sadiqa of 'Abdullah b. 'Amr", "tr": "Abdullah b. Amr'ın es-Sahîfetü's-Sâdıka'sı",
                   "ar": "الصحيفة الصادقة لعبد الله بن عمرو"},
         "lead": {
@@ -90,7 +90,7 @@ SOURCES: list[dict] = [
         "patterns": ["عمرو بن شعيب عن أبيه عن جده", "اكتب فوالذي نفسي بيده"],
     },
     {
-        "id": "ali", "road": "sunni", "layer": 2,
+        "id": "ali", "book": "sahifat_ali_ibn_abi_talib", "road": "sunni", "layer": 2,
         "title": {"en": "The sahifa of 'Ali", "tr": "Hz. Ali'nin sahîfesi", "ar": "صحيفة علي"},
         "lead": {
             "en": "Asked whether the Prophet's family had been given anything besides the Qur'an, 'Ali said: "
@@ -112,7 +112,7 @@ SOURCES: list[dict] = [
         "patterns": ["هذه الصحيفة"],
     },
     {
-        "id": "zakat", "road": "sunni", "layer": 2,
+        "id": "zakat", "book": "kitab_al_sadaqa_abi_bakr", "road": "sunni", "layer": 2,
         "title": {"en": "Abu Bakr's letter on zakat", "tr": "Hz. Ebû Bekir'in zekât mektubu",
                   "ar": "كتاب أبي بكر في الصدقة"},
         "lead": {
@@ -132,7 +132,7 @@ SOURCES: list[dict] = [
         "patterns": ["كتب له هذا الكتاب", "فريضة الصدقة التي فرض"],
     },
     {
-        "id": "hazm", "road": "sunni", "layer": 2,
+        "id": "hazm", "book": "kitab_amr_ibn_hazm", "road": "sunni", "layer": 2,
         "title": {"en": "The letter for 'Amr b. Hazm", "tr": "Amr b. Hazm'a yazılan mektup",
                   "ar": "كتاب عمرو بن حزم"},
         "lead": {
@@ -151,7 +151,7 @@ SOURCES: list[dict] = [
         "patterns": ["لعمرو بن حزم", "كتاب عمرو بن حزم"],
     },
     {
-        "id": "chains-sunni", "road": "sunni", "layer": 3,
+        "id": "chains-sunni", "book": "al_kitaba_fi_al_asanid_ahl_al_sunna", "road": "sunni", "layer": 3,
         "title": {"en": "Writing in the chains", "tr": "Senedlerde yazı", "ar": "الكتابة في الأسانيد"},
         "lead": {
             "en": "Most links of a chain say they heard (\"he told us\", \"from\"). Some say the text came in "
@@ -173,7 +173,7 @@ SOURCES: list[dict] = [
     },
     # ------------------------------------------------------------------ the Shia road, on its own
     {
-        "id": "kitab-ali", "road": "shia", "layer": 2,
+        "id": "kitab-ali", "book": "kitab_ali_fi_al_kutub_al_shiiyya", "road": "shia", "layer": 2,
         "title": {"en": "The Book of 'Ali", "tr": "Kitâbu Alî", "ar": "كتاب علي"},
         "lead": {
             "en": "The Imams of the Shia books often answer from \"the Book of 'Ali\": what 'Ali wrote in his own "
@@ -190,7 +190,7 @@ SOURCES: list[dict] = [
         "patterns": ["كتاب علي", "هذه الصحيفة"],
     },
     {
-        "id": "jamia", "road": "shia", "layer": 2,
+        "id": "jamia", "book": "al_jamia_fi_al_kutub_al_shiiyya", "road": "shia", "layer": 2,
         "title": {"en": "al-Jami'a", "tr": "el-Câmia", "ar": "الجامعة"},
         "lead": {
             "en": "In al-Kafi (Kitab al-Hujja) the Imam describes al-Jami'a: a scroll seventy cubits long by the "
@@ -208,7 +208,7 @@ SOURCES: list[dict] = [
         "all": ["الجامعة", "ذراع"],
     },
     {
-        "id": "fatima", "road": "shia", "layer": 2,
+        "id": "fatima", "book": "mushaf_fatima_fi_al_kutub_al_shiiyya", "road": "shia", "layer": 2,
         "title": {"en": "Mushaf Fatima, as the Shia books relate it", "tr": "Mushaf-ı Fâtıma (Şiî kitapların anlattığı gibi)",
                   "ar": "مصحف فاطمة كما ترويه الكتب الشيعية"},
         "lead": {
@@ -227,7 +227,7 @@ SOURCES: list[dict] = [
         "patterns": ["مصحف فاطمة"],
     },
     {
-        "id": "chains-shia", "road": "shia", "layer": 3,
+        "id": "chains-shia", "book": "al_mukataba_maa_al_aimma", "road": "shia", "layer": 3,
         "title": {"en": "Writing in the chains, and letters to the Imams", "tr": "Senedlerde yazı ve imamlara mektuplar",
                   "ar": "الكتابة في الأسانيد والمكاتبة مع الأئمة"},
         "lead": {
@@ -432,3 +432,81 @@ def summary(conn: sqlite3.Connection) -> list[dict]:
             row["parallels"] = sum(len(v) for v in data["hammam"]["parallels"].values())
         rows.append(row)
     return rows
+
+
+# ------------------------------------------------------------------ as books (SHF1b, LIB2)
+SCHEMA = "isnady-sahifa/1"
+
+
+def book_ids(road: str | None = None) -> dict[str, str]:
+    """{book id (isnady-data, the work's key): source id}."""
+    return {x["book"]: x["id"] for x in SOURCES if road is None or x["road"] == road}
+
+
+def export(conn: sqlite3.Connection) -> list[dict]:
+    """Every written source as a book for isnady-data (sahifa/<road>/<book>.json): its texts in three languages and
+    its hadith as [book, number] of the books they stand in — read from the database imported here."""
+    out = []
+    for s in SOURCES:
+        ids = hadith(conn, s["id"])
+        rows = refs(conn, ids)
+        item = {"schema": SCHEMA, "id": s["book"], "source": s["id"], "road": s["road"], "layer": s["layer"],
+                "title": s["title"], "lead": s["lead"], "how": s["how"],
+                "hadith": [[key, num] for _h, key, num in rows]}
+        if s["id"] == "hammam":
+            item["parallels"] = {num: [[k, n] for _x, k, n in refs(conn, parallels(conn, hid))]
+                                 for hid, _key, num in rows if parallels(conn, hid)}
+        out.append(item)
+    return out
+
+
+def write_work(conn: sqlite3.Connection, data: dict, source_id: int) -> tuple[int, int]:
+    """A written source as a book of Books (core.works), its hadith those of the books imported here — nothing is
+    copied: each leaf points at the hadith where it stands. Returns (found, missing)."""
+    key = data["id"]
+    road = data.get("road", "sunni")
+    conn.execute("DELETE FROM works WHERE key = ?", (key,))
+    title = data["title"].get("en") if isinstance(data.get("title"), dict) else str(data.get("title") or key)
+    wid = conn.execute("INSERT INTO works (key, kind, title, title_ar, source_id, stamp) VALUES (?, 'sahifa', ?, ?, ?, ?)",
+                       (key, title, (data.get("title") or {}).get("ar"), source_id,
+                        f"sahifa|{road}|{len(data.get('hadith', []))}")).lastrowid
+    lookup: dict[tuple[str, str], int] = {}
+    wanted = {k for k, _n in data.get("hadith", [])} | {k for v in (data.get("parallels") or {}).values() for k, _n in v}
+    for key_, num, hid in conn.execute(
+            f"""SELECT c.key, h.number, h.id FROM hadiths h JOIN collections c ON c.id = h.collection_id
+                WHERE c.key IN ({','.join('?' * len(wanted)) or "''"})""", tuple(wanted)):
+        lookup[(key_, str(num))] = hid
+    found = missing = 0
+    chapters: dict[str, int] = {}
+    ordinal = {"top": 0}
+
+    def chapter(label: str, name: str) -> int:
+        if label not in chapters:
+            ordinal["top"] += 1
+            chapters[label] = conn.execute(
+                "INSERT INTO work_nodes (work_id, parent_id, ordinal, kind, label, title) VALUES (?, NULL, ?, 'kitab', ?, ?)",
+                (wid, ordinal["top"], label, name)).lastrowid
+        return chapters[label]
+
+    names = {k: n for k, n in conn.execute("SELECT key, name FROM collections")}
+    count: dict[int, int] = {}
+    for book, num in data.get("hadith", []):
+        hid = lookup.get((book, str(num)))
+        if hid is None:
+            missing += 1
+            continue
+        parent = chapter(f"book:{book}", names.get(book, book))
+        count[parent] = count.get(parent, 0) + 1
+        conn.execute("INSERT INTO work_nodes (work_id, parent_id, ordinal, kind, label, hadith_id) "
+                     "VALUES (?, ?, ?, 'hadith', ?, ?)", (wid, parent, count[parent], str(num), hid))
+        found += 1
+    for _num, pars in (data.get("parallels") or {}).items():
+        for book, n in pars:
+            hid = lookup.get((book, str(n)))
+            if hid is None:
+                continue
+            parent = chapter(f"par:{book}", names.get(book, book))
+            count[parent] = count.get(parent, 0) + 1
+            conn.execute("INSERT INTO work_nodes (work_id, parent_id, ordinal, kind, label, hadith_id) "
+                         "VALUES (?, ?, ?, 'hadith', ?, ?)", (wid, parent, count[parent], str(n), hid))
+    return found, missing

@@ -1478,6 +1478,206 @@
    "description": "The Arabic text (Tanzil, verbatim) and 60 translations in 18 languages; the Arabic and one translation in the interface language are downloaded, the others when chosen."
   },
   {
+   "id": "sahifat_hammam_ibn_munabbih",
+   "kind": "sahifa",
+   "category": "sahifa",
+   "format": "isnady-sahifa",
+   "title": "The Sahifa of Hammam b. Munabbih",
+   "title_ar": "صحيفة همام بن منبه",
+   "tradition": "sunni",
+   "location": "sahifa/sunni/sahifat_hammam_ibn_munabbih.json",
+   "book": "sahifat_hammam_ibn_munabbih",
+   "aliases": [
+    "hammam"
+   ],
+   "license": "CC-BY-4.0",
+   "hadith": 138,
+   "layer": 1,
+   "size": 13521,
+   "sha256": "ea5ac014143d00ac1c54c3d26e13e0cb9fe15e47785db6da40f9e13e9a87cd07",
+   "description": "A written source (came down whole): 138 hadith, each pointed at where it stands in the books of this repository; imported, it is a book of Books."
+  },
+  {
+   "id": "al_sahifa_al_sadiqa_abd_allah_ibn_amr",
+   "kind": "sahifa",
+   "category": "sahifa",
+   "format": "isnady-sahifa",
+   "title": "al-Sahifa al-Sadiqa of 'Abdullah b. 'Amr",
+   "title_ar": "الصحيفة الصادقة لعبد الله بن عمرو",
+   "tradition": "sunni",
+   "location": "sahifa/sunni/al_sahifa_al_sadiqa_abd_allah_ibn_amr.json",
+   "book": "al_sahifa_al_sadiqa_abd_allah_ibn_amr",
+   "aliases": [
+    "sadiqa"
+   ],
+   "license": "CC-BY-4.0",
+   "hadith": 253,
+   "layer": 2,
+   "size": 10414,
+   "sha256": "795e261ba08fd9a795203bf5eff889302ee8849bff0493b2d9834623837e4b7e",
+   "description": "A written source (lives in later books): 253 hadith, each pointed at where it stands in the books of this repository; imported, it is a book of Books."
+  },
+  {
+   "id": "sahifat_ali_ibn_abi_talib",
+   "kind": "sahifa",
+   "category": "sahifa",
+   "format": "isnady-sahifa",
+   "title": "The sahifa of 'Ali",
+   "title_ar": "صحيفة علي",
+   "tradition": "sunni",
+   "location": "sahifa/sunni/sahifat_ali_ibn_abi_talib.json",
+   "book": "sahifat_ali_ibn_abi_talib",
+   "aliases": [
+    "ali"
+   ],
+   "license": "CC-BY-4.0",
+   "hadith": 24,
+   "layer": 2,
+   "size": 2519,
+   "sha256": "1136e61d1f58959b5464da10a66efbe1bcadfc8a9e1c37272aa1a7f568ce947b",
+   "description": "A written source (lives in later books): 24 hadith, each pointed at where it stands in the books of this repository; imported, it is a book of Books."
+  },
+  {
+   "id": "kitab_al_sadaqa_abi_bakr",
+   "kind": "sahifa",
+   "category": "sahifa",
+   "format": "isnady-sahifa",
+   "title": "Abu Bakr's letter on zakat",
+   "title_ar": "كتاب أبي بكر في الصدقة",
+   "tradition": "sunni",
+   "location": "sahifa/sunni/kitab_al_sadaqa_abi_bakr.json",
+   "book": "kitab_al_sadaqa_abi_bakr",
+   "aliases": [
+    "zakat"
+   ],
+   "license": "CC-BY-4.0",
+   "hadith": 8,
+   "layer": 2,
+   "size": 1784,
+   "sha256": "f1bfd2b4943b63e967fbeeab7577dac888ab396e61a42c8ae58efd84dca865b1",
+   "description": "A written source (lives in later books): 8 hadith, each pointed at where it stands in the books of this repository; imported, it is a book of Books."
+  },
+  {
+   "id": "kitab_amr_ibn_hazm",
+   "kind": "sahifa",
+   "category": "sahifa",
+   "format": "isnady-sahifa",
+   "title": "The letter for 'Amr b. Hazm",
+   "title_ar": "كتاب عمرو بن حزم",
+   "tradition": "sunni",
+   "location": "sahifa/sunni/kitab_amr_ibn_hazm.json",
+   "book": "kitab_amr_ibn_hazm",
+   "aliases": [
+    "hazm"
+   ],
+   "license": "CC-BY-4.0",
+   "hadith": 6,
+   "layer": 2,
+   "size": 1480,
+   "sha256": "7beeff054c12b5dd9d288236b57d637d8c7cc6d782e0b42e069c655eca3d0254",
+   "description": "A written source (lives in later books): 6 hadith, each pointed at where it stands in the books of this repository; imported, it is a book of Books."
+  },
+  {
+   "id": "al_kitaba_fi_al_asanid_ahl_al_sunna",
+   "kind": "sahifa",
+   "category": "sahifa",
+   "format": "isnady-sahifa",
+   "title": "Writing in the chains",
+   "title_ar": "الكتابة في الأسانيد",
+   "tradition": "sunni",
+   "location": "sahifa/sunni/al_kitaba_fi_al_asanid_ahl_al_sunna.json",
+   "book": "al_kitaba_fi_al_asanid_ahl_al_sunna",
+   "aliases": [
+    "chains-sunni"
+   ],
+   "license": "CC-BY-4.0",
+   "hadith": 121,
+   "layer": 3,
+   "size": 5687,
+   "sha256": "f38af2b684b35c6a5f566300f21d70aa1f3bebc82ab8904f96165c6da3fa4b79",
+   "description": "A written source (writing in the chains): 121 hadith, each pointed at where it stands in the books of this repository; imported, it is a book of Books."
+  },
+  {
+   "id": "kitab_ali_fi_al_kutub_al_shiiyya",
+   "kind": "sahifa",
+   "category": "sahifa",
+   "format": "isnady-sahifa",
+   "title": "The Book of 'Ali",
+   "title_ar": "كتاب علي",
+   "tradition": "shia",
+   "location": "sahifa/shia/kitab_ali_fi_al_kutub_al_shiiyya.json",
+   "book": "kitab_ali_fi_al_kutub_al_shiiyya",
+   "aliases": [
+    "kitab-ali"
+   ],
+   "license": "CC-BY-4.0",
+   "hadith": 68,
+   "layer": 2,
+   "size": 3470,
+   "sha256": "af2bc05c816936b713acaa72635310e0dc52e000437a02d972dcfb739d3d3435",
+   "description": "A written source (lives in later books): 68 hadith, each pointed at where it stands in the books of this repository; imported, it is a book of Books."
+  },
+  {
+   "id": "al_jamia_fi_al_kutub_al_shiiyya",
+   "kind": "sahifa",
+   "category": "sahifa",
+   "format": "isnady-sahifa",
+   "title": "al-Jami'a",
+   "title_ar": "الجامعة",
+   "tradition": "shia",
+   "location": "sahifa/shia/al_jamia_fi_al_kutub_al_shiiyya.json",
+   "book": "al_jamia_fi_al_kutub_al_shiiyya",
+   "aliases": [
+    "jamia"
+   ],
+   "license": "CC-BY-4.0",
+   "hadith": 5,
+   "layer": 2,
+   "size": 1591,
+   "sha256": "861db91aaee1caea25cfa736f4340222fcad8c4b6b8e5c74a40b6fae748e9bd4",
+   "description": "A written source (lives in later books): 5 hadith, each pointed at where it stands in the books of this repository; imported, it is a book of Books."
+  },
+  {
+   "id": "mushaf_fatima_fi_al_kutub_al_shiiyya",
+   "kind": "sahifa",
+   "category": "sahifa",
+   "format": "isnady-sahifa",
+   "title": "Mushaf Fatima, as the Shia books relate it",
+   "title_ar": "مصحف فاطمة كما ترويه الكتب الشيعية",
+   "tradition": "shia",
+   "location": "sahifa/shia/mushaf_fatima_fi_al_kutub_al_shiiyya.json",
+   "book": "mushaf_fatima_fi_al_kutub_al_shiiyya",
+   "aliases": [
+    "fatima"
+   ],
+   "license": "CC-BY-4.0",
+   "hadith": 9,
+   "layer": 2,
+   "size": 1736,
+   "sha256": "39fbe4a1d78e89a2a92ba9be336d07fdd158570f84d1d6654d95f642e8340b34",
+   "description": "A written source (lives in later books): 9 hadith, each pointed at where it stands in the books of this repository; imported, it is a book of Books."
+  },
+  {
+   "id": "al_mukataba_maa_al_aimma",
+   "kind": "sahifa",
+   "category": "sahifa",
+   "format": "isnady-sahifa",
+   "title": "Writing in the chains, and letters to the Imams",
+   "title_ar": "الكتابة في الأسانيد والمكاتبة مع الأئمة",
+   "tradition": "shia",
+   "location": "sahifa/shia/al_mukataba_maa_al_aimma.json",
+   "book": "al_mukataba_maa_al_aimma",
+   "aliases": [
+    "chains-shia"
+   ],
+   "license": "CC-BY-4.0",
+   "hadith": 339,
+   "layer": 3,
+   "size": 12340,
+   "sha256": "dbcceec6e04a7dc5b947662aa87d291938998ca3a303cd58d2d8ad835963f6ff",
+   "description": "A written source (writing in the chains): 339 hadith, each pointed at where it stands in the books of this repository; imported, it is a book of Books."
+  },
+  {
    "id": "al_sira_al_nabawiyya_ibn_hisham",
    "aliases": [
     "sira",

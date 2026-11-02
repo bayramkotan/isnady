@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
 
+from isnady.core.i18n import N_
 from isnady.data.fetch import ResourceError, is_url, read_bytes, resolve
 from isnady.data.paths import data_dir
 
@@ -288,3 +289,7 @@ def entries(repo: Repository, refresh: bool = False) -> list:
 
 def absolute(base: str, location: str) -> str:
     return resolve(base, location) if base and not is_url(location) and not Path(location).is_absolute() else location
+
+
+# isnady-data's description as the shipped catalog says it, marked so that it is translated (tr(repo.description))
+REPO_ABOUT = N_("isnady's own repository: the Qur'an and its translations, every Sunni and Shia hadith collection, the sira, the lives of the scholars and the rijal works isnady reads, in one place and one format.")
