@@ -227,6 +227,15 @@ def _cache_path(repo_id: str) -> Path:
 _LAST: dict[str, tuple[dict, str]] = {}
 
 
+def _layout(cat: dict) -> str:
+    """Which layout a catalog's hadith books are in: "kind/road" (hadith/sunni/…, 0.7.3) or "road" (sunni/…)."""
+    for e in cat.get("entries", []):
+        loc = e.get("location") or ""
+        if e.get("kind") == "hadith" and "://" not in loc:
+            return "kind/road" if loc.startswith("hadith/") else "road"
+    return ""
+
+
 def catalog(repo: Repository, refresh: bool = False) -> tuple[dict, str]:
     """(catalog, where it came from: "network" | "saved" | "shipped"). Never raises for a built-in repository."""
     if not refresh and repo.id in _LAST:
@@ -239,6 +248,10 @@ def catalog(repo: Repository, refresh: bool = False) -> tuple[dict, str]:
         try:
             saved = json.loads(cache.read_text(encoding="utf-8"))
             fresh = not any(k in bundled()[repo.id] and k not in saved for k in ("library", "quran"))
+            # isnady-data moved to <kind>/<road>/ (0.7.3): a saved catalog of the old layout is read again now
+            ship = bundled()[repo.id]
+            if fresh and _layout(ship) != _layout(saved):
+                fresh = False
         except (OSError, ValueError):
             fresh = False
     result = None

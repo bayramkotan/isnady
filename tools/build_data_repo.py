@@ -2,7 +2,8 @@
 
     python tools/build_data_repo.py --mirror ../isnady-data [--languages ara,eng,tur]
                                           build the isnady-data repository: every book, Sunni and Shia, converted to
-                                          isnady's own format under our names (sunni/bukhari/, shia/kafi/,
+                                          isnady's own format under our names, every kind in its
+                                          own folder and the two roads apart (hadith/sunni/…, hadith/shia/…,
                                           rijal/sunni/…), catalog.json and README.md; its catalog is also written as
                                           the copy shipped with isnady. Then commit and push that folder.
     python tools/build_data_repo.py --quran ../isnady-data
@@ -12,6 +13,10 @@
                                           the Qur'an (--quran) and the works that are neither hadith nor rijal:
                                           sira/ (Ibn Hisham) and tabaqat/ (al-Dhahabi's Siyar and Tadhkira),
                                           and the catalog's "library"
+    python tools/build_data_repo.py --relayout ../isnady-data
+                                          move a folder of the old layout (sunni/, shia/, sira/<file>, tabaqat/<file>)
+                                          to the layout of isnady 0.7.3 (hadith/sunni/, hadith/shia/, sira/sunni/,
+                                          tabaqat/sunni/), and its catalog's locations with it
     python tools/build_data_repo.py --catalogs
                                           write the catalogs of the optional repositories shipped with isnady
 
@@ -309,7 +314,9 @@ def rijal() -> list[dict]:
 
 
 # ================================================================== isnady's own repository
-# Every book under OUR names: sunni/<book>/, shia/<book>/, rijal/<tradition>/<work>; isnady's own book format
+# Every book under OUR names, each kind in its folder and each road in its own under it (0.7.3, Bayram: "her bir
+# klasörde sunni, shia … klasörleri altında"): hadith/<road>/<book>/, sahifa/<road>/, sira/<road>/, tabaqat/<road>/,
+# rijal/<road>/<work>; quran/ is shared by both roads; isnady's own book format
 # (isnady-book/1, read by isnady.data.importers.isnady_book). Where each book was first published is said once,
 # in the credits of README.md and in each book's "credit" — never in a path or a key.
 LANG = {"ara": ("Arabic", "rtl"), "eng": ("English", "ltr"), "tur": ("Turkish", "ltr"), "urd": ("Urdu", "rtl"),
@@ -360,7 +367,7 @@ def _book_entry(tradition: str, key: str, title: str, ar: str, languages: list[s
                 credit: str, hadith: int | None, description: str) -> dict:
     return {"id": FOLDER[key], "title": title, "title_ar": ar,
             "kind": "hadith", "tradition": tradition, "format": "isnady",
-            "location": f"{tradition}/{FOLDER[key]}/book.json",
+            "location": f"hadith/{tradition}/{FOLDER[key]}/book.json",
             "book": key, "languages": languages, "license": license, "hadith": hadith,
             "source_name": f"isnady-data: {title}", "source_key": f"isnady-{key}", "description": description}
 
@@ -481,7 +488,7 @@ def _num(value) -> tuple[str, float | None]:
 def write_book(target: Path, tradition: str, key: str, title: str, ar: str, compiler: str, license: str | None,
                credit: str, hadiths: list[dict], langs: dict[str, dict]) -> tuple[int, list[str]]:
     """One book in isnady's format: book.json (numbers, chapters, references, grades) and a file per language."""
-    folder = target / tradition / FOLDER[key]
+    folder = target / "hadith" / tradition / FOLDER[key]
     codes = [c for c in LANG if c in langs and langs[c]["texts"]]
     book = {"schema": "isnady-book/1", "key": key, "title": title, "title_ar": ar, "tradition": tradition,
             "compiler": compiler, "license": license, "credit": credit,
@@ -494,7 +501,7 @@ def write_book(target: Path, tradition: str, key: str, title: str, ar: str, comp
     for c in codes:
         write_json(folder / f"{c}.json", {"language": c, "sections": langs[c].get("sections", {}),
                                           "texts": langs[c]["texts"]}, compact=True)
-    print(f"  {tradition}/{key}: {len(hadiths):,} hadith, {', '.join(codes)}")
+    print(f"  hadith/{tradition}/{key}: {len(hadiths):,} hadith, {', '.join(codes)}")
     return len(hadiths), codes
 
 
@@ -731,7 +738,7 @@ LIBRARY = [
     {"id": "al_sira_al_nabawiyya_ibn_hisham", "aliases": ["sira", "ibn-hisham"], "kind": "sira", "category": "sira",
      "title": "al-Sira al-Nabawiyya — Ibn Hisham", "title_ar": "السيرة النبوية لابن هشام",
      "compiler": "Ibn Hisham (d. 218; 213 in some sources), from Ibn Ishaq (d. 151)",
-     "location": "sira/al_sira_al_nabawiyya_ibn_hisham.md",
+     "location": "sira/sunni/al_sira_al_nabawiyya_ibn_hisham.md",
      "origin_location": f"{OPENITI_RAW}/0225AH/master/data/0213IbnHisham/0213IbnHisham.SiraNabawiyya/"
                         "0213IbnHisham.SiraNabawiyya.Shamela0023833-ara1.completed",
      "edition": "ed. Mustafa al-Saqqa, Ibrahim al-Abyari and 'Abd al-Hafiz al-Shalabi (Cairo: al-Halabi, 1955)",
@@ -741,7 +748,7 @@ LIBRARY = [
     {"id": "siyar_alam_al_nubala_al_dhahabi", "aliases": ["siyar"], "kind": "tabaqat", "category": "tabaqat", "entries": "siyar",
      "title": "Siyar A'lam al-Nubala' — al-Dhahabi", "title_ar": "سير أعلام النبلاء",
      "compiler": "al-Dhahabi (d. 748)",
-     "location": "tabaqat/siyar_alam_al_nubala_al_dhahabi.md",
+     "location": "tabaqat/sunni/siyar_alam_al_nubala_al_dhahabi.md",
      "origin_location": f"{OPENITI_RAW}/0750AH/master/data/0748Dhahabi/0748Dhahabi.SiyarAclamNubala/"
                         "0748Dhahabi.SiyarAclamNubala.Shamela0010906-ara1.mARkdown",
      "edition": "the Risala edition",
@@ -751,7 +758,7 @@ LIBRARY = [
     {"id": "tadhkirat_al_huffaz_al_dhahabi", "aliases": ["tadhkira"], "kind": "tabaqat", "category": "tabaqat", "entries": "tadhkira",
      "title": "Tadhkirat al-Huffaz — al-Dhahabi", "title_ar": "تذكرة الحفاظ",
      "compiler": "al-Dhahabi (d. 748)",
-     "location": "tabaqat/tadhkirat_al_huffaz_al_dhahabi.md",
+     "location": "tabaqat/sunni/tadhkirat_al_huffaz_al_dhahabi.md",
      "origin_location": f"{OPENITI_RAW}/0750AH/master/data/0748Dhahabi/0748Dhahabi.TadhkiratHuffaz/"
                         "0748Dhahabi.TadhkiratHuffaz.JK000532-ara1.mARkdown",
      "edition": "",
@@ -886,7 +893,7 @@ def mirror(target: Path, languages: set[str] | None) -> None:
     """Build isnady-data in target: every book in isnady's format under our names, the rijal works, the catalog."""
     target.mkdir(parents=True, exist_ok=True)
     for child in target.iterdir():                 # a clean tree each time (the history stays in .git)
-        if child.name not in (".git", ".gitignore", "derived", "database.json", "release", "quran", "sira", "tabaqat", "sahifa"):   # DB1, Q1b, LIB1, SHF1b
+        if child.name not in (".git", ".gitignore", "derived", "database.json", "release", "quran", "sira", "tabaqat", "sahifa"):   # DB1, Q1b, LIB1, SHF1b (hadith/ and rijal/ are built again)
             import shutil
             shutil.rmtree(child) if child.is_dir() else child.unlink()
     counts, langs = {}, {}
@@ -995,16 +1002,26 @@ def readme(cat: dict) -> str:
          "```",
          "isnady-data/",
          "├── catalog.json                     the list isnady reads (schema isnady-catalog/1)",
-         "├── sunni/",
-         "│   ├── sahih_al_bukhari/",
-         "│   │   ├── book.json                numbers, chapters, references, grades (schema isnady-book/1)",
-         "│   │   ├── ara.json                 the Arabic text, chapter titles",
-         "│   │   ├── eng.json  tur.json …     one file per translation",
-         "│   ├── musnad_ahmad_ibn_hanbal/",
-         "│   └── …",
-         "├── shia/",
-         "│   ├── al_kafi_al_kulayni/",
-         "│   └── …",
+         "├── quran/                           the Qur'an, shared by both roads",
+         "│   ├── suras.json                   the 114 suras",
+         "│   ├── ara/ara-quransimple.json     the Arabic (Tanzil, verbatim)",
+         "│   └── tur/  eng/  urd/ …           the translations, one folder per language",
+         "├── hadith/                          the hadith collections",
+         "│   ├── sunni/",
+         "│   │   ├── sahih_al_bukhari/",
+         "│   │   │   ├── book.json            numbers, chapters, references, grades (schema isnady-book/1)",
+         "│   │   │   ├── ara.json             the Arabic text, chapter titles",
+         "│   │   │   └── eng.json  tur.json … one file per translation",
+         "│   │   └── musnad_ahmad_ibn_hanbal/ …",
+         "│   └── shia/",
+         "│       └── al_kafi_al_kulayni/ …",
+         "├── sahifa/                          the written sources (schema isnady-sahifa/1)",
+         "│   ├── sunni/sahifat_hammam_ibn_munabbih.json …",
+         "│   └── shia/kitab_ali_fi_al_kutub_al_shiiyya.json …",
+         "├── sira/",
+         "│   └── sunni/al_sira_al_nabawiyya_ibn_hisham.md",
+         "├── tabaqat/",
+         "│   └── sunni/siyar_alam_al_nubala_al_dhahabi.md  tadhkirat_al_huffaz_al_dhahabi.md",
          "├── rijal/",
          "│   ├── sunni/taqrib_al_tahdhib_ibn_hajar_al_asqalani.md",
          "│   └── shia/rijal_al_najashi_ahmad_ibn_ali_al_najashi.md",
@@ -1030,13 +1047,13 @@ def readme(cat: dict) -> str:
              "al-Kafi in its eight volumes with al-Majlisi's grade on nearly every hadith (*Mir'at al-'Uqul*, "
              "13,931) and al-Behbudi's selection (*Sahih al-Kafi*), and fifteen more works of al-Saduq, al-Mufid, Ibn Qulawayh, al-Nu'mani, al-Tusi, al-Ahwazi "
              "and al-Muhsini, in Arabic and English.")):
-        add([f"## {heading}", "", note, "",
+        add([f"## {heading}", "", f"Folder: `hadith/{t}/`. " + note, "",
              "| Book | | Compiler | Hadith | Languages | Import id |", "|---|---|---|--:|---|---|"])
         for e in by[t]:
             add([f"| **{e['title']}** | {e['title_ar']} | {compiler(e)} | {(e.get('hadith') or 0):,} | "
                  f"{', '.join(LANG_NAMES.get(c, c) for c in e['languages'])} | `{e['id']}` |"])
         add([f"| | | **{len(by[t])} books** | **{total[t]:,}** | | |", ""])
-    add(["## 👥 Narrators (rijal)", "",
+    add(["## 👥 Narrators (rijal)", "", "Folders: `rijal/sunni/` and `rijal/shia/`.", "",
          "| Work | | Tradition | Entries | What isnady does with it | Import id |", "|---|---|---|--:|---|---|"])
     uses = {"sunni": "every name in the Sunni chains is matched to its narrator; his rank on Ibn Hajar's twelve-step "
                      "scale, tabaqa, death year and book marks",
@@ -1068,7 +1085,8 @@ def readme(cat: dict) -> str:
         add(["", "## 📜 Sira and tabaqat", "",
              "The life of the Prophet ﷺ and the lives of the scholars, generation by generation — read in isnady's "
              "**Books** like the hadith collections, chapter by chapter; al-Dhahabi's two works also give the text "
-             "beside a narrator's written life and the Huffaz of the Scholars page.", "",
+             "beside a narrator's written life and the Huffaz of the Scholars page. Folders: `sira/sunni/` and "
+             "`tabaqat/sunni/` (Sunni works; a Shia work would stand in `sira/shia/`, `tabaqat/shia/`).", "",
              "| Work | | Compiler | What it holds | Import id |", "|---|---|---|---|---|"])
         for e in works:
             what = e["description"].split(". ", 1)[-1]
@@ -1080,7 +1098,8 @@ def readme(cat: dict) -> str:
              "The hadith that were written down early, and where that writing lives in the books — the Sunni road and "
              "the Shia road apart. Each file lists its hadith as `[book, number]` of the books here; imported, it is "
              "a book of isnady's **Books** whose hadith are those of the books themselves (nothing is copied). Only "
-             "Hammam's sahifa came down whole; the others live in later books and are named so.", ""])
+             "Hammam's sahifa came down whole; the others live in later books and are named so. Folders: "
+             "`sahifa/sunni/` and `sahifa/shia/`.", ""])
         for road in ("sunni", "shia"):
             rows = [e for e in sah if e["tradition"] == road]
             if rows:
@@ -1099,14 +1118,16 @@ def readme(cat: dict) -> str:
          '  "entries": [',
          '    { "id": "sahih_al_bukhari", "title": "Sahih al-Bukhari", "title_ar": "صحيح البخاري",',
          '      "kind": "hadith", "tradition": "sunni", "format": "isnady",',
-         '      "location": "sunni/sahih_al_bukhari/book.json", "book": "bukhari",',
+         '      "location": "hadith/sunni/sahih_al_bukhari/book.json", "book": "bukhari",',
          '      "languages": ["ara", "eng", "tur"], "license": "Unlicense", "hadith": 7590 }',
          "  ]",
          "}",
          "```", "",
          "`location` is relative to the catalog, so the same catalog works on GitHub, in a clone and on a USB "
-         "stick. `kind` is `hadith` or `rijal`; `tradition` is `sunni` or `shia`; `format` names the reader isnady "
-         "uses (`isnady`, `taqrib`, `najashi` …).", "", "</details>", "",
+         "stick. `kind` is `hadith` or `rijal` (in `entries`), `quran`, `sahifa`, `sira` or `tabaqat` (in "
+         "`library`); `tradition` is `sunni` or `shia` (`all` for the Qur'an), and the folder follows both: "
+         "`<kind>/<tradition>/…`; `format` names the reader isnady uses (`isnady`, `taqrib`, `najashi`, "
+         "`openiti-work`, `isnady-sahifa` …).", "", "</details>", "",
          "<details>", "<summary><b>book.json and the language files — <code>isnady-book/1</code></b></summary>", "",
          "```json",
          "{",
@@ -1158,6 +1179,68 @@ def write_readme(target: Path) -> None:
     print(f"README written to {target / 'README.md'}")
 
 
+# the layout before 0.7.3 → the layout of 0.7.3: each kind its folder, each road its own under it
+OLD_LAYOUT = (("sunni/", "hadith/sunni/"), ("shia/", "hadith/shia/"))
+FLAT_KINDS = ("sira", "tabaqat")                   # sira/<file>, tabaqat/<file> → sira/sunni/<file> …
+
+
+def relocated(location: str, tradition: str = "sunni") -> str:
+    """A location of the old layout as the new one gives it (a new one, or a URL, unchanged)."""
+    if "://" in location:
+        return location
+    for old, new in OLD_LAYOUT:
+        if location.startswith(old):
+            return new + location[len(old):]
+    parts = location.split("/")
+    if len(parts) == 2 and parts[0] in FLAT_KINDS:
+        return f"{parts[0]}/{tradition if tradition in ('sunni', 'shia') else 'sunni'}/{parts[1]}"
+    return location
+
+
+def relocate_catalog(cat: dict) -> int:
+    """Every location of a catalog in the new layout; how many changed."""
+    changed = 0
+    for e in cat.get("entries", []) + cat.get("library", []):
+        if e.get("location"):
+            new = relocated(e["location"], e.get("tradition", "sunni"))
+            changed += new != e["location"]
+            e["location"] = new
+    return changed
+
+
+def relayout(target: Path) -> int:
+    """Move a folder of the old layout into the new one, and its catalog (and the shipped copy) with it."""
+    import shutil
+
+    moved = 0
+    for old, new in OLD_LAYOUT:
+        src = target / old.rstrip("/")
+        if not src.is_dir():
+            continue
+        dest = target / new.rstrip("/")
+        dest.mkdir(parents=True, exist_ok=True)
+        for child in sorted(src.iterdir()):
+            if (dest / child.name).exists():
+                shutil.rmtree(dest / child.name) if (dest / child.name).is_dir() else (dest / child.name).unlink()
+            shutil.move(str(child), str(dest / child.name))
+            moved += 1
+        src.rmdir()
+    for kind in FLAT_KINDS:
+        for f in sorted((target / kind).glob("*.md")):
+            (target / kind / "sunni").mkdir(parents=True, exist_ok=True)
+            shutil.move(str(f), str(target / kind / "sunni" / f.name))
+            moved += 1
+    for path in (target / "catalog.json", BUNDLED / "isnady.json"):
+        if path.exists():
+            cat = json.loads(path.read_text(encoding="utf-8"))
+            relocate_catalog(cat)
+            write_json(path, cat)
+    if (target / "catalog.json").exists():
+        (target / "README.md").write_text(readme(json.loads((target / "catalog.json").read_text(encoding="utf-8"))),
+                                          encoding="utf-8", newline="\n")
+    return moved
+
+
 def write_catalogs() -> None:
     """The catalogs shipped with isnady: the optional repositories (and isnady-data's, unless a mirror wrote it)."""
     if not (BUNDLED / "isnady.json").exists():
@@ -1181,11 +1264,19 @@ def main() -> int:
                                                     "read from --database, and the catalog's library")
     ap.add_argument("--database", metavar="FILE", help="with --sahifa: an isnady.db with the books imported "
                     "(without it, the sahifa/ files already in DIR are listed in the catalog)")
+    ap.add_argument("--relayout", metavar="DIR", help="move the isnady-data folder DIR to the layout of 0.7.3 "
+                                                      "(hadith/sunni/, hadith/shia/, sira/sunni/, tabaqat/sunni/)")
     ap.add_argument("--readme", metavar="DIR", help="write only the README of the isnady-data folder DIR, from its catalog")
     a = ap.parse_args()
     sys.path.insert(0, str(ROOT / "src"))          # this repository's isnady, not an installed one
     if a.readme:
         write_readme(Path(a.readme).expanduser())
+        return 0
+    if a.relayout:
+        target = Path(a.relayout).expanduser()
+        n = relayout(target)
+        print(f"{target}: {n} books and works moved to hadith/<road>/, sira/<road>/, tabaqat/<road>/; "
+              "the catalog, its shipped copy and the README follow them")
         return 0
     if a.sahifa:
         target = Path(a.sahifa).expanduser()

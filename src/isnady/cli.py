@@ -448,16 +448,19 @@ def cmd_catalog(args) -> int:
         for kind, title in (("builtin", f"Sources of {repo.name}"), ("user", "Your sources (User Resources)")):
             entries = catalog.builtin_entries(repo.id) if kind == "builtin" else catalog.user_entries()
             heads = {}
-            if kind == "builtin":                 # the Qur'an, then the Sunni road, then the Shia road (LIB1, SH1)
+            if kind == "builtin":                 # as isnady-data's folders: each kind, each road under it (0.7.3, SH1)
                 def road(e):
                     return "" if e.kind == "quran" else ("shia" if e.tradition == "shia" else "sunni")
-                entries = sorted(entries, key=lambda e: (("", "sunni", "shia").index(road(e)),
-                                                         catalog.KIND_ORDER.index(e.kind)
-                                                         if e.kind in catalog.KIND_ORDER else 9))
+                kinds = ("quran", "hadith", "sahifa", "sira", "tabaqat", "rijal")
+                entries = sorted(entries, key=lambda e: (kinds.index(e.kind) if e.kind in kinds else 9,
+                                                         ("", "sunni", "shia").index(road(e))))
+                names = {"quran": "The Qur'an", "hadith": "Hadith collections", "sahifa": "Written sources",
+                         "sira": "Sira", "tabaqat": "Tabaqat", "rijal": "Rijal"}
                 for e in entries:
-                    heads.setdefault(road(e), e.id)
-                heads = {v: {"": "The Qur'an", "sunni": "The Sunni road", "shia": "The Shia road"}[k]
-                         for k, v in heads.items()}
+                    folder = f"{e.kind}/{road(e)}/" if road(e) else f"{e.kind}/"
+                    label = names.get(e.kind, e.kind) + (f" · {road(e).capitalize()}" if road(e) else "")
+                    heads.setdefault(folder, (e.id, f"{label}  (isnady-data/{folder})"))
+                heads = {v[0]: v[1] for v in heads.values()}
             print(f"\n{title}")
             if not entries:
                 print("  none yet — add one: iy catalog add TITLE FORMAT FILE-OR-URL")

@@ -14,7 +14,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/sahih_al_bukhari/book.json",
+   "location": "hadith/sunni/sahih_al_bukhari/book.json",
    "book": "bukhari",
    "languages": [
     "ara",
@@ -40,7 +40,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/sahih_muslim/book.json",
+   "location": "hadith/sunni/sahih_muslim/book.json",
    "book": "muslim",
    "languages": [
     "ara",
@@ -66,7 +66,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/sunan_abi_dawud/book.json",
+   "location": "hadith/sunni/sunan_abi_dawud/book.json",
    "book": "abudawud",
    "languages": [
     "ara",
@@ -91,7 +91,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/jami_al_tirmidhi/book.json",
+   "location": "hadith/sunni/jami_al_tirmidhi/book.json",
    "book": "tirmidhi",
    "languages": [
     "ara",
@@ -114,7 +114,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/sunan_al_nasai/book.json",
+   "location": "hadith/sunni/sunan_al_nasai/book.json",
    "book": "nasai",
    "languages": [
     "ara",
@@ -138,7 +138,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/sunan_ibn_majah/book.json",
+   "location": "hadith/sunni/sunan_ibn_majah/book.json",
    "book": "ibnmajah",
    "languages": [
     "ara",
@@ -162,7 +162,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/muwatta_malik_ibn_anas/book.json",
+   "location": "hadith/sunni/muwatta_malik_ibn_anas/book.json",
    "book": "malik",
    "languages": [
     "ara",
@@ -186,7 +186,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/al_arbain_al_nawawiyya/book.json",
+   "location": "hadith/sunni/al_arbain_al_nawawiyya/book.json",
    "book": "nawawi",
    "languages": [
     "ara",
@@ -208,7 +208,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/al_arbain_al_qudsiyya/book.json",
+   "location": "hadith/sunni/al_arbain_al_qudsiyya/book.json",
    "book": "qudsi",
    "languages": [
     "ara",
@@ -228,7 +228,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/al_arbain_shah_waliullah_al_dehlawi/book.json",
+   "location": "hadith/sunni/al_arbain_shah_waliullah_al_dehlawi/book.json",
    "book": "dehlawi",
    "languages": [
     "ara",
@@ -248,7 +248,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/musnad_ahmad_ibn_hanbal/book.json",
+   "location": "hadith/sunni/musnad_ahmad_ibn_hanbal/book.json",
    "book": "ahmad",
    "languages": [
     "ara"
@@ -266,7 +266,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/sunan_al_darimi/book.json",
+   "location": "hadith/sunni/sunan_al_darimi/book.json",
    "book": "darimi",
    "languages": [
     "ara"
@@ -284,7 +284,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/riyad_al_salihin_al_nawawi/book.json",
+   "location": "hadith/sunni/riyad_al_salihin_al_nawawi/book.json",
    "book": "riyad",
    "languages": [
     "ara",
@@ -303,7 +303,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/al_shamail_al_muhammadiyya_al_tirmidhi/book.json",
+   "location": "hadith/sunni/al_shamail_al_muhammadiyya_al_tirmidhi/book.json",
    "book": "shamail",
    "languages": [
     "ara",
@@ -322,7 +322,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/bulugh_al_maram_ibn_hajar_al_asqalani/book.json",
+   "location": "hadith/sunni/bulugh_al_maram_ibn_hajar_al_asqalani/book.json",
    "book": "bulugh",
    "languages": [
     "ara",
@@ -341,7 +341,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/al_adab_al_mufrad_al_bukhari/book.json",
+   "location": "hadith/sunni/al_adab_al_mufrad_al_bukhari/book.json",
    "book": "adab",
    "languages": [
     "ara",
@@ -360,7 +360,7 @@
    "kind": "hadith",
    "tradition": "sunni",
    "format": "isnady",
-   "location": "sunni/mishkat_al_masabih_al_khatib_al_tabrizi/book.json",
+   "location": "hadith/sunni/mishkat_al_masabih_al_khatib_al_tabrizi/book.json",
    "book": "mishkat",
    "languages": [
     "ara",
@@ -379,7 +379,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/al_kafi_al_kulayni/book.json",
+   "location": "hadith/shia/al_kafi_al_kulayni/book.json",
    "book": "kafi",
    "languages": [
     "ara",
@@ -398,7 +398,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/uyun_akhbar_al_rida_al_shaykh_al_saduq/book.json",
+   "location": "hadith/shia/uyun_akhbar_al_rida_al_shaykh_al_saduq/book.json",
    "book": "uyun",
    "languages": [
     "ara",
@@ -417,7 +417,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/al_amali_al_shaykh_al_saduq/book.json",
+   "location": "hadith/shia/al_amali_al_shaykh_al_saduq/book.json",
    "book": "amali-saduq",
    "languages": [
     "ara",
@@ -436,7 +436,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/al_khisal_al_shaykh_al_saduq/book.json",
+   "location": "hadith/shia/al_khisal_al_shaykh_al_saduq/book.json",
    "book": "khisal",
    "languages": [
     "ara",
@@ -455,7 +455,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/al_tawhid_al_shaykh_al_saduq/book.json",
+   "location": "hadith/shia/al_tawhid_al_shaykh_al_saduq/book.json",
    "book": "tawhid",
    "languages": [
     "ara",
@@ -474,7 +474,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/maani_al_akhbar_al_shaykh_al_saduq/book.json",
+   "location": "hadith/shia/maani_al_akhbar_al_shaykh_al_saduq/book.json",
    "book": "maani",
    "languages": [
     "ara",
@@ -493,7 +493,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/thawab_al_amal_wa_iqab_al_amal_al_shaykh_al_saduq/book.json",
+   "location": "hadith/shia/thawab_al_amal_wa_iqab_al_amal_al_shaykh_al_saduq/book.json",
    "book": "thawab",
    "languages": [
     "ara",
@@ -512,7 +512,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/sifat_al_shia_al_shaykh_al_saduq/book.json",
+   "location": "hadith/shia/sifat_al_shia_al_shaykh_al_saduq/book.json",
    "book": "sifat-shia",
    "languages": [
     "ara",
@@ -531,7 +531,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/fadail_al_shia_al_shaykh_al_saduq/book.json",
+   "location": "hadith/shia/fadail_al_shia_al_shaykh_al_saduq/book.json",
    "book": "fadail-shia",
    "languages": [
     "ara",
@@ -550,7 +550,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/al_amali_al_shaykh_al_mufid/book.json",
+   "location": "hadith/shia/al_amali_al_shaykh_al_mufid/book.json",
    "book": "amali-mufid",
    "languages": [
     "ara",
@@ -569,7 +569,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/kamil_al_ziyarat_ibn_qulawayh_al_qummi/book.json",
+   "location": "hadith/shia/kamil_al_ziyarat_ibn_qulawayh_al_qummi/book.json",
    "book": "kamil-ziyarat",
    "languages": [
     "ara",
@@ -588,7 +588,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/kitab_al_ghayba_ibn_abi_zaynab_al_numani/book.json",
+   "location": "hadith/shia/kitab_al_ghayba_ibn_abi_zaynab_al_numani/book.json",
    "book": "ghayba-numani",
    "languages": [
     "ara",
@@ -607,7 +607,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/kitab_al_ghayba_al_shaykh_al_tusi/book.json",
+   "location": "hadith/shia/kitab_al_ghayba_al_shaykh_al_tusi/book.json",
    "book": "ghayba-tusi",
    "languages": [
     "ara",
@@ -626,7 +626,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/kitab_al_mumin_al_husayn_ibn_said_al_ahwazi/book.json",
+   "location": "hadith/shia/kitab_al_mumin_al_husayn_ibn_said_al_ahwazi/book.json",
    "book": "mumin",
    "languages": [
     "ara",
@@ -645,7 +645,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/kitab_al_zuhd_al_husayn_ibn_said_al_ahwazi/book.json",
+   "location": "hadith/shia/kitab_al_zuhd_al_husayn_ibn_said_al_ahwazi/book.json",
    "book": "zuhd",
    "languages": [
     "ara",
@@ -664,7 +664,7 @@
    "kind": "hadith",
    "tradition": "shia",
    "format": "isnady",
-   "location": "shia/mujam_al_ahadith_al_mutabara_asif_al_muhsini/book.json",
+   "location": "hadith/shia/mujam_al_ahadith_al_mutabara_asif_al_muhsini/book.json",
    "book": "mujam-mutabara",
    "languages": [
     "ara",
@@ -1689,7 +1689,7 @@
    "title": "al-Sira al-Nabawiyya — Ibn Hisham",
    "title_ar": "السيرة النبوية لابن هشام",
    "tradition": "sunni",
-   "location": "sira/al_sira_al_nabawiyya_ibn_hisham.md",
+   "location": "sira/sunni/al_sira_al_nabawiyya_ibn_hisham.md",
    "book": "al_sira_al_nabawiyya_ibn_hisham",
    "license": null,
    "compiler": "Ibn Hisham (d. 218; 213 in some sources), from Ibn Ishaq (d. 151)",
@@ -1716,7 +1716,7 @@
    "title": "Siyar A'lam al-Nubala' — al-Dhahabi",
    "title_ar": "سير أعلام النبلاء",
    "tradition": "sunni",
-   "location": "tabaqat/siyar_alam_al_nubala_al_dhahabi.md",
+   "location": "tabaqat/sunni/siyar_alam_al_nubala_al_dhahabi.md",
    "book": "siyar_alam_al_nubala_al_dhahabi",
    "license": null,
    "compiler": "al-Dhahabi (d. 748)",
@@ -1744,7 +1744,7 @@
    "title": "Tadhkirat al-Huffaz — al-Dhahabi",
    "title_ar": "تذكرة الحفاظ",
    "tradition": "sunni",
-   "location": "tabaqat/tadhkirat_al_huffaz_al_dhahabi.md",
+   "location": "tabaqat/sunni/tadhkirat_al_huffaz_al_dhahabi.md",
    "book": "tadhkirat_al_huffaz_al_dhahabi",
    "license": null,
    "compiler": "al-Dhahabi (d. 748)",

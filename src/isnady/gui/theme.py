@@ -488,7 +488,7 @@ def _sheet(t: Tokens) -> str:
     QLineEdit#NumberField {{ background: {t.surface}; color: {t.ink}; border: 1px solid {t.border};
                              border-radius: 7px; padding: 5px 10px; }}
     QLineEdit#NumberField:focus {{ border-color: {t.lapis}; }}
-    QPushButton#Quiet:disabled {{ color: {t.muted}; border-color: {t.border}; }}
+    QPushButton#Quiet:disabled {{ color: {t.muted}; border-color: {t.border}; border-style: dashed; }}
 
     /* start and placeholder pages */
     QLabel#Hero {{ color: {t.ink}; }}

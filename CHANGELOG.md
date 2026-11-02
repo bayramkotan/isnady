@@ -3,6 +3,31 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.7.3] — 2026-11-02
+
+- **isnady-data in order: each kind in its folder, each road in its own under it (Bayram, 2026-11-02: "kitaplar
+  isnady-data'da düzenli mi? hepsi türlerine göre ayrıldı mı? … her bir klasörde sunni, shia … klasörleri altında
+  mı?").** The hadith collections move from `sunni/<book>/` and `shia/<book>/` to `hadith/sunni/<book>/` and
+  `hadith/shia/<book>/`; Ibn Hisham's Sira to `sira/sunni/`, al-Dhahabi's two works to `tabaqat/sunni/`; the written
+  sources stay in `sahifa/sunni/` and `sahifa/shia/`, the rijal in `rijal/sunni/` and `rijal/shia/`, the Qur'an —
+  both roads' — in `quran/`. The catalog's locations follow; the files themselves are not changed.
+  `tools/build_data_repo.py --relayout DIR` moves a folder of the old layout. isnady 0.7.3 reads a saved catalog of
+  the old layout again at once, and a book not found where its catalog said is looked for again in a fresh catalog;
+  an older isnady finds the new places after Refresh in Data sources, or by itself a day later.
+- **Data sources laid out the same way ("Settings altında da böyle olmalı! … Import/export … butonları hepsi için
+  aynı olmalı! Diller de!").** One button per kind — The Qur'an, Hadith collections, Written sources, Sira, Tabaqat,
+  Rijal, each with its count — then Both roads · Sunni · Shia; under each road its folder in the repository and its
+  books. Every card is the same: kind, road, licence and size; what it is; its languages (a collection's
+  translations; the Qur'an's translations by language, with Translators… for the others; Arabic for the works written
+  in it); and the same four buttons — Import (Update), Remove data, Open in Books, Export… (greyed out, with the
+  reason, where it does not apply). Open in Books and Export close Preferences and open the book or the Export
+  window on it. `iy catalog list` follows the same order, each group with its folder.
+- The Qur'an's card: a language ticked downloads the translation its readers know best, one unticked removes its
+  translations.
+- README: the new layout of isnady-data, Data sources as it now is; every screenshot taken again, three new (Data
+  sources by kind, the written sources and the Qur'an there), and the Sira, Written sources and their books taken by
+  `tools/make_screenshots.py` too. The README of isnady-data shows each kind's folder.
+
 ## [0.7.2] — 2026-11-02
 
 - **Every written source is a book of its own, in isnady-data and in Data sources (SHF1b — Bayram, 2026-11-02: "simdi

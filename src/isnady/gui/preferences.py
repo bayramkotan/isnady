@@ -177,6 +177,15 @@ class PreferencesDialog(QDialog):
     data_imported = Signal()   # a source was imported or removed; the main window refreshes its pages
     languages_changed = Signal()   # the languages of the texts chosen here; the pages draw their texts again
     sidebar_changed = Signal()     # the order of the sidebar's sections changed; the main window reorders them
+    open_book = Signal(str)        # Data sources → Open in Books: the dialog closes and Books opens it
+    export_book = Signal(str)      # Data sources → Export…: the dialog closes and Export opens on that book
+
+    def _leave(self, signal, key: str) -> None:
+        """Close, then let the main window open what was asked (an import running keeps the dialog open)."""
+        if self.sources.busy():
+            return
+        self.accept()
+        signal.emit(key)
 
     def __init__(self, parent=None, start_tab: str = "") -> None:
         super().__init__(parent)
@@ -197,6 +206,8 @@ class PreferencesDialog(QDialog):
 
         self.sources = SourcesPage()
         self.sources.data_imported.connect(self.data_imported)
+        self.sources.open_book.connect(lambda key: self._leave(self.open_book, key))
+        self.sources.export_book.connect(lambda key: self._leave(self.export_book, key))
         tabs = QTabWidget()
         tabs.addTab(self._scroll(self._themes_tab()), tr("Themes"))
         tabs.addTab(self._scroll(self._reading_tab()), tr("Reading text"))

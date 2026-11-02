@@ -302,7 +302,16 @@ def import_entry(conn: sqlite3.Connection, entry: Entry, languages: list[str] | 
         return _import_quran(languages, progress)
     # a user's own file: its language comes from the file itself, never from our defaults (request_for)
     try:
-        result = run_import(conn, request_for(entry, languages, auth), progress)
+        try:
+            result = run_import(conn, request_for(entry, languages, auth), progress)
+        except ResourceError:
+            moved = _moved(entry)            # the repository changed its layout since its catalog was read
+            if moved is None:
+                raise
+            if progress:
+                progress(tr("The repository has moved this book; reading it from its new place"))
+            entry = moved
+            result = run_import(conn, request_for(entry, languages, auth), progress)
     except ResourceError as exc:
         if not entry.fallback:
             raise
@@ -311,6 +320,23 @@ def import_entry(conn: sqlite3.Connection, entry: Entry, languages: list[str] | 
         result = run_import(conn, request_for(entry, languages, auth, use_fallback=True), progress)
     _set_tradition(conn, entry)
     return result
+
+
+def _moved(entry: Entry) -> Entry | None:
+    """The same entry read from the repository's catalog again, when its location changed there (else None)."""
+    if not entry.builtin or not entry.repo:
+        return None
+    from isnady.core import repositories
+
+    repo = repositories.find(entry.repo)
+    if repo is None or not repo.url:
+        return None
+    try:
+        repositories.catalog(repo, refresh=True)
+        fresh = next((e for e in repositories.entries(repo) if e.id == entry.id), None)
+    except Exception:  # noqa: BLE001 — the first error is the one to report
+        return None
+    return fresh if fresh is not None and fresh.location != entry.location else None
 
 
 def _import_quran(editions: list[str] | None = None, progress=None):

@@ -44,17 +44,25 @@ def wait_statistics(page):
     settle(1500)
 
 
-def prefs(tab: str, name: str, size=(1000, 760), scroll_to: int = 0):
+def prefs(tab: str, name: str, size=(1000, 760), scroll_to: int = 0, kind: str = ""):
     d = PreferencesDialog(w)
     d.resize(*size)
     tabs = d.findChild(QTabWidget)
     tabs.setCurrentIndex([tabs.tabText(i) for i in range(tabs.count())].index(tab))
     d.show()
     settle(1200)
+    if kind:                                        # Data sources: one kind (and road) of books in view (0.7.3)
+        d.sources._go_to(kind)
+        settle(1200)
     d.grab().save(D + name)
     d.close()
 
 
+from isnady import config  # noqa: E402
+
+# the recent searches shown on the start page: a few plain ones; the reader's own are put back at the end
+kept_recent = config.state_get("search.recent", [])
+config.state_set("search.recent", [{"text": t, "kind": "hadith"} for t in ("namaz", "الصلاة", "niyet", "إنما الأعمال بالنيات")])
 w = MainWindow()
 ROW = {k: i for i, k in enumerate(w._order)}       # the sidebar in the order chosen (Preferences → Sidebar)
 w.resize(1400, 900)
@@ -141,6 +149,22 @@ w.grab().save(D + "books.png")
 w.books_page.select_work("taqrib")
 settle(1500)
 w.grab().save(D + "books-taqrib.png")
+w.books_page.select_work("al_sira_al_nabawiyya_ibn_hisham")
+settle(1500)
+w.grab().save(D + "books-sira.png")
+w.books_page.select_work("sahifat_hammam_ibn_munabbih")
+settle(1500)
+w.grab().save(D + "books-sahifa.png")
+w._open_sira("badr")                                # the Sira timeline (SIY1) and the written sources (SHF1)
+settle(2500)
+w.grab().save(D + "sira.png")
+w._open_sahifa("hammam")
+for _ in range(60):                                 # counted once, then kept
+    settle(500)
+    if w.sahifa_page.list.count():
+        break
+settle(1500)
+w.grab().save(D + "written-sources.png")
 w.nav.setCurrentRow(w._row("narrators"))
 w.narrators_page.set_tradition("shia")
 w.narrators_page.query.setText("زرارة")
@@ -235,7 +259,9 @@ else:
 HUB.changed.emit()
 
 prefs("Reading text", "preferences.png", (900, 660))
-prefs("Data sources", "data-sources.png", (1100, 900))
+prefs("Data sources", "data-sources.png", (1100, 900), kind="hadith")
+prefs("Data sources", "data-sources-sahifa.png", (1100, 900), kind="sahifa")
+prefs("Data sources", "data-sources-quran.png", (1100, 900), kind="quran")
 prefs("Books and languages", "books-languages.png", (1000, 980))
 prefs("Reset", "reset.png", (1000, 760))
 
@@ -273,3 +299,4 @@ settle(600)
 w._log_viewer.grab().save(D + "log.png")
 w._log_viewer.close()
 theme.set_theme_mode("system")
+config.state_set("search.recent", kept_recent)

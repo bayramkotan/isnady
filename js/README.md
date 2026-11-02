@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.7.2-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.7.3-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.7.2-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.7.3-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -48,7 +48,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.7.2).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.7.3).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -83,8 +83,8 @@ isnady is two repositories that work as one:
    ───────────────────────                         ──────────────────
    catalog.json ─────────────── Data sources ───▶  import ─▶ isnady.db ─▶ search · chains · narrators
    quran/                                            (your data folder)      books · scholars · statistics
-   sunni/<book>/  shia/<book>/                                                window  and  command line
-   sira/  tabaqat/  rijal/sunni/  rijal/shia/
+   hadith/sunni/  hadith/shia/                                                window  and  command line
+   sahifa/sunni|shia/  sira/sunni/  tabaqat/sunni/  rijal/sunni|shia/
    Releases: isnady-db-<date>.zip ── Use a ready database… ──▶ isnady.db
 ```
 
@@ -268,19 +268,23 @@ The hadith collections, Sunni and Shia apart:
 ### How it is laid out
 
 ```
-isnady-data/
+isnady-data/                        each KIND in its folder, each ROAD in its own under it
 ├── catalog.json                    the list isnady reads (isnady-catalog/1): "entries" and the "library"
-├── quran/                          suras.json, the Arabic and the translations (quran/tur/tur-diyanetisleri.json …)
-├── sunni/sahih_al_bukhari/         book.json (numbers, chapters, references, grades) + ara.json, eng.json, tur.json …
-├── sunni/musnad_ahmad_ibn_hanbal/
-├── shia/al_kafi_al_kulayni/
-├── rijal/sunni/taqrib_al_tahdhib_ibn_hajar_al_asqalani.md
-├── rijal/shia/rijal_al_najashi_ahmad_ibn_ali_al_najashi.md
-├── sahifa/sunni/sahifat_hammam_ibn_munabbih.json   a written source: [book, number] of its hadith (isnady-sahifa/1)
-├── sahifa/shia/kitab_ali_fi_al_kutub_al_shiiyya.json
-├── sira/al_sira_al_nabawiyya_ibn_hisham.md
-├── tabaqat/siyar_alam_al_nubala_al_dhahabi.md
-├── tabaqat/tadhkirat_al_huffaz_al_dhahabi.md
+├── quran/                          the Qur'an, both roads': suras.json, ara/, tur/tur-diyanetisleri.json …
+├── hadith/
+│   ├── sunni/sahih_al_bukhari/     book.json (numbers, chapters, references, grades) + ara.json, eng.json, tur.json …
+│   ├── sunni/musnad_ahmad_ibn_hanbal/ …
+│   └── shia/al_kafi_al_kulayni/ …
+├── sahifa/
+│   ├── sunni/sahifat_hammam_ibn_munabbih.json   a written source: [book, number] of its hadith (isnady-sahifa/1)
+│   └── shia/kitab_ali_fi_al_kutub_al_shiiyya.json …
+├── sira/
+│   └── sunni/al_sira_al_nabawiyya_ibn_hisham.md
+├── tabaqat/
+│   └── sunni/siyar_alam_al_nubala_al_dhahabi.md, tadhkirat_al_huffaz_al_dhahabi.md
+├── rijal/
+│   ├── sunni/taqrib_al_tahdhib_ibn_hajar_al_asqalani.md
+│   └── shia/rijal_al_najashi_ahmad_ibn_ali_al_najashi.md
 ├── derived/                        statistics and models already computed, as JSON
 └── database.json                   the ready database of the latest Release
 ```
@@ -294,9 +298,18 @@ isnady-data/
   per language with the chapter titles and the texts. The formats are described in the
   [isnady-data README](https://github.com/bayramkotan/isnady-data#-the-formats).
 - **Sunni and Shia apart.** Every book says its tradition, and isnady keeps them on their own roads
-  (below). **Data sources** shows them that way too: the Qur'an, then *the Sunni road* (hadith, written sources,
-  sira, tabaqat, rijal), then *the Shia road* (hadith, written sources, rijal), with *All · Sunni · Shia* on top
-  and a tile for each group that takes you to it.
+  (below): in the repository each kind has a folder for each road, `hadith/sunni/` beside `hadith/shia/`.
+- **Data sources is laid out the same way.** One button for each kind — *The Qur'an · Hadith collections · Written
+  sources · Sira · Tabaqat · Rijal*, each with how many books it holds — then *Both roads · Sunni · Shia*; under each
+  road its folder in the repository (`isnady-data/hadith/sunni/`) and its books. **Every book's card is the same:**
+  its tags (kind, road, licence, size), what it is, its **languages** (a hadith collection's translations, the
+  Qur'an's translations by language with *Translators…* for the others, *Arabic* for the works written in it), and
+  the same four buttons — **Import** (or **Update**), **Remove data**, **Open in Books**, **Export…** (the hadith
+  collections; for the other kinds it is shown greyed out, with the reason). `iy catalog list` lists them in the
+  same order, each kind and road under its folder.
+- **The layout of 0.7.3.** Until 0.7.2 the hadith collections stood at `sunni/<book>/` and `shia/<book>/`, and the
+  sira and tabaqat with no road folder. isnady 0.7.3 reads the new places at once; an older isnady finds them after
+  **Refresh** in Data sources (or by itself a day later).
 - **A written source is a book that copies nothing.** Its file lists `[book, number]` for each of its hadith;
   importing it makes a book of **Books** whose chapters are the collections it lives in (for Hammam: Musnad Ahmad
   138, then its parallels in al-Bukhari, Muslim …), each leaf the hadith itself in its own collection. Search and the
@@ -327,7 +340,11 @@ must match the `database.json` beside it), puts it in place at the next start an
 previous database beside it (`isnady.<date-time>.bak.db`). Nothing is deleted.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/data-sources.png" alt="Settings → Data sources — the Sunni road and the Shia road apart: the hadith collections, then the Sunni written sources (the Sahifa of Hammam b. Munabbih, al-Sahifa al-Sadiqa …), each imported with one click" width="760">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/data-sources.png" alt="Settings → Data sources — one button for each kind of book, then the road; the Sunni hadith collections under isnady-data/hadith/sunni/, each card with its languages and the same four buttons: Update, Remove data, Open in Books, Export" width="760">
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/data-sources-sahifa.png" alt="Data sources → Written sources — the Sunni ones under isnady-data/sahifa/sunni/ and the Shia ones under sahifa/shia/, each with the same card" width="49%">
+  <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/data-sources-quran.png" alt="Data sources → The Qur'an — the translations ticked by language, Translators… for the others, and the same four buttons" width="49%">
 </p>
 
 ### Other repositories
@@ -749,8 +766,8 @@ Every list is isnady's reading of the texts — a chain or a wording — and the
 terminal: `iy sahifa`, `iy sahifa hammam`, `iy sahifa kitab-ali`.
 
 **Each one is also a book.** isnady-data keeps every written source as its own entry — under `sahifa/sunni/` and
-`sahifa/shia/` — and **Data sources** lists them in their own groups, *Sunni written sources* and *Shia written
-sources*. Imported, it stands on the shelf of **Books** with them (*Sunni written sources · 6*, *Shia written sources ·
+`sahifa/shia/` — and **Data sources → Written sources** lists them the same way, the Sunni road and the Shia road
+apart. Imported, it stands on the shelf of **Books** with them (*Sunni written sources · 6*, *Shia written sources ·
 4*) and reads chapter by chapter: the Sahifa of Hammam opens with Musnad Ahmad (138), then *Its parallels in Sahih
 al-Bukhari* (56), *in Sahih Muslim* (56) … Nothing is copied — each leaf is the hadith in its own collection. From the
 terminal: `iy catalog import hammam`, `iy book sahifat_hammam_ibn_munabbih`.
@@ -1364,7 +1381,7 @@ iy stats corpus --recompute          # compute again
 ### 📚 Data, books and sources
 
 ```bash
-iy catalog list                      # the books of the repository: the Qur'an, the Sunni road, the Shia road
+iy catalog list                      # the books of the repository, each kind and road under its folder
 iy catalog import sahih_muslim --language tur --language eng   # one book, in these languages
 iy catalog import --all              # everything: the Qur'an, the hadith, the sira, the tabaqat, the rijal
 iy catalog import quran              # the Qur'an (the Arabic and a translation); more: iy quran download KEY

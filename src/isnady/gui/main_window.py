@@ -5,7 +5,7 @@ Sections without their own page yet show a short description.
 
 from contextlib import contextmanager
 
-from PySide6.QtCore import QEvent, QSize, Qt, QUrl, Signal
+from PySide6.QtCore import QEvent, QSize, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QAction, QActionGroup, QDesktopServices, QGuiApplication, QKeySequence
 from PySide6.QtWidgets import (
     QMenu,
@@ -1095,6 +1095,8 @@ class MainWindow(QMainWindow):
         dialog.data_imported.connect(self._data_imported)
         dialog.languages_changed.connect(self._languages_changed)
         dialog.sidebar_changed.connect(self.apply_sidebar_order)
+        dialog.open_book.connect(lambda key: QTimer.singleShot(0, lambda: self._open_book(key)))
+        dialog.export_book.connect(lambda key: QTimer.singleShot(0, lambda: self.export_dialog("book", book=key)))
         dialog.exec()
 
     # --------------------------------------------------------------- export and import (EX1)

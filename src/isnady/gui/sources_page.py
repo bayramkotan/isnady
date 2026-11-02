@@ -163,15 +163,46 @@ class AddSourceDialog(QDialog):
                 "key_name": self.key_name.text().strip() or None, "book": self.book.text().strip() or None}
 
 
+# the kinds of book, as isnady-data's folders are (0.7.3): (kind, sign, name)
+KINDS = (("quran", "📖", N_("The Qur'an")), ("hadith", "📚", N_("Hadith collections")),
+         ("sahifa", "📜", N_("Written sources")), ("sira", "🕌", N_("Sira")), ("tabaqat", "👥", N_("Tabaqat")),
+         ("rijal", "⚖", N_("Rijal")))
+ONE = {"quran": N_("Qur'an"), "hadith": N_("Hadith collection"), "sahifa": N_("Written source"), "sira": N_("Sira"),
+       "tabaqat": N_("Tabaqat"), "rijal": N_("Rijal")}
+
+# the languages of the Qur'an's translations in isnady-data, marked so that their names are translated
+QURAN_LANGUAGES = (N_("Albanian"), N_("Azerbaijani"), N_("Bengali"), N_("Bosnian"), N_("English"), N_("French"),
+                   N_("German"), N_("Indonesian"), N_("Kazakh"), N_("Malay"), N_("Persian"), N_("Russian"),
+                   N_("Spanish"), N_("Tamil"), N_("Tatar"), N_("Turkish"), N_("Urdu"), N_("Uzbek"))
+
+
+def _kind_name(kind: str, one: bool = False) -> str:
+    return ONE.get(kind, kind) if one else next((k[2] for k in KINDS if k[0] == kind), kind)
+
+
+def _sign(kind: str) -> str:
+    return next((k[1] for k in KINDS if k[0] == kind), "•")
+
+
+def _road(entry) -> str | None:
+    """The road of a book; None for the Qur'an, which is both roads'."""
+    if entry.kind == "quran":
+        return None
+    return "shia" if entry.tradition == "shia" else "sunni"
+
+
 class SourcesPage(QWidget):
     data_imported = Signal()
+    open_book = Signal(str)          # a book's "Open in Books" (the dialog closes, Books opens it)
+    export_book = Signal(str)        # a hadith collection's "Export…"
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setObjectName("Page")
         self._worker: Worker | None = None
         self._buttons: list[QPushButton] = []
-        self._road = "all"                       # All | Sunni | Shia (SH1)
+        self._kind = "hadith"                    # the kind shown, as isnady-data's folders (0.7.3)
+        self._road = "all"                       # both roads, or one (SH1)
         self._anchors: dict = {}
         self.box = QVBoxLayout(self)
         self.box.setContentsMargins(6, 12, 12, 12)
@@ -206,11 +237,11 @@ class SourcesPage(QWidget):
         self._lang_checks = {}
         conn = db.connect()
         try:
-            intro = QLabel(tr("isnady reads every book from a REPOSITORY: its own by default (isnady-data), which keeps the "
-                             "Qur'an and its translations, every Sunni and Shia hadith collection, the sira, the lives of "
-                             "the scholars and the rijal works. Choose another, or add your own, and import with one "
-                             "click. Your own files (User Resources) stay on this computer. The same from the command "
-                             "line: iy repo, iy catalog."))
+            intro = QLabel(tr("isnady reads every book from a REPOSITORY: its own by default (isnady-data). Its books "
+                              "stand in one folder per kind — the Qur'an, hadith, written sources, sira, tabaqat, "
+                              "rijal — and in each the Sunni road and the Shia road have their own. This page shows them "
+                              "the same way: choose a kind, then a road. Every book has the same buttons and its "
+                              "languages. The same from the command line: iy repo, iy catalog."))
             intro.setObjectName("Lead")
             intro.setWordWrap(True)
             self.box.addWidget(intro)
@@ -223,8 +254,6 @@ class SourcesPage(QWidget):
                 entries = []
                 self.status.setText(tr("The repository cannot be read: {exc}", exc=exc))
             self._anchors = {}
-            if entries:
-                self.box.addWidget(self._holds_card(entries))
             head = QHBoxLayout()
             title = QLabel(tr("Sources of {name}", name=repositories.selected().name))
             title.setObjectName("CardTitle")
@@ -240,28 +269,39 @@ class SourcesPage(QWidget):
             self._buttons.append(all_button)
             head.addWidget(all_button)
             self.box.addLayout(head)
-            self.box.addWidget(self._road_bar())
-            # every kind of book on its own, the Sunni road and the Shia road apart (SH1); the Qur'an above both
-            road_titles = {None: "", "sunni": tr("The Sunni road"), "shia": tr("The Shia road")}
-            current_road = "—"
-            for gid, road, heading, sign, group in self._groups(entries):
-                if not group or (self._road != "all" and road not in (None, self._road)):
+            kinds = [k for k in KINDS if any(e.kind == k[0] for e in entries)]
+            if kinds and self._kind not in [k[0] for k in kinds]:
+                self._kind = kinds[0][0]
+            if kinds:
+                self.box.addWidget(self._kind_bar(entries, kinds))
+            shown = [e for e in entries if e.kind == self._kind]
+            roads = [r for r in ("sunni", "shia") if any(_road(e) == r for e in shown)]
+            if len(roads) > 1:
+                self.box.addWidget(self._road_bar())
+            elif self._road not in ("all", *roads):
+                self._road = "all"
+            # the kind's folder in the repository, and under it one group for each road (SH1); the Qur'an is both roads'
+            for road in (roads or [None]):
+                group = [e for e in shown if road is None or _road(e) == road]
+                if not group or (road is not None and self._road not in ("all", road)):
                     continue
-                if road != current_road and road is not None:
-                    current_road = road
-                    band = QLabel(road_titles[road])
-                    band.setObjectName("CardTitle")
-                    band.setFont(theme.reading_font(17, bold=True))
+                folder = f"{self._kind}/{road}/" if road else f"{self._kind}/"
+                band = QLabel(f"{_sign(self._kind)}  {tr(_kind_name(self._kind))}" +
+                              (f" · {tr('Sunni') if road == 'sunni' else tr('Shia')}" if road else "") +
+                              f"  ·  {len(group)}")
+                band.setObjectName("CardTitle")
+                band.setFont(theme.reading_font(16, bold=True))
+                if road:
                     band.setStyleSheet(f"color: {theme.current().gold if road == 'shia' else theme.current().lapis};"
-                                       "padding-top: 10px;")
-                    self.box.addWidget(band)
-                sub = QLabel(f"{sign}  {heading}  ·  {len(group)}")
-                sub.setObjectName("FilterTitle")
-                self._anchors[gid] = sub
-                self.box.addWidget(sub)
+                                       "padding-top: 8px;")
+                self._anchors[f"{self._kind}-{road}" if road else self._kind] = band
+                self.box.addWidget(band)
+                where = QLabel(tr("In the repository: {folder}", folder=f"isnady-data/{folder}"))
+                where.setObjectName("Caption")
+                self.box.addWidget(where)
                 for entry in group:
                     self.box.addWidget(self._card(conn, entry))
-            if entries:
+            if self._kind == "hadith" and shown:
                 self.box.addWidget(self._languages_card(conn))
 
             title = QLabel(tr("Your sources"))
@@ -289,30 +329,30 @@ class SourcesPage(QWidget):
             conn.close()
         self._set_busy(self._worker is not None)
 
-    @staticmethod
-    def _groups(entries) -> list[tuple[str, str | None, str, str, list]]:
-        """(id, road, heading, sign, entries) of every kind of book: the Qur'an; on the Sunni road the hadith, the
-        written sources, the sira, the lives of the scholars and the rijal; on the Shia road the hadith, the written
-        sources and the rijal — never mixed (SH1)."""
-        def of(kind, road):
-            return [e for e in entries if e.kind == kind and (road is None or (e.tradition == "shia") == (road == "shia"))]
-        return [("quran", None, tr("The Holy Qur'an"), "📖", of("quran", None)),
-                ("hadith-sunni", "sunni", tr("Sunni hadith collections"), "📚", of("hadith", "sunni")),
-                ("sahifa-sunni", "sunni", tr("Sunni written sources (sahifa)"), "📜", of("sahifa", "sunni")),
-                ("sira", "sunni", tr("Sira — the life of the Prophet ﷺ"), "🕌", of("sira", "sunni")),
-                ("tabaqat", "sunni", tr("Tabaqat — the lives of the scholars"), "👥", of("tabaqat", "sunni")),
-                ("rijal-sunni", "sunni", tr("Sunni rijal"), "⚖", of("rijal", "sunni")),
-                ("hadith-shia", "shia", tr("Shia hadith collections"), "📚", of("hadith", "shia")),
-                ("sahifa-shia", "shia", tr("Shia written sources"), "📜", of("sahifa", "shia")),
-                ("rijal-shia", "shia", tr("Shia rijal"), "⚖", of("rijal", "shia"))]
+    def _kind_bar(self, entries, kinds) -> QWidget:
+        """One button per kind of book, as the repository's folders are: the Qur'an, hadith, written sources, sira,
+        tabaqat, rijal — each with how many books it holds and how many are imported."""
+        bar = QWidget()
+        flow = FlowLayout(bar, spacing=8)
+        for kind, sign, _name in kinds:
+            group = [e for e in entries if e.kind == kind]
+            b = QPushButton(f"{sign}  {tr(_kind_name(kind))}  ·  {len(group)}")
+            b.setObjectName("Segment")
+            b.setCheckable(True)
+            b.setChecked(kind == self._kind)
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            b.setToolTip(tr("In the repository: {folder}", folder=f"isnady-data/{kind}/"))
+            b.clicked.connect(lambda _c=False, k=kind: self._set_kind(k))
+            flow.addWidget(b)
+        return bar
 
     def _road_bar(self) -> QWidget:
-        """All, or one road only."""
+        """Both roads, or one only."""
         bar = QWidget()
         row = QHBoxLayout(bar)
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(6)
-        for key, text in (("all", tr("All")), ("sunni", tr("Sunni")), ("shia", tr("Shia"))):
+        for key, text in (("all", tr("Both roads")), ("sunni", tr("Sunni")), ("shia", tr("Shia"))):
             b = QPushButton(text)
             b.setObjectName("Segment")
             b.setCheckable(True)
@@ -323,62 +363,27 @@ class SourcesPage(QWidget):
         row.addStretch(1)
         return bar
 
+    def _set_kind(self, kind: str) -> None:
+        self._kind = kind
+        self.refresh()
+
     def _set_road(self, road: str) -> None:
         self._road = road
         self.refresh()
 
     def _go_to(self, gid: str) -> None:
-        """A tile of "What it holds" clicked: its books, in view."""
+        """A kind, or a kind on one road ("sahifa-shia"), shown and in view."""
         from PySide6.QtWidgets import QScrollArea
 
-        target = self._anchors.get(gid)
-        if target is None and self._road != "all":
-            self._road = "all"
-            self.refresh()
-            target = self._anchors.get(gid)
+        kind, _, road = gid.partition("-")
+        self._kind, self._road = kind, road or "all"
+        self.refresh()
+        target = self._anchors.get(gid) or self._anchors.get(kind)
         w = self.parentWidget()
         while w is not None and not isinstance(w, QScrollArea):
             w = w.parentWidget()
         if target is not None and w is not None:
             w.verticalScrollBar().setValue(max(0, target.mapTo(w.widget(), target.rect().topLeft()).y() - 10))
-
-    def _holds_card(self, entries) -> QFrame:
-        """What the repository holds, at a glance: one tile per kind of book, a click goes to its cards."""
-        card = QFrame()
-        card.setObjectName("Card")
-        box = QVBoxLayout(card)
-        box.setContentsMargins(18, 12, 18, 12)
-        box.setSpacing(8)
-        title = QLabel(tr("What it holds"))
-        title.setObjectName("CardTitle")
-        title.setFont(theme.reading_font(13.5, bold=True))
-        box.addWidget(title)
-        bar = QWidget()
-        flow = FlowLayout(bar, spacing=10)
-        for gid, road, heading, sign, group in self._groups(entries):
-            if not group:
-                continue
-            if group[0].kind == "quran":
-                e = group[0]
-                big = tr("{n} translations", n=e.translations) if e.translations else tr("Arabic text")
-            elif group[0].kind in ("hadith", "sahifa"):
-                big = tr("{n} books · {hadith:,} hadith", n=len(group), hadith=sum(e.hadith or 0 for e in group))
-            elif len(group) == 1:
-                from isnady.core import titles as core_titles
-
-                big = core_titles.book(group[0].book or group[0].id, group[0].title.split(" — ")[0])
-            else:
-                big = tr("{n} works", n=len(group))
-            road_mark = {"sunni": tr("Sunni"), "shia": tr("Shia")}.get(road or "", "")
-            tile = QPushButton(f"{sign}  {heading}\n{big}")
-            tile.setObjectName("Quiet")
-            tile.setCursor(Qt.CursorShape.PointingHandCursor)
-            tile.setToolTip(road_mark)
-            tile.setStyleSheet("text-align: left; padding: 8px 14px;")
-            tile.clicked.connect(lambda _c=False, g=gid: self._go_to(g))
-            flow.addWidget(tile)
-        box.addWidget(bar)
-        return card
 
     def _languages_card(self, conn) -> QFrame:
         """One language for every book at once (LANG2): added to or taken out of all the imported books that offer
@@ -508,6 +513,9 @@ class SourcesPage(QWidget):
         return card
 
     def _card(self, conn, entry: catalog.Entry) -> QFrame:
+        """One book, the same for every kind: its name, its tags, what it is, its languages, and the same four
+        buttons — Import (Update), Remove data, Open in Books, Export (Bayram, 2026-11-02: "Import/export butonları
+        hepsi için aynı olmalı! Diller de!")."""
         st = catalog.status(conn, entry)
         card = QFrame()
         card.setObjectName("Card")
@@ -542,21 +550,18 @@ class SourcesPage(QWidget):
             licence = (entry.license or tr("licence not stated"), "TagMuted",
                        tr("May be shared further (tier A/B)") if db.tier_for_license(entry.license) in "AB"
                        else tr("No licence allowing it to be shared further: for this computer (tier C)"))
-            if entry.library:
-                kind = {"quran": tr("Qur'an"), "sira": tr("Sira"), "tabaqat": tr("Tabaqat"),
-                        "sahifa": tr("Written source")}[entry.kind]
-                items = [(kind, "Tag", tr("Read in Books, beside the hadith collections")), licence]
-                if entry.compiler:
-                    items.append((entry.compiler, "TagMuted", ""))
-                if entry.size and entry.size >= 2**19:
-                    items.append((tr("about {mb} MB", mb=max(1, round(entry.size / 2**20))), "TagMuted",
-                                  tr("Downloaded once; the Qur'an's translations each when chosen")
-                                  if entry.kind == "quran" else tr("Downloaded once")))
-            else:
-                items = [(tr("Shia") if entry.tradition == "shia" else tr("Sunni"),
-                          "TagGold" if entry.tradition == "shia" else "Tag",
-                          tr("The tradition of the collection: Shia books are kept apart from Sunni ones, and their "
-                             "grades and narrators are read in their own terms.")), licence]
+            road = _road(entry)
+            items = [(tr(_kind_name(entry.kind, one=True)), "Tag", ""),
+                     (tr("Both roads") if road is None else tr("Shia") if road == "shia" else tr("Sunni"),
+                      "TagGold" if road == "shia" else "TagMuted",
+                      tr("The tradition of the book: Shia books are kept apart from Sunni ones, and their "
+                         "grades and narrators are read in their own terms.")), licence]
+            if entry.compiler:
+                items.append((entry.compiler, "TagMuted", ""))
+            if entry.size and entry.size >= 2**19:
+                items.append((tr("about {mb} MB", mb=max(1, round(entry.size / 2**20))), "TagMuted",
+                              tr("Downloaded once; the Qur'an's translations each when chosen")
+                              if entry.kind == "quran" else tr("Downloaded once")))
             if not ours and entry.origin_url:
                 items.append((tr("read from its publisher"), "TagMuted",
                               f"{entry.origin_name}\n{entry.origin_url}" if entry.origin_url else ""))
@@ -588,48 +593,128 @@ class SourcesPage(QWidget):
         desc.setWordWrap(True)
         box.addWidget(desc)
 
+        checks = self._language_row(box, entry, st)
+        row = QHBoxLayout()
+        row.addStretch(1)
+        key = self._work_key(conn, entry) if st["imported"] else None
+        buttons = [
+            (tr("Update") if st["imported"] else tr("Import"), "Quiet" if st["imported"] else "Primary", True, "",
+             lambda _c=False, e=entry, cs=checks: self._import(e, cs)),
+            (tr("Remove data"), "Quiet", st["imported"], tr("Nothing of it is imported yet"),
+             lambda _c=False, e=entry: self._remove(e)),
+            ("📚 " + tr("Open in Books"), "Quiet", bool(key), tr("Import it first; then it is read in Books"),
+             lambda _c=False, k=key: self.open_book.emit(k)),
+            ("⤴ " + tr("Export…"), "Quiet", bool(st["imported"] and entry.kind == "hadith" and entry.book),
+             tr("Import it first") if not st["imported"] else
+             tr("Export writes hadith collections (EPUB, PDF, CSV …); this kind is read in Books"),
+             lambda _c=False, b=entry.book: self.export_book.emit(b or "")),
+        ]
+        if not entry.builtin:
+            buttons.append((tr("Delete from list"), "Quiet", True, "", lambda _c=False, e=entry: self._delete(e)))
+        for text, style, ok, why, slot in buttons:
+            b = QPushButton(text)
+            b.setObjectName(style)
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            b.setProperty("allowed", bool(ok))
+            if not ok and why:
+                b.setToolTip(why)
+            b.clicked.connect(slot)
+            row.addWidget(b)
+            self._buttons.append(b)
+        box.addLayout(row)
+        return card
+
+    def _language_row(self, box, entry: catalog.Entry, st) -> list:
+        """The book's languages, on every card: those a hadith collection offers; the Qur'an's translations by
+        language (and its translators); Arabic alone, as it is, for the other kinds."""
+        langs = QWidget()
+        flow = FlowLayout(langs, spacing=10)
+        title = QLabel(tr("Languages:"))
+        title.setObjectName("Caption")
+        flow.addWidget(title)
         checks = []
-        if entry.builtin and entry.book and entry.languages:
-            langs = QWidget()
-            flow = FlowLayout(langs, spacing=10)
+        if entry.kind == "quran":
+            from isnady.core import quran
+
+            have = {e["language"] for e in quran.editions()} if quran.available() else set()
+            fixed = QCheckBox(tr("Arabic"))
+            fixed.setChecked(True)
+            fixed.setEnabled(False)
+            fixed.setToolTip(tr("The Arabic text is always there"))
+            flow.addWidget(fixed)
+            wanted = set(quran.wanted_languages())
+            for lang in entry.languages:
+                check = QCheckBox(tr(lang))
+                check.setChecked(lang in have or (not have and lang in wanted))
+                check.setProperty("code", lang)
+                check.setToolTip(tr("Ticked: one translation in this language ({name}); untick to remove its "
+                                    "translations. Translators… chooses others.",
+                                    name=quran.DEFAULT_OF.get(lang, "")))
+                flow.addWidget(check)
+                checks.append(check)
+            more = QPushButton("➕ " + tr("Translators…"))
+            more.setObjectName("Quiet")
+            more.setToolTip(tr("Choose the translations to download, of 98 languages; untick one to remove it"))
+            more.clicked.connect(self._quran_translations)
+            self._buttons.append(more)
+            flow.addWidget(more)
+        elif entry.book and entry.languages and entry.kind == "hadith":
             chosen = st["languages"] or [catalog.language_label(c) for c in catalog.DEFAULT_LANGUAGES]
             for code in entry.languages:
                 check = QCheckBox(tr(catalog.language_label(code)))
                 check.setChecked(catalog.language_label(code) in chosen)
                 check.setProperty("code", code)
+                if code == "ara":
+                    check.setToolTip(tr("Arabic stays: the chains and the narrators are read from it."))
                 flow.addWidget(check)
                 checks.append(check)
-            box.addWidget(langs)
             self._lang_checks[entry.id] = checks
+        else:
+            fixed = QCheckBox(tr("Arabic"))
+            fixed.setChecked(True)
+            fixed.setEnabled(False)
+            fixed.setToolTip(tr("This work is in Arabic only, as its author wrote it"))
+            flow.addWidget(fixed)
+        box.addWidget(langs)
+        return checks
 
-        row = QHBoxLayout()
-        row.addStretch(1)
-        imp = QPushButton(tr("Update") if st["imported"] else tr("Import"))
-        imp.setObjectName("Primary" if not st["imported"] else "Quiet")
-        imp.clicked.connect(lambda _c=False, e=entry, cs=checks: self._import(e, cs))
-        row.addWidget(imp)
-        self._buttons.append(imp)
+    @staticmethod
+    def _work_key(conn, entry: catalog.Entry) -> str | None:
+        """The key Books opens this book by, once it is imported."""
         if entry.kind == "quran":
-            more = QPushButton("➕ " + tr("Translations…"))
-            more.setObjectName("Quiet")
-            more.setToolTip(tr("Choose the translations to download, of 98 languages; untick one to remove it"))
-            more.clicked.connect(self._quran_translations)
-            row.addWidget(more)
-            self._buttons.append(more)
-        if st["imported"]:
-            rem = QPushButton(tr("Remove data"))
-            rem.setObjectName("Quiet")
-            rem.clicked.connect(lambda _c=False, e=entry: self._remove(e))
-            row.addWidget(rem)
-            self._buttons.append(rem)
-        if not entry.builtin:
-            forget = QPushButton(tr("Delete from list"))
-            forget.setObjectName("Quiet")
-            forget.clicked.connect(lambda _c=False, e=entry: self._delete(e))
-            row.addWidget(forget)
-            self._buttons.append(forget)
-        box.addLayout(row)
-        return card
+            return "quran"
+        names = [n for n in (entry.book, entry.id, *entry.aliases) if n]
+        if not names:
+            return None
+        try:
+            row = conn.execute(f"SELECT key FROM works WHERE key IN ({','.join('?' * len(names))}) LIMIT 1",
+                               names).fetchone()
+            if row is None and entry.kind != "hadith":     # a work named by its source (the rijal: taqrib, najashi)
+                row = conn.execute("SELECT w.key FROM works w JOIN sources s ON s.id = w.source_id WHERE s.key = ? "
+                                   "LIMIT 1", (entry.source_key,)).fetchone()
+        except Exception:  # noqa: BLE001 — a database without works
+            row = None
+        return row[0] if row else None
+
+    def _import_quran(self, entry: catalog.Entry, checks: list) -> None:
+        """The Qur'an's card: a language ticked gets its translation (the one its readers know best), a language
+        unticked loses its translations; Update reads again those already here."""
+        from isnady.core import quran
+
+        ticked = {c.property("code") for c in checks if c.isChecked()}
+        have = [e for e in quran.editions() if e["key"] != quran.ARABIC] if quran.available() else []
+        for e in have:
+            if e["language"] not in ticked:
+                quran.remove(e["key"])
+        kept = [e["key"] for e in have if e["language"] in ticked]
+        langs = {e["language"] for e in have}
+        wanted = kept + [quran.DEFAULT_OF[lang] for lang in sorted(ticked) if lang not in langs and lang in quran.DEFAULT_OF]
+        if not wanted and not quran.available():
+            wanted = quran.default_editions()
+        if not wanted:
+            self.refresh()
+            return
+        self._start(Worker("import", entry, wanted), tr("Downloading the translations…"))
 
     def _quran_translations(self) -> None:
         """The Qur'an's translations window (gui.quran_view): those ticked are downloaded here, with the page's bar."""
@@ -902,6 +987,9 @@ class SourcesPage(QWidget):
         self._start(Worker("import_all", None, languages), tr("Importing every source of the repository…"))
 
     def _import(self, entry: catalog.Entry, checks: list) -> None:
+        if entry.kind == "quran":                  # its languages ticked on the card (0.7.3)
+            self._import_quran(entry, checks)
+            return
         languages = [c.property("code") for c in checks if c.isChecked()] or None
         if checks and not languages:
             self.status.setText(tr("Choose at least one language."))
