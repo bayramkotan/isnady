@@ -379,6 +379,13 @@ def counted(conn: sqlite3.Connection) -> dict:
     return cache.kept(conn, "sahifa", _counted)
 
 
+def is_counted(conn: sqlite3.Connection) -> bool:
+    """Whether the count is ready for the database as it is now (then every call below is instant)."""
+    from isnady.core import cache
+
+    return cache.ready(conn, "sahifa") is not None
+
+
 def hadith(conn: sqlite3.Connection, source_id: str) -> list[int]:
     """The hadith ids of a written source, in the order of the books."""
     data = counted(conn)

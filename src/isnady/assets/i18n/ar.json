@@ -1376,6 +1376,8 @@
  "Lives in later books": "تعيش في الكتب اللاحقة",
  "Writing in the chains": "الكتابة في الأسانيد",
  "Most hadith came down by word of mouth; some were written in the first generations. What was written, and where it lives in the books imported here.": "نُقل أكثر الحديث مشافهة، وكُتب بعضه في الأجيال الأولى. ما الذي كُتب، وأين يعيش في الكتب المستوردة هنا.",
+ "Counting the written sources in the books imported here…": "تُعدّ المصادر المكتوبة في الكتب المستوردة هنا…",
+ "Once, after the books change; the window can be used meanwhile, and this page fills in by itself.": "مرة واحدة بعد تغيّر الكتب؛ يمكن استعمال النافذة في أثناء ذلك، وتمتلئ هذه الصفحة وحدها.",
  "Read it as a book in Books": "اقرأه كتابًا في الكتب",
  "Import it as a book (Data sources)": "استورده كتابًا (مصادر البيانات)",
  "In the books imported here: {n:,} hadith": "في الكتب المستوردة هنا: {n:,} حديثًا",

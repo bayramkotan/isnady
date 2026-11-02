@@ -125,8 +125,17 @@ def _file(name: str) -> Path | None:
 
 
 # ---------------------------------------------------------------------- the two kinds
-def kept(conn: sqlite3.Connection, name: str, compute, disk: bool = True):
-    """compute(conn), counted again only when the database changed; kept in memory and (disk) in cache/<name>.json."""
+_MISS = object()
+
+
+def ready(conn: sqlite3.Connection, name: str, disk: bool = True):
+    """The value kept for name while it is still the database's (in memory, else on disk), or None — it never
+    counts, so a page can ask without waiting and count in the background when the answer is None."""
+    value = _lookup(conn, name, disk)
+    return None if value is _MISS else value
+
+
+def _lookup(conn: sqlite3.Connection, name: str, disk: bool):
     now = stamp(conn)
     db = _db(conn)
     key = (db, name)
@@ -143,8 +152,19 @@ def kept(conn: sqlite3.Connection, name: str, compute, disk: bool = True):
                 return value
         except (OSError, ValueError, KeyError, TypeError):
             pass
+    return _MISS
+
+
+def kept(conn: sqlite3.Connection, name: str, compute, disk: bool = True):
+    """compute(conn), counted again only when the database changed; kept in memory and (disk) in cache/<name>.json."""
+    value = _lookup(conn, name, disk)
+    if value is not _MISS:
+        return value
+    now = stamp(conn)
+    db = _db(conn)
     value = _plain(compute(conn))
-    _MEMORY[key] = (now, value)
+    _MEMORY[(db, name)] = (now, value)
+    path = _file(name) if disk and db != ":memory:" else None
     if path is not None:
         try:
             path.parent.mkdir(parents=True, exist_ok=True)

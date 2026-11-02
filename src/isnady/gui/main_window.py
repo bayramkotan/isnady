@@ -441,6 +441,9 @@ class MainWindow(QMainWindow):
             from PySide6.QtCore import QTimer
 
             QTimer.singleShot(300, self._warm_next)
+            # the written sources are counted in the background a little later, so their page opens at once
+            if hasattr(self.sahifa_page, "warm"):
+                QTimer.singleShot(4000, self.sahifa_page.warm)
 
     def _warm_next(self) -> None:
         from PySide6.QtCore import QTimer
@@ -1202,6 +1205,8 @@ class MainWindow(QMainWindow):
         self.search_page._sync_with_database(force=True)
         for key in self._lazy:
             self._refresh_or_later(key)
+        if hasattr(self.sahifa_page, "warm"):          # counted again in the background, not when it is opened
+            self.sahifa_page.warm()
         self.books_page.refresh()
         self.statistics_page.refresh()
 

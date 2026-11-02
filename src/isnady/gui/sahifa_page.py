@@ -3,7 +3,7 @@ later books, and writing in the chains — the Sunni road and the Shia road each
 
 import html
 
-from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtCore import QObject, QSize, Qt, Signal
 from PySide6.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QListWidget,
     QListWidgetItem,
+    QProgressBar,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -38,6 +39,30 @@ def _label(text: str, name: str = "", wrap: bool = True, rich: bool = False) -> 
     return label
 
 
+class _Count(QObject):
+    """The count (core.sahifa.counted, some seconds on a full database) in the background, with its own connection:
+    the window is never held while it runs (Bayram, 2026-11-02: "Yazılı Kaynaklara geçtiğimizde yavaşlama oluyor,
+    biraz takılıyor"). A daemon thread, not a QThread: closing isnady while it counts neither waits nor aborts."""
+    done = Signal()
+
+    def start(self) -> None:
+        import threading
+
+        threading.Thread(target=self._run, name="sahifa-count", daemon=True).start()
+
+    def _run(self) -> None:
+        from isnady.data import db
+
+        conn = db.connect()
+        try:
+            core.counted(conn)
+        except Exception:  # noqa: BLE001 — the page says nothing was found rather than freezing
+            pass
+        finally:
+            conn.close()
+            self.done.emit()                      # queued to the window's thread
+
+
 class SahifaPage(QWidget):
     open_hadith = Signal(int)                # a hadith → in its book
     open_book = Signal(str)                  # the written source as a book of Books (SHF1b)
@@ -53,6 +78,7 @@ class SahifaPage(QWidget):
         self._current: str | None = None
         self._ids: list[int] = []
         self._shown = 0
+        self._counting: _Count | None = None
 
         left = QFrame()
         left.setObjectName("Card")
@@ -120,6 +146,29 @@ class SahifaPage(QWidget):
             self._current = None
         self.refresh()
 
+    def warm(self) -> None:
+        """Count in the background now if the count is not ready (the window calls it a little after it opens, and
+        after an import), so the page is ready before it is opened."""
+        conn = self.conn
+        if conn is None or self._counting is not None or core.is_counted(conn):
+            return
+        self._counting = _Count(self)
+        self._counting.done.connect(self._counted)
+        self._counting.start()
+
+    def _counted(self) -> None:
+        self._counting = None
+        if self.isVisible():
+            self.refresh()
+        else:
+            self._stale = True                     # drawn when it is opened next
+
+    def showEvent(self, event) -> None:  # noqa: N802 (Qt's name)
+        super().showEvent(event)
+        if getattr(self, "_stale", False):
+            self._stale = False
+            self.refresh()
+
     def refresh(self) -> None:
         from PySide6.QtGui import QColor, QPalette
 
@@ -127,6 +176,10 @@ class SahifaPage(QWidget):
         pal.setColor(QPalette.ColorRole.HighlightedText, QColor(theme.current().ink))
         self.list.setPalette(pal)
         conn = self.conn
+        if conn is not None and not core.is_counted(conn):
+            self._waiting()
+            self.warm()
+            return
         counts = {r["id"]: r["count"] for r in core.summary(conn)} if conn is not None else {}
         self.list.blockSignals(True)
         self.list.clear()
@@ -145,6 +198,28 @@ class SahifaPage(QWidget):
         self.list.blockSignals(False)
         if current is not None:
             self.show_source(current.data(Qt.ItemDataRole.UserRole))
+
+    def _waiting(self) -> None:
+        """The list without its numbers and a note while the count runs in the background."""
+        self.list.blockSignals(True)
+        self.list.clear()
+        for s in core.sources(self._road):
+            item = QListWidgetItem(f"{core.text(s['title'])}\n{tr(LAYERS[s['layer']])} · …")
+            item.setData(Qt.ItemDataRole.UserRole, s["id"])
+            item.setSizeHint(QSize(0, 58))
+            self.list.addItem(item)
+        self.list.blockSignals(False)
+        self._clear()
+        _card, box = self._card()
+        box.addWidget(_label(tr("Counting the written sources in the books imported here…"), "CardTitle"))
+        box.addWidget(_label(tr("Once, after the books change; the window can be used meanwhile, and this page fills "
+                                "in by itself."), "Caption"))
+        bar = QProgressBar()
+        bar.setRange(0, 0)
+        bar.setMaximumHeight(6)
+        bar.setTextVisible(False)
+        box.addWidget(bar)
+        self.box.addStretch(1)
 
     def _picked(self, source_id: str) -> None:
         self.show_source(source_id)
@@ -186,6 +261,9 @@ class SahifaPage(QWidget):
         if s is None or conn is None:
             return
         self._current = source_id
+        if not core.is_counted(conn):              # picked while the count runs: shown when it is ready
+            self.warm()
+            return
         self._clear()
         t = theme.current()
         shia = s["road"] == "shia"

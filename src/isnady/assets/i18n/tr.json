@@ -1376,6 +1376,8 @@
  "Lives in later books": "Sonraki kitaplarda yaşıyor",
  "Writing in the chains": "Senedlerde yazı",
  "Most hadith came down by word of mouth; some were written in the first generations. What was written, and where it lives in the books imported here.": "Hadislerin çoğu sözlü aktarıldı; bir kısmı ilk nesillerde yazıldı. Ne yazıldı ve içe aktarılan kitaplarda nerede yaşıyor.",
+ "Counting the written sources in the books imported here…": "Yazılı kaynaklar içe aktarılan kitaplarda sayılıyor…",
+ "Once, after the books change; the window can be used meanwhile, and this page fills in by itself.": "Kitaplar değiştiğinde bir kez yapılır; bu arada pencereyi kullanabilirsiniz, sayfa kendiliğinden dolar.",
  "Read it as a book in Books": "Kitaplar'da kitap olarak oku",
  "Import it as a book (Data sources)": "Kitap olarak içe aktar (Veri kaynakları)",
  "In the books imported here: {n:,} hadith": "İçe aktarılan kitaplarda: {n:,} hadis",
