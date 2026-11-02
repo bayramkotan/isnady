@@ -1,18 +1,23 @@
 # One release, everywhere at once (REL1). A tag v* → check → build everything → publish.
 # Nothing is published unless every build succeeds, so GitHub, PyPI and the applications never differ.
 # The file name (publish.yml) and the "pypi" environment are what PyPI's trusted publishing is tied to: keep them.
+# npm is published here too, by npm's trusted publishing (OIDC: no token, no login): npmjs.com → isnady → Settings →
+# Trusted Publisher → GitHub Actions, bayramkotan / isnady / publish.yml. "Run workflow" (or gh workflow run
+# publish.yml) publishes only npm, the version js/package.json carries on main — for a release whose npm step failed.
 name: Release
 
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   check:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -105,3 +110,29 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --title "isnady ${GITHUB_REF_NAME#v}" \
             --notes-file artifacts/release-notes/release-notes.md
+
+  npm:
+    # after PyPI, so npm never carries a version PyPI does not; alone when the workflow is run by hand
+    needs: publish
+    if: ${{ always() && (github.event_name == 'workflow_dispatch' || needs.publish.result == 'success') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+      - name: npm new enough for trusted publishing
+        run: npm install -g npm@latest && npm --version
+      - name: Publish js/ unless npm already has this version
+        working-directory: js
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if npm view "isnady@${version}" version >/dev/null 2>&1; then
+            echo "isnady ${version} is already on npm"
+          else
+            npm publish --provenance --access public
+          fi
