@@ -296,7 +296,8 @@ def _vocabulary(conn: sqlite3.Connection) -> tuple[str, dict]:
 def _in_vocabulary(conn: sqlite3.Connection, pattern: str, limit: int = NEAR_MAX) -> list[str]:
     lines, counts = _vocabulary(conn)
     found = re.findall(r"^(?:" + pattern + r")$", lines, re.M)
-    return sorted(set(found), key=lambda w: -counts.get(w, 0))[:limit]
+    # the most frequent first, equal ones by the word: the same spellings every time, and the same as isnady-rs
+    return sorted(set(found), key=lambda w: (-counts.get(w, 0), w))[:limit]
 
 
 def spellings_text(spellings: dict, most: int = 4) -> str:

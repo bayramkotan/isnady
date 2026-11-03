@@ -77,6 +77,13 @@ isnady is two repositories that work as one:
 The application ships without hadith data, so it stays small and the data can grow on its own:
 a new book in isnady-data reaches every isnady at once, without a new version of the program.
 
+**And isnady in Rust: [bayramkotan/isnady-rs](https://github.com/bayramkotan/isnady-rs).** The same program is being
+written again in Rust. It uses the same data folder, the same database and the same settings, and it carries **the
+same version number**: isnady 0.7.4 and isnady-rs 0.7.4 are one release. Each piece is ported word for word, and a
+parity test compares both programs' answers on every release. Today `iy-rs search` (about 60 ms a search),
+`iy-rs sources` and `iy-rs datadir`; its [PARITY.md](https://github.com/bayramkotan/isnady-rs/blob/main/PARITY.md)
+lists what is ported and what is still done here.
+
 ---
 
 ## 🎯 Why isnady
