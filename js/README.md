@@ -96,7 +96,9 @@ written again in Rust. It uses the same data folder, the same database and the s
 same version number**: isnady 0.7.4 and isnady-rs 0.7.4 are one release. Each piece is ported word for word, and a
 parity test compares both programs' answers on every release. Today `iy-rs search` (about 60 ms a search),
 `iy-rs sources` and `iy-rs datadir`; its [PARITY.md](https://github.com/bayramkotan/isnady-rs/blob/main/PARITY.md)
-lists what is ported and what is still done here.
+lists what is ported and what is still done here. Get it with `cargo install isnady` from
+[crates.io](https://crates.io/crates/isnady), or ready to run from its
+[Releases](https://github.com/bayramkotan/isnady-rs/releases/latest). Its README is this one, word for word.
 
 ---
 
