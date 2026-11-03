@@ -8,12 +8,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.7.3-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.7.4-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.7.3-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.7.4-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -48,7 +48,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.7.3).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.7.4).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -212,7 +212,8 @@ administrator prompt on Windows). If an old copy starts even for `iy update`, ru
    isnady-data at once, in the background.
 2. **File → Data Sources.** The repository is already chosen: **isnady-data**. Tick the books and
    the languages you want and press **Import** — or **Import all**. **Languages for every book** adds a language to
-   all the books that have it (or takes it out of all of them) in one step.
+   all the books that have it (or takes it out of all of them) in one step. Later, **⟳ Get updates** brings in only
+   what is new or changed in the repository.
 3. **Import the narrators too** — Ibn Hajar's *Taqrib* for the Sunni books, al-Najashi's *Rijal*
    for the Shia books — and every name in every chain is matched to its narrator.
 4. **Search**, open a chain, open a narrator, read a book.
@@ -227,6 +228,8 @@ iy catalog import al_kafi_al_kulayni                      # with al-Majlisi's an
 iy catalog import taqrib_al_tahdhib_ibn_hajar_al_asqalani # the narrators of the Sunni chains
 iy catalog import rijal_al_najashi_ahmad_ibn_ali_al_najashi  # the narrators of the Shia chains
 iy catalog import --all                                   # everything
+iy catalog updates                                        # later: what is new or changed in the repository
+iy catalog update                                         # …and import only that
 
 iy search النيات              # Arabic, with or without diacritics
 iy search "niyetlere göre"     # Turkish, English, any imported language
@@ -247,7 +250,9 @@ written, and the search index, the chains and the narrators are built once, at t
 **[bayramkotan/isnady-data](https://github.com/bayramkotan/isnady-data)** is isnady's own data
 repository and its default: every book isnady reads, kept once in isnady's own format, and every one of them is
 listed in **Data sources** and imported from there with one click — or all of them with **Import all**
-(`iy catalog import --all`).
+(`iy catalog import --all`). After that, **⟳ Get updates** (`iy catalog update`) imports only what changed: a book
+new to the repository, a book whose files changed (every book's fingerprint is in the catalog), or a language the
+repository added to a book that you read in your other books. Nothing else is read again.
 
 | What | Books | Read in isnady |
 |---|---|---|
@@ -307,6 +312,12 @@ isnady-data/                        each KIND in its folder, each ROAD in its ow
   the same four buttons — **Import** (or **Update**), **Remove data**, **Open in Books**, **Export…** (the hadith
   collections; for the other kinds it is shown greyed out, with the reason). `iy catalog list` lists them in the
   same order, each kind and road under its folder.
+- **Get updates, not everything again (0.7.4).** isnady remembers each book's fingerprint and languages when it
+  imports it (`imported.json` in your data folder). The button at the top of Data sources says how many books
+  wait — *⟳ Get updates (3)* — and each of their cards carries a mark: *New*, *Changed* or *New language*. Importing
+  them brings the search index, the chains and the narrators up to date once, at the end.
+- **In your language.** The cards say what each book is in the interface language — Turkish and Arabic as well as
+  English (*"Buhârî (ö. 256) derledi. Arapça ve 8 tercüme …"*).
 - **The layout of 0.7.3.** Until 0.7.2 the hadith collections stood at `sunni/<book>/` and `shia/<book>/`, and the
   sira and tabaqat with no road folder. isnady 0.7.3 reads the new places at once; an older isnady finds them after
   **Refresh** in Data sources (or by itself a day later).
@@ -1384,6 +1395,8 @@ iy stats corpus --recompute          # compute again
 iy catalog list                      # the books of the repository, each kind and road under its folder
 iy catalog import sahih_muslim --language tur --language eng   # one book, in these languages
 iy catalog import --all              # everything: the Qur'an, the hadith, the sira, the tabaqat, the rijal
+iy catalog updates                   # what is new or changed in the repository since you imported
+iy catalog update                    # import only that (new books, changed books, new languages)
 iy catalog import quran              # the Qur'an (the Arabic and a translation); more: iy quran download KEY
 iy catalog import sira               # Ibn Hisham's Sira; siyar, tadhkira: al-Dhahabi's two works
 iy catalog import hammam             # a written source as a book: hammam, sadiqa, ali, kitab-ali, jamia, fatima …

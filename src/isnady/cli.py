@@ -409,6 +409,28 @@ def cmd_catalog(args) -> int:
     from isnady.core import catalog
     from isnady.core import repositories as R
 
+    if args.action in ("updates", "update"):        # UPD5: only what is new or changed in the repository
+        conn = _connect()
+        try:
+            items = catalog.updates(conn, args.repo)
+            if not items:
+                print("Up to date: no new book, no changed book, no new language of the languages you read.")
+                return 0
+            for i in items:
+                e = i["entry"]
+                why = {"new": "new in the repository", "changed": "changed in the repository",
+                       "languages": "new language(s): " + ", ".join(catalog.language_label(c) for c in i.get("new", []))}
+                print(f"  {e.id:46} {why[i['why']]}")
+            if args.action == "updates":
+                print(f"{len(items)} to bring up to date: iy catalog update")
+                return 0
+            imported, failed, narrators = catalog.update(conn, items, progress=lambda m: print(f"  {m}", flush=True))
+            print(f"Brought up to date: {len(imported)} of {len(items)}")
+            for label, why in failed:
+                print(f"  failed: {label}: {why}", file=sys.stderr)
+            return 1 if failed else 0
+        finally:
+            conn.close()
     if args.action == "languages":                  # LANG2: one language for every book
         conn = _connect()
         try:
@@ -2347,9 +2369,11 @@ def build_parser() -> argparse.ArgumentParser:
     prf.add_argument("--copy", metavar="PROFILE", help="new: start from this profile's settings")
     prf.set_defaults(func=cmd_profile)
     sub.add_parser("formats", help="list supported data formats").set_defaults(func=cmd_formats)
-    cat = sub.add_parser("catalog", help="built-in sources and your own: list, import, remove, add, delete")
-    cat.add_argument("action", choices=["list", "import", "remove", "add", "delete", "languages"],
-                     help="languages: one language for every book — iy catalog languages [add|remove] tr en (LANG2)")
+    cat = sub.add_parser("catalog", help="built-in sources and your own: list, import, updates, update, remove, add, "
+                                         "delete")
+    cat.add_argument("action", choices=["list", "import", "remove", "add", "delete", "languages", "updates", "update"],
+                     help="languages: one language for every book — iy catalog languages [add|remove] tr en (LANG2); "
+                          "updates: what is new or changed in the repository; update: import only that (UPD5)")
     cat.add_argument("id", nargs="?", help="source id (see list); for add: a title")
     cat.add_argument("format", nargs="?", help="add: data format, see 'iy formats'")
     cat.add_argument("location", nargs="?", help="add: file path or URL")

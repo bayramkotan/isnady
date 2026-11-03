@@ -35,12 +35,22 @@ def _table(code: str) -> dict:
         path = resources.files("isnady.assets").joinpath("i18n", "titles", f"{code}.json")
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError, ModuleNotFoundError):
-        return {"chapters": {}, "books": {}}
-    return {"chapters": data.get("chapters", {}), "books": data.get("books", {})}
+        return {"chapters": {}, "books": {}, "about": {}}
+    return {"chapters": data.get("chapters", {}), "books": data.get("books", {}), "about": data.get("about", {})}
 
 
 def _clean(title: str) -> str:
     return re.sub(r"\s+", " ", (title or "").replace("ـ", "")).strip()
+
+
+def about(entry_id: str, english: str, lang: str | None = None) -> str:
+    """What a book of the repository is, in the interface language (DS-L10N, 2026-11-03): isnady's own text when it
+    was written for this very English text (a description changed in the repository falls back to its English)."""
+    code = lang or i18n.language()
+    if code == "en" or not english:
+        return english
+    item = _table(code)["about"].get(entry_id)
+    return item["text"] if item and item.get("en") == english and item.get("text") else english
 
 
 def chapter(title: str, lang: str | None = None, own: str | None = None) -> str:

@@ -66,6 +66,7 @@ class Entry:
     entries_work: str | None = None  # a work whose entries the written lives quote (core.source_entries)
     size: int | None = None         # bytes to download, as the catalog says
     translations: int | None = None  # the Qur'an: how many translations the repository keeps
+    sha256: str | None = None       # the book's fingerprint in the repository: changed when its files change (UPD5)
 
     @property
     def library(self) -> bool:
@@ -97,7 +98,7 @@ def entry_from_catalog(raw: dict, repo, base: str) -> Entry:
         mapping=raw.get("mapping"), parts=parts, fallback=raw.get("fallback"), origin_name=origin.get("name", ""),
         origin_url=origin.get("url", ""), aliases=raw.get("aliases", []), hadith=raw.get("hadith"),
         compiler=raw.get("compiler", ""), entries_work=raw.get("entries"), size=raw.get("size"),
-        translations=raw.get("translations"))
+        translations=raw.get("translations"), sha256=raw.get("sha256"))
 
 
 def builtin_entries(repo_id: str | None = None) -> list[Entry]:
@@ -286,6 +287,8 @@ def import_all(conn: sqlite3.Connection, languages: dict[str, list[str]] | list[
         failed = [f for f in failed if f[0] not in done]
     for e in entries:
         _set_tradition(conn, e)
+    done_titles = {label for label, _r in imported}
+    remember(conn, [e for e in entries if e.title in done_titles], seen=everything)
     for e in everything:                      # the Qur'an: the Arabic and a translation in the interface language
         if e.kind == "quran":
             try:
@@ -319,6 +322,7 @@ def import_entry(conn: sqlite3.Connection, entry: Entry, languages: list[str] | 
             progress(tr("The repository's copy could not be read ({exc}); reading the original", exc=exc))
         result = run_import(conn, request_for(entry, languages, auth, use_fallback=True), progress)
     _set_tradition(conn, entry)
+    remember(conn, [entry])
     return result
 
 
@@ -350,8 +354,121 @@ def _import_quran(editions: list[str] | None = None, progress=None):
     return report, {}
 
 
+# ---------------------------------------------------------------------- what changed in the repository (UPD5)
+# Bayram (2026-10-13): "Hepsini içe aktar yerine, değişiklikleri güncelle olabilir, sonradan eklenecekler için veya
+# sonradan eklenecek diller için!" — and 2026-11-02, of importing: "bu işlem biraz uzun sürüyor". What was imported is
+# kept in <data folder>/imported.json: each book's fingerprint and languages when it was imported, and the books the
+# repository listed then. A book is offered again only when it is NEW to the repository, CHANGED there (another
+# fingerprint), or has a NEW LANGUAGE there that the reader reads in other books.
+def _state_file():
+    return data_dir() / "imported.json"
+
+
+def _state() -> dict:
+    try:
+        return json.loads(_state_file().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_state(state: dict) -> None:
+    try:
+        path = _state_file()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
+        tmp.replace(path)
+    except OSError:
+        pass
+
+
+def _key(entry: Entry) -> str:
+    return f"{entry.repo}:{entry.id}"
+
+
+def _codes(st: dict) -> list[str]:
+    return sorted({code_for(label) for label in st.get("languages", [])})
+
+
+def remember(conn: sqlite3.Connection, entries: list[Entry], seen: list[Entry] | None = None,
+             forget: bool = False) -> None:
+    """Note these books as imported now (or forgotten), and the repository's list as seen."""
+    state = _state()
+    books = state.setdefault("books", {})
+    for e in entries:
+        if forget:
+            books.pop(_key(e), None)
+        elif e.builtin and e.kind != "quran":
+            books[_key(e)] = {"sha256": e.sha256, "languages": _codes(status(conn, e)),
+                              "offered": list(e.languages)}
+    if seen:
+        state["seen"] = sorted(set(state.get("seen", [])) | {_key(e) for e in seen if e.builtin})
+    _save_state(state)
+
+
+def updates(conn: sqlite3.Connection, repo_id: str | None = None) -> list[dict]:
+    """What the repository has that is not here yet: [{"entry", "why": "new"|"changed"|"languages", "languages"}].
+    The first time (isnady before 0.7.4 kept nothing), what is here now is taken as up to date."""
+    entries = [e for e in builtin_entries(repo_id) if e.kind != "quran"]
+    state = _state()
+    first = "seen" not in state
+    books = state.setdefault("books", {})
+    seen = set(state.get("seen", []))
+    reads = set()                                   # the languages the reader has in the imported books
+    rows = []
+    for e in entries:
+        st = status(conn, e)
+        rows.append((e, st))
+        if st["imported"] and e.kind == "hadith":
+            reads |= set(_codes(st))
+    out, changed_state = [], first
+    for e, st in rows:
+        key = _key(e)
+        if not st["imported"]:
+            if not first and key not in seen:
+                out.append({"entry": e, "why": "new", "languages": []})
+            continue
+        rec = books.get(key)
+        if rec is None or (e.sha256 and not rec.get("sha256")):
+            books[key] = {"sha256": e.sha256, "languages": _codes(st), "offered": list(e.languages)}  # the start
+            changed_state = True
+            continue
+        if e.sha256 and rec.get("sha256") != e.sha256:
+            out.append({"entry": e, "why": "changed", "languages": _codes(st)})
+            continue
+        if e.kind == "hadith" and e.languages:
+            # a language the repository ADDED to this book since it was imported, and one the reader reads
+            extra = [c for c in e.languages if c in reads and c not in _codes(st)
+                     and c not in rec.get("offered", e.languages)]
+            if extra:
+                out.append({"entry": e, "why": "languages", "languages": sorted(set(_codes(st)) | set(extra)),
+                            "new": extra})
+    if first:
+        state["seen"] = sorted({_key(e) for e in entries})
+    if changed_state:
+        _save_state(state)
+    return out
+
+
+def update(conn: sqlite3.Connection, items: list[dict] | None = None, progress=None):
+    """Import what updates() found, in one go: the derived tables brought up to date once at the end."""
+    items = updates(conn) if items is None else items
+    requests = [(i["entry"].title, request_for(i["entry"], i["languages"] or None)) for i in items]
+    if not requests:
+        return [], [], {}
+    imported, failed, narrators = run_many(conn, requests, progress)
+    done = {label for label, _r in imported}
+    entries = [i["entry"] for i in items]
+    for e in entries:
+        _set_tradition(conn, e)
+    remember(conn, [e for e in entries if e.title in done], seen=entries)
+    return imported, failed, narrators
+
+
 def remove_entry(conn: sqlite3.Connection, entry: Entry) -> bool:
     """Remove what this entry imported (for one book of a shared source: that book only)."""
+    if entry.builtin and entry.kind != "quran":
+        remember(conn, [entry], forget=True)
     if entry.kind == "quran":
         from isnady.core import quran
 

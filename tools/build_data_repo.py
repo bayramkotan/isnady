@@ -17,6 +17,9 @@
                                           move a folder of the old layout (sunni/, shia/, sira/<file>, tabaqat/<file>)
                                           to the layout of isnady 0.7.3 (hadith/sunni/, hadith/shia/, sira/sunni/,
                                           tabaqat/sunni/), and its catalog's locations with it
+    python tools/build_data_repo.py --hashes ../isnady-data
+                                          each book's fingerprint (sha256 of its files) and size into the catalog,
+                                          so that isnady can say which books changed (Get updates, 0.7.4)
     python tools/build_data_repo.py --catalogs
                                           write the catalogs of the optional repositories shipped with isnady
 
@@ -920,7 +923,8 @@ def mirror(target: Path, languages: set[str] | None) -> None:
     write_json(target / "catalog.json", cat)
     (target / "README.md").write_text(readme(cat), encoding="utf-8", newline="\n")
     (target / ".gitattributes").write_text("*.json -diff\n*.md -diff\nREADME.md diff\n", encoding="utf-8", newline="\n")
-    write_json(BUNDLED / "isnady.json", cat)
+    add_hashes(target)                             # each book's fingerprint (UPD5)
+    write_json(BUNDLED / "isnady.json", json.loads((target / "catalog.json").read_text(encoding="utf-8")))
     print(f"isnady-data written to {target}: {len(cat['entries'])} sources (and the shipped copy of its catalog)")
 
 
@@ -1127,7 +1131,9 @@ def readme(cat: dict) -> str:
          "stick. `kind` is `hadith` or `rijal` (in `entries`), `quran`, `sahifa`, `sira` or `tabaqat` (in "
          "`library`); `tradition` is `sunni` or `shia` (`all` for the Qur'an), and the folder follows both: "
          "`<kind>/<tradition>/…`; `format` names the reader isnady uses (`isnady`, `taqrib`, `najashi`, "
-         "`openiti-work`, `isnady-sahifa` …).", "", "</details>", "",
+         "`openiti-work`, `isnady-sahifa` …). `sha256` and `size` are the book's fingerprint (the sha256 of its "
+         "files) and its bytes: isnady compares the fingerprint with the one it imported and offers only the books "
+         "that changed (Get updates).", "", "</details>", "",
          "<details>", "<summary><b>book.json and the language files — <code>isnady-book/1</code></b></summary>", "",
          "```json",
          "{",
@@ -1241,6 +1247,47 @@ def relayout(target: Path) -> int:
     return moved
 
 
+def fingerprint(target: Path, location: str) -> tuple[str, int] | None:
+    """(sha256, bytes) of what a catalog location stands for in the folder: a book's folder (book.json and its
+    language files, in name order) or a single file; None when the folder does not hold it."""
+    import hashlib
+
+    if "://" in location:
+        return None
+    path = target / location
+    files = sorted(p for p in path.parent.iterdir() if p.is_file()) if path.name == "book.json" and path.exists() \
+        else ([path] if path.is_file() else [])
+    if not files:
+        return None
+    if files == [path] and path.name != "book.json":     # one file: its own sha256, as the library always had
+        raw = path.read_bytes()
+        return hashlib.sha256(raw).hexdigest(), len(raw)
+    h, size = hashlib.sha256(), 0
+    for f in files:
+        raw = f.read_bytes()
+        h.update(f.name.encode() + b"\0" + hashlib.sha256(raw).digest())
+        size += len(raw)
+    return h.hexdigest(), size
+
+
+def add_hashes(target: Path) -> int:
+    """Every entry's fingerprint and size into the folder's catalog.json (and README): isnady compares them with
+    what it imported, and offers only what changed (UPD5)."""
+    path = target / "catalog.json"
+    cat = json.loads(path.read_text(encoding="utf-8"))
+    n = 0
+    for e in cat.get("entries", []) + cat.get("library", []):
+        if e.get("kind") == "quran":
+            continue
+        got = fingerprint(target, e.get("location") or "")
+        if got:
+            e["sha256"], e["size"] = got
+            n += 1
+    write_json(path, cat)
+    (target / "README.md").write_text(readme(cat), encoding="utf-8", newline="\n")
+    return n
+
+
 def write_catalogs() -> None:
     """The catalogs shipped with isnady: the optional repositories (and isnady-data's, unless a mirror wrote it)."""
     if not (BUNDLED / "isnady.json").exists():
@@ -1266,11 +1313,17 @@ def main() -> int:
                     "(without it, the sahifa/ files already in DIR are listed in the catalog)")
     ap.add_argument("--relayout", metavar="DIR", help="move the isnady-data folder DIR to the layout of 0.7.3 "
                                                       "(hadith/sunni/, hadith/shia/, sira/sunni/, tabaqat/sunni/)")
+    ap.add_argument("--hashes", metavar="DIR", help="write each book's fingerprint and size into the catalog of the "
+                                                    "isnady-data folder DIR")
     ap.add_argument("--readme", metavar="DIR", help="write only the README of the isnady-data folder DIR, from its catalog")
     a = ap.parse_args()
     sys.path.insert(0, str(ROOT / "src"))          # this repository's isnady, not an installed one
     if a.readme:
         write_readme(Path(a.readme).expanduser())
+        return 0
+    if a.hashes:
+        target = Path(a.hashes).expanduser()
+        print(f"{target}: the fingerprints of {add_hashes(target)} books written into catalog.json")
         return 0
     if a.relayout:
         target = Path(a.relayout).expanduser()

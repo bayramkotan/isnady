@@ -67,6 +67,17 @@ class Worker(QThread):
                     message += ". " + tr("Failed:") + " " + "; ".join(f"{label} ({why})" for label, why in failed)
                 self.done.emit(not failed, message + ".")
                 return
+            if self.action == "update":                   # UPD5: what is new or changed in the repository
+                imported, failed, narrators = catalog.update(conn, self.languages, self.progress.emit)
+                message = tr("{n} book(s) brought up to date", n=len(imported))
+                if narrators.get("links"):
+                    message += "; " + tr("{identified:,} of {links:,} narrators in chains identified ({share:.1f}%)",
+                                         identified=narrators["identified"], links=narrators["links"],
+                                         share=100 * narrators["identified"] / narrators["links"])
+                if failed:
+                    message += ". " + tr("Failed:") + " " + "; ".join(f"{label} ({why})" for label, why in failed)
+                self.done.emit(not failed, message + ".")
+                return
             if self.action == "add_languages":            # LANG2: one language for every book
                 imported, failed, _n = catalog.add_languages(conn, self.languages, self.progress.emit)
                 message = tr("{names} added to {n} book(s)", names=", ".join(
@@ -260,8 +271,23 @@ class SourcesPage(QWidget):
             title.setFont(theme.reading_font(15, bold=True))
             head.addWidget(title)
             head.addStretch(1)
+            try:
+                self._updates = {i["entry"].id: i for i in catalog.updates(conn)} if entries else {}
+            except Exception:  # noqa: BLE001 — the page is drawn without it
+                self._updates = {}
+            n = len(self._updates)
+            upd = QPushButton("⟳ " + (tr("Get updates ({n})", n=n) if n else tr("Up to date")))
+            upd.setObjectName("Primary" if n else "Quiet")
+            upd.setCursor(Qt.CursorShape.PointingHandCursor)
+            upd.setToolTip("\n".join(self._why(i) for i in self._updates.values()) if n else
+                           tr("Nothing new in the repository: no new book, no changed book, no new language of the "
+                              "languages you read"))
+            upd.setProperty("allowed", bool(n))
+            upd.clicked.connect(self._get_updates)
+            self._buttons.append(upd)
+            head.addWidget(upd)
             all_button = QPushButton(tr("Import all"))
-            all_button.setObjectName("Primary")
+            all_button.setObjectName("Quiet" if n else "Primary")
             all_button.setToolTip(tr("Every source of this repository, each in the languages ticked on its card; the search index, "
                                     "chains and narrators are brought up to date once, at the end"))
             all_button.clicked.connect(self._import_all)
@@ -328,6 +354,29 @@ class SourcesPage(QWidget):
         finally:
             conn.close()
         self._set_busy(self._worker is not None)
+
+    @staticmethod
+    def _why(item: dict) -> str:
+        from isnady.core import titles as core_titles
+
+        e = item["entry"]
+        name = core_titles.book(e.book or e.id, e.title)
+        if item["why"] == "new":
+            return tr("New in the repository: {title}", title=name)
+        if item["why"] == "changed":
+            return tr("Changed in the repository: {title}", title=name)
+        return tr("{title}: new language(s) {names}", title=name,
+                  names=", ".join(tr(catalog.language_label(c)) for c in item.get("new", [])))
+
+    def _get_updates(self) -> None:
+        items = list(getattr(self, "_updates", {}).values())
+        if not items:
+            return
+        answer = QMessageBox.question(self, tr("Get updates"), tr("Bring these up to date?") + "\n\n" +
+                                      "\n".join("• " + self._why(i) for i in items))
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        self._start(Worker("update", None, items), tr("Bringing {n} book(s) up to date…", n=len(items)))
 
     def _kind_bar(self, entries, kinds) -> QWidget:
         """One button per kind of book, as the repository's folders are: the Qur'an, hadith, written sources, sira,
@@ -556,12 +605,18 @@ class SourcesPage(QWidget):
                       "TagGold" if road == "shia" else "TagMuted",
                       tr("The tradition of the book: Shia books are kept apart from Sunni ones, and their "
                          "grades and narrators are read in their own terms.")), licence]
-            if entry.compiler:
+            from isnady.core import i18n as core_i18n
+
+            if entry.compiler and core_i18n.language() == "en":     # in another language it opens the description
                 items.append((entry.compiler, "TagMuted", ""))
             if entry.size and entry.size >= 2**19:
                 items.append((tr("about {mb} MB", mb=max(1, round(entry.size / 2**20))), "TagMuted",
                               tr("Downloaded once; the Qur'an's translations each when chosen")
                               if entry.kind == "quran" else tr("Downloaded once")))
+            pending = getattr(self, "_updates", {}).get(entry.id)
+            if pending:
+                items.insert(0, ("⟳ " + {"new": tr("New"), "changed": tr("Changed"),
+                                         "languages": tr("New language")}[pending["why"]], "TagGold", self._why(pending)))
             if not ours and entry.origin_url:
                 items.append((tr("read from its publisher"), "TagMuted",
                               f"{entry.origin_name}\n{entry.origin_url}" if entry.origin_url else ""))
@@ -581,7 +636,7 @@ class SourcesPage(QWidget):
                 link.setOpenExternalLinks(True)
                 tags.addWidget(link)
             box.addWidget(tag_bar)
-        about = entry.description
+        about = core_titles.about(entry.id, entry.description) if entry.builtin else entry.description
         if entry.kind == "sahifa":                  # its lead in the interface language (SHF1b)
             from isnady.core import sahifa as core_sahifa
 
@@ -747,7 +802,7 @@ class SourcesPage(QWidget):
             return tr("Imported: {n:,} entries and sections", n=st["count"]) + when
         what = (tr("Imported: {n:,} narrators", n=st["count"]) if entry.kind == "rijal" else
                 tr("Imported: {n:,} hadith", n=st["count"]) if entry.book else tr("Imported: {n:,} texts", n=st["count"]))
-        langs = f" · {', '.join(st['languages'])}" if st["languages"] else ""
+        langs = f" · {', '.join(tr(x) for x in st['languages'])}" if st["languages"] else ""
         when = f" · {st['when'][:10]}" if st.get("when") else ""
         tier = " · " + tr("tier {tier}", tier=st["tier"]) if st.get("tier") else ""
         return what + langs + when + tier

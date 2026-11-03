@@ -3,6 +3,23 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [0.7.4] — 2026-11-03
+
+- **Get updates: only what is new or changed (UPD5 — Bayram, 2026-10-13: "Hepsini içe aktar yerine, değişiklikleri
+  güncelle olabilir, sonradan eklenecekler için veya sonradan eklenecek diller için!"; 2026-11-02: "bu işlem biraz
+  uzun sürüyor").** isnady remembers each book's fingerprint and languages when it imports it (`imported.json` in the
+  data folder) and the books the repository listed then. **⟳ Get updates (n)** at the top of Data sources, and
+  `iy catalog updates` / `iy catalog update`, import only a book new to the repository, a book whose files changed
+  there, or a language the repository added to a book that you read in your other books; the search index, the
+  chains and the narrators are brought up to date once, at the end. Each waiting book's card carries a mark — New,
+  Changed, New language. The first time (an isnady before 0.7.4 kept nothing) what is imported is taken as up to date.
+- isnady-data's catalog gives every book its fingerprint and size: `tools/build_data_repo.py --hashes DIR` (and every
+  `--mirror`) writes the sha256 of each book's files.
+- **Data sources in your language (DS-L10N).** Each book's description is in Turkish and Arabic as well as English —
+  who compiled it and when, its languages and its grades; a description changed in the repository falls back to its
+  English until it is translated. The languages in a card's state are translated too.
+- README: Get updates, in the window and in the terminal; the catalog's fingerprints in the README of isnady-data.
+
 ## [0.7.3] — 2026-11-02
 
 - **isnady-data in order: each kind in its folder, each road in its own under it (Bayram, 2026-11-02: "kitaplar
