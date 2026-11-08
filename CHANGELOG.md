@@ -3,6 +3,12 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Isnad Chains opens at the first book (RS-WIN3b).** The page opened with no book chosen and its number field and
+  buttons off: the book list took the line between the Sunni and the Shia books for the choice
+  (`widgets.fill_book_combo`). It opens at Sahih al-Bukhari now, as isnady-rs does.
+
 ## [0.7.4] — 2026-11-03
 
 - **Get updates: only what is new or changed (UPD5 — Bayram, 2026-10-13: "Hepsini içe aktar yerine, değişiklikleri

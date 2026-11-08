@@ -270,7 +270,9 @@ def fill_book_combo(combo, conn, all_label: str | None = None) -> None:
         item.setFont(font)
         for b in group:
             combo.addItem(f"    {b['name']} ({b['count']:,})", b["key"])
-    index = combo.findData(current)
+    # no choice yet and no "all" entry: findData(None) found the line between the Sunni and the Shia books, and the
+    # page opened with no book chosen and its buttons off (RS-WIN3b, 2026-11-08)
+    index = combo.findData(current) if current is not None or all_label is not None else -1
     if index < 0 or combo.itemData(index) == "__heading__":
         index = next((i for i in range(combo.count()) if combo.itemData(i) not in ("__heading__",)
                       and combo.model().item(i) is not None and combo.model().item(i).isEnabled()), 0)
