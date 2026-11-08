@@ -5,6 +5,9 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **Books: the Arabic font on Arabic chapter titles (RS-WIN3c).** The contents tree meant to set the reading font of
+  Arabic on a chapter whose title is Arabic, but looked for the letters with a doubled backslash (`"\\u0600"`) and
+  never found them, so every title stood in the interface font. Found while isnady-rs drew the same page.
 - **Isnad Chains opens at the first book (RS-WIN3b).** The page opened with no book chosen and its number field and
   buttons off: the book list took the line between the Sunni and the Shia books for the choice
   (`widgets.fill_book_combo`). It opens at Sahih al-Bukhari now, as isnady-rs does.

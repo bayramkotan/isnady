@@ -559,7 +559,7 @@ class BooksPage(QWidget):
                 count = f"   ({c['leaves']})" if c["leaves"] else ""
                 item = QTreeWidgetItem([label + count])
                 item.setData(0, Qt.ItemDataRole.UserRole, c["id"] if c["leaves"] else None)
-                if any("\\u0600" <= ch <= "\\u06ff" for ch in label):
+                if any("\u0600" <= ch <= "\u06ff" for ch in label):
                     item.setFont(0, theme.script_font("arabic", factor=0.62))
                 (parent_item.addChild(item) if parent_item else self.tree.addTopLevelItem(item))
                 if c["subchapters"]:
