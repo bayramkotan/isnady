@@ -5,6 +5,17 @@ is taken from its section here.
 
 ## [Unreleased]
 
+- **The meaning index learnt the same way by both programs (LSA3; Bayram, 2026-11-11: "sen önce eşitle bunları!").**
+  `iy ai build` finds the concepts by a randomized subspace iteration from a fixed start (`semantic.top_right_vectors`:
+  16 power steps, 60 vectors beyond the concepts, Cholesky QR, each vector's sign fixed) instead of scipy's ARPACK,
+  which is not in Rust; each row's length is summed in float64. isnady and isnady-rs now write the same index, array
+  for array, on the same data (on the whole of isnady-data: every array of lsa.npz the same). An index built before
+  (isnady-lsa-2) reads as older than the data until it is built again.
+- **The other isnady in the report and the update (TEK PROJE).** `iy doctor` also prints what isnady-rs (`iy-rs
+  doctor`) says of its copies, `iy doctor --fix` and `iy update` bring isnady-rs's copies up to date too, `iy update
+  --check` shows its versions; Help → Check Installation shows both and its Update runs both. isnady-rs does the same
+  from its side, so the two programs report the same.
+
 - **Books: the Arabic font on Arabic chapter titles (RS-WIN3c).** The contents tree meant to set the reading font of
   Arabic on a chapter whose title is Arabic, but looked for the letters with a doubled backslash (`"\\u0600"`) and
   never found them, so every title stood in the interface font. Found while isnady-rs drew the same page.

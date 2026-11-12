@@ -29,6 +29,11 @@ class _Update(QThread):
 
     def run(self) -> None:
         results = doctor.run_plan(self.plan, self.line.emit, window=True)
+        if doctor.other_command():                     # isnady-rs too, where it is installed (TEK PROJE)
+            self.line.emit(f"$ {doctor.OTHER} update --yes")
+            _code, out = doctor.other_run(["update", "--yes"], timeout=None)
+            for line in out.splitlines():
+                self.line.emit(line)
         self.done.emit(results, doctor.diagnose(check_pypi=True))
 
 
@@ -83,7 +88,7 @@ class InstallDialog(QDialog):
 
     def _show(self, report) -> None:
         self.report = report
-        self.text.setPlainText(doctor.as_text(report))
+        self.text.setPlainText(doctor.as_text(report) + doctor.other_text())
         self.update_button.setVisible(bool(report.fixes and report.problems))
         self.update_button.setEnabled(True)
         if report.problems:
@@ -113,7 +118,7 @@ class InstallDialog(QDialog):
         log = self.text.toPlainText()
         self.report = after
         failed = [argv for argv, code in results if code != 0]
-        self.text.setPlainText(log + "\n\n" + "—" * 40 + "\n" + doctor.as_text(after))
+        self.text.setPlainText(log + "\n\n" + "—" * 40 + "\n" + doctor.as_text(after) + doctor.other_text())
         self.text.verticalScrollBar().setValue(self.text.verticalScrollBar().maximum())
         self.update_button.setVisible(bool(after.fixes and after.problems))
         self.update_button.setEnabled(True)

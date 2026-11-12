@@ -219,9 +219,18 @@ def cmd_doctor(args) -> int:
     from isnady import doctor
 
     report = doctor.diagnose(check_pypi=not args.offline)
+    other = doctor.other_command()
+    other_code = 0
     print(doctor.as_text(report))
+    if other and not args.fix:            # the other isnady's copies too (TEK PROJE)
+        other_code, out = doctor.other_run(["doctor"] + (["--offline"] if args.offline else []))
+        print(f"\n— {doctor.OTHER_NAME}: {other} —\n{out}")
     if not args.fix or not report.fixes:
-        return 1 if report.problems else 0
+        if other and args.fix:
+            print(f"\n— {doctor.OTHER_NAME}: {other} —")
+            other_code, _ = doctor.other_run(["doctor", "--fix"] + (["--yes"] if args.yes else [])
+                                             + (["--offline"] if args.offline else []), capture=False, timeout=None)
+        return 1 if report.problems or other_code else 0
     print()
     _run_plan(report.fixes, args.yes)
     after = doctor.diagnose(check_pypi=not args.offline)
@@ -229,7 +238,11 @@ def cmd_doctor(args) -> int:
     note = doctor.lag_note(after)
     if note:
         print("\n" + note)
-    return 1 if after.problems else 0
+    if other:
+        print(f"\n— {doctor.OTHER_NAME}: {other} —")
+        other_code, _ = doctor.other_run(["doctor", "--fix"] + (["--yes"] if args.yes else [])
+                                         + (["--offline"] if args.offline else []), capture=False, timeout=None)
+    return 1 if after.problems or other_code else 0
 
 
 def cmd_update(args) -> int:
@@ -253,6 +266,9 @@ def cmd_update(args) -> int:
         for version, text in found["news"]:
             print(f"\nWhat is new in {version}:\n{text}")
         if args.check:
+            if doctor.other_command():            # the other isnady too (TEK PROJE)
+                _code, out = doctor.other_run(["update", "--check"])
+                print(f"\n— {doctor.OTHER_NAME}: {doctor.other_command()} —\n{out}")
             return 0
         if n["behind"] and (args.npm or not args.pypi):
             print("\nUpdating isnady from npm:")
@@ -260,10 +276,16 @@ def cmd_update(args) -> int:
         if args.npm and not args.pypi:
             return 0
     report = doctor.diagnose(check_pypi=True)
+    other = doctor.other_command()
+    other_code = 0
+    if other:                                     # the other isnady first: it is not this program, so nothing stands
+        print(f"— {doctor.OTHER_NAME}: {other} —")  # in its way
+        other_code, _ = doctor.other_run(["update"] + (["--yes"] if args.yes else []), capture=False, timeout=None)
+        print()
     if not report.fixes:
         print(f"isnady {report.running_version} is up to date"
               + (f" (latest on PyPI: {report.latest})." if report.latest else " (PyPI could not be reached)."))
-        return 0
+        return 1 if other_code else 0
     print("Updating every copy of isnady where it is installed:")
     _run_plan(report.fixes, args.yes)
     after = doctor.diagnose(check_pypi=True)       # against PyPI again: "no problems" must mean up to date
@@ -272,7 +294,7 @@ def cmd_update(args) -> int:
     if note:
         print("\n" + note)
     print("\nIf the shell still starts an old copy, open a new terminal (or run: hash -r).")
-    return 1 if after.problems else 0
+    return 1 if after.problems or other_code else 0
 
 
 def cmd_version(_args) -> int:

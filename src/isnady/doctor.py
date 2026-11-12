@@ -503,3 +503,43 @@ def run_plan(plan: list[list[str]], say, window: bool = False) -> list[tuple[lis
             code = -1
         results.append((argv, code))
     return results
+
+
+# The other isnady (TEK PROJE): isnady-rs, the Rust program, has its own copies (cargo's); each program's report and
+# update take in the other's, so `iy doctor` and `iy-rs doctor` say the same and `iy update` brings both up to date.
+OTHER = "iy-rs"
+OTHER_NAME = "isnady-rs (Rust)"
+NESTED = "ISNADY_DOCTOR_NESTED"
+
+
+def other_command() -> str | None:
+    """The other program on PATH, or None (and None when this report is itself the other's)."""
+    if os.environ.get(NESTED):
+        return None
+    return shutil.which(OTHER)
+
+
+def other_run(args: list[str], capture: bool = True, timeout: int | None = 120) -> tuple[int, str]:
+    """Run the other program's doctor or update (it does not call this one back); (exit code, what it printed)."""
+    exe = other_command()
+    if not exe:
+        return 0, ""
+    env = dict(os.environ, **{NESTED: "1"})
+    try:
+        if capture:
+            p = subprocess.run([exe, *args], capture_output=True, text=True, encoding="utf-8", errors="replace",
+                               env=env, timeout=timeout, stdin=subprocess.DEVNULL, check=False)
+            return p.returncode, p.stdout.rstrip()
+        return subprocess.run([exe, *args], env=env, check=False).returncode, ""
+    except (OSError, subprocess.SubprocessError) as exc:
+        return 1, str(exc)
+
+
+def other_text(offline: bool = False) -> str:
+    """What the other isnady says of its copies, under a heading of its own; "" when it is not on this computer."""
+    exe = other_command()
+    if not exe:
+        return ""
+    _code, out = other_run(["doctor"] + (["--offline"] if offline else []))
+    return f"\n\n— {OTHER_NAME}: {exe} —\n{out}" if out else ""
+

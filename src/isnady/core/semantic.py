@@ -25,7 +25,7 @@ from isnady.core.search import SearchQuery, SearchResult, _load_result
 from isnady.data.paths import data_dir
 from isnady.core.i18n import tr
 
-METHOD_ID = "isnady-lsa-2"
+METHOD_ID = "isnady-lsa-3"
 DEFAULT_DIMS = 200
 MIN_DF = 3                  # a word must appear in at least this many hadith
 MAX_DF_SHARE = 0.4          # words in more than this share of hadith carry no meaning of their own
@@ -95,6 +95,64 @@ def status(conn: sqlite3.Connection) -> dict:
     return meta
 
 
+STEPS = 16       # power steps of the subspace iteration
+EXTRA = 60       # vectors beyond the concepts kept, so the last of them are found as well as the first
+
+
+def _start(rows: int, cols: int):
+    """The iteration's fixed start: splitmix64 of 0, 1, 2 … as numbers in [-1, 1), row by row (as isnady-rs)."""
+    import numpy as np
+
+    with np.errstate(over="ignore"):
+        z = np.arange(rows * cols, dtype=np.uint64) + np.uint64(0x9E3779B97F4A7C15)
+        z = (z ^ (z >> np.uint64(30))) * np.uint64(0xBF58476D1CE4E5B9)
+        z = (z ^ (z >> np.uint64(27))) * np.uint64(0x94D049BB133111EB)
+        z = z ^ (z >> np.uint64(31))
+    return ((z >> np.uint64(11)).astype(np.float64) / float(1 << 53) * 2.0 - 1.0).reshape(rows, cols)
+
+
+def _orthonormal(y):
+    """The columns of y made orthonormal (Cholesky QR, twice; the diagonal raised by 1e-13 of the trace)."""
+    import numpy as np
+    from scipy.linalg import solve_triangular
+
+    for _ in range(2):
+        g = y.T @ y
+        shift = np.trace(g) * 1e-13 + 1e-300
+        g[np.diag_indices_from(g)] += shift
+        r = np.linalg.cholesky(g).T
+        y = solve_triangular(r, y.T, trans="T", lower=False).T
+    return y
+
+
+def top_right_vectors(x, k: int):
+    """The k right singular vectors of x with the largest singular values (k × terms), by randomized subspace
+    iteration (Halko, Martinsson and Tropp 2011) from a fixed start — the same steps as isnady-rs, so the two
+    programs learn the same concepts (LSA3; ARPACK, which this used before, is not in Rust). Each vector's sign is
+    fixed: its largest value is positive."""
+    import numpy as np
+
+    rows, cols = x.shape
+    l = min(k + EXTRA, rows, cols)
+    a = x.astype(np.float64).tocsr()
+    at = a.T.tocsr()
+    y = _orthonormal(a @ _start(cols, l))
+    for _ in range(STEPS):
+        z = _orthonormal(at @ y)
+        y = _orthonormal(a @ z)
+    bt = at @ y
+    values, vectors = np.linalg.eigh(bt.T @ bt)
+    order = np.argsort(-values, kind="stable")[:k]
+    out = np.zeros((k, cols))
+    for r, e in enumerate(order):
+        s = math.sqrt(max(values[e], 0.0))
+        if s:
+            out[r] = (bt @ vectors[:, e]) / s
+            if out[r][np.argmax(np.abs(out[r]))] < 0:
+                out[r] = -out[r]
+    return out
+
+
 def build(conn: sqlite3.Connection, dims: int = DEFAULT_DIMS,
           progress: Callable[[str], None] | None = None) -> dict:
     missing = requirements_message()
@@ -102,7 +160,6 @@ def build(conn: sqlite3.Connection, dims: int = DEFAULT_DIMS,
         raise NotAvailable(missing)
     import numpy as np
     import scipy.sparse as sp
-    from scipy.sparse.linalg import svds
 
     say = progress or (lambda _m: None)
     started = time.perf_counter()
@@ -132,16 +189,17 @@ def build(conn: sqlite3.Connection, dims: int = DEFAULT_DIMS,
                 cols.append(j)
                 vals.append((1.0 + math.log(c)) * idf[j])
     x = sp.csr_matrix((np.array(vals, dtype=np.float32), (rows, cols)), shape=(n, len(vocab)))
-    norms = np.sqrt(np.asarray(x.multiply(x).sum(axis=1)).ravel())
+    # each row's length summed in float64 and kept in float32, then × (1 / length): as isnady-rs does it (LSA3)
+    x64 = x.astype(np.float64)
+    norms = np.sqrt(np.asarray(x64.multiply(x64).sum(axis=1)).ravel()).astype(np.float32)
     norms[norms == 0] = 1.0
-    x = sp.diags(1.0 / norms) @ x
+    x = sp.diags(np.float32(1.0) / norms) @ x
 
     k = max(10, min(dims, min(x.shape) - 1))
     say(tr("Finding {k} shared concepts across the languages", k=k))
-    _u, _s, vt = svds(x.astype(np.float64), k=k, random_state=0)
-    vt = vt.astype(np.float32)
-    vecs = np.asarray(x @ vt.T, dtype=np.float32)
-    lengths = np.linalg.norm(vecs, axis=1)
+    vt = top_right_vectors(x, k).astype(np.float32)
+    vecs = np.asarray(x.astype(np.float64) @ vt.T.astype(np.float64)).astype(np.float32)
+    lengths = np.sqrt(np.sum(vecs.astype(np.float64) ** 2, axis=1)).astype(np.float32)
     lengths[lengths == 0] = 1.0
     vecs = (vecs / lengths[:, None]).astype(np.float16)
 
