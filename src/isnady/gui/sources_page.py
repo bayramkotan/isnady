@@ -53,6 +53,9 @@ class Worker(QThread):
         self.action, self.entry, self.languages, self.auth = action, entry, languages, auth
 
     def run(self) -> None:
+        if self.action == "ready_download":               # DB-READY: isnady-data's ready database (self.languages)
+            self._ready_download()
+            return
         conn = db.connect()
         try:
             if self.action == "import_all":
@@ -114,6 +117,54 @@ class Worker(QThread):
             self.done.emit(False, f"{type(exc).__name__}: {exc}")
         finally:
             conn.close()
+
+
+    def _ready_download(self) -> None:
+        """Download isnady-data's ready database (its database.json given as self.languages) and stage it."""
+        from isnady.data import ready
+
+        shown = [-1]
+
+        def step(done: int, total: int) -> None:
+            mb = ready.megabytes(done)
+            if mb == shown[0]:
+                return
+            shown[0] = mb
+            self.progress.emit(tr("Downloading the ready database… {done:,} of {total:,} MB", done=mb,
+                                  total=ready.megabytes(total)) if total else
+                               tr("Downloading the ready database… {done:,} MB", done=mb))
+
+        try:
+            info = ready.download(self.languages, step)
+        except ready.ReadyError as exc:
+            self.done.emit(False, str(exc))
+            return
+        except Exception as exc:  # the window must never be left waiting
+            self.done.emit(False, f"{type(exc).__name__}: {exc}")
+            return
+        self.done.emit(True, tr("The ready database is downloaded: {books} books, {hadith:,} hadith. It takes the place "
+                                "of your database at the next start of isnady.", books=info["books"],
+                                hadith=info["hadith"]))
+
+
+def ready_offer_text(info: dict) -> str:
+    """What isnady-data's ready database holds, for the dialogs that offer it."""
+    from isnady.data import ready
+
+    return tr("{date}: {books} books, {hadith:,} hadith, {narrators:,} narrators — every chain already read and every "
+              "narrator already matched. {size:,} MB.", date=info.get("date") or "?", books=info["books"],
+              hadith=info["hadith"], narrators=info["narrators"], size=ready.megabytes(info["size"]))
+
+
+def ask_quit_for_ready(parent) -> None:
+    """A ready database is staged: it is used from the next start; offer to quit now."""
+    from PySide6.QtWidgets import QApplication
+
+    answer = QMessageBox.question(parent, tr("Ready database"),
+                                  tr("The ready database is waiting; it is used from the next start of isnady. Your "
+                                     "database is kept beside it as isnady.<date>.bak.db.\n\nQuit isnady now?"))
+    if answer == QMessageBox.StandardButton.Yes:
+        QApplication.quit()
 
 
 class AddSourceDialog(QDialog):
@@ -824,10 +875,13 @@ class SourcesPage(QWidget):
         worker.start()
 
     def _finished(self, ok: bool, message: str) -> None:
+        action = self._worker.action if self._worker is not None else None
         self._worker = None
         self.refresh()
         self.status.setText(("" if ok else tr("Failed: ")) + message)
-        if ok:
+        if ok and action == "ready_download":
+            ask_quit_for_ready(self)
+        elif ok:
             self.data_imported.emit()
 
     def _ask_auth(self, entry: catalog.Entry) -> Auth | None:
@@ -878,6 +932,7 @@ class SourcesPage(QWidget):
         row = FlowLayout(bar, spacing=8)
         for key, label, slot in (("open", tr("Open"), self._open_folder), ("change", tr("Change…"), self._change_folder),
                                  ("default", tr("Use default"), self._default_folder),
+                                 ("download", tr("Download the ready database…"), self._download_ready_database),
                                  ("ready", tr("Use a ready database…"), self._use_ready_database)):
             b = QPushButton(label)
             b.setObjectName("Quiet")
@@ -999,6 +1054,29 @@ class SourcesPage(QWidget):
         repositories.select(repo.id)
         self.refresh()
         self.status.setText(tr("Added {name} ({folder}); it is the repository now, read from this computer.", name=repo.name, folder=folder))
+
+    def _download_ready_database(self) -> None:
+        """DB-READY: isnady-data's own ready database — every book imported, every chain read, every narrator
+        matched — downloaded in the background and used from the next start."""
+        from isnady.data import ready
+
+        try:
+            info = ready.available(timeout=20)
+        except ready.ReadyError as exc:
+            QMessageBox.warning(self, tr("Ready database"), str(exc))
+            return
+        if not info["usable"]:
+            QMessageBox.warning(self, tr("Ready database"),
+                                tr("The ready database of isnady-data is newer (schema {schema}) than this isnady "
+                                   "reads. Update isnady first: Help → Check for Updates.", schema=info["schema"]))
+            return
+        answer = QMessageBox.question(
+            self, tr("Ready database"),
+            tr("Download the ready database of isnady-data?") + "\n\n" + ready_offer_text(info) + "\n\n"
+            + tr("It takes the place of your database at the next start of isnady; your database is kept beside it "
+                 "as isnady.<date>.bak.db."))
+        if answer == QMessageBox.StandardButton.Yes:
+            self._start(Worker("ready_download", None, info), tr("Downloading the ready database…"))
 
     def _use_ready_database(self) -> None:
         from isnady.data import ready

@@ -1151,21 +1151,55 @@ class MainWindow(QMainWindow):
         rijal = sum(1 for e in entries if e.kind == "rijal")
         if not entries:
             return
+        # DB-READY (0.7.5): isnady-data's ready database, offered beside importing book by book when there is one
+        # this isnady can open; asked for briefly, so that an offline start is not held up
+        from isnady.data import ready
+
+        try:
+            offer = ready.available(timeout=5)
+        except ready.ReadyError:
+            offer = None
+        if offer is not None and not offer["usable"]:
+            offer = None
         langs = ", ".join(tr(catalog.language_label(c)) for c in catalog.DEFAULT_LANGUAGES)
-        box = QMessageBox(QMessageBox.Icon.Question, tr("Import the books?"),
-                          tr("isnady has no books yet. Import the {books} hadith books and the {rijal} rijal works of "
-                             "isnady-data now? Languages: {langs} (others can be added in File → Data Sources).\n\nThe "
-                             "import runs in the background and the window can be used meanwhile; the progress is "
-                             "shown at the bottom.", books=books, rijal=rijal, langs=langs), parent=self)
+        text = tr("isnady has no books yet. Import the {books} hadith books and the {rijal} rijal works of "
+                  "isnady-data now? Languages: {langs} (others can be added in File → Data Sources).\n\nThe "
+                  "import runs in the background and the window can be used meanwhile; the progress is "
+                  "shown at the bottom.", books=books, rijal=rijal, langs=langs)
+        if offer is not None:
+            text += "\n\n" + tr("Or download the ready database of isnady-data, used from the next start:") + " " \
+                + sources_page.ready_offer_text(offer)
+        box = QMessageBox(QMessageBox.Icon.Question, tr("Import the books?"), text, parent=self)
         go = box.addButton(tr("Import all"), QMessageBox.ButtonRole.AcceptRole)
+        quick = (box.addButton(tr("Download the ready database"), QMessageBox.ButtonRole.ActionRole)
+                 if offer is not None else None)
         box.addButton(tr("Not now"), QMessageBox.ButtonRole.RejectRole)
         box.setDefaultButton(go)
         box.exec()
         if box.clickedButton() is go:
             self.import_in_background()
+        elif quick is not None and box.clickedButton() is quick:
+            self.download_ready_in_background(offer)
 
     def import_in_background(self, languages=None) -> None:
         """Every source of the repository, imported by the Data Sources worker; the bottom bar shows where it is."""
+        self._background_job("import_all", languages, tr("Importing the books of isnady-data…"),
+                             self._background_import_done)
+
+    def download_ready_in_background(self, info: dict) -> None:
+        """DB-READY: isnady-data's ready database downloaded by the Data Sources worker, the bottom bar showing how
+        much has come; then it waits for the next start."""
+        self._background_job("ready_download", info, tr("Downloading the ready database…"), self._ready_download_done)
+
+    def _ready_download_done(self, ok: bool, message: str) -> None:
+        from isnady.gui import sources_page
+
+        self._import_bar.hide()
+        self._import_label.setText(("" if ok else tr("Failed: ")) + message)
+        if ok:
+            sources_page.ask_quit_for_ready(self)
+
+    def _background_job(self, action: str, argument, first: str, finished) -> None:
         from PySide6.QtWidgets import QLabel as _Label, QProgressBar
 
         from isnady.gui import sources_page
@@ -1182,14 +1216,14 @@ class MainWindow(QMainWindow):
             self._import_bar.setTextVisible(False)
             bar.addWidget(self._import_label, 1)
             bar.addPermanentWidget(self._import_bar)
-        self._import_label.setText(tr("Importing the books of isnady-data…"))
+        self._import_label.setText(first)
         self._import_bar.show()
         bar.show()
-        worker = sources_page.Worker("import_all", None, languages)
+        worker = sources_page.Worker(action, None, argument)
         sources_page._LIVE_WORKERS.add(worker)
         worker.finished.connect(lambda w=worker: (sources_page._LIVE_WORKERS.discard(w), w.deleteLater()))
         worker.progress.connect(lambda m: self._import_label.setText(m))
-        worker.done.connect(self._background_import_done)
+        worker.done.connect(finished)
         worker.start()
 
     def _background_import_done(self, ok: bool, message: str) -> None:

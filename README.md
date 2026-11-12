@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://pypi.org/project/isnady/">
-    <img src="https://img.shields.io/badge/PyPI-v0.7.4-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
+    <img src="https://img.shields.io/badge/PyPI-v0.7.5-1D4777?style=for-the-badge&logo=pypi&logoColor=white" alt="PyPI">
   </a>
   <img src="https://img.shields.io/pypi/pyversions/isnady?style=for-the-badge&color=A47E24&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-5B6878?style=for-the-badge" alt="Platform">
   <a href="https://www.npmjs.com/package/isnady">
-    <img src="https://img.shields.io/badge/npm-v0.7.4-14304F?style=for-the-badge&logo=npm" alt="npm">
+    <img src="https://img.shields.io/badge/npm-v0.7.5-14304F?style=for-the-badge&logo=npm" alt="npm">
   </a>
   <a href="https://github.com/bayramkotan/isnady-data">
     <img src="https://img.shields.io/badge/data-isnady--data-2E6B4F?style=for-the-badge&logo=github" alt="isnady-data">
@@ -47,7 +47,7 @@
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/search-arabic.png" alt="Searching النيات finds بالنيات in Sahih al-Bukhari 1, with the chain above the text" width="850">
 </p>
 
-> **Pre-alpha (0.7.4).** Search, chains of transmission, narrators, books, scholars, statistics and
+> **Pre-alpha (0.7.5).** Search, chains of transmission, narrators, books, scholars, statistics and
 > the glossary work today, Sunni and Shia, on data you import in one click. Everything is built in
 > the open, one piece at a time.
 
@@ -71,20 +71,21 @@ isnady is two repositories that work as one:
    quran/                                            (your data folder)      books · scholars · statistics
    hadith/sunni/  hadith/shia/                                                window  and  command line
    sahifa/sunni|shia/  sira/sunni/  tabaqat/sunni/  rijal/sunni|shia/
-   Releases: isnady-db-<date>.zip ── Use a ready database… ──▶ isnady.db
+   Releases: isnady-db-<date>.zip ── Download the ready database ──▶ isnady.db
 ```
 
 The application ships without hadith data, so it stays small and the data can grow on its own:
 a new book in isnady-data reaches every isnady at once, without a new version of the program.
 
-**And isnady in Rust: [bayramkotan/isnady-rs](https://github.com/bayramkotan/isnady-rs).** The same program is being
-written again in Rust. It uses the same data folder, the same database and the same settings, and it carries **the
-same version number**: isnady 0.7.4 and isnady-rs 0.7.4 are one release. Each piece is ported word for word, and a
-parity test compares both programs' answers on every release. Today `iy-rs search` (about 60 ms a search),
-`iy-rs sources` and `iy-rs datadir`; its [PARITY.md](https://github.com/bayramkotan/isnady-rs/blob/main/PARITY.md)
-lists what is ported and what is still done here. Get it with `cargo install isnady` from
-[crates.io](https://crates.io/crates/isnady), or ready to run from its
-[Releases](https://github.com/bayramkotan/isnady-rs/releases/latest). Its README is this one, word for word.
+**And isnady in Rust: [bayramkotan/isnady-rs](https://github.com/bayramkotan/isnady-rs).** The same program,
+written again in Rust: `iy-rs` on the command line and the window `isnady-rs`. It uses the same data folder, the same
+database and the same settings, and it carries **the same version number** — every release of isnady is a release of
+isnady-rs, on the same day. Every command and every page is ported and gives the same answers, word for word;
+parity tests compare the two programs on every push (its
+[PARITY.md](https://github.com/bayramkotan/isnady-rs/blob/main/PARITY.md)). Get it from
+[crates.io](https://crates.io/crates/isnady) (`cargo install isnady` for `iy-rs`, `cargo install isnady-gui` for the
+window) or ready to run from its [Releases](https://github.com/bayramkotan/isnady-rs/releases/latest) (see
+[Install](#-install)). Its README is this one, word for word.
 
 ---
 
@@ -132,6 +133,21 @@ All three are **portable**: nothing is installed, each runs from wherever it is.
 Put isnady on the desktop and in the applications menu with **Tools → Create Desktop Shortcut** (or
 `iy shortcut`): the shortcut starts isnady the way it is installed — the AppImage, the application, or the
 `isnady-gui` command of a Python install.
+
+### isnady-rs (the same isnady in Rust)
+
+From the **[isnady-rs releases](https://github.com/bayramkotan/isnady-rs/releases/latest)** — the window `isnady-rs`
+and the command line `iy-rs`, with the same data folder as the Python isnady:
+
+| System | The window | The command line |
+|---|---|---|
+| Windows 10/11 | `isnady-rs-<version>-windows-x86_64-setup.exe` (installs for you, no administrator rights), `…-windows-x86_64.msi` (for all users), or `…-windows-x86_64-portable.exe` (nothing installed) | `iy-rs-<version>-windows-x86_64.zip` |
+| Linux | `isnady-rs-<version>-linux-x86_64.AppImage` (portable: `chmod +x` and run it) or `isnady-rs-<version>-linux-amd64.deb` (`sudo apt install ./…deb`) | `iy-rs-<version>-linux-x86_64.tar.gz` |
+| macOS, Apple silicon / Intel | `isnady-rs-<version>-macos-arm64.dmg` / `…-macos-x86_64.dmg` (drag it to Applications), or the `.zip` of the app (portable); the first time, right-click it and choose *Open* | `iy-rs-<version>-macos-arm64.tar.gz` / `…-macos-x86_64.tar.gz` |
+
+Or with Rust: `cargo install isnady` (`iy-rs`) and `cargo install isnady-gui` (the window; on Linux it needs
+`webkit2gtk-4.1`). The portable ones keep everything in a folder named `isnady-data` beside them, as above. Every file of
+a release is listed with its sha256 in `SHA256SUMS.txt`.
 
 ### With Python
 
@@ -335,15 +351,22 @@ iy catalog import --all
 ```
 
 Or take **a whole ready database** — every book imported, every chain read, every narrator
-identified — from the [isnady-data Releases](https://github.com/bayramkotan/isnady-data/releases):
+identified — in one download instead of importing book by book. The first start offers it beside
+**Import all** when isnady has no book yet; later it is **Data folder → Download the ready database…**
+in Data sources, or one command:
 
 ```bash
-iy database use ~/Downloads/isnady-db-<date>.zip   # in the window: Data folder → Use a ready database…
+iy database download --check   # what it holds: date, books, hadith, narrators, size
+iy database download           # download it, check it and use it
+iy database use ~/Downloads/isnady-db-<date>.zip   # or a file you already have (Data folder → Use a ready database…)
 ```
 
-isnady checks the file (the zip must hold `isnady.db`, the schema must be one it reads, the sha256
-must match the `database.json` beside it), puts it in place at the next start and keeps your
-previous database beside it (`isnady.<date-time>.bak.db`). Nothing is deleted.
+isnady reads what the ready database holds from isnady-data's `database.json`, downloads the zip
+of the [isnady-data Releases](https://github.com/bayramkotan/isnady-data/releases) into your data
+folder and checks it (its size and sha256 as `database.json` gives them, the zip must hold
+`isnady.db`, the schema must be one it reads). It takes the place of your database at the next start
+and your previous database is kept beside it (`isnady.<date-time>.bak.db`). Nothing is deleted. A new
+ready database is published with every release of isnady, so it carries the newest chain reader.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/bayramkotan/isnady/main/assets/screenshots/data-sources.png" alt="Settings → Data sources — one button for each kind of book, then the road; the Sunni hadith collections under isnady-data/hadith/sunni/, each card with its languages and the same four buttons: Update, Remove data, Open in Books, Export" width="760">
@@ -1102,7 +1125,9 @@ when both are behind) and shows what is new; `iy update --check`, `iy update --n
 shows a plain card instead of stopping isnady, the details go to `isnady.log` in the data folder, and an import that
 was cut short is named on the Search page at the next start. At every start with no books yet, isnady asks to
 import isnady-data — every hadith book and rijal work with one click (**Import all**) — in the background, the
-progress in the bar at the bottom; on the command line `iy` says so and `iy catalog import --all` does it.
+progress in the bar at the bottom, or to download isnady-data's ready database instead (**Download the ready
+database**: everything already read, used from the next start); on the command line `iy` says so, and
+`iy catalog import --all` or `iy database download` does it.
 
 **Settings → Books and languages** switches imported books on and off (Sunni and Shia apart),
 chooses the languages the texts are shown in — the others are folded behind an arrow on each hadith — and puts
@@ -1403,6 +1428,7 @@ iy catalog add "My notes" isnady ~/notes/book.json --license CC-BY-4.0   # a boo
 iy repo                              # the data repositories (isnady-data by default)
 iy repo add ~/isnady-data --name "My copy"      # a GitHub or Hugging Face repository, a URL or a folder
 iy repo use lk-hadith-corpus         # read the books from another repository
+iy database download                 # isnady-data's ready database, downloaded and checked (yours is kept beside it)
 iy database use isnady-db-2026-10-12.zip        # a ready database from a file (yours is kept beside it)
 iy import isnady ~/my_book/book.json --license CC-BY-4.0   # import one file of your own
 iy import fawazahmed0 https://…/editions.json --book bukhari --language Turkish   # from an index of editions

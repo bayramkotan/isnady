@@ -347,11 +347,43 @@ def _print_report(report, narrators) -> None:
 
 
 def cmd_database(args) -> int:
-    """iy database use FILE: a ready database (isnady.db or the isnady-db zip of isnady-data) from this computer."""
+    """iy database use FILE: a ready database (isnady.db or the isnady-db zip of isnady-data) from this computer;
+    iy database download [--check]: isnady-data's own ready database, downloaded, checked and used (DB-READY)."""
     from isnady.data import ready
+    from isnady.data.db import SCHEMA_VERSION
     from isnady.data.paths import db_path
 
-    if args.action == "use":
+    if args.action == "download":
+        try:
+            offer = ready.available()
+        except ready.ReadyError as exc:
+            print(exc, file=sys.stderr)
+            return 1
+        print(f"The ready database of isnady-data, {ready.describe(offer)} (schema {offer['schema']})")
+        if not offer["usable"]:
+            print(f"It is newer than this isnady reads (schema {SCHEMA_VERSION}). Update isnady first: iy update",
+                  file=sys.stderr)
+            return 1
+        if args.check:
+            print("Download it and use it: iy database download")
+            return 0
+        tty = sys.stderr.isatty()
+
+        def progress(done: int, total: int) -> None:
+            if tty:
+                share = f"{100 * done // total}%, " if total else ""
+                print(f"\r  {share}{ready.megabytes(done):,} MB", end="", file=sys.stderr, flush=True)
+
+        try:
+            info = ready.download(offer, progress)
+        except ready.ReadyError as exc:
+            if tty:
+                print(file=sys.stderr)
+            print(exc, file=sys.stderr)
+            return 1
+        if tty:
+            print(file=sys.stderr)
+    elif args.action == "use":
         if not args.file:
             print("Give the file: iy database use ~/Downloads/isnady-db-2026-10-10.zip", file=sys.stderr)
             return 2
@@ -360,6 +392,7 @@ def cmd_database(args) -> int:
         except ready.ReadyError as exc:
             print(exc, file=sys.stderr)
             return 1
+    if args.action in ("use", "download"):
         try:
             backup = ready.apply_pending()    # the command line holds no connection open: in place now
         except OSError:
@@ -2410,10 +2443,11 @@ def build_parser() -> argparse.ArgumentParser:
     cat.add_argument("--api-key-param", help="add: query parameter name for an API key")
     cat.add_argument("--repo", help="list / import: the sources of this repository instead of the chosen one")
     cat.set_defaults(func=cmd_catalog)
-    dbp = sub.add_parser("database", help="use a ready database from a file on this computer (isnady.db or the "
-                                           "isnady-db zip of isnady-data)")
-    dbp.add_argument("action", nargs="?", default="show", choices=["show", "use"])
+    dbp = sub.add_parser("database", help="a ready database: download isnady-data's, or use one from a file on this "
+                                           "computer (isnady.db or the isnady-db zip of isnady-data)")
+    dbp.add_argument("action", nargs="?", default="show", choices=["show", "use", "download"])
     dbp.add_argument("file", nargs="?", help="use: isnady.db or isnady-db-<date>.zip")
+    dbp.add_argument("--check", action="store_true", help="download: only say what the ready database holds")
     dbp.set_defaults(func=cmd_database)
     rp = sub.add_parser("repo", help="data repositories: list, use, show, add, remove (isnady's own is the default)")
     rp.add_argument("action", nargs="?", default="list", choices=["list", "use", "show", "add", "remove"])
@@ -2723,14 +2757,16 @@ def main(argv: list[str] | None = None) -> int:
             print(upgrade.message(changed), file=sys.stderr)
         from isnady.core import imports as core_imports
 
-        if getattr(args, "func", None) not in (cmd_catalog, cmd_version, cmd_reset):
-            # no book yet (FR1): one command brings them all, as one click does in the window
+        if getattr(args, "func", None) not in (cmd_catalog, cmd_version, cmd_reset, cmd_database):
+            # no book yet (FR1): one command brings them all, as one click does in the window — or the ready
+            # database, everything already read (DB-READY)
             probe = _connect()
             empty = probe.execute("SELECT 1 FROM hadiths LIMIT 1").fetchone() is None
             probe.close()
             if empty:
                 print("isnady has no books yet. Import every hadith book and rijal work of isnady-data with one "
-                      "command: iy catalog import --all", file=sys.stderr)
+                      "command: iy catalog import --all — or download the ready database: iy database download",
+                      file=sys.stderr)
         cut = core_imports.interrupted() if getattr(args, "func", None) is not cmd_catalog else None
         if cut:
             print(f"Note: an import did not finish ({cut['started'].replace('T', ' ')}): {', '.join(cut['titles'][:6])}. "

@@ -3,7 +3,26 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
-## [Unreleased]
+## [0.7.5] — 2026-11-12
+
+- **The ready database in one download (DB-READY; Bayram, 2026-11-12: "ikisi esitse simdi bir sonraki problemi ikisi
+  icin coz ve yeni versiyonu (0.7.5)'i ikisi icinde yap").** Importing isnady-data book by book is slow after the
+  download (the search index, every chain read, every narrator matched); isnady-data's Releases carry the whole of it
+  already done, and isnady now offers it. `iy database download` reads isnady-data's `database.json` (date, schema,
+  books, hadith, narrators, size, sha256), downloads the zip into the data folder as it comes (the progress on a
+  terminal), checks its size and sha256, checks it is an isnady database this version opens, and puts it in place —
+  your previous database kept beside it as `isnady.<date-time>.bak.db`; `--check` only says what it holds. In the
+  window: the first start with no book offers **Download the ready database** beside **Import all** (asked for five
+  seconds at most, so an offline start is not held up), and Data sources → Data folder has **Download the ready
+  database…**; both download in the background, the progress at the bottom, then ask to quit so that it is used at the
+  next start. A ready database is read without leaving `-wal` and `-shm` files beside the staged copy (SQLite's
+  immutable mode), and the command line's note for an empty database names `iy database download` too.
+  `ISNADY_DATABASE_INFO` points to another database.json (a URL or a file). The same in isnady-rs, word for word
+  (`tools/parity_ready.py` there).
+- **isnady-rs in its Releases as an application, and its workflows remade.** The Rust window `isnady-rs` is
+  published for Windows (an installer with no administrator rights, an .msi, a portable .exe), Linux (a portable
+  AppImage, a .deb) and macOS (a .dmg and the .app zipped, Apple silicon and Intel), and `cargo install isnady-gui`
+  gives it from crates.io; this README says where (Install → isnady-rs).
 
 - **The meaning index learnt the same way by both programs (LSA3; Bayram, 2026-11-11: "sen önce eşitle bunları!").**
   `iy ai build` finds the concepts by a randomized subspace iteration from a fixed start (`semantic.top_right_vectors`:

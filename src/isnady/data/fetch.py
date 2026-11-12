@@ -157,3 +157,50 @@ def resolve(base: str, relative: str) -> str:
     if is_url(base):
         return urllib.parse.urljoin(base, relative)
     return str(Path(base).expanduser().parent / relative)
+
+
+def save_to(location: str, target: Path, progress=None, timeout: float | None = None) -> int:
+    """A large file (the ready database) written to disk as it comes, not held in memory: a URL or a local file.
+    progress(done, total) after every MiB (total 0 when the server does not say). Returns the bytes written."""
+    target = Path(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    chunk = 1 << 20
+    done = 0
+    if is_url(location):
+        try:
+            response = urllib.request.urlopen(_build_request(location, NO_AUTH), timeout=timeout or TIMEOUT_SECONDS)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                raise ResourceError(f"Not found (404): {location}") from exc
+            raise ResourceError(f"HTTP {exc.code} while reading {location}") from exc
+        except urllib.error.URLError as exc:
+            raise ResourceError(f"Could not reach {location}: {exc.reason}") from exc
+        except TimeoutError as exc:
+            raise ResourceError(f"Timed out after {timeout or TIMEOUT_SECONDS}s: {location}") from exc
+        total = int(response.headers.get("Content-Length") or 0)
+        source = response
+    else:
+        path = Path(location).expanduser()
+        if location.startswith("file://"):
+            path = Path(urllib.request.url2pathname(urllib.parse.urlparse(location).path))
+        if not path.is_file():
+            raise ResourceError(f"File not found: {path}")
+        total = path.stat().st_size
+        source = open(path, "rb")
+    try:
+        with source, open(target, "wb") as out:
+            while True:
+                try:
+                    block = source.read(chunk)
+                except (OSError, TimeoutError) as exc:
+                    raise ResourceError(f"Could not reach {location}: {exc}") from exc
+                if not block:
+                    break
+                out.write(block)
+                done += len(block)
+                if progress:
+                    progress(done, total)
+    except ResourceError:
+        target.unlink(missing_ok=True)
+        raise
+    return done
