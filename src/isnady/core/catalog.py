@@ -84,7 +84,9 @@ def entry_from_catalog(raw: dict, repo, base: str) -> Entry:
     origin = raw.get("origin") or {}
     # the rijal works keep the database keys they always had, whatever repository lists them
     fixed = {"taqrib": ("openiti-taqrib", "Ibn Hajar, Taqrib al-Tahdhib"),
-             "najashi": ("openiti-najashi", "al-Najashi, Rijal")}.get(raw["format"])
+             "najashi": ("openiti-najashi", "al-Najashi, Rijal"),
+             "tusi_rijal": ("openiti-tusi-rijal", "al-Tusi, Rijal"),
+             "tusi_fihrist": ("openiti-tusi-fihrist", "al-Tusi, al-Fihrist")}.get(raw["format"])
     if fixed and not raw.get("source_key"):
         raw = {**raw, "source_key": fixed[0], "source_name": raw.get("source_name") or fixed[1]}
     return Entry(

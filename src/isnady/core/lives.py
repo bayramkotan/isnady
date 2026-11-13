@@ -270,7 +270,10 @@ def read(conn: sqlite3.Connection, person_id: int) -> dict | None:
         facts.append((t(FACTS["teachers"]), names(rel["teachers"][:3])))
     if rel["students"]:
         facts.append((t(FACTS["students"]), names(rel["students"][:3])))
-    sources = [_in(SOURCES["najashi" if shia else "taqrib"]), t("the chains of the books imported here")]
+    # the rijal work his entry is from (al-Najashi, al-Tusi's Fihrist or his Rijal; the Taqrib)
+    work = (who.get("key") or "").split(":", 1)[0]
+    sources = [_in(SOURCES[work if shia and work in ("najashi", "tusi_fihrist", "tusi_rijal") else
+                           "najashi" if shia else "taqrib"]), t("the chains of the books imported here")]
     entries = []
     from isnady.core import huffaz
 

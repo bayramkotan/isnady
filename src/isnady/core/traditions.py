@@ -147,6 +147,10 @@ COMPILER_TEACHERS = {
         "احمد بن ادريس": "احمد بن ادريس",
     },
 }
+# 0.7.6: al-Saduq opens a chain with "حدثنا أبي" (often "أبي ره", رحمه الله) — his father, 'Ali b. al-Husayn b. Musa b.
+# Babawayh (al-Najashi 684)
+for _book in ("uyun", "amali-saduq", "khisal", "tawhid", "maani", "thawab", "sifat-shia", "fadail-shia"):
+    COMPILER_TEACHERS[_book] = {"ابي": "علي بن الحسين بن موسي بن بابويه"}
 GROUP_FORMS = ("عده من اصحابنا", "جماعه من اصحابنا", "غير واحد من اصحابنا", "غير واحد")
 PREVIOUS_FORMS = ("عنه", "عنهم", "وعنه")
 VAGUE_FORMS = ("رجل", "رجل من اصحابنا", "بعض اصحابنا", "بعض اصحابه", "بعض اصحابهم", "من ذكره", "من حدثه",
@@ -168,7 +172,8 @@ def group_members(group: str, next_name: str) -> list[str]:
 
 def teacher_name(collection: str, raw_name: str) -> str:
     """The fuller name of a compiler's teacher at the head of his chains ("" when not one of them)."""
-    return COMPILER_TEACHERS.get(collection, {}).get(normalize(raw_name).strip(" ،,"), "")
+    name = re.sub(r"\s+(?:ره|رض|رضي الله عنه|رحمه الله)$", "", normalize(raw_name).strip(" ،,"))
+    return COMPILER_TEACHERS.get(collection, {}).get(name, "")
 
 
 def link_kind(raw_name: str) -> str:

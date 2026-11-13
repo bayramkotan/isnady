@@ -22,9 +22,27 @@ PROFILES = {
         "tradition": "shia", "scheme": "shia", "source_key": "openiti-najashi", "minimum": 1000,
         "name": "al-Najashi, Rijal (OpenITI)",
     },
+    # 0.7.6 (narrator identity): al-Tusi's two books of men, the other pillars of Imami rijal. His Rijal lists the
+    # companions of the Prophet and of each Imam and then "those who did not narrate from them" — numbered again in
+    # each part, and a man of two Imams is listed under each; his Fihrist lists the authors with his roads to their
+    # books. One man written the same way in several of these books is one narrator (core.narrators.Index).
+    "tusi_rijal": {
+        "title": "Rijal al-Tusi", "title_ar": "رجال الطوسي", "author": "tusi", "critic": "al-Tusi",
+        "tradition": "shia", "scheme": "shia", "source_key": "openiti-tusi-rijal", "minimum": 5000,
+        "name": "al-Tusi, Rijal (OpenITI)",
+    },
+    "tusi_fihrist": {
+        "title": "al-Fihrist — al-Tusi", "title_ar": "الفهرست للطوسي", "author": "tusi", "critic": "al-Tusi",
+        "tradition": "shia", "scheme": "shia", "source_key": "openiti-tusi-fihrist", "minimum": 800,
+        "name": "al-Tusi, al-Fihrist (OpenITI)",
+    },
 }
 
-_ENTRY = re.compile(r"^### \$\$? (?:\[\])?\s*(\d+)\s*-\s*(.*)$")
+# "### $ 12 - name", "### $$ 12 - name", "### $ [] 12 - name", "### $ 580 ms018 - name" (a page mark before the dash);
+# the Fihrist's "### $ [12] 3 - name": its entry number in brackets, then the number within the letter (the dash or the
+# name may be missing there: "### $ [885] 64", "### $ [895] 74 أبو هارون")
+_ENTRY = re.compile(r"^### \$\$? (?:\[\])?\s*(\d+)\s*(?:ms\d+\s*)?-\s*(.*)$")
+_ENTRY_NUMBERED = re.compile(r"^### \$\$? \[(\d+)\]\s*(?:\d+)?\s*(?:ms\d+\s*)?(?:-\s*)?(.*)$")
 _NOISE = re.compile(r"PageV\d+P\d+|ms\d+|~~|^#\s*|\s#\s")
 
 
@@ -36,12 +54,12 @@ def read_entries(text: str) -> list[dict]:
     """[{number, name, text}] — the name is what the entry's marker line gives after its number."""
     out, current = [], None
     for line in text.split("\n"):
-        m = _ENTRY.match(line)
+        m = _ENTRY_NUMBERED.match(line) or _ENTRY.match(line)
         if m:
             if current:
                 out.append(current)
-            name = _clean(m.group(2)).strip(" ،,.")
-            current = {"number": int(m.group(1)), "name": name, "lines": [m.group(2)]}
+            name = _clean(m.groups()[-1]).strip(" ،,.-")
+            current = {"number": int(m.group(1)), "name": name, "lines": [m.groups()[-1]]}
         elif line.startswith("### "):
             if current:
                 out.append(current)
@@ -58,14 +76,17 @@ def read_entries(text: str) -> list[dict]:
 
 # where a name ends and the critic begins to describe him (al-Najashi: "عيسى بن الوليد الهمداني كوفي، ثقة")
 _DESCRIBES = re.compile(r"\s(?:كوفي|بصري|مدني|قمي|بغدادي|عربي|ثقة|روى|يروي|له كتاب|له كتب|له نسخة|يكنى|كان|ذكره|وكان|"
-                        r"من أصحاب|من اصحاب|ضعيف|عن|أصله|اصله|يعرف|المعروف|يقال|نزل|نزيل|سكن)(?=[\s،,.]|$)")
+                        r"من أصحاب|من اصحاب|ضعيف|عن|أصله|اصله|يعرف|المعروف|يقال|نزل|نزيل|سكن|"
+                        r"أسند عنه|اسند عنه|روى عنه|روى عنهما|مات|قتل|شهد)(?=[\s،,.]|$)")
 
 
 def entry_name(text: str) -> str:
     """The narrator's name from the start of his entry: up to the first comma or full stop, or the first word that
     describes him. The marker line alone is not enough: long names run on (684 "علي بن الحسين بن موسى" /
     "بن بابويه القمي أبو الحسن، شيخ القميين …")."""
-    head = re.split(r"[،,.:؛]|\s-\s", text, maxsplit=1)[0]
+    # the editions' footnote numbers and marks inside a name are no part of it ("إبراهيم بن سليمان بن داحة 1 المزني")
+    text = re.sub(r"(?<!\S)(?:\d+|#)(?=[\s،,.:؛]|$)", " ", text)
+    head = re.split(r"[،,.:؛]|\s-\s", text.lstrip(" -"), maxsplit=1)[0]
     m = _DESCRIBES.search(" " + head)
     if m and m.start() > 0:
         head = (" " + head)[:m.start()]

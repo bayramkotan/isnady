@@ -575,9 +575,10 @@ class NarratorsPage(QWidget):
                                    "each; every name in the chains of the Sunni books is matched to its narrator."),
                                  "Lead"))
         if self.tradition != "sunni":
-            box.addWidget(_label(tr("Shia narrators come from al-Najashi's Rijal — 1,266 authors and narrators with his judgment on "
-                                   "each, read in the Imami terms (reliability and creed); the chains of the Shia books are matched "
-                                   "to them."), "Lead"))
+            box.addWidget(_label(tr("Shia narrators come from al-Najashi's Rijal and from al-Tusi's Fihrist and Rijal — the "
+                                   "authors and narrators with their judgment on each, read in the Imami terms (reliability and "
+                                   "creed); a name is looked up in al-Najashi first, then in al-Tusi, and the chains of the Shia "
+                                   "books are matched to them."), "Lead"))
         row = QHBoxLayout()
         go = QPushButton(tr("Open Data Sources"))
         go.setObjectName("Primary")

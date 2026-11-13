@@ -144,7 +144,7 @@ def person_card(row: dict, open_person) -> QFrame:
             parts.append((f"<span style='color:{dot}'>●</span> {html.escape(en.split(' (')[0])}",
                           f"{ar} — {en}\n{tr(meaning)}"))
         else:
-            parts.append((tr("no judgment"), tr("al-Najashi names him without judging him.")))
+            parts.append((tr("no judgment"), tr("The rijal work names him without judging him.")))
         if row.get("madhhab"):
             parts.append((html.escape(tr(shia_rijal.MADHHAB_LABELS.get(row["madhhab"], row["madhhab"]))),
                           tr("His school, as the critic gives it.")))

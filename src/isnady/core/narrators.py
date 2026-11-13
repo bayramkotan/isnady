@@ -71,9 +71,10 @@ from isnady.core.i18n import t, tr
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
-MATCHER_ID = "isnady-narrators-17"
+MATCHER_ID = "isnady-narrators-18"
 _TEACHER_MIN_TABAQA = 9           # the compilers' own teachers (Ibn Hajar's tabaqat 9-12)
-_HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم).*$")
+_HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم|"
+                        r"(?<!\S)(?:ره|رض)(?!\S)).*$")   # "حدثنا أبي ره": رحمه الله, abbreviated (al-Saduq's books)
 # "عائشة، زوج النبي ﷺ", "ثوبان مولى رسول الله ﷺ", "عائشة أم المؤمنين": who she is, not her name (2026-10-18: the
 # chains read since name her so, and her links had stayed unknown)
 _OF_PROPHET = re.compile(r"[،,]?\s*(?:(?:زوج|زوجه|مولي|مولاه|صاحب|خادم|ابنه|بنت|ابن عم|ربيب|ربيبه|حب|كاتب|موذن)\s+"
@@ -222,6 +223,9 @@ _MUHMAL_SHIA = [
     ("najashi:72", ("ابن فضال",), ("ابن بكير",), ("أحمد بن محمد",)),       # al-Hasan b. 'Ali b. Faddal
 ]
 
+# the Shia rijal works after al-Najashi, in the order a name is looked up in them (Index.tier; al-Najashi is 0)
+_SHIA_TIERS = {"tusi_fihrist": 1, "tusi_rijal": 2}
+
 # books whose chains begin with the compiler himself, as the book is transmitted ("مالك عن نافع" in Yahya's Muwatta)
 _AUTHORS = {"malik": "taqrib:6425"}
 
@@ -230,6 +234,40 @@ def tokens(name: str) -> list[str]:
     # (a comma some editions put inside a name — "ابن، جريج", "زهير، بن حرب" — is no part of it)
     words = normalize(name).replace("،", " ").replace(",", " ").replace("ابن ", "بن ").split()
     return [re.sub(r"^(ابا|ابي)$", "ابو", w) for w in words]
+
+
+# 0.7.6: Ibn Hajar writes how a name is spelt inside it ("سماك بكسر أوله وتخفيف الميم بن حرب", "البراد بموحدة وراء
+# ثقيلة", "مصغرا"): 1,952 names of the Taqrib, and with those words between the ism and "بن" the chains' "سماك بن حرب"
+# was nobody's name. They are left out of the names looked up here (the entry keeps them). The spelling's words: the
+# letters, with or without the article, after "و" or "ب" or "بال"; their marks and places; and what opens it.
+_LETTERS = ("همزه", "الف", "باء", "موحده", "موحدتين", "تاء", "مثناه", "مثناتين", "فوقانيه", "فوقانيتين", "ثاء", "مثلثه",
+            "جيم", "حاء", "مهمله", "مهملتين", "خاء", "معجمه", "معجمتين", "دال", "ذال", "راء", "زاي", "سين", "شين", "صاد",
+            "ضاد", "طاء", "ظاء", "عين", "غين", "فاء", "قاف", "كاف", "لام", "ميم", "نون", "نونين", "هاء", "واو", "ياء",
+            "تحتانيه", "تحتانيتين", "مد", "همز", "قصر")
+_MARKS = ("فتح", "ضم", "كسر", "سكون", "تخفيف", "تشديد", "تصغير")
+_SPELLING_START = frozenset([f"ب{w}" for w in _LETTERS + _MARKS] + [f"بال{w}" for w in _LETTERS + _MARKS]
+                            + ["مصغر", "مصغرا", "مثقلا", "مخففا"])
+_SPELLING = _SPELLING_START | frozenset(
+    [w for x in _LETTERS + _MARKS for w in (x, "ال" + x, "و" + x, "وال" + x)]
+    + ["اوله", "ثانيه", "ثالثه", "رابعه", "اخره", "واخره", "بعدها", "بعده", "قبلها", "قبله", "ثم", "بينهما",
+       "ساكنه", "مفتوحه", "مضمومه", "مكسوره", "مشدده", "مخففه", "ثقيله", "خفيفه", "الساكنه", "المفتوحه",
+       "المضمومه", "المكسوره", "المشدده", "المخففه", "الثقيله", "الخفيفه", "الاولي", "الثانيه", "مفتوحتين",
+       "مضمومتين", "مكسورتين", "ساكنتين", "ممدود", "مقصور", "مصغر", "مصغرا", "مثقلا", "مخففا"])
+
+
+def without_spelling(toks: list[str]) -> list[str]:
+    """A rijal entry's name without the words that tell how it is spelt ("سماك بكسر اوله وتخفيف الميم بن حرب" is
+    "سماك بن حرب"): from a word that opens such words, every word of them that follows."""
+    out, inside = [], False
+    for w in toks:
+        if w in _SPELLING_START:
+            inside = True
+            continue
+        if inside and w in _SPELLING:
+            continue
+        inside = False
+        out.append(w)
+    return out
 
 
 def _is_subsequence(short: list[str], long: list[str]) -> bool:
@@ -253,9 +291,24 @@ class Index:
         # is another source's judgment, never a candidate for these links
         unnamed: set[int] = set()
         self.death: dict[int, int] = {}
+        # the Shia rijal works one above the other (0.7.6): a name is looked up in al-Najashi first, then in al-Tusi's
+        # Fihrist, then in his Rijal — a man found in an earlier book is that book's entry, and the later books only
+        # add the men it does not have (al-Hasan b. Mahbub, al-Husayn b. Sa'id …). The same man written the same way
+        # in several parts of al-Tusi's Rijal (a companion of two Imams) is one man: his first entry.
+        self.tier: dict[int, int] = {}
+        repeated: set[int] = set()
+        seen_in: dict[tuple, int] = {}
         for pid, tabaqa, name, key, died in conn.execute(
-                "SELECT id, tabaqa, name_ar, key, death_year_ah FROM persons WHERE COALESCE(tradition, 'sunni') = ?",
-                (tradition,)):
+                "SELECT id, tabaqa, name_ar, key, death_year_ah FROM persons WHERE COALESCE(tradition, 'sunni') = ? "
+                "ORDER BY id", (tradition,)):
+            prefix = (key or "").split(":", 1)[0]
+            self.tier[pid] = _SHIA_TIERS.get(prefix, 0)
+            if prefix in _SHIA_TIERS:
+                same = (prefix, tuple(tokens(name or "")))
+                if same in seen_in:
+                    repeated.add(pid)
+                else:
+                    seen_in[same] = pid
             if died:
                 self.death[pid] = died
             if tabaqa is None and tradition == "sunni" and name:
@@ -263,7 +316,7 @@ class Index:
                 if _COMPANION.search(plain) and not _UNSURE.search(plain):
                     tabaqa = 1                      # a Companion in other words (Anas b. Malik, Ubayy b. Ka'b)
             self.tabaqa[pid] = tabaqa
-            self.full[pid] = tokens(name)
+            self.full[pid] = without_spelling(tokens(name))
             if key and key.startswith("taqrib:") and key[7:].isdigit() and any(
                     lo <= int(key[7:]) <= hi for lo, hi in _MUBHAMAT):
                 unnamed.add(pid)
@@ -276,11 +329,12 @@ class Index:
                             (keys[key], {tuple(tokens(x)) for x in teachers}, {tuple(tokens(x)) for x in students}))
         for pid, mark in conn.execute("SELECT person_id, mark FROM person_marks"):
             self.marks[pid].add(mark)
+        self.hidden = unnamed | repeated              # never a candidate (_elsewhere reads self.full)
         for pid, name, kind in conn.execute("SELECT n.person_id, n.name, n.kind FROM person_names n JOIN persons p ON p.id = n.person_id "
                                             "WHERE COALESCE(p.tradition, 'sunni') = ?", (tradition,)):
-            if pid in unnamed:
-                continue                            # an unnamed man: no name in the chains is his
-            toks = tokens(name)
+            if pid in unnamed or pid in repeated:
+                continue                            # an unnamed man: no name in the chains is his; a repeated entry
+            toks = without_spelling(tokens(name))
             if kind != "full" and "عن" in toks[1:]:
                 continue                            # "أنس بن مالك عن أمه": how a chain reaches her, not her name
             if toks:
@@ -323,6 +377,48 @@ class Index:
         found = set(self.exact.get(" ".join(toks), ()))
         for variant in _article_variants(toks):             # "الأشعث" in a chain is "أشعث" in the Taqrib
             found |= self._rule_matches(variant)
+        if not found and any(len(w) > 3 and w.endswith("ا") for w in toks):
+            # "سمعت أنسا", "سمعت جابرا": the name after a verb, with the alif of the accusative (0.7.6)
+            bare = [w[:-1] if len(w) > 3 and w.endswith("ا") else w for w in toks]
+            found = set(self.exact.get(" ".join(bare), ()))
+            for variant in _article_variants(bare):
+                found |= self._rule_matches(variant)
+        if not found and "بن" not in toks and 1 <= len(toks) <= 4:
+            found = self._elsewhere(toks)
+        if len(found) > 1:
+            first = min(self.tier.get(p, 0) for p in found)
+            found = {p for p in found if self.tier.get(p, 0) == first}     # the earliest rijal work that has him
+        return found
+
+    def _elsewhere(self, toks: list[str]) -> set[int]:
+        """0.7.6: a name the chains give without "بن" that begins no entry — a kunya, a nisba, an ism with his nisba
+        ("أبي الصباح الكناني", "الوشاء", "عمرو الناقد", "خالد الحذاء") — found inside the entries' names: the kunya
+        as written, then the other words in order ("إبراهيم بن نعيم العبدي أبو الصباح الكناني"); a lone nisba as a
+        word of the name; an ism as its first word and the nisba after it. Only when nothing else was found."""
+        if toks[0] in ("ابو", "ام"):
+            if len(toks) < 2:
+                return set()
+            lead, rest = toks[:2], toks[2:]
+        elif len(toks) == 1:
+            if not (toks[0].startswith("ال") and len(toks[0]) > 4):
+                return set()
+            lead, rest = [], toks
+        else:
+            lead, rest = None, toks[1:]
+        found = set()
+        for pid, name in self.full.items():
+            if pid in self.hidden:
+                continue
+            if lead is None:
+                if name[:1] == toks[:1] and _is_subsequence(rest, name[1:]):
+                    found.add(pid)
+            elif lead:
+                for i in range(len(name) - 1):
+                    if name[i] == lead[0] and name[i + 1] == lead[1] and _is_subsequence(rest, name[i + 2:]):
+                        found.add(pid)
+                        break
+            elif _is_subsequence(rest, name[1:]):
+                found.add(pid)
         return found
 
     def _rule_matches(self, toks: list[str]) -> set[int]:
