@@ -3,7 +3,9 @@
     python tools/publish_database.py ~/Github/isnady-data [--data DIR]
 
   * the database (isnady.db) is copied compactly (VACUUM INTO), without what was imported from your own files
-    (User Resources never leave the computer), then zipped: release/isnady-db-<date>.zip — too large for a git
+    (User Resources never leave the computer) and without the books of other repositories (LK Hadith Corpus,
+    fawazahmed0, Thaqalayn …: other people's editions of the same books, which the ready database must not
+    carry beside isnady-data's own), then zipped: release/isnady-db-<date>.zip — too large for a git
     file (GitHub takes at most 100 MB a file), so it is published as a Release of isnady-data;
   * every saved computation (derived/*.json: statistics, models, laboratory …) is copied into derived/ of the
     repository, so they are kept with the data and never computed again for the same data;
@@ -23,6 +25,16 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def _own_keys(repo: Path) -> set[str]:
+    """The database keys of every source isnady-data's catalog lists (its books, rijal works and library)."""
+    from isnady.core import repositories
+    from isnady.core.catalog import entry_from_catalog
+
+    cat = json.loads((repo / "catalog.json").read_text(encoding="utf-8"))
+    own = repositories.find(repositories.DEFAULT_ID)
+    return {entry_from_catalog(raw, own, "").source_key for raw in cat.get("entries", []) + cat.get("library", [])}
 
 
 def main() -> int:
@@ -55,10 +67,16 @@ def main() -> int:
 
     conn = sqlite3.connect(copy)
     conn.execute("PRAGMA foreign_keys = ON")
-    mine = conn.execute("SELECT key FROM sources WHERE origin = 'user'").fetchall()
+    mine = [k for (k,) in conn.execute("SELECT key FROM sources WHERE origin = 'user'")]
     if mine:
-        print("Leaving out your own sources: " + ", ".join(k for (k,) in mine))
-        conn.execute("DELETE FROM sources WHERE origin = 'user'")
+        print("Leaving out your own sources: " + ", ".join(mine))
+    own = _own_keys(repo)
+    other = [k for (k,) in conn.execute("SELECT key FROM sources WHERE origin != 'user' ORDER BY key")
+             if k not in own]
+    if other:
+        print("Leaving out the books of other repositories: " + ", ".join(other))
+    if mine or other:
+        conn.executemany("DELETE FROM sources WHERE key = ?", [(k,) for k in mine + other])
         conn.commit()
         db.cleanup(conn)
         conn.execute("VACUUM")

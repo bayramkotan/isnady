@@ -162,10 +162,10 @@ class RijalImporter(Importer):
         report.editions.append(prof["title"])
         report.new_hadiths = 0
         report.texts = len(entries)
-        report.warnings.append(
+        # a summary, said once: not a warning (iy printed it again as one)
+        say(
             f"{len(entries)} narrators; a judgment read for {judged} ({100 * judged / len(entries):.1f}%): "
             + ", ".join(f"{shia_rijal.RANKS[k][1]} {counts.get(k, 0)}" for k in sorted(shia_rijal.RANKS)))
-        say(report.warnings[-1])
         return report
 
 

@@ -177,8 +177,8 @@ class OpenITIWorkImporter(Importer):
                 source_entries.store(entries, text, source.location)
         report.editions.append(key)
         report.texts = leaves
-        report.warnings.append(f"{chapters:,} chapters, {leaves:,} entries and sections")
-        say(report.warnings[-1])
+        # a summary, said once: not a warning (iy printed it again as one)
+        say(f"{chapters:,} chapters, {leaves:,} entries and sections")
         return report
 
 

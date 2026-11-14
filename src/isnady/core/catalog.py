@@ -290,7 +290,7 @@ def import_all(conn: sqlite3.Connection, languages: dict[str, list[str]] | list[
     for e in entries:
         _set_tradition(conn, e)
     done_titles = {label for label, _r in imported}
-    remember(conn, [e for e in entries if e.title in done_titles], seen=everything)
+    remember(conn, [e for e in entries if e.title in done_titles])
     for e in everything:                      # the Qur'an: the Arabic and a translation in the interface language
         if e.kind == "quran":
             try:
@@ -362,6 +362,9 @@ def _import_quran(editions: list[str] | None = None, progress=None):
 # kept in <data folder>/imported.json: each book's fingerprint and languages when it was imported, and the books the
 # repository listed then. A book is offered again only when it is NEW to the repository, CHANGED there (another
 # fingerprint), or has a NEW LANGUAGE there that the reader reads in other books.
+# Bayram (2026-11-14), al-Tusi's two rijal works never offered: a book the repository lists and that is not here is
+# offered until it is imported — "seen" once marked every listed book, so one that failed or came later was lost. Only
+# a book the reader REMOVED himself is not offered again (until he imports it once more).
 def _state_file():
     return data_dir() / "imported.json"
 
@@ -392,30 +395,33 @@ def _codes(st: dict) -> list[str]:
     return sorted({code_for(label) for label in st.get("languages", [])})
 
 
-def remember(conn: sqlite3.Connection, entries: list[Entry], seen: list[Entry] | None = None,
-             forget: bool = False) -> None:
-    """Note these books as imported now (or forgotten), and the repository's list as seen."""
+def remember(conn: sqlite3.Connection, entries: list[Entry], forget: bool = False) -> None:
+    """Note these books as imported now, or as removed by the reader (forget)."""
     state = _state()
+    state.pop("seen", None)                         # isnady before 0.7.9: every listed book, imported or not
     books = state.setdefault("books", {})
+    removed = set(state.get("removed", []))
     for e in entries:
+        if not e.builtin or e.kind == "quran":
+            continue
         if forget:
             books.pop(_key(e), None)
-        elif e.builtin and e.kind != "quran":
+            removed.add(_key(e))
+        else:
             books[_key(e)] = {"sha256": e.sha256, "languages": _codes(status(conn, e)),
                               "offered": list(e.languages)}
-    if seen:
-        state["seen"] = sorted(set(state.get("seen", [])) | {_key(e) for e in seen if e.builtin})
+            removed.discard(_key(e))
+    state["removed"] = sorted(removed)
     _save_state(state)
 
 
 def updates(conn: sqlite3.Connection, repo_id: str | None = None) -> list[dict]:
     """What the repository has that is not here yet: [{"entry", "why": "new"|"changed"|"languages", "languages"}].
-    The first time (isnady before 0.7.4 kept nothing), what is here now is taken as up to date."""
+    Every book that is not here is new, except one the reader removed himself."""
     entries = [e for e in builtin_entries(repo_id) if e.kind != "quran"]
     state = _state()
-    first = "seen" not in state
     books = state.setdefault("books", {})
-    seen = set(state.get("seen", []))
+    removed = set(state.get("removed", []))
     reads = set()                                   # the languages the reader has in the imported books
     rows = []
     for e in entries:
@@ -423,11 +429,11 @@ def updates(conn: sqlite3.Connection, repo_id: str | None = None) -> list[dict]:
         rows.append((e, st))
         if st["imported"] and e.kind == "hadith":
             reads |= set(_codes(st))
-    out, changed_state = [], first
+    out, changed_state = [], False
     for e, st in rows:
         key = _key(e)
         if not st["imported"]:
-            if not first and key not in seen:
+            if key not in removed:
                 out.append({"entry": e, "why": "new", "languages": []})
             continue
         rec = books.get(key)
@@ -445,8 +451,6 @@ def updates(conn: sqlite3.Connection, repo_id: str | None = None) -> list[dict]:
             if extra:
                 out.append({"entry": e, "why": "languages", "languages": sorted(set(_codes(st)) | set(extra)),
                             "new": extra})
-    if first:
-        state["seen"] = sorted({_key(e) for e in entries})
     if changed_state:
         _save_state(state)
     return out
@@ -463,7 +467,7 @@ def update(conn: sqlite3.Connection, items: list[dict] | None = None, progress=N
     entries = [i["entry"] for i in items]
     for e in entries:
         _set_tradition(conn, e)
-    remember(conn, [e for e in entries if e.title in done], seen=entries)
+    remember(conn, [e for e in entries if e.title in done])
     return imported, failed, narrators
 
 

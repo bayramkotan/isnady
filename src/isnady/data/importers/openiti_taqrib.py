@@ -388,11 +388,11 @@ class TaqribImporter(Importer):
         report.editions.append(WORK)
         report.new_hadiths = 0
         report.texts = len(entries)
-        report.warnings.append(
+        # a summary, said once: not a warning (iy printed it again as one)
+        say(
             f"{len(entries)} narrators; rank read for {ranked} ({100 * ranked / len(entries):.1f}%), "
             f"tabaqa for {sum(1 for e in entries if e['tabaqa'])}, death year for "
             f"{sum(1 for e in entries if e['death_year'])}; {linked} of {len(xrefs)} cross-references linked")
-        say(report.warnings[-1])
         return report
 
 
