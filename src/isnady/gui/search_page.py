@@ -1359,6 +1359,23 @@ class SearchPage(QWidget):
         self.retheme()
         return stats
 
+    def narrator_guesses_on(self) -> bool:
+        return self._conn is not None and core_narrators.guesses_on(self._conn)
+
+    def set_narrator_guesses(self, on: bool) -> dict:
+        """Tools → Narrator Guesses: isnady's own inference on or off, the narrators identified again."""
+        if self._conn is None:
+            return {}
+        QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            stats = core_narrators.set_guesses(self._conn, on, progress=self._status)
+        finally:
+            QGuiApplication.restoreOverrideCursor()
+        self.__dict__.pop("_person_cache", None)
+        self.data_changed.emit()
+        self.retheme()
+        return stats
+
     def rebuild_chains(self) -> dict:
         if self._conn is None:
             return {}

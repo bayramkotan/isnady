@@ -288,11 +288,22 @@ def identified_how(confidence: float | None) -> str:
     if confidence >= 1.0:
         return tr("Identified by his name as the rijal work gives it.")
     if confidence >= 0.8:
-        return tr("Identified by his name and the chain around him (his patron, the bare name's teacher or student).")
+        return tr("Identified by the rijal work's words and the chain around him: the book's mark, the generations, "
+                  "his patron, his father's name in his son's entry, the compiler's own teacher.")
+    if confidence >= 0.7:
+        return tr("isnady's guess, by its own rules: a list of who narrates from whom, a name isnady knows him by, a "
+                  "name found inside an entry, or a father weighed from his son's nasab — not the rijal work's words "
+                  "(Tools → Narrator Guesses).")
     if confidence >= 0.6:
-        return tr("Identified by the narrators around him: this teacher and student are seen with him in the chains "
-                  "that name him in full.")
-    return tr("Taken as the famous narrator of this name: nothing else decided between those who bear it.")
+        return tr("isnady's guess: the narrators around him — this teacher and student are seen with him in the "
+                  "chains that name him in full (Tools → Narrator Guesses).")
+    return tr("isnady's guess: the famous narrator of this name — nothing else decided between those who bear it "
+              "(Tools → Narrator Guesses).")
+
+
+def is_guess(confidence: float | None) -> bool:
+    """A narrator isnady's own inference decided, not the rijal works' words (Tools → Narrator Guesses)."""
+    return confidence is not None and confidence < 0.8
 
 
 class ChainNode(QWidget):
@@ -372,7 +383,8 @@ class ChainNode(QWidget):
             sub.setWordWrap(True)
             box.addWidget(sub)
         if person:
-            who = QLabel(_shorten(person["display_name"], 90))
+            guess = is_guess(confidence)
+            who = QLabel(("≟ " + tr("isnady's guess") + " · " if guess else "") + _shorten(person["display_name"], 90))
             if on_person is not None:
                 who.setCursor(Qt.CursorShape.PointingHandCursor)
             who.setObjectName("NodeFacts")

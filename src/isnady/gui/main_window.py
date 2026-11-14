@@ -408,6 +408,30 @@ class MainWindow(QMainWindow):
         super().closeEvent(event)
 
     # --------------------------------------------------------------- the sidebar's order
+    def _toggle_guesses(self, checked: bool = False) -> None:
+        """Tools → Narrator Guesses: isnady's own inference on or off, after saying what it is."""
+        from PySide6.QtWidgets import QMessageBox
+
+        search = self.search_page
+        if checked:
+            text = tr("By default isnady links a name of a chain to a narrator only by the rijal works' own words: his "
+                      "name as Ibn Hajar, al-Najashi or al-Tusi gives it, the book's mark, the order of generations, "
+                      "his patron, his father's name in his son's entry, the compiler's own teacher.\n\n"
+                      "Turned on, isnady also guesses by its own rules: which teacher and student are seen together "
+                      "in other chains, the famous narrator of a bare name, its lists of who narrates from whom, a "
+                      "name found inside an entry, a father weighed from his son's nasab. These are isnady's "
+                      "inference, not the scholars' words: each narrator found this way is marked \"isnady's "
+                      "guess\" in the chain, with the reason.\n\nTurn the guesses on and identify the narrators "
+                      "again?")
+        else:
+            text = tr("Remove isnady's guesses and identify the narrators again by the rijal works' own words "
+                      "alone? The names only isnady's rules decided are left unidentified.")
+        answer = QMessageBox.question(self, tr("Narrator Guesses (isnady's Own Inference)"), text)
+        if answer != QMessageBox.StandardButton.Yes:
+            self._guess_action.setChecked(not checked)
+            return
+        search.set_narrator_guesses(checked)
+
     def _clear_cache(self) -> None:
         from PySide6.QtWidgets import QMessageBox
 
@@ -743,6 +767,13 @@ class MainWindow(QMainWindow):
                      tip=tr("Read every chain of transmission from the Arabic texts again"))
         self._action(tools_menu, tr("Identify Narrators Again"), lambda: search.identify_narrators(),
                      tip=tr("Match every name in the chains against the imported rijal works again"))
+        # 0.7.8: isnady's own inference about who a narrator is — off unless turned on here, marked where it decides
+        self._guess_action = self._action(
+            tools_menu, tr("Narrator Guesses (isnady's Own Inference)…"), self._toggle_guesses,
+            tip=tr("Also identify narrators by isnady's own rules, not only by the rijal works' words; every "
+                   "narrator found this way is marked as isnady's guess"))
+        self._guess_action.setCheckable(True)
+        tools_menu.aboutToShow.connect(lambda: self._guess_action.setChecked(search.narrator_guesses_on()))
         tools_menu.addSeparator()
         self._action(tools_menu, tr("Create Desktop Shortcut…"), self._create_shortcut,
                      tip=tr("Put isnady on the desktop and in the applications menu, with its icon"))

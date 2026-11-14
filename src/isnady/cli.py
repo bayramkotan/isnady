@@ -2068,6 +2068,34 @@ def _chain_chapter(conn, args) -> int:
     return 0
 
 
+def cmd_guess(args) -> int:
+    """iy guess [on|off]: isnady's own inference about who a narrator is (0.7.8) — off unless turned on."""
+    conn = _connect()
+    if args.state:
+        if not core_narrators_loaded(conn):
+            print("No rijal work imported: there are no narrators to identify.")
+            conn.close()
+            return 1
+        core_narrators.set_guesses(conn, args.state == "on", progress=print)
+    elif core_narrators_loaded(conn):
+        core_narrators.link_narrators(conn, progress=print)       # the counts below of the narrators as now matched
+    on = core_narrators.guesses_on(conn)
+    total, found, guessed = conn.execute(
+        "SELECT COUNT(*), COALESCE(SUM(person_id IS NOT NULL), 0), "
+        "COALESCE(SUM(person_id IS NOT NULL AND match_confidence < 0.8), 0) FROM isnad_links").fetchone()
+    if on:
+        print("Narrator guesses (isnady's own inference): on — narrators are identified by the rijal works' own "
+              "words and by isnady's own rules, each of these marked as isnady's guess.")
+    else:
+        print("Narrator guesses (isnady's own inference): off — narrators are identified by the rijal works' own "
+              "words alone (turn on: iy guess on).")
+    if total:
+        print(f"  {found:,} of {total:,} links identified ({100 * found / total:.1f}%), {guessed:,} of them "
+              f"isnady's guesses.")
+    conn.close()
+    return 0
+
+
 def cmd_chain(args) -> int:
     conn = _connect()
     if getattr(args, "chapter", None):
@@ -2128,7 +2156,9 @@ def cmd_chain(args) -> int:
                                                           else f" (rank {v['rank']})" if v and v["rank"] else "") if v else ""]
                 conf = link.get("match_confidence")
                 how = ("" if conf is None or conf >= 0.8 else
-                       "  [by the narrators around him]" if conf >= 0.6 else "  [the famous one of this name]")
+                       "  [isnady's guess: its own rules]" if conf >= 0.7 else
+                       "  [isnady's guess: the narrators around him]" if conf >= 0.6 else
+                       "  [isnady's guess: the famous one of this name]")
                 print(f"      = {who['display_name']}{how}")
                 print(f"        {'; '.join(f for f in facts if f)}")
             elif link.get("candidates") is not None and core_narrators_loaded(conn):
@@ -2522,6 +2552,10 @@ def build_parser() -> argparse.ArgumentParser:
     isn = sub.add_parser("isnads", help="read the chains of transmission from the Arabic texts and report")
     isn.add_argument("--rebuild", action="store_true", help="read every chain again")
     isn.set_defaults(func=cmd_isnads)
+    gu = sub.add_parser("guess", help="isnady's own inference about who a narrator is: off (the rijal works' words "
+                                      "alone) unless turned on; every narrator it finds is marked as its guess")
+    gu.add_argument("state", nargs="?", choices=["on", "off"], help="turn it on or off (nothing: show which)")
+    gu.set_defaults(func=cmd_guess)
     ai = sub.add_parser("ai", help="artificial-intelligence features: build or check the meaning index and takhrij")
     ai.add_argument("action", choices=["build", "status"])
     ai.add_argument("--dims", type=int, default=200, help="build: number of concepts (default 200)")
