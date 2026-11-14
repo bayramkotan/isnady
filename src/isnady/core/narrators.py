@@ -71,7 +71,7 @@ from isnady.core.i18n import t, tr
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
-MATCHER_ID = "isnady-narrators-18"
+MATCHER_ID = "isnady-narrators-19"
 _TEACHER_MIN_TABAQA = 9           # the compilers' own teachers (Ibn Hajar's tabaqat 9-12)
 _HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم|"
                         r"(?<!\S)(?:ره|رض)(?!\S)).*$")   # "حدثنا أبي ره": رحمه الله, abbreviated (al-Saduq's books)
@@ -149,6 +149,93 @@ _MUHMAL = [
     ("taqrib:7312", ("أبو معاوية", "أبي معاوية"),
      ("حصين", "مغيرة", "المغيرة", "أبي بشر", "أبو بشر", "يونس بن عبيد", "خالد الحذاء", "منصور بن زاذان",
       "يعلى بن عطاء", "داود بن أبي هند", "سيار", "العوام", "إسماعيل بن سالم"), ()),
+    # 0.7.7: the bare names left most often open, each by the neighbours that are his alone — read from the chains
+    # (which teachers and students stand around the name) and from the books of tamyiz al-muhmal. A neighbour both
+    # namesakes share is left out: the link stays open rather than be guessed.
+    ("taqrib:5787", ("محمد بن جعفر",),                                  # Ghundar, Shu'ba's student
+     ("شعبة", "سعيد بن أبي عروبة", "سعيد", "عوف", "عوف بن أبي جميلة", "معمر", "كهمس", "حسين المعلم"),
+     ("محمد بن المثنى", "ابن المثنى", "محمد بن بشار", "ابن بشار", "بندار", "محمد بن الوليد", "بشر بن خالد",
+      "أبو بكر بن أبي شيبة", "أحمد بن عبد الله بن الحكم", "عمرو بن علي", "أحمد بن حنبل", "أبو بكر بن نافع",
+      "عبيد الله بن عمر القواريري")),
+    ("taqrib:5784", ("محمد بن جعفر",),                                  # Muhammad b. Ja'far b. Abi Kathir
+     ("زيد بن أسلم", "أبي حازم", "العلاء بن عبد الرحمن", "العلاء", "موسى بن عقبة", "محمد بن عمرو بن حلحلة",
+      "شريك بن عبد الله بن أبي نمر", "عمرو بن أبي عمرو", "يزيد بن خصيفة"),
+     ("سعيد بن أبي مريم", "ابن أبي مريم", "عبد العزيز بن عبد الله", "خالد بن مخلد", "إسماعيل بن أبي أويس")),
+    ("taqrib:7557", ("يحيى بن سعيد", "يحيى"),                           # Yahya b. Sa'id al-Qattan
+     ("شعبة", "سفيان", "ابن جريج", "هشام", "هشام بن عروة", "عبيد الله", "عبيد الله بن عمر", "إسماعيل",
+      "إسماعيل بن أبي خالد", "التيمي", "سليمان التيمي", "حميد", "حميد الطويل", "ابن عجلان", "عوف",
+      "ابن أبي عروبة", "سعيد بن أبي عروبة", "عبد الملك", "عبد الملك بن أبي سليمان", "ابن أبي ذئب",
+      "عبيد الله بن الأخنس", "جعفر بن محمد", "ابن عون", "قرة"),
+     ("محمد بن المثنى", "ابن المثنى", "محمد بن بشار", "ابن بشار", "بندار", "عمرو بن علي", "مسدد",
+      "أحمد بن حنبل", "علي بن عبد الله", "عبيد الله بن سعيد", "محمد بن حاتم", "يعقوب بن إبراهيم",
+      "يحيى بن حكيم", "زهير بن حرب", "عبيد الله بن عمر القواريري", "صدقة بن الفضل")),
+    ("taqrib:7559", ("يحيى بن سعيد",),                                  # Yahya b. Sa'id al-Ansari, the qadi
+     ("سعيد بن المسيب", "عمرة", "محمد بن يحيى بن حبان", "بشير بن يسار", "القاسم بن محمد", "سليمان بن يسار",
+      "محمد بن إبراهيم", "محمد بن إبراهيم التيمي", "عمرو بن شعيب", "أبي بكر بن محمد بن عمرو بن حزم",
+      "أبي بكر بن محمد", "أنس بن مالك", "أنس", "عدي بن ثابت", "عمر بن كثير بن أفلح", "عبد الله بن دينار",
+      "أبي أمامة بن سهل", "عمر بن الحكم", "عباد بن تميم", "حميد بن نافع", "يوسف بن مسعود"),
+     ("مالك", "سفيان", "سفيان بن عيينة", "عبد الوهاب", "عبد الوهاب الثقفي", "الليث", "الليث بن سعد",
+      "يزيد بن هارون", "حماد بن زيد", "حماد", "سليمان بن بلال", "هشيم", "أبو معاوية", "أبو خالد الأحمر",
+      "جرير", "يحيى بن سعيد القطان")),
+    ("taqrib:7632", ("يحيى",),                                         # Yahya b. Abi Kathir
+     ("أبي سلمة", "أبو سلمة", "عبد الله بن أبي قتادة", "أبي قلابة", "عكرمة", "عياض", "زيد بن سلام",
+      "أبي سلام", "عمران بن حطان", "ضمضم", "هلال بن أبي ميمونة", "أبي جعفر", "أبي كثير"),
+     ("شيبان", "حرب", "حرب بن شداد", "همام", "علي بن المبارك", "الأوزاعي", "هشام الدستوائي", "أبان", "معمر")),
+    ("taqrib:416", ("إسماعيل",),                                         # Isma'il b. 'Ulayya
+     ("أيوب", "يونس", "الجريري", "خالد الحذاء", "خالد", "ابن عون", "هشام الدستوائي", "عبد العزيز",
+      "عبد العزيز بن صهيب", "روح بن القاسم", "ابن أبي نجيح"),
+     ("مسدد", "عمرو بن زرارة", "مؤمل بن هشام", "يعقوب بن إبراهيم", "زهير بن حرب", "أحمد بن حنبل",
+      "عمرو الناقد", "زياد بن أيوب")),
+    ("taqrib:438", ("إسماعيل",),                                         # Isma'il b. Abi Khalid
+     ("قيس", "قيس بن أبي حازم", "عامر", "الشعبي", "عبد الله بن أبي أوفى", "ابن أبي أوفى", "أبيه"),
+     ("يحيى", "يحيى بن سعيد", "أبو أسامة", "وكيع", "محمد بن عبيد", "ابن نمير", "عبد الله بن نمير", "هشيم",
+      "يعلى بن عبيد", "محمد بن بشر")),
+    ("taqrib:431", ("إسماعيل",),                                         # Isma'il b. Ja'far
+     ("العلاء", "العلاء بن عبد الرحمن", "عبد الله بن دينار", "ربيعة", "عمرو بن أبي عمرو",
+      "شريك بن عبد الله بن أبي نمر", "محمد بن عمرو", "أبي سهيل"),
+     ("يحيى بن يحيى", "سعيد بن سليمان", "قتيبة", "قتيبة بن سعيد")),
+    ("taqrib:460", ("إسماعيل",),                                         # Isma'il b. Abi Uways, Malik's nephew
+     ("مالك", "مالك بن أنس", "أخي", "سليمان بن بلال"), ()),
+    ("taqrib:871", ("جابر",),                                            # Jabir b. 'Abd Allah al-Ansari
+     (), ("أبي سفيان", "أبو سفيان", "عطاء", "عمرو", "عمرو بن دينار", "أبي الزبير", "أبو الزبير",
+          "محمد بن المنكدر", "ابن المنكدر", "سالم بن أبي الجعد", "مجاهد", "سليمان اليشكري", "وهب بن كيسان")),
+    ("taqrib:878", ("جابر",),                                            # Jabir b. Yazid al-Ju'fi
+     ("عامر", "الشعبي", "عكرمة", "أبي الضحى", "القاسم بن عبد الرحمن", "أبي الطفيل"),
+     ("شعبة", "إسرائيل", "شريك", "سفيان", "زهير", "معمر", "أبو عوانة", "حفص بن غياث")),
+    ("taqrib:916", ("جرير",),                                            # Jarir b. 'Abd al-Hamid
+     ("منصور", "الأعمش", "مغيرة", "المغيرة", "عمارة بن القعقاع", "سليمان التيمي", "مطرف", "هشام بن عروة",
+      "عبد العزيز بن رفيع", "قابوس", "سهيل", "سهيل بن أبي صالح", "عبد الملك بن عمير", "الحسن بن عبيد الله",
+      "ليث", "عطاء بن السائب", "حصين", "الأعمش"),
+     ("إسحاق بن إبراهيم", "إسحاق بن إبراهيم الحنظلي", "إسحاق", "محمد بن قدامة", "قتيبة بن سعيد", "قتيبة",
+      "عثمان", "عثمان بن أبي شيبة", "عثمان بن محمد", "زهير بن حرب", "أبو بكر بن أبي شيبة", "يحيى بن يحيى",
+      "يوسف بن موسى", "محمد بن الصباح", "علي بن حجر", "عبد الرحمن بن هلال", "يحيى بن معين", "ابن حميد")),
+    ("taqrib:915", ("جرير",),                                            # Jarir b. 'Abd Allah al-Bajali
+     (), ("قيس", "قيس بن أبي حازم", "الشعبي", "أبي زرعة", "المنذر بن جرير", "زياد بن علاقة")),
+    ("taqrib:4591", ("عطاء",),                                           # 'Ata' b. Abi Rabah
+     ("صفوان بن يعلى", "عبيد بن عمير", "يعلى بن أمية", "عبد الله بن السائب", "حبيبة بنت ميسرة",
+      "أبي صالح الزيات", "صفوان بن عبد الله"),
+     ("ابن جريج", "عبد الملك", "عبد الملك بن أبي سليمان", "عمرو", "عمرو بن دينار", "حجاج", "الحجاج",
+      "حجاج بن أرطاة", "ابن أبي ليلى", "سلمة بن كهيل", "ابن أبي نجيح", "الأوزاعي", "عبد الكريم",
+      "ليث", "خصيف", "قيس بن سعد", "حبيب بن أبي ثابت", "طلحة بن عمرو", "أبو الزبير", "عسل")),
+    ("taqrib:1135", ("حجاج",),                                           # Hajjaj b. Muhammad al-A'war
+     ("ابن جريج", "ليث", "ليث بن سعد", "ابن أبي ذئب", "يونس بن أبي إسحاق"), ()),
+    ("taqrib:1137", ("حجاج",),                                           # Hajjaj b. Minhal
+     ("حماد", "حماد بن سلمة", "همام", "عبد الله بن عمر النميري", "جرير بن حازم", "أبو عوانة"), ()),
+    ("taqrib:1119", ("حجاج",),                                           # Hajjaj b. Artat
+     ("عطاء", "عمرو بن شعيب", "مكحول", "الحكم", "عون بن أبي جحيفة"),
+     ("أبو معاوية", "أبو خالد الأحمر", "ابن نمير", "عبد الله بن نمير", "عباد بن العوام", "هشيم",
+      "محمد بن فضيل", "يزيد بن هارون", "حفص بن غياث", "عبد الرحيم بن سليمان")),
+    ("taqrib:2051", ("زهير",),                                           # Zuhayr b. Mu'awiya
+     ("أبو الزبير", "أبي الزبير", "أبي إسحاق", "أبو إسحاق", "سماك", "سماك بن حرب", "منصور", "الأعمش", "حميد",
+      "الأسود بن قيس", "سليمان التيمي", "مطرف", "عبد الله بن عيسى", "عاصم الأحول", "بيان", "أبي خالد"),
+     ("أحمد بن يونس", "أحمد بن عبد الله بن يونس", "يحيى بن آدم", "أبو نعيم", "حسن", "حسن بن موسى",
+      "الحسن بن موسى", "النفيلي", "عبد الله بن محمد النفيلي", "ابن نفيل", "عمرو بن خالد", "مالك بن إسماعيل",
+      "هاشم", "هاشم بن القاسم", "الحسن بن أعين", "الأسود بن عامر", "أسود بن عامر", "أبو غسان", "يحيى بن يحيى")),
+    ("taqrib:2451", ("سفيان",),                                          # Sufyan b. 'Uyayna, more students
+     ("الزهري", "أيوب بن موسى"),
+     ("علي بن عبد الله", "محمد بن منصور", "مسدد", "عبد الله بن محمد", "إسحاق بن إبراهيم")),
+    ("taqrib:2445", ("سفيان",),                                          # al-Thawri, more students
+     (), ("يحيى بن سعيد", "يحيى بن آدم", "عبد الله بن الوليد", "أبو داود الحفري")),
 ]
 
 
@@ -172,6 +259,9 @@ _KNOWN_AS = {
     # other Abu Khaythama is Zuhayr b. Mu'awiya, their generations tell them apart
     "ابو خيثمه": ("taqrib:2042", "taqrib:2051"), "ابو خيثمه زهير بن حرب": ("taqrib:2042",),
     "زهير ابو خيثمه": ("taqrib:2042", "taqrib:2051"),
+    # 0.7.7: a laqab and a grandfather the chains call them by — "غندر" Muhammad b. Ja'far al-Hudhali (or the later
+    # Ghundar of Baghdad, the generations decide), "أحمد بن يونس" Ahmad b. 'Abd Allah b. Yunus al-Yarbu'i
+    "غندر": ("taqrib:5787", "taqrib:5862"), "احمد بن يونس": ("taqrib:63",),
 }
 # NR-ID2, the famous one: a bare name the scholars read as the famous narrator of that name unless something says
 # otherwise ("أنس" is Anas b. Malik al-Ansari, "مالك" Malik b. Anas, "ابن عمر" 'Abd Allah b. 'Umar). Applied last,
@@ -246,13 +336,13 @@ _LETTERS = ("همزه", "الف", "باء", "موحده", "موحدتين", "ت�
             "تحتانيه", "تحتانيتين", "مد", "همز", "قصر")
 _MARKS = ("فتح", "ضم", "كسر", "سكون", "تخفيف", "تشديد", "تصغير")
 _SPELLING_START = frozenset([f"ب{w}" for w in _LETTERS + _MARKS] + [f"بال{w}" for w in _LETTERS + _MARKS]
-                            + ["مصغر", "مصغرا", "مثقلا", "مخففا"])
+                            + ["مصغر", "مصغرا", "مثقلا", "مخففا", "بغير"])
 _SPELLING = _SPELLING_START | frozenset(
     [w for x in _LETTERS + _MARKS for w in (x, "ال" + x, "و" + x, "وال" + x)]
     + ["اوله", "ثانيه", "ثالثه", "رابعه", "اخره", "واخره", "بعدها", "بعده", "قبلها", "قبله", "ثم", "بينهما",
        "ساكنه", "مفتوحه", "مضمومه", "مكسوره", "مشدده", "مخففه", "ثقيله", "خفيفه", "الساكنه", "المفتوحه",
        "المضمومه", "المكسوره", "المشدده", "المخففه", "الثقيله", "الخفيفه", "الاولي", "الثانيه", "مفتوحتين",
-       "مضمومتين", "مكسورتين", "ساكنتين", "ممدود", "مقصور", "مصغر", "مصغرا", "مثقلا", "مخففا"])
+       "مضمومتين", "مكسورتين", "ساكنتين", "ممدود", "مقصور", "مصغر", "مصغرا", "مثقلا", "مخففا", "اضافه"])
 
 
 def without_spelling(toks: list[str]) -> list[str]:
@@ -706,8 +796,19 @@ def by_one_side(chains: list[tuple[list, list]]) -> int:
                 weak_t = (results[i + 1][1] or 0) <= _FAMOUS_CONFIDENCE
                 if weak_s != weak_t:
                     student, teacher = (None, teacher) if weak_s else (student, None)
-            if (student is None) == (teacher is None):
-                continue                            # both known (the two-sided rule decided or could not), or none
+            if student is None and teacher is None:
+                continue
+            if student is not None and teacher is not None:
+                # both known, the two-sided rule could not decide (the student newly known, 0.7.7: "جرير، عاصم، عبد
+                # الله بن سرجس"): the teacher alone, as when the student was not known — and the student must not
+                # have been seen with another of them more
+                rows = sorted((edges.get((p, teacher), 0), p) for p in cands[i])
+                best, who = rows[-1]
+                if best >= _ONE_SIDE_MIN and best >= _ONE_SIDE_LEAD * max(rows[-2][0], 1) and \
+                        edges.get((student, who), 0) >= max(edges.get((student, p), 0) for p in cands[i]):
+                    results[i] = (who, _EDGE_CONFIDENCE, count)
+                    found += 1
+                continue
             rows = sorted(((edges.get((student, p), 0) if student else edges.get((p, teacher), 0)), p) for p in cands[i])
             best, who = rows[-1]
             second = rows[-2][0]
@@ -731,62 +832,194 @@ def by_famous(chains: list[tuple[list, list, list]], famous: dict[str, int]) -> 
     return found
 
 
+# "مولى أبي قتادة", "زوج عبد الله بن أبي قتادة", "يروي عن أبي الشعثاء": another man's kunya in an entry
+_NOT_HIS_KUNYA = {"بن", "ابن", "بنت", "مولي", "عن", "زوج", "زوجه", "اخو", "اخت", "ام", "والد", "والده", "جد", "عم",
+                  "صاحب", "خال", "ابنه", "مولاه", "حفيد", "سبط", "ولد", "يروي", "ال", "امراه", "جاريه", "غلام"}
+# a city or a land: many men's nisba, half the evidence of a tribe's
+_CITY_NISBAS = {"الكوفي", "البصري", "المدني", "المكي", "الشامي", "المصري", "البغدادي", "الواسطي", "الحمصي", "الدمشقي",
+                "الرازي", "المروزي", "الخراساني", "اليماني", "الصنعاني", "الطايفي", "الجزري", "الموصلي", "البلخي",
+                "النيسابوري", "الحراني", "الرقي", "الاصبهاني", "الهروي", "الانطاكي", "العسقلاني", "الايلي", "الحجازي",
+                "العراقي", "الفلسطيني", "الاردني", "اليمامي", "البخاري", "الترمذي", "الطوسي", "القمي", "المقدسي"}
+# the letters without their dots: "الخصيب" and "الحصيب" are one name copied two ways
+_RASM_FROM, _RASM_TO = "بتثنيجخذزشضظغقة", "ٮٮٮٮٮححدرسصطعفه"
+_RASM = str.maketrans(_RASM_FROM, _RASM_TO)
+_FATHER_GAP = 6          # a father up to six tabaqat before his son (Mu'tamir 9, his father Sulayman al-Taymi 4)
+
+
+def _kunya_index(index: "Index") -> dict[str, set[int]]:
+    """Every narrator by the kunya his entry gives him anywhere in his name ("وهب بن عبد الله السوائي … أبو
+    جحيفة"), once per index."""
+    found = getattr(index, "_kunyas", None)
+    if found is None:
+        found = defaultdict(set)
+        for pid, toks in index.full.items():
+            if pid in index.hidden:
+                continue
+            for k in range(len(toks) - 1):
+                if toks[k] == "ابو" and (k == 0 or toks[k - 1] not in _NOT_HIS_KUNYA):
+                    found[" ".join(_compound(toks, k + 1))].add(pid)
+        index._kunyas = found
+    return found
+
+
+def _compound(toks: list[str], k: int) -> tuple:
+    """The name that starts at toks[k]: two words for "عبد الله", "عبيد الله", one otherwise."""
+    return tuple(toks[k:k + 2]) if toks[k:k + 1] in (["عبد"], ["عبيد"]) and k + 1 < len(toks) else tuple(toks[k:k + 1])
+
+
+def _lineage(toks: list[str]) -> list[tuple]:
+    """The names of a nasab one after the other: "محمد بن عيسى بن عبد الله بن سعد الأشعري" → محمد, عيسى, عبد الله,
+    سعد (a kunya in it, "بن أبي وهب", is one name). It stops at the first word that is no "بن"."""
+    out, k = [], 0
+    while k < len(toks):
+        if toks[k] in ("ابو", "ابي") and k + 1 < len(toks):
+            name = ("ابو",) + _compound(toks, k + 1)
+        else:
+            name = _compound(toks, k)
+        out.append(name)
+        k += len(name)
+        if k >= len(toks) or toks[k] != "بن":
+            break
+        k += 1
+    return out
+
+
+def _patrons(toks: list[str]) -> set[tuple]:
+    """Whose freedman an entry calls him: "مولى عمر", "مولى بني ليث", "مولى أبي قتادة"."""
+    out = set()
+    for k in range(len(toks) - 1):
+        if toks[k] == "مولي":
+            n = 2 if toks[k + 1] in ("عبد", "عبيد", "ابو", "ابن", "بني", "ال", "ام") else 1
+            out.add(tuple(toks[k + 1:k + 1 + n]))
+    return out
+
+
 def _father_by_nasab(index: "Index", son: int) -> int | None:
     """The father of a narrator, read from the son's own nasab in the rijal work and found as an entry of his own
-    (NR-ID3, 2026-10-25): "سهيل بن أبي صالح ذكوان السمان" → "ذكوان أبو صالح السمان", "عبد الله بن أبي قتادة
-    الأنصاري" → "أبو قتادة الأنصاري …", "عمر بن حفص بن غياث" → "حفص بن غياث …", "زيد بن أسلم العدوي مولى عمر" →
-    "أسلم العدوي مولى عمر". The entry must carry the father's name (his ism, or his kunya when the nasab gives only
-    that) AND one more thing of the son's nasab — the grandfather, the kunya, or a nisba — and be of the son's
-    generation or before it; one such entry, or none."""
+    (NR-ID3, 2026-10-25; 0.7.7): "سهيل بن أبي صالح ذكوان السمان" → "ذكوان أبو صالح السمان", "عبد الله بن أبي قتادة
+    الأنصاري" → "أبو قتادة الأنصاري هو الحارث …", "عمر بن حفص بن غياث" → "حفص بن غياث …", "عطاء بن السائب" →
+    "السائب بن مالك … والد عطاء". An entry bearing the father's name (his ism, or his kunya anywhere in it) is weighed
+    by what else of the son's nasab it carries: the grandfather (2, its letters without their dots: "الخصيب" is
+    "الحصيب"; another grandfather rules him out), the kunya (1), the ism beside the kunya (1), the name the son's
+    entry gives his father ("اسم أبيه معاذ", 1), a tribe (1) or a city (½), the same patron ("مولى عمر", 1), the son
+    named in it ("والد عطاء" 3, "أبو المعتمر" 1); of the son's generation or up to six before it. The heaviest is
+    taken when he weighs two or more and more than any other — or, alone in weighing anything, when he carries
+    something of his own (a grandfather, the kunya, the patron, "والد"), or bears a name no other entry bears
+    ("نسي الكندي")."""
     son_toks = index.full.get(son) or []
-    if "بن" not in son_toks:
+    if not son_toks or "بن" not in son_toks:
         return None
     i = son_toks.index("بن")
     seg = son_toks[i + 1:]
-    kunya = None
+    for k, w in enumerate(seg):
+        if w in ("او", "ويقال", "وقيل", "قيل", "يقال"):
+            seg = seg[:k]                           # "يسير بن عمرو أو بن جابر": another father, not a grandfather
+            break
+    kunya = None                                    # ("قتاده",), ("عبد", "الله"): what follows "أبي"
     if seg[:1] in (["ابي"], ["ابو"]) and len(seg) >= 2:
-        kunya = ("ابو", seg[1])
-        seg = seg[2:]
-    ism = seg[0] if seg and seg[0] not in ("بن", "ابن") and not seg[0].startswith("ال") and seg[0] not in ("مولي", "ابو") else None
-    if ism in ("عبد", "عبيد") and len(seg) > 1:
-        ism = None                                  # a compound name ("عبد الله"): the rule below is too loose for it
-    grand = None
-    if "بن" in seg:
-        j = seg.index("بن")
-        grand = seg[j + 1] if j + 1 < len(seg) else None
-    nisbas = {t for t in son_toks if t.startswith("ال") and len(t) > 3 and t not in ("الله", "الرحمن")}
+        kunya = _compound(seg, 1)
+        seg = seg[1 + len(kunya):]
+    first = seg[0] if seg else None
+    ism = None                                      # ("سليمان",), ("عبد", "الله")
+    if first and first not in ("بن", "ابن", "مولي", "ابو", "ابي") and (
+            not first.startswith("ال") or (first not in ("الله", "الرحمن") and not first.endswith(("ي", "يه")) and any(
+                not alias for _p, _t, alias in index.names.get(first, [])))):
+        ism = _compound(seg, 0)                     # "السائب", "المسيب": a name with the article (not "المحاربي")
+    # the father's own ancestors as the son's nasab gives them: "أحمد بن محمد بن عيسى بن عبد الله" → عيسى, عبد الله
+    above = _lineage(seg)[1:] if ism else (_lineage(seg[1:]) if seg[:1] == ["بن"] else [])
+    grand = above[0] if above else None
+    told = None                                     # "أبو بكر بن أبي زهير الثقفي اسم أبيه معاذ"
+    for k in range(len(son_toks) - 2):
+        if son_toks[k:k + 2] == ["اسم", "ابيه"]:
+            told = son_toks[k + 2]
+            break
+    skip = _NOT_HIS_KUNYA | {"وكيل", "من", "نزيل", "يروي", "اسمه", "قيل", "وقيل", "يقال", "ويقال", "هو", "او"}
+    nisbas = {t for k, t in enumerate(son_toks) if t.startswith("ال") and len(t) > 3 and t not in ("الله", "الرحمن")
+              and (k == 0 or son_toks[k - 1] not in skip)}
+    nisbas -= set(ism or ()) | set(kunya or ())     # the father's own name is no nisba ("أبي الشعثاء")
+    patrons = _patrons(son_toks)
     if not ism and not kunya:
         return None
     low = index.tabaqa.get(son)
+    son_ism = son_toks[:2] if son_toks[0] in ("عبد", "عبيد", "ابو") and len(son_toks) > 1 else son_toks[:1]
+    son_art = ["ال" + son_ism[0]] + son_ism[1:] if not son_ism[0].startswith("ال") else [son_ism[0][2:]] + son_ism[1:]
     pool = set()
+    bearers = []
     if ism:
-        pool |= {pid for pid, toks, alias in index.names.get(ism, []) if not alias}
+        bearers = [pid for pid, toks, alias in index.names.get(ism[0], [])
+                   if not alias and pid not in index.hidden and tuple(toks[:len(ism)]) == ism]
+        pool |= set(bearers)
     if kunya:
-        pool |= {pid for pid, toks, alias in index.names.get("ابو", []) if not alias and toks[1:2] == [kunya[1]]}
-    found = set()
+        pool |= _kunya_index(index).get(" ".join(kunya), set())
+    def rasm(words):
+        return [x.translate(_RASM) for x in words]
+
+    scored = []
     for pid in pool:
-        if pid == son:
+        if pid == son or pid in index.hidden:
             continue
         toks = index.full.get(pid) or []
-        if ism and ism not in toks[:3]:
+        has_kunya = bool(kunya) and any(toks[k] == "ابو" and _compound(toks, k + 1) == kunya
+                                        and (k == 0 or toks[k - 1] not in _NOT_HIS_KUNYA) for k in range(len(toks) - 1))
+        first_is = bool(ism) and tuple(toks[:len(ism)]) == ism
+        has_ism = first_is or (bool(ism) and len(ism) == 1 and ism[0] in toks[:3])
+        if not (has_ism or has_kunya):
             continue
-        if kunya and not ism and not (toks[:2] == ["ابو", kunya[1]] or any(
-                toks[k:k + 2] == ["ابو", kunya[1]] for k in range(len(toks) - 1))):
-            continue
-        more = 0
-        if grand and "بن" in toks and toks.index("بن") + 1 < len(toks) and toks[toks.index("بن") + 1] == grand:
+        more = 0.0
+        own = False                                 # a thing of his own: a grandfather, a kunya, a patron, "والد"
+        if grand and first_is:
+            theirs = _lineage(toks)[1:]
+            same = 0
+            for mine, his in zip(above, theirs):
+                if rasm(mine) != rasm(his):
+                    break
+                same += 1
+            if same < min(len(above), len(theirs)):
+                continue                            # "يحيى بن عبد الرحمن" is not the father of "محمد بن يحيى بن حبان"
+            if same:
+                more += 1 + same                    # the grandfather 2, each ancestor above him one more
+                own = True
+        elif grand:
+            head = toks[:8]
+            if any(head[k] == "بن" and rasm(head[k + 1:k + 1 + len(grand)]) == rasm(list(grand))
+                   for k in range(len(head) - 1)):
+                more += 2
+                own = True
+        if has_kunya:
             more += 1
-        if kunya and any(toks[k:k + 2] == ["ابو", kunya[1]] for k in range(len(toks) - 1)):
+            own = True
+            if first_is:
+                more += 1                           # "يسار المكي أبو نجيح": the ism and the kunya the son's nasab gives
+        if told and told in toks:
             more += 1
-        if nisbas & set(toks):
+        for n in nisbas & set(toks):
+            more += 0.5 if n in _CITY_NISBAS else 1
+        if patrons & _patrons(toks):
             more += 1
+            own = True                              # "زيد بن أسلم العدوي مولى عمر" → "أسلم العدوي مولى عمر"
+        for k in range(len(toks) - len(son_ism)):
+            if toks[k] in ("والد", "ابو") and toks[k + 1:k + 1 + len(son_ism)] in (son_ism, son_art):
+                more += 3 if toks[k] == "والد" else 1   # "والد عطاء"; "أبو المعتمر" (a kunya alone is common)
+                own = own or toks[k] == "والد"
+                break
         if not more:
             continue
         t = index.tabaqa.get(pid)
-        if low is not None and t is not None and not (low - 4 <= t <= low):
+        if low is not None and t is not None and not (low - _FATHER_GAP <= t <= low):
             continue                                # a father of a later generation than his son, or far before him
-        found.add(pid)
-    return next(iter(found)) if len(found) == 1 else None
+        scored.append((more, -index.tier.get(pid, 0), pid, own))
+    if not scored:
+        return None
+    scored.sort(reverse=True)
+    best, tier, who, own = scored[0]
+    # of the Shia rijal works, the earlier book's entry when two weigh the same (al-Najashi before al-Tusi's)
+    second = max((m for m, t, _p, _o in scored[1:] if t == tier), default=0)
+    if any(m > best for m, t, _p, _o in scored[1:]):
+        second = best
+    alone = bearers == [who]                        # the one entry of that name ("نسي الكندي الشامي")
+    if best > second and (best >= 2 or (not second and (own or alone))):
+        return who
+    return None
 
 
 def by_relatives(chains: list[tuple[list, list, list]], index: "Index") -> int:
@@ -829,6 +1062,82 @@ def by_relatives(chains: list[tuple[list, list, list]], index: "Index") -> int:
                 cands[i] = {who}
                 found += 1
     return found
+
+
+def _father_of(index: "Index", son: int) -> int | None:
+    """The one father a narrator's entry gives him, as by_relatives reads it: his nasab looked up as a name, else
+    _father_by_nasab. Asked once per narrator."""
+    cache = getattr(index, "_fathers", None)
+    if cache is None:
+        cache = index._fathers = {}
+    if son in cache:
+        return cache[son]
+    t = index.tabaqa.get
+    found: set[int] = set()
+    toks, how = name_tokens("ابيه", index.full.get(son))
+    if toks and how == "father of the previous narrator":
+        found = set(index.candidates(toks))
+        if not found and "بن" in toks:
+            last = len(toks) - 1 - toks[::-1].index("بن")
+            cut = last + 3 if last + 1 < len(toks) and toks[last + 1] in ("عبد", "عبيد", "ابو") else last + 2
+            found = set(index.candidates(toks[:cut]))
+        low = t(son)
+        found = {p for p in found if p != son and (low is None or t(p) is None or t(p) <= low)}
+    if len(found) != 1:
+        father = _father_by_nasab(index, son)
+        found = {father} if father is not None else set()
+    cache[son] = next(iter(found)) if found else None
+    return cache[son]
+
+
+def by_father_pair(chains: list[tuple[list, list, list]], index: "Index") -> int:
+    """0.7.7: "سالم عن أبيه", "حدثنا يعقوب حدثنا أبي" — a son open between several namesakes, and his father with
+    him. Of the son's candidates, only those whose entry gives a father of his own (_father_of) can be followed by
+    "عن أبيه"; the father must be of the generation of, or before, the teacher he reports from. The one pair the
+    chains have seen — the student with the son, or the father with his teacher, in the chains read whole — far more
+    than any other is taken: both links. Returns how many links."""
+    edges: dict[tuple[int, int], int] = defaultdict(int)
+    for results, _c, *_rest in chains:
+        for i in range(len(results) - 1):
+            a, b = results[i][0], results[i + 1][0]
+            if a is not None and b is not None and (results[i][1] or 0) >= 0.8 and (results[i + 1][1] or 0) >= 0.8:
+                edges[(a, b)] += 1
+    t = index.tabaqa.get
+    found = 0
+    for results, cands, names in chains:
+        n = len(results)
+        for i in range(n - 1):
+            if results[i][0] is not None or len(cands[i]) < 2 or results[i + 1][0] is not None \
+                    or i + 1 >= len(names) or names[i + 1] not in ("ابيه", "ابوه"):
+                continue
+            student = results[i - 1][0] if i > 0 else None
+            teacher = results[i + 2][0] if i + 2 < n else None
+            rows = []
+            for c in cands[i]:
+                f = _father_of(index, c)
+                if f is None:
+                    continue
+                if teacher is not None and t(teacher) is not None and t(f) is not None and t(teacher) > t(f):
+                    continue                        # the father cannot report from a man after him
+                score = (edges.get((student, c), 0) if student else 0) + (edges.get((f, teacher), 0) if teacher else 0)
+                rows.append((score, c, f))
+            if not rows:
+                continue
+            rows.sort()
+            best, c, f = rows[-1]
+            second = rows[-2][0] if len(rows) > 1 else 0
+            # one namesake alone with a father of his own, among a few ("ابن نمير": the father or the son), or the
+            # pair the chains have seen far more than any other
+            alone = len(rows) == 1 and len(cands[i]) <= _PAIR_FEW and (student is not None or teacher is not None)
+            if alone or (best >= _PAIR_MIN and best >= _EDGE_LEAD * second and best > second):
+                results[i] = (c, _EDGE_CONFIDENCE, results[i][2])
+                results[i + 1] = (f, _EDGE_CONFIDENCE, results[i + 1][2] or 1)
+                cands[i], cands[i + 1] = {c}, {f}
+                found += 2
+    return found
+
+
+_PAIR_MIN, _PAIR_FEW = 1, 3
 
 
 _GAP_TABAQA = 4          # a teacher four tabaqat after his student
@@ -958,6 +1267,10 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
         if by_relatives(pairs, indexes[road]):
             by_neighbours(pairs)
         if by_one_side(pairs):                      # NR-ID3: the bare names known by one neighbour alone
+            by_neighbours(pairs)
+            if by_relatives(pairs, indexes[road]):
+                by_neighbours(pairs)
+        if by_father_pair(pairs, indexes[road]):    # 0.7.7: a son open between namesakes, and his father
             by_neighbours(pairs)
             if by_relatives(pairs, indexes[road]):
                 by_neighbours(pairs)
