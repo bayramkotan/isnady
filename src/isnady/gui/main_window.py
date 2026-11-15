@@ -432,6 +432,11 @@ class MainWindow(QMainWindow):
             return
         search.set_narrator_guesses(checked)
 
+    def _narrator_rules(self) -> None:
+        from isnady.gui.narrator_rules_dialog import open_dialog
+
+        open_dialog(self)
+
     def _clear_cache(self) -> None:
         from PySide6.QtWidgets import QMessageBox
 
@@ -774,6 +779,10 @@ class MainWindow(QMainWindow):
                    "narrator found this way is marked as isnady's guess"))
         self._guess_action.setCheckable(True)
         tools_menu.aboutToShow.connect(lambda: self._guess_action.setChecked(search.narrator_guesses_on()))
+        # 0.8.0: every way of identifying a narrator, its parameters and how many links it decided
+        self._action(tools_menu, tr("Narrator Identification…"), self._narrator_rules,
+                     tip=tr("How isnady identifies the narrators: every way, its parameters and what it decided; "
+                            "change them and identify the narrators again"))
         tools_menu.addSeparator()
         self._action(tools_menu, tr("Create Desktop Shortcut…"), self._create_shortcut,
                      tip=tr("Put isnady on the desktop and in the applications menu, with its icon"))

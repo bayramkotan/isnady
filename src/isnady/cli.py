@@ -2096,6 +2096,77 @@ def cmd_guess(args) -> int:
     return 0
 
 
+def _rule_number(value) -> str:
+    """A parameter as the command shows it: 9, 0.7, 3 (not 3.0)."""
+    return f"{value:g}" if isinstance(value, float) else str(value)
+
+
+def _print_rules(conn) -> None:
+    from isnady.core import narrator_rules as nr
+
+    rules, base, found = nr.load(conn), nr.defaults(), nr.counts(conn)
+    guess = core_narrators.guesses_on(conn)
+    print("How isnady identifies the narrators of the chains (Tools → Narrator Identification)")
+    print(f"Narrator guesses: {'on' if guess else 'off'} (iy guess on|off)")
+    for group in ("source", "guess", "common"):
+        print()
+        print(nr.GROUPS[group] + ("  (used only with Narrator guesses on)" if group == "guess" else ""))
+        for key, g, switch, params in nr.RULES:
+            if g != group:
+                continue
+            state = ("on" if rules[key]["on"] else "off") if switch else ("on" if key == "name" else "")
+            if switch and rules[key]["on"] != base[key]["on"]:
+                state += "*"
+            numbers = []
+            for road, label in (("sunni", "Sunni"), ("shia", "Shia")):
+                n = found.get(road, {}).get(key)
+                if n:
+                    numbers.append(f"{label} {n:,}")
+            tally = (("removed " if key == "impossible" else "") + " · ".join(numbers)) if numbers else ""
+            print(f"  {key:<13} {state:<4} {nr.TITLES[key]:<50} {tally}".rstrip())
+            for name, default, lo, hi, _step in params:
+                value = rules[key][name]
+                mark = f"default {_rule_number(default)}; " if value != default else ""
+                print(f"  {'':<13} {'':<4} {name} = {_rule_number(value)} ({mark}{_rule_number(lo)}–{_rule_number(hi)})")
+    print()
+    print("Change: iy narrator-rules set KEY=on|off KEY.PARAMETER=VALUE …   The defaults again: iy narrator-rules "
+          "reset [KEY …]   (* changed)")
+
+
+def cmd_narrator_rules(args) -> int:
+    """iy narrator-rules [set SETTING … | reset [KEY …]]: how isnady identifies the narrators (0.8.0)."""
+    from isnady.core import narrator_rules as nr
+
+    conn = _connect()
+    try:
+        if args.action:
+            if not core_narrators_loaded(conn):
+                print("No rijal work imported: there are no narrators to identify.")
+                return 1
+            rules = nr.load(conn)
+            if args.action == "set":
+                if not args.settings:
+                    print("Nothing to set: iy narrator-rules set KEY=on|off KEY.PARAMETER=VALUE …", file=sys.stderr)
+                    return 1
+                for setting in args.settings:
+                    wrong = nr.apply(rules, setting)
+                    if wrong:
+                        print(wrong, file=sys.stderr)
+                        return 1
+            else:
+                base = nr.defaults()
+                for key in args.settings or list(base):
+                    if key not in base:
+                        print(f"no such way: {key} (see iy narrator-rules)", file=sys.stderr)
+                        return 1
+                    rules[key] = dict(base[key])
+            core_narrators.set_rules(conn, rules, progress=print)
+        _print_rules(conn)
+        return 0
+    finally:
+        conn.close()
+
+
 def cmd_chain(args) -> int:
     conn = _connect()
     if getattr(args, "chapter", None):
@@ -2556,6 +2627,13 @@ def build_parser() -> argparse.ArgumentParser:
                                       "alone) unless turned on; every narrator it finds is marked as its guess")
     gu.add_argument("state", nargs="?", choices=["on", "off"], help="turn it on or off (nothing: show which)")
     gu.set_defaults(func=cmd_guess)
+    nru = sub.add_parser("narrator-rules", help="how isnady identifies the narrators: every way, its parameters and "
+                                                "how many links it decided; change them (the narrators are "
+                                                "identified again)")
+    nru.add_argument("action", nargs="?", choices=["set", "reset"], help="set KEY=on|off KEY.PARAMETER=VALUE …; "
+                                                                        "reset [KEY …] (nothing: show them)")
+    nru.add_argument("settings", nargs="*", help="set: famous=off neighbours.rounds=4 …; reset: the ways to reset")
+    nru.set_defaults(func=cmd_narrator_rules)
     ai = sub.add_parser("ai", help="artificial-intelligence features: build or check the meaning index and takhrij")
     ai.add_argument("action", choices=["build", "status"])
     ai.add_argument("--dims", type=int, default=200, help="build: number of concepts (default 200)")

@@ -67,12 +67,12 @@ import sqlite3
 from collections import defaultdict
 from typing import Callable
 
+from isnady.core import narrator_rules
 from isnady.core.i18n import t, tr
 from isnady.core.normalize import normalize
 from isnady.core.rijal import COLLECTION_MARKS
 
-MATCHER_ID = "isnady-narrators-20"
-_TEACHER_MIN_TABAQA = 9           # the compilers' own teachers (Ibn Hajar's tabaqat 9-12)
+MATCHER_ID = "isnady-narrators-21"
 _HONORIFIC = re.compile(r"\s*(?:رضي الله (?:تعالي )?عن(?:ه|ها|هما|هم)|رحمه الله|عليه السلام|صلي الله عليه وسلم|"
                         r"(?<!\S)(?:ره|رض)(?!\S)).*$")   # "حدثنا أبي ره": رحمه الله, abbreviated (al-Saduq's books)
 # "عائشة، زوج النبي ﷺ", "ثوبان مولى رسول الله ﷺ", "عائشة أم المؤمنين": who she is, not her name (2026-10-18: the
@@ -90,7 +90,8 @@ _KIN_FIRST_PERSON = {"عمي", "خالي", "اخي", "امي", "جدتي", "عم
 _COMPANION = re.compile(r"صحابي|له صحبه|لها صحبه|من الصحابه|خادم رسول الله|مولي رسول الله|مولي النبي|بدري|"
                         r"شهد بدرا|ام المومنين|زوج النبي|بنت رسول الله|بنت النبي|من كبار الصحابه")
 _UNSURE = re.compile(r"مختلف في صحبته|يقال له صحبه|قيل له صحبه|لا تصح صحبته|ذكر في الصحابه|ارسل")
-_EDGE_MIN, _EDGE_LEAD, _EDGE_CONFIDENCE = 2, 3.0, 0.6
+# the ways of identifying that are isnady's own inference (narrator_rules.RULES, group "guess")
+_GUESS_RULES = frozenset(key for key, group, _sw, _p in narrator_rules.RULES if group == "guess")
 # the Taqrib's "mubhamat", the men and the women left unnamed ("عطاء بن يسار عن بعض الصحابة … هو أبو هريرة", "حميد
 # بن عبد الرحمن عن رجل صحب النبي"): an entry there is nobody's name — the names in it belong to the men around the
 # unnamed one, so none of them is matched to him (NR-ID2). Their places in the Taqrib, men and women:
@@ -286,13 +287,6 @@ _FAMOUS = {
     "ابو عوانه": "taqrib:7407", "ابو نعيم": "taqrib:5401", "ابو اسامه": "taqrib:1487", "ابو الزناد": "taqrib:3302",
     "ابو عاصم": "taqrib:2977", "ابو قلابه": "taqrib:3333", "ابو معاويه": "taqrib:5841",
 }
-_FAMOUS_CONFIDENCE = 0.5
-# a narrator decided by isnady's own rules (Index.guess): a list of who narrates from whom, a name it knows him by, a
-# name found inside an entry, a father weighed from his son's nasab — below the rijal work's own words (1.0, 0.8)
-_GUESS_CONFIDENCE = 0.7
-# the links whose pairs of teacher and student count as seen (evidence 5 and after): the rijal works' words and
-# isnady's own rules, not what the neighbours or the famous name alone decided
-_TRUST = 0.7
 # Road B (al-Najashi's keys), the same three helps, from the Imami scholars' own tamyiz (2026-10-18): the nisbas and
 # kunyas the chains of al-Kafi use alone ("السكوني" Isma'il b. Abi Ziyad, "النوفلي" al-Husayn b. Yazid, "أبو بصير"
 # al-Asadi or al-Muradi, "الحلبي" 'Ubayd Allah or Muhammad), al-Kulayni's own teachers named short ("علي بن إبراهيم"
@@ -374,13 +368,19 @@ def _is_subsequence(short: list[str], long: list[str]) -> bool:
 class Index:
     """Every person's names as tokens, with tabaqa and book marks, for fast lookup."""
 
-    def __init__(self, conn: sqlite3.Connection, tradition: str = "sunni", guess: bool = False) -> None:
+    def __init__(self, conn: sqlite3.Connection, tradition: str = "sunni", guess: bool = False,
+                 rules: dict | None = None) -> None:
         self.tradition = tradition
+        # 0.8.0: every way of identifying, each with its parameters (core/narrator_rules.py; Tools → Narrator
+        # Identification), and how many links each decided
+        self.rules = rules or narrator_rules.defaults()
+        self.counts: dict[str, int] = defaultdict(int)
         # 0.7.8: isnady's own inference (Tools → Narrator guesses) — the bare names by isnady's lists of who narrates
         # from whom (_MUHMAL), the names it knows them by (_KNOWN_AS), a name looked up inside the entries
         # (_elsewhere), the famous one of a name (_FAMOUS) — only when asked for; the links it decides are marked
         self.guess = guess
         self.guessed_keys: set[tuple] = set()      # names whose candidates came from _elsewhere
+        self.tiered: set[tuple] = set()            # names left one narrator by the order of the Shia rijal works
         self.known_as_added: dict[str, set[int]] = {}   # names isnady's list gives a narrator the rijal work does not
         self.tabaqa, self.marks, self.full = {}, defaultdict(set), {}
         self.muhmal: dict[tuple, list[tuple[int, set, set]]] = defaultdict(list)
@@ -423,7 +423,7 @@ class Index:
                     lo <= int(key[7:]) <= hi for lo, hi in _MUBHAMAT):
                 unnamed.add(pid)
         keys = dict(conn.execute("SELECT key, id FROM persons WHERE COALESCE(tradition, 'sunni') = ?", (tradition,)))
-        if guess:
+        if self.on("muhmal"):
             for key, names, teachers, students in (_MUHMAL if tradition == "sunni" else _MUHMAL_SHIA):
                 if key in keys:
                     for name in names:
@@ -449,14 +449,22 @@ class Index:
         self.famous: dict[str, int] = {}
         self.authors: dict[str, int] = {}
         sunni = tradition == "sunni"
-        for written, owners in ((_KNOWN_AS if sunni else _KNOWN_AS_SHIA).items() if guess else ()):
+        for written, owners in ((_KNOWN_AS if sunni else _KNOWN_AS_SHIA).items() if self.on("known_as") else ()):
             for key in owners:
                 if key in keys and keys[key] not in self.exact[written]:
                     self.exact[written].add(keys[key])
                     self.known_as_added.setdefault(written, set()).add(keys[key])
         self.famous = {written: keys[key] for written, key in (_FAMOUS if sunni else _FAMOUS_SHIA).items()
-                       if key in keys} if guess else {}
+                       if key in keys} if self.on("famous") else {}
         self.authors = {book: keys[key] for book, key in _AUTHORS.items() if key in keys} if sunni else {}
+
+    def on(self, key: str) -> bool:
+        """Whether this way of identifying is used: turned on, and — a guess — only with Narrator Guesses."""
+        return self.rules[key]["on"] and (self.guess or key not in _GUESS_RULES)
+
+    def p(self, key: str, name: str):
+        """A parameter of a way (core/narrator_rules.py)."""
+        return self.rules[key][name]
 
     def candidates(self, toks: list[str]) -> set[int]:
         """Persons whose name can be the one written in the chain.
@@ -486,13 +494,15 @@ class Index:
             found = set(self.exact.get(" ".join(bare), ()))
             for variant in _article_variants(bare):
                 found |= self._rule_matches(variant)
-        if not found and "بن" not in toks and 1 <= len(toks) <= 4 and self.guess:
+        if not found and "بن" not in toks and 1 <= len(toks) <= 4 and self.on("elsewhere"):
             found = self._elsewhere(toks)
             if found:
                 self.guessed_keys.add(tuple(toks))
-        if len(found) > 1:
+        if len(found) > 1 and self.on("shia_order"):
             first = min(self.tier.get(p, 0) for p in found)
             found = {p for p in found if self.tier.get(p, 0) == first}     # the earliest rijal work that has him
+            if len(found) == 1:
+                self.tiered.add(tuple(toks))
         return found
 
     def _elsewhere(self, toks: list[str]) -> set[int]:
@@ -618,21 +628,24 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
     the candidates left for each link (for the teacher-and-student evidence, `by_neighbours`)."""
     from isnady.core import traditions
 
-    allowed_marks = COLLECTION_MARKS.get(collection)
+    allowed_marks = COLLECTION_MARKS.get(collection) if index.on("marks") else None
     cands: list[set[int]] = []
     written: list[list[str]] = []
+    by: list[str | None] = []                       # the way that left each link one narrator (index.counts)
     previous: list[str] | None = None
     after_father = False
     for link in links:
         if index.tradition == "shia" and traditions.link_kind(link["raw_name"]) != "person":
             cands.append(set())                    # a group, "عنه", "عن رجل": no one to look up
             written.append([])
+            by.append(None)
             previous = None
             after_father = False
             continue
         if index.tradition != "shia" and _is_prophet(link["raw_name"]):
             cands.append(set())                    # the Prophet ﷺ by his kunya or an epithet is no narrator
             written.append([])
+            by.append(None)
             previous = None
             after_father = False
             continue
@@ -643,29 +656,41 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
             if fuller:
                 toks = tokens(fuller)                  # the compiler's own teacher, as the rijal works name him
         found = index.candidates(toks)
+        how = ("shia_order" if tuple(toks) in index.tiered else "name") if len(found) == 1 else None
         if allowed_marks and found:
             in_book = {p for p in found if index.marks[p] & allowed_marks}
+            if len(in_book) == 1 and len(found) > 1:
+                how = "marks"
             found = in_book                        # a narrator of this book must carry its mark
         cands.append(found)
         written.append(toks)
+        by.append(how)
         previous = index.full[next(iter(found))] if len(found) == 1 else toks
 
     first_counts = [len(c) for c in cands]
     n = len(cands)
     guessed = [False] * n                           # decided by isnady's own inference (Index.guess)
-    author = index.authors.get(collection)
+    author = index.authors.get(collection) if index.on("teacher") else None
+    lowest_teacher = index.p("teacher", "min_tabaqa")
+
+    def narrowed(i, keep, way):
+        """cands[i] made keep by a way: the way noted when it leaves one narrator of several."""
+        if len(keep) == 1 and len(cands[i]) > 1:
+            by[i] = way
+        cands[i] = keep
+
     if n and author is not None and author in cands[0]:
-        cands[0] = {author}                         # the Muwatta's chains begin with Malik himself (NR-ID2)
-    elif n and cands[0] and not (n == 1 and reaches_prophet):
+        narrowed(0, {author}, "teacher")            # the Muwatta's chains begin with Malik himself (NR-ID2)
+    elif n and cands[0] and not (n == 1 and reaches_prophet) and index.on("teacher"):
         # (one link reaching the Prophet — "عن أبي هريرة" in Mishkat, Riyad al-Salihin, Bulugh al-Maram — is the
         # Companion, not the compiler's teacher: those books give no chains, only the Companion)
-        teachers = {p for p in cands[0] if index.tabaqa.get(p) is None or index.tabaqa[p] >= _TEACHER_MIN_TABAQA}
+        teachers = {p for p in cands[0] if index.tabaqa.get(p) is None or index.tabaqa[p] >= lowest_teacher}
         if teachers:
-            cands[0] = teachers
-    if reaches_prophet and n and cands[-1]:
+            narrowed(0, teachers, "teacher")
+    if reaches_prophet and n and cands[-1] and index.on("companion"):
         companions = {p for p in cands[-1] if index.tabaqa.get(p) in (1, None)}
         if companions:
-            cands[-1] = companions
+            narrowed(n - 1, companions, "companion")
 
     t = index.tabaqa.get
 
@@ -678,7 +703,7 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
         values = [t(q) for q in group]
         return None if None in values else max(values)
 
-    changed = True
+    changed = index.on("order")
     while changed:                                  # the tabaqa never grows towards the Prophet
         changed = False
         for i in range(n):
@@ -694,11 +719,11 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
             if high is not None:
                 keep = {p for p in keep if t(p) is None or high >= t(p)}
             if keep and keep != cands[i]:
-                cands[i] = keep
+                narrowed(i, keep, "order")
                 changed = True
 
     # evidence 6: "نافع عن ابن عمر" — of the Nafi's, the one whose entry calls him "مولى ابن عمر"
-    for i in range(n - 1):
+    for i in range(n - 1 if index.on("mawla") else 0):
         if len(cands[i]) > 1 and written[i + 1]:
             after = written[i + 1]
             forms = {" ".join(after)}
@@ -708,7 +733,7 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
             hits = {p for p in cands[i]
                     if any(m in " " + " ".join(index.full.get(p, [])) + " " for m in marks)}
             if len(hits) == 1:
-                cands[i] = hits
+                narrowed(i, hits, "mawla")
                 first_counts[i] = max(first_counts[i], 2)      # not the name alone: confidence 0.8
     # evidence 7: a bare name read by its neighbours (_MUHMAL)
     for i in range(n):
@@ -720,7 +745,7 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
             hits = {pid for pid, teachers, students in index.muhmal[tuple(written[i])]
                     if pid in cands[i] and (after in teachers or any(before[:len(x)] == x for x in students))}
             if len(hits) == 1:                      # the neighbours point to one alone; two: left open
-                cands[i] = hits
+                narrowed(i, hits, "muhmal")
                 first_counts[i] = max(first_counts[i], 2)
                 guessed[i] = True                   # isnady's list, not the rijal work's words
     if left is not None:
@@ -736,21 +761,28 @@ def match_chain(index: Index, links: list[dict], collection: str, reaches_prophe
         if len(c) == 1:
             who = next(iter(c))
             confidence = 1.0 if first_counts[i] == 1 else 0.8
-            if guessed[i] or tuple(written[i]) in index.guessed_keys \
-                    or who in index.known_as_added.get(" ".join(written[i]), ()):
-                confidence = _GUESS_CONFIDENCE
+            way = by[i] or "name"
+            if tuple(written[i]) in index.guessed_keys:
+                way = "elsewhere"
+            elif who in index.known_as_added.get(" ".join(written[i]), ()):
+                way = "known_as"
+            if guessed[i] or way in ("elsewhere", "known_as"):
+                confidence = index.p("confidence", "guess")
+            index.counts[way] += 1
             out.append((who, confidence, first_counts[i]))
         else:
             out.append((None, None, len(c)))
     return out
 
 
-def by_neighbours(chains: list[tuple[list, list]], rounds: int = 3, trust: float = _TRUST, least: int = 0,
-                  lead: float = 0.0) -> int:
+def by_neighbours(chains: list[tuple[list, list]], rules: dict | None = None) -> int:
     """Evidence 5: [(results, candidates)] per chain, results changed in place where the narrators around a link
     decide between its candidates. Returns how many links were identified this way."""
+    rules = rules or narrator_rules.defaults()
+    trust, edge_confidence = rules["confidence"]["trust"], rules["confidence"]["neighbours"]
+    least, lead = rules["neighbours"]["min_chains"], rules["neighbours"]["lead"]
     found = 0
-    for _ in range(rounds):
+    for _ in range(rules["neighbours"]["rounds"]):
         edges: dict[tuple[int, int], int] = defaultdict(int)       # (student, teacher) → how many chains show it
         for results, _c, *_rest in chains:
             for i in range(len(results) - 1):
@@ -780,9 +812,9 @@ def by_neighbours(chains: list[tuple[list, list]], rounds: int = 3, trust: float
                 rows.sort()
                 best, who = rows[-1]
                 second = rows[-2][0]
-                floor = least or (_EDGE_MIN + 1 if last else _EDGE_MIN)
-                if best >= floor and best >= (lead or _EDGE_LEAD) * second and best > second:
-                    results[i] = (who, _EDGE_CONFIDENCE, count)
+                floor = least + 1 if last else least
+                if best >= floor and best >= lead * second and best > second:
+                    results[i] = (who, edge_confidence, count)
                     changed += 1
         found += changed
         if not changed:
@@ -790,19 +822,20 @@ def by_neighbours(chains: list[tuple[list, list]], rounds: int = 3, trust: float
     return found
 
 
-_ONE_SIDE_MIN, _ONE_SIDE_LEAD = 6, 5.0
-
-
-def by_one_side(chains: list[tuple[list, list]]) -> int:
+def by_one_side(chains: list[tuple[list, list]], rules: dict | None = None) -> int:
     """NR-ID3 (2026-10-25): a bare name ("سفيان", "يحيى", "محمد بن جعفر") whose neighbour on ONE side only is known —
     the other is itself a bare name, or the end of the chain: the critics' tamyiz al-muhmal by the teacher or by the
     student alone. Kept only when the known neighbour is seen with one candidate far more often than with any other
     (at least six chains, five times the next) in the chains read whole. Returns how many links."""
+    rules = rules or narrator_rules.defaults()
+    trust, edge_confidence = rules["confidence"]["trust"], rules["confidence"]["neighbours"]
+    famous_confidence = rules["confidence"]["famous"]
+    one_min, one_lead = rules["one_side"]["min_chains"], rules["one_side"]["lead"]
     edges: dict[tuple[int, int], int] = defaultdict(int)
     for results, _c, *_rest in chains:
         for i in range(len(results) - 1):
             a, b = results[i][0], results[i + 1][0]
-            if a is not None and b is not None and (results[i][1] or 0) >= _TRUST and (results[i + 1][1] or 0) >= _TRUST:
+            if a is not None and b is not None and (results[i][1] or 0) >= trust and (results[i + 1][1] or 0) >= trust:
                 edges[(a, b)] += 1
     found = 0
     for results, cands, *_rest in chains:
@@ -813,8 +846,8 @@ def by_one_side(chains: list[tuple[list, list]]) -> int:
             teacher = results[i + 1][0] if i + 1 < len(results) else None
             if student is not None and teacher is not None:
                 # both known, one of them only as the famous bearer of a bare name (0.5): the other side decides
-                weak_s = (results[i - 1][1] or 0) <= _FAMOUS_CONFIDENCE
-                weak_t = (results[i + 1][1] or 0) <= _FAMOUS_CONFIDENCE
+                weak_s = (results[i - 1][1] or 0) <= famous_confidence
+                weak_t = (results[i + 1][1] or 0) <= famous_confidence
                 if weak_s != weak_t:
                     student, teacher = (None, teacher) if weak_s else (student, None)
             if student is None and teacher is None:
@@ -825,30 +858,31 @@ def by_one_side(chains: list[tuple[list, list]]) -> int:
                 # have been seen with another of them more
                 rows = sorted((edges.get((p, teacher), 0), p) for p in cands[i])
                 best, who = rows[-1]
-                if best >= _ONE_SIDE_MIN and best >= _ONE_SIDE_LEAD * max(rows[-2][0], 1) and \
+                if best >= one_min and best >= one_lead * max(rows[-2][0], 1) and \
                         edges.get((student, who), 0) >= max(edges.get((student, p), 0) for p in cands[i]):
-                    results[i] = (who, _EDGE_CONFIDENCE, count)
+                    results[i] = (who, edge_confidence, count)
                     found += 1
                 continue
             rows = sorted(((edges.get((student, p), 0) if student else edges.get((p, teacher), 0)), p) for p in cands[i])
             best, who = rows[-1]
             second = rows[-2][0]
-            if best >= _ONE_SIDE_MIN and best >= _ONE_SIDE_LEAD * max(second, 1):
-                results[i] = (who, _EDGE_CONFIDENCE, count)
+            if best >= one_min and best >= one_lead * max(second, 1):
+                results[i] = (who, edge_confidence, count)
                 found += 1
     return found
 
 
-def by_famous(chains: list[tuple[list, list, list]], famous: dict[str, int]) -> int:
+def by_famous(chains: list[tuple[list, list, list]], famous: dict[str, int], rules: dict | None = None) -> int:
     """NR-ID2: a bare name still open after every other evidence is the famous narrator of that name, when he is
     among its candidates (_FAMOUS). Returns how many links."""
+    confidence = (rules or narrator_rules.defaults())["confidence"]["famous"]
     found = 0
     for results, cands, names in chains:
         for i, (pid, _conf, count) in enumerate(results):
             if pid is None and i < len(names):
                 who = famous.get(names[i])
                 if who is not None and who in cands[i]:
-                    results[i] = (who, _FAMOUS_CONFIDENCE, count)
+                    results[i] = (who, confidence, count)
                     found += 1
     return found
 
@@ -864,7 +898,7 @@ _CITY_NISBAS = {"الكوفي", "البصري", "المدني", "المكي", "�
 # the letters without their dots: "الخصيب" and "الحصيب" are one name copied two ways
 _RASM_FROM, _RASM_TO = "بتثنيجخذزشضظغقة", "ٮٮٮٮٮححدرسصطعفه"
 _RASM = str.maketrans(_RASM_FROM, _RASM_TO)
-_FATHER_GAP = 6          # a father up to six tabaqat before his son (Mu'tamir 9, his father Sulayman al-Taymi 4)
+# a father up to six tabaqat before his son (Mu'tamir 9, his father Sulayman al-Taymi 4): father_nasab.gap
 
 
 def _kunya_index(index: "Index") -> dict[str, set[int]]:
@@ -1026,7 +1060,7 @@ def _father_by_nasab(index: "Index", son: int) -> int | None:
         if not more:
             continue
         t = index.tabaqa.get(pid)
-        if low is not None and t is not None and not (low - _FATHER_GAP <= t <= low):
+        if low is not None and t is not None and not (low - index.p("father_nasab", "gap") <= t <= low):
             continue                                # a father of a later generation than his son, or far before him
         scored.append((more, -index.tier.get(pid, 0), pid, own))
     if not scored:
@@ -1072,7 +1106,7 @@ def by_relatives(chains: list[tuple[list, list, list]], index: "Index") -> int:
             if teacher is not None and t(teacher) is not None:
                 found_here = {p for p in found_here if t(p) is None or t(p) >= t(teacher)}
             weighed = False
-            if len(found_here) != 1 and names[i] in ("ابيه", "ابوه") and index.guess:
+            if len(found_here) != 1 and names[i] in ("ابيه", "ابوه") and index.on("father_nasab"):
                 # the father not found by his name as the chain reads it: as the son's own nasab gives him (NR-ID3),
                 # weighed by isnady's rules — a guess
                 father = _father_by_nasab(index, student)
@@ -1084,8 +1118,9 @@ def by_relatives(chains: list[tuple[list, list, list]], index: "Index") -> int:
                 who = next(iter(found_here))
                 # his name, read from the son's: as evidence 4 — a guess when the son himself was one
                 sure = not weighed and (results[i - 1][1] or 0) >= 0.8
-                results[i] = (who, 0.8 if sure else _GUESS_CONFIDENCE, count or 1)
+                results[i] = (who, 0.8 if sure else index.p("confidence", "guess"), count or 1)
                 cands[i] = {who}
+                index.counts["father_nasab" if weighed else "father"] += 1
                 found += 1
     return found
 
@@ -1110,7 +1145,7 @@ def _father_of(index: "Index", son: int) -> int | None:
         low = t(son)
         found = {p for p in found if p != son and (low is None or t(p) is None or t(p) <= low)}
     if len(found) != 1:
-        father = _father_by_nasab(index, son)
+        father = _father_by_nasab(index, son) if index.on("father_nasab") else None
         found = {father} if father is not None else set()
     cache[son] = next(iter(found)) if found else None
     return cache[son]
@@ -1122,11 +1157,14 @@ def by_father_pair(chains: list[tuple[list, list, list]], index: "Index") -> int
     "عن أبيه"; the father must be of the generation of, or before, the teacher he reports from. The one pair the
     chains have seen — the student with the son, or the father with his teacher, in the chains read whole — far more
     than any other is taken: both links. Returns how many links."""
+    trust, edge_confidence = index.p("confidence", "trust"), index.p("confidence", "neighbours")
+    pair_min, pair_few, lead = index.p("father_pair", "min_chains"), index.p("father_pair", "few"), \
+        index.p("neighbours", "lead")
     edges: dict[tuple[int, int], int] = defaultdict(int)
     for results, _c, *_rest in chains:
         for i in range(len(results) - 1):
             a, b = results[i][0], results[i + 1][0]
-            if a is not None and b is not None and (results[i][1] or 0) >= _TRUST and (results[i + 1][1] or 0) >= _TRUST:
+            if a is not None and b is not None and (results[i][1] or 0) >= trust and (results[i + 1][1] or 0) >= trust:
                 edges[(a, b)] += 1
     t = index.tabaqa.get
     found = 0
@@ -1154,21 +1192,17 @@ def by_father_pair(chains: list[tuple[list, list, list]], index: "Index") -> int
             second = rows[-2][0] if len(rows) > 1 else 0
             # one namesake alone with a father of his own, among a few ("ابن نمير": the father or the son), or the
             # pair the chains have seen far more than any other
-            alone = len(rows) == 1 and len(cands[i]) <= _PAIR_FEW and (student is not None or teacher is not None)
-            if alone or (best >= _PAIR_MIN and best >= _EDGE_LEAD * second and best > second):
-                results[i] = (c, _EDGE_CONFIDENCE, results[i][2])
-                results[i + 1] = (f, _EDGE_CONFIDENCE, results[i + 1][2] or 1)
+            alone = len(rows) == 1 and len(cands[i]) <= pair_few and (student is not None or teacher is not None)
+            if alone or (best >= pair_min and best >= lead * second and best > second):
+                results[i] = (c, edge_confidence, results[i][2])
+                results[i + 1] = (f, edge_confidence, results[i + 1][2] or 1)
                 cands[i], cands[i + 1] = {c}, {f}
                 found += 2
     return found
 
 
-_PAIR_MIN, _PAIR_FEW = 1, 3
-
-
-_GAP_TABAQA = 4          # a teacher four tabaqat after his student
-_GAP_OLDER = 6           # a teacher six tabaqat before him (five happens: Makki b. Ibrahim from Yazid b. Abi 'Ubayd)
-_GAP_DEATH = 80          # a teacher who died eighty years after his student
+# impossible.after: a teacher four tabaqat after his student; impossible.before: six tabaqat before him (five
+# happens: Makki b. Ibrahim from Yazid b. Abi 'Ubayd); impossible.death_years: who died eighty years after him
 
 
 def drop_impossible(results: list, index: "Index") -> int:
@@ -1177,6 +1211,7 @@ def drop_impossible(results: list, index: "Index") -> int:
     a tie the teacher, except at the first link (the compiler's own teacher, taken for an early namesake). Takrib's
     tabaqat are approximate, so a gap of three is let stand. Returns how many were dropped (2026-10-18: "أبو عمران
     الجوني" had been the later Baghdadi of that name, "حيوة" the Himsi, "حدثني عمي" al-'Ammi)."""
+    gap_after, gap_older, gap_death = (index.p("impossible", k) for k in ("after", "before", "death_years"))
     dropped = 0
     for _ in range(len(results)):
         bad = None
@@ -1186,9 +1221,9 @@ def drop_impossible(results: list, index: "Index") -> int:
                 continue
             ts, tt = index.tabaqa.get(s), index.tabaqa.get(t)
             ds, dt = index.death.get(s), index.death.get(t)
-            older = ts is not None and tt is not None and ts - tt >= _GAP_OLDER
-            if s == t or older or (ts is not None and tt is not None and tt - ts >= _GAP_TABAQA) \
-                    or (ds and dt and dt - ds >= _GAP_DEATH):
+            older = ts is not None and tt is not None and ts - tt >= gap_older
+            if s == t or older or (ts is not None and tt is not None and tt - ts >= gap_after) \
+                    or (ds and dt and dt - ds >= gap_death):
                 cs, ct = results[i][1] or 0, results[i + 1][1] or 0
                 # (a teacher far too old is the namesake of an earlier generation: "حماد عن ثابت" is al-Bunani)
                 bad = i if cs < ct or (cs == ct and i == 0 and s != t and not older) else i + 1
@@ -1212,13 +1247,29 @@ def links_ready(conn: sqlite3.Connection) -> bool:
         death = conn.execute("SELECT value FROM core_meta WHERE key = 'death_rule'").fetchone()
         if death is None or death[0] != rijal.DEATH_RULE:
             return False
-        persons_now = str(tuple(conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM persons").fetchone()))
         row = conn.execute("SELECT value FROM core_meta WHERE key = 'narrator_matcher'").fetchone()
-        if row is None or row[0] != f"{MATCHER_ID}|{persons_now}|{PARSER_ID}":
+        if row is None or row[0] != _stamp(conn, PARSER_ID):
             return False
         return not conn.execute("SELECT EXISTS (SELECT 1 FROM isnad_links WHERE candidates IS NULL)").fetchone()[0]
     except sqlite3.OperationalError:
         return False
+
+
+def _stamp(conn: sqlite3.Connection, parser_id: str) -> str:
+    """What the links were identified by: this matcher, these narrators, this parser, the guesses on or off, the
+    rules changed from their defaults (Tools → Narrator Identification) — the links are identified again when it
+    changes."""
+    persons_now = str(tuple(conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM persons").fetchone()))
+    rules = narrator_rules.stored(conn)
+    return f"{MATCHER_ID}|{persons_now}|{parser_id}" + ("|guess" if guesses_on(conn) else "") + \
+        (f"|rules:{rules}" if rules else "")
+
+
+def set_rules(conn: sqlite3.Connection, rules: dict, progress: Callable[[str], None] | None = None) -> dict:
+    """Keep the ways of identifying and their parameters (Tools → Narrator Identification, iy narrator-rules) and
+    identify every chain's narrators again."""
+    narrator_rules.save(conn, rules)
+    return link_narrators(conn, progress, rebuild=True)
 
 
 def guesses_on(conn: sqlite3.Connection) -> bool:
@@ -1240,6 +1291,43 @@ def set_guesses(conn: sqlite3.Connection, on: bool, progress: Callable[[str], No
     return link_narrators(conn, progress, rebuild=True)
 
 
+def _evidence(pairs: list, index: Index, rules: dict) -> None:
+    """The evidence drawn from all the chains of one road together, in this order; each way counted in index.counts.
+    Without the guesses: the rijal works' words alone — a father read from a son identified by them."""
+    counts = index.counts
+
+    def neighbours() -> None:
+        if index.on("neighbours"):
+            counts["neighbours"] += by_neighbours(pairs, rules)     # the lists of results are changed in place
+
+    def relatives() -> int:
+        return by_relatives(pairs, index) if index.on("father") else 0      # (counted inside)
+
+    if not index.guess:
+        relatives()
+        return
+    neighbours()
+    if index.famous:
+        n = by_famous(pairs, index.famous, rules)
+        counts["famous"] += n
+        if n:
+            neighbours()                            # the famous ones now known, their neighbours may decide more
+    if relatives():
+        neighbours()
+    n = by_one_side(pairs, rules) if index.on("one_side") else 0
+    counts["one_side"] += n
+    if n:                                           # NR-ID3: the bare names known by one neighbour alone
+        neighbours()
+        if relatives():
+            neighbours()
+    n = by_father_pair(pairs, index) if index.on("father_pair") else 0
+    counts["father_pair"] += n
+    if n:                                           # 0.7.7: a son open between namesakes, and his father
+        neighbours()
+        if relatives():
+            neighbours()
+
+
 def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | None = None,
                    rebuild: bool = False) -> dict:
     """Identify the narrators of every chain read from the texts: by the rijal works' own words, and — when turned
@@ -1251,14 +1339,14 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
 
     rijal.fix_death_years(conn)          # a database read before a better rule for the years of death
     conn.execute("CREATE TABLE IF NOT EXISTS core_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-    persons_now = str(tuple(conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM persons").fetchone()))
     from isnady.core.isnad import PARSER_ID
 
     # the chains read again by a new parser are matched again whole, with the evidence of all of them (2026-10-24:
     # matched only as "new", without the neighbours' evidence, a database read anew by isnady-isnad-9 had 54.7% of
     # its Sunni links identified instead of 68%)
     guess = guesses_on(conn)
-    stamp = f"{MATCHER_ID}|{persons_now}|{PARSER_ID}" + ("|guess" if guess else "")
+    rules = narrator_rules.load(conn)
+    stamp = _stamp(conn, PARSER_ID)
     row = conn.execute("SELECT value FROM core_meta WHERE key = 'narrator_matcher'").fetchone()
     pending = conn.execute(
         "SELECT EXISTS (SELECT 1 FROM isnad_links WHERE candidates IS NULL)"
@@ -1300,7 +1388,7 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
         # road A or road B: each book's chains are identified in its own tradition's rijal works
         road = "shia" if tradition == "shia" else "sunni"
         if road not in indexes:
-            indexes[road] = Index(conn, road, guess)
+            indexes[road] = Index(conn, road, guess, rules)
         links = links_of.get(isnad_id, [])
         kept: list = []
         written: list = []
@@ -1308,25 +1396,10 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
         done[road].append((results, kept, written))
         order.append((isnad_id, links, results, road))
     for road, pairs in done.items():
-        if not guess:
-            # the rijal works' words alone: a father read from a son identified by them, and nothing guessed
-            by_relatives(pairs, indexes[road])
-            continue
-        by_neighbours(pairs)                        # the lists of results are changed in place
-        if indexes[road].famous and by_famous(pairs, indexes[road].famous):
-            by_neighbours(pairs)                    # the famous ones now known, their neighbours may decide more
-        if by_relatives(pairs, indexes[road]):
-            by_neighbours(pairs)
-        if by_one_side(pairs):                      # NR-ID3: the bare names known by one neighbour alone
-            by_neighbours(pairs)
-            if by_relatives(pairs, indexes[road]):
-                by_neighbours(pairs)
-        if by_father_pair(pairs, indexes[road]):    # 0.7.7: a son open between namesakes, and his father
-            by_neighbours(pairs)
-            if by_relatives(pairs, indexes[road]):
-                by_neighbours(pairs)
+        _evidence(pairs, indexes[road], rules)
     for isnad_id, links, results, road in order:
-        drop_impossible(results, indexes[road])
+        if indexes[road].on("impossible"):
+            indexes[road].counts["impossible"] += drop_impossible(results, indexes[road])
         for link, (pid, confidence, count) in zip(links, results):
             updates.append((pid, confidence, count, isnad_id, link["position"]))
             total += 1
@@ -1336,6 +1409,10 @@ def link_narrators(conn: sqlite3.Connection, progress: Callable[[str], None] | N
     # a tahwil whose meeting the text does not name: joined where the narrators attest it (ISN-TAH, v0.5.3)
     met = tahwil_meet.join(conn)
     conn.execute("INSERT OR REPLACE INTO core_meta (key, value) VALUES ('narrator_matcher', ?)", (stamp,))
+    if not only_new:
+        # how many links each way decided (Tools → Narrator Identification): the whole database identified now
+        narrator_rules.save_counts(conn, {road: {k: n for k, n in sorted(ix.counts.items()) if n}
+                                          for road, ix in sorted(indexes.items())})
     conn.commit()
     from isnady.core import log
 
