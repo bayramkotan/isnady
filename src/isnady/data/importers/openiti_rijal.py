@@ -171,3 +171,167 @@ class RijalImporter(Importer):
 
 for _key in PROFILES:
     register(RijalImporter(_key))
+
+
+# ---------------------------------------------------------------------------------------------------- al-Kashshi
+# 0.8.1 (Bayram, 2026-11-23: "Keşşî ricâli"): al-Tusi's selection from al-Kashshi's book of men (اختيار معرفة الرجال),
+# the third pillar of Imami rijal beside al-Najashi and al-Tusi. It is not a list of entries but of sections — "### |"
+# and the men the section is about ("زرارة بن أعين", "في محمد بن مسلم الطائفي الثقفي", "ما روى في حريز وفضل بن عبد
+# الملك البقباق وحذيفة بن منصور") — each with the reports about them, numbered through the book (1 … 1151). al-Kashshi
+# gives the reports, not a grade: no rank is read from them; the reports are his words about the man.
+# The men are read from the heading as it is written, nothing added: the heading without "في" / "ما روى في", up to a
+# word that begins to describe ("وهو", "صاحب", "أيضا" …) or a comma, the men joined by "و" one by one ("وهب" is a name,
+# not "and"), each up to a word that names a kinsman instead ("ابنه", "أخيه", "ابني" …). A heading about a group (the
+# Zaydiyya, "بنو ذودان", "تسمية الفقهاء") names no one. An empty heading after the end of a part continues the man
+# before it; the end of a part (PARATEXT) stays in the book under no one.
+KASHSHI = {
+    "title": "Ikhtiyar Ma'rifat al-Rijal — al-Kashshi", "title_ar": "اختيار معرفة الرجال (رجال الكشي)",
+    "author": "kashshi", "critic": "al-Kashshi", "tradition": "shia", "source_key": "openiti-kashshi",
+    "minimum": 300, "name": "al-Kashshi, Ikhtiyar Ma'rifat al-Rijal (OpenITI)",
+}
+_KASHSHI_OPENINGS = ("ما روى في ", "ما روي في ", "في ")
+_KASHSHI_GROUPS = frozenset(["ابنا", "بنو", "بنى", "بني", "اخوة", "إخوة", "أصحاب", "اصحاب", "تسمية", "السبعين",
+                             "الزهاد", "ومن", "الغلات", "الغلاة"])
+_KASHSHI_TAIL = frozenset(["وهو", "وكان", "وكانا", "صاحب", "المعروف", "ويعرف", "ولقبه", "اسمه", "وقيل", "ويقال",
+                           "أيضا", "بعد", "رحمه", "واحتجاج", "ودعوة", "وذكر", "وسبب", "وكلامه", "وغيره", "وغيرهما",
+                           "وغيرهم", "منهم", "من", "رحمهما", "رحمهم", "عليه", "عليهم"])
+_KASHSHI_KIN = frozenset(["ابني", "ابنا", "ابنه", "وابنه", "أخيه", "أخويه", "اخوته", "واخوته", "إخوته", "أخوه",
+                          "موليان", "القميين", "الكوفيين", "الأهوازيين"])
+_W_NAMES = frozenset(["وهب", "وهيب", "وكيع", "واصل", "وردان", "وضاح", "وائل", "وابصة", "وحشي", "ورقاء", "وثيمة",
+                      "وزير", "وليد", "وداعة", "وبرة", "وصيف"])
+_PARTICLES = ("بن", "بنت", "ابن", "أبو", "أبي", "أبى", "ابو", "ابي")
+_SECTION = re.compile(r"^### \|+\s*(.*)$")
+
+
+def kashshi_names(heading: str) -> list[str]:
+    """The men a section of al-Kashshi is about, as its heading writes them (see above)."""
+    h = re.sub(r"ms\d+|PageV\d+P\d+", " ", heading)
+    h = re.sub(r"\([^)]*\)?", " ", h)
+    h = re.sub(r"\s+", " ", h).strip(" |.،,:")
+    for opening in _KASHSHI_OPENINGS:
+        if h.startswith(opening):
+            h = h[len(opening):]
+            break
+    h = re.split(r"[،,]", h, maxsplit=1)[0]
+    words = h.split()
+    if not words or words[0] in _KASHSHI_GROUPS or (
+            len(words) == 1 and words[0].startswith("ال") and words[0].endswith(("ية", "ة", "ات"))):
+        return []
+    for i, w in enumerate(words):
+        if w in _KASHSHI_TAIL:
+            words = words[:i]
+            break
+    parts: list[list[str]] = [[]]
+    for w in words:
+        # (after "بن", "أبي", "عبد" a word in و is the name itself: "عامر بن واثلة")
+        if w.startswith("و") and len(w) > 1 and w not in _W_NAMES and w not in _KASHSHI_KIN and parts[-1] \
+                and parts[-1][-1] not in _PARTICLES + ("عبد",):
+            parts.append([w[1:]])
+        else:
+            parts[-1].append(w)
+    out: list[str] = []
+    for part in parts:
+        for i, w in enumerate(part):
+            if w in _KASHSHI_KIN:
+                part = part[:i]
+                break
+        while part and part[-1] in _PARTICLES:
+            part = part[:-1]
+        name = " ".join(part).strip(" .")
+        if name and name not in out:
+            out.append(name)
+    return out
+
+
+def read_kashshi(text: str) -> list[dict]:
+    """[{number, heading, names, text}] — the sections in their order; an empty heading after the end of a part is
+    the section before it going on; the end of a part (PARATEXT) is a section about no one."""
+    out, current, started = [], None, False
+    for line in text.split("\n"):
+        if not started:
+            started = line.startswith("#META#Header#End#")
+            continue
+        m = _SECTION.match(line)
+        if m:
+            heading = m.group(1).strip()
+            if heading == "" and out and current is not None and current["paratext"]:
+                current = out[-2] if len(out) > 1 else current       # the man before the part's end goes on
+                continue
+            current = {"heading": heading.strip("|").strip() if heading.startswith("PARATEXT") else heading,
+                       "paratext": heading.startswith("PARATEXT"), "lines": []}
+            out.append(current)
+        elif current is not None:
+            current["lines"].append(line)
+    for n, s in enumerate(out, 1):
+        s["number"] = n
+        s["text"] = _clean(" ".join(s.pop("lines")))
+        s["names"] = [] if s["paratext"] or n == 1 else kashshi_names(s["heading"])
+    return out
+
+
+class KashshiImporter(Importer):
+    format_id = "kashshi"
+    title = f"OpenITI mARkdown — {KASHSHI['title']}"
+    description = "The men of al-Kashshi's book with the reports about them, readable in Books"
+
+    def run(self, conn: sqlite3.Connection, source: SourceInfo, options: dict,
+            progress: ProgressCallback | None = None) -> ImportReport:
+        say = progress or (lambda _m: None)
+        prof = KASHSHI
+        say(f"Reading {source.location}")
+        try:
+            text = read_bytes(source.location, source.auth).decode("utf-8-sig")
+        except UnicodeDecodeError as exc:
+            raise ResourceError(f"Not UTF-8 text: {source.location}") from exc
+        sections = read_kashshi(text)
+        if len(sections) < prof["minimum"]:
+            raise ResourceError(f"Only {len(sections)} sections found; is this {prof['title']}?")
+        say(f"{len(sections)} sections")
+        key = prof["source_key"]
+        tier = source.tier or tier_for_license(source.license)
+        report = ImportReport(source_key=key)
+        men = 0
+        with conn:
+            conn.execute(
+                """INSERT INTO sources (key, name, format, location, license, tier, origin, auth_type, imported_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(key) DO UPDATE SET name = excluded.name, location = excluded.location,
+                       license = COALESCE(excluded.license, sources.license), tier = excluded.tier,
+                       origin = excluded.origin, auth_type = excluded.auth_type, imported_at = excluded.imported_at""",
+                (key, source.name or prof["name"], self.format_id, source.location, source.license, tier,
+                 source.origin, source.auth.describe(), now_iso()))
+            source_id = conn.execute("SELECT id FROM sources WHERE key = ?", (key,)).fetchone()[0]
+            conn.execute("DELETE FROM persons WHERE source_id = ?", (source_id,))      # re-import replaces
+            person_of, entries = {}, []
+            for s in sections:
+                first = None
+                for i, name in enumerate(s["names"]):
+                    person_key = f"kashshi:{s['number']}" + ("" if i == 0 else chr(ord("a") + i))
+                    pid = conn.execute("INSERT INTO persons (key, name_ar, tradition, source_id) VALUES (?, ?, ?, ?)",
+                                       (person_key, name, prof["tradition"], source_id)).lastrowid
+                    conn.execute("INSERT INTO person_names (person_id, name, kind, source_id) VALUES (?, ?, 'full', ?)",
+                                 (pid, name, source_id))
+                    conn.execute("INSERT OR IGNORE INTO person_roles (person_id, role) VALUES (?, 'narrator')", (pid,))
+                    # the reports about him are al-Kashshi's words; no grade is read from them (rank: none)
+                    conn.execute(
+                        """INSERT INTO verdicts (person_id, critic_name, work, phrase, rank_scheme, rank, tradition,
+                                                 madhhab, source_id) VALUES (?, ?, ?, ?, 'shia', NULL, ?, NULL, ?)""",
+                        (pid, prof["critic"], prof["title"], _clip(s["text"]), prof["tradition"], source_id))
+                    first = first or pid
+                    men += 1
+                entry = {"number": s["number"], "name": s["heading"] or "—", "text": s["text"]}
+                entries.append(entry)
+                if first:
+                    person_of[id(entry)] = first
+            outline = [("h", 1, prof["title_ar"])] + [("e", e["number"]) for e in entries]
+            write_work(conn, outline, entries, person_of, source_id, key="kashshi", title=prof["title"],
+                       title_ar=prof["title_ar"], author=prof["author"])
+        report.editions.append(prof["title"])
+        report.new_hadiths = 0
+        report.texts = len(sections)
+        say(f"{men} men in {len(sections)} sections, with the reports about them (al-Kashshi gives reports, "
+            "not a grade)")
+        return report
+
+
+register(KashshiImporter())

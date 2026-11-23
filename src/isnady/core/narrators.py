@@ -313,8 +313,11 @@ _MUHMAL_SHIA = [
     ("najashi:72", ("ابن فضال",), ("ابن بكير",), ("أحمد بن محمد",)),       # al-Hasan b. 'Ali b. Faddal
 ]
 
-# the Shia rijal works after al-Najashi, in the order a name is looked up in them (Index.tier; al-Najashi is 0)
-_SHIA_TIERS = {"tusi_fihrist": 1, "tusi_rijal": 2}
+# the Shia rijal works after al-Najashi, in the order a name is looked up in them (Index.tier; al-Najashi is 0).
+# 0.8.1: al-Kashshi last — a man of his headings is looked up only when al-Najashi and al-Tusi do not have the name,
+# and only when the heading gives him a father ("زرارة بن أعين"): a bare heading ("عمار", "حذيفة", "أبى المقدام")
+# says whom that section is about, never who a bare name of a chain is (it stays his, in the book and on his page)
+_SHIA_TIERS = {"tusi_fihrist": 1, "tusi_rijal": 2, "kashshi": 3}
 
 # books whose chains begin with the compiler himself, as the book is transmitted ("مالك عن نافع" in Yahya's Muwatta)
 _AUTHORS = {"malik": "taqrib:6425"}
@@ -392,6 +395,7 @@ class Index:
         # Sunni rijal works, a Shia book's in the Shia ones — a narrator of the other tradition with the same name
         # is another source's judgment, never a candidate for these links
         unnamed: set[int] = set()
+        kashshi: set[int] = set()                   # al-Kashshi's men (0.8.1): never by their father alone
         self.death: dict[int, int] = {}
         # the Shia rijal works one above the other (0.7.6): a name is looked up in al-Najashi first, then in al-Tusi's
         # Fihrist, then in his Rijal — a man found in an earlier book is that book's entry, and the later books only
@@ -405,6 +409,11 @@ class Index:
                 "ORDER BY id", (tradition,)):
             prefix = (key or "").split(":", 1)[0]
             self.tier[pid] = _SHIA_TIERS.get(prefix, 0)
+            if prefix == "kashshi":
+                kashshi.add(pid)
+                if "بن" not in tokens(name or "")[1:]:
+                    unnamed.add(pid)                # a heading without his own name and his father's: no chain's
+                    #                                 name is his ("عمار", "ابن فضال": above)
             if prefix in _SHIA_TIERS:
                 same = (prefix, tuple(tokens(name or "")))
                 if same in seen_in:
@@ -442,7 +451,7 @@ class Index:
             if toks:
                 self.names[toks[0]].append((pid, toks, kind != "full"))
                 self.exact[" ".join(toks)].add(pid)
-                if tradition == "shia" and kind == "full" and "بن" in toks[1:]:
+                if tradition == "shia" and kind == "full" and "بن" in toks[1:] and pid not in kashshi:
                     # the Shia chains call many by their father alone: "ابن أبي عمير" is Muhammad b. Abi 'Umayr
                     i = toks.index("بن", 1)
                     self.names["بن"].append((pid, toks[i:], True))

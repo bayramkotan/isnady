@@ -207,7 +207,7 @@ PROFILES = {
                     "The chain ends at the Prophet ﷺ (marfu') or at a Companion (mawquf).",
                     "Narrators are identified in Ibn Hajar's Taqrib al-Tahdhib, with his twelve ranks."]),
     SHIA: Profile(SHIA, "Shia", "one of the Fourteen Ma'sumun (the Prophet ﷺ or an Imam)",
-                  ("openiti-najashi", "openiti-tusi-rijal", "openiti-tusi-fihrist"),
+                  ("openiti-najashi", "openiti-tusi-rijal", "openiti-tusi-fihrist", "openiti-kashshi"),
                   "sahih / hasan / muwaththaq / da'if … (the Imami scholars: al-Majlisi, al-Behbudi …)", True,
                   ["al-Kulayni opens with his teacher's name, without a term (\"علي بن إبراهيم عن أبيه …\").",
                    "\"عدة من أصحابنا\" stands for named teachers, as al-Kulayni explained them.",
