@@ -42,7 +42,7 @@ from isnady.core.normalize import normalize_with_map
 from isnady.core.i18n import N_, t, tr
 from isnady.core.companions import is_companion_name
 
-PARSER_ID = "isnady-isnad-15"  # bump when rules change (7: tahwil split; 8: two narrators at a link, a chain kept as far as read;
+PARSER_ID = "isnady-isnad-16"  # bump when rules change (7: tahwil split; 8: two narrators at a link, a chain kept as far as read;
 #                                9: the Prophet by his kunya, the subject of a story, second roads after "وعن" / "وحدثنا")
 #                               10: one man named twice with a comma between, "أبو خيثمة، زهير بن حرب"
 #                               11: "- وهو ابن …-", an aside in dashes, "قال فلان أخبرنا", "قال قال ابن جريج أخبرني",
@@ -63,6 +63,10 @@ PARSER_ID = "isnady-isnad-15"  # bump when rules change (7: tahwil split; 8: two
 #                                   joined to it), "مثله / نحوه" complete nothing, "وعنه" / "وبإسناده" borrowed, a text
 #                                   going on from the one before CONTINUED (no chain), no meeting of two roads supposed
 #                                   (v0.5.2: "Hadis ilmi cercevesinde yap demistim!")
+#                               16: the Shia compilers who name only the man they took it from: "وروى حريز عن …",
+#                                   "فأما ما رواه محمد بن يعقوب عن …", "ما أخبرني به الشيخ …", "وفي رواية السكوني",
+#                                   "وسأل محمد بن مسلم أبا جعفر (ع)" — al-Saduq's Faqih, al-Tusi's Tahdhib and Istibsar
+#                                   (0.8.2: "Kütüb-i Erbaa kalanı")
 
 # normalised form -> term id; longer forms first so "حدثني" is not read as "حدث"
 TERMS = [
@@ -1467,7 +1471,7 @@ _MASUM_HONOR_RE = re.compile(
     r"عليهم[\s\u200c]*السلام|صلوات الله عليه(?:ما|م)?|صلي الله عليه و?(?:اله|ال)(?: وسلم)?|صلي الله عليه وسلم|"
     r"(?<!\w)ع(?!\w))[\s\u200c]*[)\]]?")
 _SHIA_STOP_RE = re.compile(r"(?<!\w)(?:قال|قالا|قالوا|قالت|يقول|رفعه|يرفعه|جميعا|باسناده|وباسناده|بهذا الاسناد|"
-                           r"باسناده|مثله|نحوه|انه|انها|في حديث|قلت|سالت|سمعت|رضي الله|رحمه الله|رحمهم الله|"
+                           r"باسناده|مثله|نحوه|انه|انها|في حديث|قلت|سالت|سمعت|رضي الله|رحمه الله|رحمهم الله|ايده الله|"
                            r"اجازه|مناوله|فيما كتب|فيما اجاز)(?!\w)")
 _JOIN_RE = re.compile(r"[\s،,؛]*و(?=[^\s])")
 _ALL_RE = re.compile(r"[\s،,؛]*جميعا(?!\w)")
@@ -1475,7 +1479,7 @@ _ALL_RE = re.compile(r"[\s،,؛]*جميعا(?!\w)")
 _PLACE_RE = re.compile(r"(?<!\w)(?:بال\w+|بمدينه|بسمرقند|بقم|ببلخ|بنيسابور|بمرو|ببغداد|بمكه|بفرغانه|في سنه|سنه)(?!\w)")
 # "… قال: حدثنا" a little further on, after words that belong to no one (a place, a date, a praise)
 _SAID_TERM_RE = re.compile(r"(?:قال|قالا|قالوا)\s*:?\s*(?=و?(?:حدثنا|حدثني|اخبرنا|اخبرني|انبانا|انباني|سمعت)(?!\w))")
-_PRAISE_RE = re.compile(r"[\s،,؛\-\[(]*(?:رضي ?الله (?:تعالي )?\s?عن(?:ه|هما|هم)|رحمه الله|رحمهم الله|ره)(?:\s*تعالي)?(?!\w)[\s\-\])]*")
+_PRAISE_RE = re.compile(r"[\s،,؛\-\[(]*(?:رضي ?الله (?:تعالي )?\s?عن(?:ه|هما|هم)|رحمه الله|رحمهم الله|ايده الله|ره)(?:\s*تعالي)?(?!\w)[\s\-\])]*")
 _ALL_START_RE = re.compile(r"[\s،,]*(?:و?بالاسناد|و?باسناده|و?بهذا الاسناد|و?عنه باسناده)(?!\w)")
 _MUDMAR_RE = re.compile(r"^[\s،,:]*(?:قال|قالا)?[\s،,:]*(?:سالته|سمعته|كتبت اليه|قلت له|سال|سئل)(?!\w)")
 # the teachers al-Kulayni opens his chains with: "و" + one of them after a link starts a second road from him
@@ -1486,6 +1490,19 @@ COMPILER_TEACHERS = ("محمد بن يحيي", "علي بن ابراهيم", "ع
 _DESCRIPTION_WORDS = ("كان", "هو", "هي", "قد", "لم", "كانت", "زاد", "في", "فيه", "ذكر", "ذكره", "رواه", "ليس")
 _SHIA_SAID_RE = re.compile(r"[\s،,]*(?:ره|رحمه الله)?[\s،,:]*قال\s+([^،,:()]{3,60}?)\s+(?=عن\s|(?:حدثني|حدثنا|اخبرني|اخبرنا)(?!\w))")
 _SAME_CHAIN_RE = re.compile(r"[\s،,]*(?:و?باسناده|بهذا الاسناد|بالاسناد|بهذا الاسناد مثله|مثله)(?!\w)")
+# 0.8.2: the words before the man al-Saduq or al-Tusi took a hadith from — "وروى حريز عن …", "فأما ما رواه محمد بن
+# يعقوب عن …", "والذي يدل على ذلك ما رواه …", "وفي رواية السكوني" (said: "qala") and "ما أخبرني به الشيخ …"
+# ("akhbarani", group 1); the chains between them and him are in their Mashyakha, not here
+_SHIA_OPENER_RE = re.compile(
+    r"(?:(?:و|ف)?اما\s+|و?قد\s+|(?:و|ف)?(?:الذي\s+)?يدل (?:علي ذلك|عليه|علي هذا)\s+)?"
+    r"(?:(?:و|ف)?(?:ما|الذي|الخبر الذي|الحديث الذي)\s+)?"
+    r"(?:(?:و|ف)?(?:رواه|روي)(?:\s+(?:ذلك|هذا الخبر|هذا الحديث|هذا))?(?:\s+ايضا)?|(و?ما\s+اخبرني\s+به)|و?في\s+روايه)\s+(?=\S)")
+# a text that says only "it was narrated that …" ("وروي أن …", "وروي: "…"", "وروي في خبر آخر"): no man is named
+_SHIA_NO_MAN_RE = re.compile(r"[\s:،,]*(?:[\"«“(]|ان(?:ه|ها|هم)?(?!\w)|في (?:خبر|حديث)(?!\w)|اخري(?!\w))")
+# "وسأل محمد بن مسلم أبا جعفر (ع) …", "وسأله سماعة عن …": the man who asked is the one link; whom he asked ends it
+_SHIA_ASKED_RE = re.compile(r"(?:و|ف)?(?:سال|ساله)\s+(?=\S)")
+_SHIA_ASKED_END_RE = re.compile(r"(?<!\w)(?:ابا|اباه|اخاه|ابنه|العبد الصالح|الصادق|الرضا|احدهما|الامام|رسول الله|"
+                                r"النبي|امير المومنين)(?!\w)|(?<!\w)عن(?!\w)|[،,:\"«“(]")
 
 
 def _masum_after(norm: str, at: int, window: int = 110) -> str:
@@ -1553,6 +1570,26 @@ def _parse_shia(text: str) -> ParsedIsnad:
     result = ParsedIsnad()
     pre = _PREAMBLE_RE.match(norm)
     pos = pre.end() if pre else 0
+    asked = _SHIA_ASKED_RE.match(norm, pos)
+    if asked:
+        stop = _SHIA_ASKED_END_RE.search(norm, asked.end(), min(n, asked.end() + 120))
+        end = stop.start() if stop else asked.end()
+        core = norm[asked.end():end].strip(" ،,:-()")
+        if core and _words(core) <= 8 and not _MASUM_HONOR_RE.search(core):
+            name = _clean_name(orig(asked.end(), asked.end() + len(norm[asked.end():end].rstrip(" ،,:-()"))))
+            result.links = [Link(1, "qala", name)]
+            result.raw_isnad = name
+            result.ends_with = _masum_after(norm, end)
+            result.reaches_prophet = bool(result.ends_with)
+            return result
+    opener = _SHIA_OPENER_RE.match(norm, pos)
+    opened = ""
+    if opener:
+        if _SHIA_NO_MAN_RE.match(norm, opener.end()):
+            result.problem = N_("no narrator found before the text")
+            return result
+        pos = opener.end()
+        opened = "akhbarani" if opener.group(1) else "qala"
     if _ALL_START_RE.match(norm, pos):
         result.problem = N_("refers to the chain of an earlier hadith (bi-isnadihi); not split")
         return result
@@ -1573,6 +1610,8 @@ def _parse_shia(text: str) -> ParsedIsnad:
                              r"ثواب|عقاب|كامل|اختيار|الامالي|التوحيد|الخصال|العيون|المعاني|العلل|المحاسن|البصاير|الغيبه|"
                              r"الارشاد|الاحتجاج|الاختصاص|الوسايل|البحار)(?!\w)", lead.group(0))):
         lead = None                             # "علي بن إبراهيم:" is a name, only the name of a book is passed over
+    if opened:
+        lead = None                             # the man is named right after the words passed over
     if lead and re.match(r"باسناده\s+عن\s", norm[pos + lead.end():]):
         # "[-/3] التهذيب: بإسناده عن محمد بن أحمد بن يحيى عن …": the book's own way to him is not given, the chain
         # is drawn from him
@@ -1593,7 +1632,7 @@ def _parse_shia(text: str) -> ParsedIsnad:
             term_id = _TERM_ID[term.group(1)]
             name_start = term.end()
         elif first:
-            term_id, name_start = ("qala" if said_first else "bare"), pos   # al-Kulayni names his teacher without a term
+            term_id, name_start = (opened or ("qala" if said_first else "bare")), pos   # al-Kulayni names his teacher without a term
         else:
             break
         first = False
@@ -1823,12 +1862,14 @@ def _shia_without_chain(text: str, read: "ParsedIsnad", hadith_id: int, continue
     from isnady.core import traditions
 
     head = normalize_name(text)[:220]
-    start = re.match(_SHIA_LEAD + r"(?:و\s*)?(?:عن|قال|وقال)\s+", head)
+    start = re.match(_SHIA_LEAD + r"(?:و\s*)?(?:(?:قد\s+)?روي\s+)?(?:عن|قال|وقال|سيل|وسيل)\s+", head)
     if read.ends_with and start and (traditions.masum_in(" ".join(head[start.end():].split()[:6]))
                                      or _MASUM_HONOR_RE.search(head, start.end(), start.end() + 50)):
         return ParsedIsnad(problem=DIRECT, reaches_prophet=True, ends_with=read.ends_with)
     if _SAME_CHAIN_OLD_RE.match(head) or _FROM_HIM_RE.match(head):
         return read                                 # "وبهذا الإسناد", "وعنه": the book gives the chain before (borrowed)
+    if re.match(_SHIA_LEAD + r"(?:و)?(?:قد\s+)?روي(?!\w)", head):
+        return ParsedIsnad(problem=NO_CHAIN)        # "وروي أن …": it was narrated, no man named (0.8.2)
     if re.match(_SHIA_LEAD + r"و(?!منهم)", head) and not re.match(_SHIA_LEAD + r"و(?:قد|كان|اما|هذا|ذلك)(?!\w)", head):
         return ParsedIsnad(problem=CONTINUED)       # the rest of the hadith before: no chain of its own (v0.5.1)
     cited = re.match(_SHIA_LEAD + r"(?:و)?قال\s+([^:،,.()]{2,45}?)\s*:", head)

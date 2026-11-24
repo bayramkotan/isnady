@@ -20,6 +20,9 @@
     python tools/build_data_repo.py --hashes ../isnady-data
                                           each book's fingerprint (sha256 of its files) and size into the catalog,
                                           so that isnady can say which books changed (Get updates, 0.7.4)
+    python tools/build_data_repo.py --openiti-hadith ../isnady-data
+                                          the three of the Four Books read from the OpenITI corpus (0.8.2): al-Saduq's
+                                          al-Faqih, al-Tusi's al-Tahdhib and al-Istibsar, into hadith/shia/
     python tools/build_data_repo.py --catalogs
                                           write the catalogs of the optional repositories shipped with isnady
 
@@ -30,6 +33,7 @@ the datasets as their authors publish them, each with a catalog shipped inside i
 
 import argparse
 import json
+import re
 import sys
 import urllib.request
 from pathlib import Path
@@ -197,6 +201,35 @@ TQ_MAPPING = {"type": "json", "number": "id", "section": "categoryId",
                           "pattern": TQ_GRADE, "skip": ["لم يخرجه"]}],
               "url": "URL"}
 
+# ------------------------------------------------------------------ OpenITI: the rest of the Four Books (Shia; C)
+# al-Kafi comes from thaqalayn.net; the other three of the Four Books are not there, so they are read from the OpenITI
+# corpus (0.8.2, SR5): al-Saduq's Man La Yahduruhu al-Faqih and al-Tusi's Tahdhib al-Ahkam and al-Istibsar, as the
+# corpus marks them. Nothing of the text is changed: the page and manuscript marks are taken out, the edition's
+# footnote numbers ("(3)") — their footnotes are not in the file — and its hadith numbers, which become the numbers.
+OI_HADITH_URL = f"{RAW}/OpenITI"
+OI_HADITH = {   # key: (title, Arabic title, compiler, path in OpenITI, how its hadith are marked, numbers by volume)
+    "faqih": ("Man La Yahduruhu al-Faqih — al-Saduq", "من لا يحضره الفقيه", "al-Saduq (d. 381)",
+              ("0400AH/master/data/0381IbnBabawayhSaduq/0381IbnBabawayhSaduq.ManLaYahduruhuFaqih/"
+               "0381IbnBabawayhSaduq.ManLaYahduruhuFaqih.Shia001149Vols-ara1.mARkdown"), "inline", False),
+    "tahdhib": ("Tahdhib al-Ahkam — al-Tusi", "تهذيب الأحكام", "al-Tusi (d. 460)",
+                ("0475AH/master/data/0460ShaykhTusi/0460ShaykhTusi.TahdhibAhkam/"
+                 "0460ShaykhTusi.TahdhibAhkam.Shia001161Vols-ara1.completed"), "printed", True),
+    "istibsar": ("al-Istibsar — al-Tusi", "الاستبصار", "al-Tusi (d. 460)",
+                 ("0475AH/master/data/0460ShaykhTusi/0460ShaykhTusi.Istibsar/"
+                  "0460ShaykhTusi.Istibsar.Shia001157Vols-ara1.completed"), "counted", True),
+}
+OI_HADITH_DESCRIPTION = {
+    "faqih": "Compiled by al-Saduq (d. 381), who left out the chains but for the narrator he took the hadith from (his "
+             "roads to them are at the end, in his Mashyakha). Arabic, as the OpenITI corpus has it; 4 volumes, the "
+             "hadith numbered as the edition numbers them; al-Saduq's own words between them kept with them.",
+    "tahdhib": "Compiled by al-Tusi (d. 460): al-Mufid's al-Muqni'a with the hadith for each of its rulings. Arabic, "
+               "as the OpenITI corpus has it; 10 volumes, numbered volume:hadith as the edition numbers them; "
+               "al-Mufid's and al-Tusi's own words kept in their places.",
+    "istibsar": "Compiled by al-Tusi (d. 460): the hadith that seem to differ, each chapter with the way al-Tusi "
+                "reconciles them. Arabic, as the OpenITI corpus has it; 4 volumes, numbered volume:hadith in the "
+                "order of the edition; al-Tusi's own words kept in their places.",
+}
+
 # ------------------------------------------------------------------ OpenITI rijal (licence not stated there: C)
 TAQRIB_URL = (f"{RAW}/OpenITI/0875AH/master/data/0852IbnHajarCasqalani/0852IbnHajarCasqalani.TaqribTahdhib/"
               "0852IbnHajarCasqalani.TaqribTahdhib.JK000121-ara1.completed")
@@ -362,6 +395,8 @@ FOLDER = {
     "ghayba-tusi": "kitab_al_ghayba_al_shaykh_al_tusi", "mumin": "kitab_al_mumin_al_husayn_ibn_said_al_ahwazi",
     "zuhd": "kitab_al_zuhd_al_husayn_ibn_said_al_ahwazi",
     "mujam-mutabara": "mujam_al_ahadith_al_mutabara_asif_al_muhsini",
+    "faqih": "man_la_yahduruhu_al_faqih_al_shaykh_al_saduq", "tahdhib": "tahdhib_al_ahkam_al_shaykh_al_tusi",
+    "istibsar": "al_istibsar_al_shaykh_al_tusi",
     "taqrib": "taqrib_al_tahdhib_ibn_hajar_al_asqalani", "najashi": "rijal_al_najashi_ahmad_ibn_ali_al_najashi",
 }
 
@@ -401,6 +436,9 @@ def own_entries(counts: dict | None = None, langs: dict | None = None) -> list[d
                                + (", with the grades of al-Majlisi (Mir'at al-'Uqul) and al-Behbudi (Sahih al-Kafi)"
                                   if key == "kafi" else "")
                                + (f"; {len(files)} volumes, numbered volume:hadith" if len(files) > 1 else "") + "."))
+    for key, (title, ar, *_rest) in OI_HADITH.items():
+        out.append(_book_entry("shia", key, title, ar, langs.get(key) or ["ara"], None, CREDIT["openiti"],
+                               counts.get(key), OI_HADITH_DESCRIPTION[key]))
     for e in rijal():
         e = dict(e)
         for k in ("origin", "source_name", "source_key"):      # the database keys of the rijal works: in isnady's code
@@ -630,6 +668,202 @@ def convert_tq(target: Path, key: str):
                 sections[str(s)] = item["category"] + (f" (volume {vol})" if multi else "")
     return write_book(target, "shia", key, title, ar, compiler, None, CREDIT["tq"], _unique(hadiths),
                       {"ara": {"texts": ara}, "eng": {"texts": eng, "sections": sections}})
+
+
+_OI_PAGE = re.compile(r"PageV(\d+)P\d+")
+_OI_MARK = re.compile(r"PageV\d+P\d+|\bms\d+\b")
+_OI_FOOTNOTE = re.compile(r"\s*\(\s*\d{1,3}\s*\)")
+_OI_LEAD = re.compile(r"^[\s()*\-–0-9]+")
+_OI_INLINE = re.compile(r"(?:^|(?<=\s))(\d{1,4})(\s*-\s+|\s+)(?=[^\s\d\-])")
+
+
+# a hadith the corpus left on its chapter's heading line ("باب التيمم (1263) 1 محمد بن علي …", "باب … 89 - 1 أخبرني
+# …", "باب … 5305 في رواية …"): the edition's number, with a second number or a dash (or two digits at least)
+_OI_IN_HEADING = re.compile(r"\s[\[(]?\d{1,4}[\])]?\s*\*?\s*(?:(?:-\s*)?\d{1,4}\s*-?|-)\s+(?=[^\d\s\-)\]])"
+                            r"|\s\d{2,4}\s+(?=[^\d\s\-)\]])")
+
+
+# the compiler's words the corpus left on the heading line: "باب … قال الشيخ رحمه الله: …", "باب … قد بينا في كتاب …"
+_OI_SAID_IN_HEADING = re.compile(r"\s(?:قال الشيخ|وقال الشيخ|قد بينا|هذه المسأله|هذه المسألة|اخبرني|أخبرني|وأخبرني|"
+                                 r"واخبرني|محمد بن يعقوب|الحسين بن سعيد|أحمد بن محمد|احمد بن محمد)(?!\w)")
+
+
+def _oi_split_heading(text: str) -> tuple[str, str, str]:
+    """(the heading, what follows it on the same line or "", and what that is: "entry" — a hadith — or "para" — the
+    compiler's words)."""
+    lead = re.match(r"[\s\[(*]*\d+\s*-?\s*", text)
+    at = lead.end() if lead else 0
+    m = _OI_IN_HEADING.search(text, at)
+    said = _OI_SAID_IN_HEADING.search(text, at)
+    if said and (m is None or said.start() < m.start()):
+        rest = text[said.start():].strip()
+        words = re.match(r"(?:و?قال الشيخ|قد بينا|هذه المسأل[هة])(?!\w)", rest)
+        return text[:said.start()], rest, ("para" if words else "entry")   # al-Mufid's or al-Tusi's words, or a chain
+    if m is None:
+        return text, "", ""
+    rest = text[m.start():].strip()
+    if len(_OI_MARK.sub("", text[m.end():]).split()) < 3 or text[m.end():].lstrip().startswith("باب"):
+        return text, "", ""
+    return text[:m.start()], rest, "entry"
+
+
+def _oi_heading(text: str) -> str:
+    text = _OI_FOOTNOTE.sub("", _OI_MARK.sub("", text))
+    text = re.sub(r"[*()\[\]]", " ", text)
+    text = re.sub(r"^\s*\d+\s*-?\s*", "", text)
+    return re.sub(r"\s+", " ", text).strip(" .:-")
+
+
+def _oi_text(parts: list[str]) -> str:
+    """The paragraphs of one hadith as they are written: no page or manuscript mark, no footnote number. A paragraph
+    the corpus begins after a page mark is the same sentence going on to the next page: it joins the one before."""
+    out: list[str] = []
+    turned = False                                   # the part before ended at a page mark
+    for raw in parts:
+        p = _OI_FOOTNOTE.sub("", _OI_MARK.sub("", raw))
+        p = re.sub(r"\s+", " ", p).strip()
+        if p:
+            if turned and out:
+                out[-1] += " " + p
+            else:
+                out.append(p)
+        turned = bool(re.search(r"PageV\d+P\d+\s*(?:\bms\d+\s*)?$", raw.strip()))
+    return "\n".join(out)
+
+
+def read_openiti_hadith(text: str, how: str, by_volume: bool) -> tuple[list[dict], dict, dict]:
+    """A hadith collection of the OpenITI corpus: (hadiths for book.json, {number: Arabic text}, {section: title}).
+
+    how: "inline" — a hadith begins where the edition's number stands, "12 - " or "12 " (al-Faqih); "printed" — each hadith is
+    an entry ("### $") with the edition's number first, "(12) 3 - " (al-Tahdhib); "counted" — each hadith is an entry,
+    numbered in the order of the volume (al-Istibsar, whose file keeps only the numbers within each chapter).
+    An entry that begins with a verse in brackets is not a new hadith but the text going on. A number that does not
+    follow the one before (a misread "88" for 188) is the next number; the words of the compiler before the first
+    hadith of a chapter are kept as their own item, numbered after the hadith before them ("12.1")."""
+    body = text.split("#META#Header#End#", 1)[-1].split("\n")
+    vol_of, nxt = [0] * len(body), 1
+    for i in range(len(body) - 1, -1, -1):          # a page mark ends its page: a line is in the volume marked next
+        pages = _OI_PAGE.findall(body[i])
+        if pages:
+            nxt = int(pages[0])
+        vol_of[i] = nxt
+    # paragraphs: (kind, text, volume) — kind "head<level>", "entry" or "para"
+    paras: list[list] = []
+    for i, line in enumerate(body):
+        vol = vol_of[i]
+        m = re.match(r"^### (\|+) ?(.*)$", line)
+        if m:
+            paras.append([f"head{len(m.group(1))}", m.group(2), vol])
+            continue
+        if line.startswith("### $"):
+            paras.append(["entry", line[5:], vol])
+        elif line.startswith("# "):
+            paras.append(["para", line[2:], vol])
+        elif line.startswith("~~") and paras:
+            paras[-1][1] += " " + line[2:]
+        elif line.strip() and paras and paras[-1][0] != "head1" and not paras[-1][0].startswith("head"):
+            paras[-1][1] += " " + line.strip()
+    items: list[dict] = []           # {"n", "sort", "s", "parts"}
+    sections: dict[str, str] = {}
+    section, last, last_vol, extra = 0, 0, 0, 0
+
+    def start(number: int | None, vol: int, first: str) -> None:
+        nonlocal last, last_vol, extra
+        if by_volume and vol != last_vol:
+            last, last_vol = 0, vol
+        if number is None:                                   # the compiler's words before a chapter's first hadith
+            extra += 1
+            n = f"{last}.{extra}"
+            sort = last + extra / 100
+        else:
+            last, extra = number, 0
+            n, sort = str(number), float(number)
+        if by_volume:
+            n, sort = f"{vol}:{n}", vol * 100000 + sort
+        items.append({"n": n, "sort": sort, "s": section or None, "parts": [first]})
+
+    def next_number(printed: int | None) -> int:
+        if printed is not None and last < printed <= last + 40:
+            return printed
+        if printed is not None and last > 0 and printed < last:
+            tail = str(last + 1)
+            if tail.endswith(str(printed)):                  # "88" for 188
+                return last + 1
+        return last + 1
+
+    def volume_changes(vol: int) -> bool:
+        return by_volume and vol != last_vol
+
+    def prose(words: str, vol: int) -> None:
+        """Words that are not a numbered hadith: they go on the item before them in the same chapter."""
+        if items and items[-1]["s"] == (section or None):
+            items[-1]["parts"].append(words)
+        else:
+            start(None, vol, words)
+
+    for kind, raw, vol in paras:
+        if kind.startswith("head"):
+            heading, rest, what = _oi_split_heading(raw)
+            title = _oi_heading(heading)
+            if title:
+                section += 1
+                sections[str(section)] = title
+            if not rest:
+                continue
+            kind, raw = ("entry" if how in ("printed", "counted") and what == "entry" else "para"), rest
+        if volume_changes(vol):
+            last, last_vol, extra = 0, vol, 0
+        if how in ("printed", "counted") and kind == "entry":
+            if re.match(r"^\s*\(\s*[^\d\s]", raw) and items:          # a verse in brackets: the text goes on
+                items[-1]["parts"].append(raw)
+                continue
+            m = re.match(r"^[\s*\-–]*\(?\s*(\d+)", raw)
+            printed = int(m.group(1)) if (m and how == "printed") else None
+            start(next_number(printed), vol, _OI_LEAD.sub("", raw))
+            continue
+        if how == "inline":
+            pieces = []
+            for m in _OI_INLINE.finditer(raw):
+                number, cur = int(m.group(1)), last + len(pieces)
+                before = raw[:m.start()].rstrip()
+                ends = not before or before[-1] in '.:"»)]؟!،'
+                dash = "-" in m.group(2)
+                if number == cur + 1 or (dash and ends and (cur < number <= cur + 40 or (
+                        number < cur and str(cur + 1).endswith(str(number))))) or (
+                        not dash and not before and cur < number <= cur + 40):
+                    pieces.append((m.start(), m.end(), number))
+            head = raw[:pieces[0][0]] if pieces else raw
+            if head.strip():
+                prose(head, vol)
+            for j, (_b, e, number) in enumerate(pieces):
+                end = pieces[j + 1][0] if j + 1 < len(pieces) else len(raw)
+                start(next_number(number), vol, raw[e:end])
+            continue
+        prose(raw, vol)
+    hadiths, texts, seen = [], {}, set()
+    for it in items:
+        t = _oi_text(it["parts"])
+        if not t:
+            continue
+        n = it["n"]
+        while n in seen:                                     # never two hadith with one number
+            n += "'"
+        seen.add(n)
+        h = {"n": n, "sort": round(it["sort"], 4), "s": it["s"]}
+        if h["s"] is None:
+            h.pop("s")
+        hadiths.append(h)
+        texts[n] = t
+    used = {str(h["s"]) for h in hadiths if "s" in h}
+    return hadiths, texts, {k: v for k, v in sections.items() if k in used}
+
+
+def convert_oi(target: Path, key: str, local: Path | None = None):
+    title, ar, compiler, path, how, by_volume = OI_HADITH[key]
+    raw = (local.read_bytes() if local else fetch(f"{OI_HADITH_URL}/{path}")).decode("utf-8")
+    hadiths, texts, sections = read_openiti_hadith(raw, how, by_volume)
+    return write_book(target, "shia", key, title, ar, compiler, None, CREDIT["openiti"], hadiths,
+                      {"ara": {"texts": texts, "sections": sections}})
 
 
 # ------------------------------------------------------------------ the Qur'an (Q1b)
@@ -1316,10 +1550,18 @@ def main() -> int:
     ap.add_argument("--hashes", metavar="DIR", help="write each book's fingerprint and size into the catalog of the "
                                                     "isnady-data folder DIR")
     ap.add_argument("--readme", metavar="DIR", help="write only the README of the isnady-data folder DIR, from its catalog")
+    ap.add_argument("--openiti-hadith", metavar="DIR", help="convert the Shia collections read from the OpenITI corpus "
+                                                             "(al-Faqih, al-Tahdhib, al-Istibsar) into the isnady-data "
+                                                             "folder DIR: hadith/shia/<book>/ (the catalog is not touched)")
     a = ap.parse_args()
     sys.path.insert(0, str(ROOT / "src"))          # this repository's isnady, not an installed one
     if a.readme:
         write_readme(Path(a.readme).expanduser())
+        return 0
+    if a.openiti_hadith:
+        target = Path(a.openiti_hadith).expanduser()
+        for key in OI_HADITH:
+            convert_oi(target, key)
         return 0
     if a.hashes:
         target = Path(a.hashes).expanduser()
