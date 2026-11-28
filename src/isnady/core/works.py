@@ -127,7 +127,7 @@ def list_works(conn: sqlite3.Connection) -> list[dict]:
     from isnady.core import books as core_books
 
     order = {b["key"]: i for i, b in enumerate(core_books.all_books(conn, include_inactive=True))}
-    off = core_books.disabled()
+    off = {b["key"] for b in core_books.all_books(conn, include_inactive=True) if not b["active"]}
     from isnady.core import titles
 
     from isnady.core import sahifa as core_sahifa

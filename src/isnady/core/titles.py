@@ -76,7 +76,7 @@ def _catalog() -> dict[str, dict]:
 
 def book(key: str, fallback: str = "", lang: str | None = None) -> str:
     """A book's title in the language ("Sahîh-i Buhârî", "صحيح البخاري", "Sahih al-Bukhari"); the compiler
-    after a dash in the catalog's English title is left out."""
+    after a dash in the catalog's English title is left out, unless another book has the same title (al-Amali)."""
     code = lang or i18n.language()
     if code != "en":
         own = _table(code)["books"].get(key)
@@ -86,8 +86,22 @@ def book(key: str, fallback: str = "", lang: str | None = None) -> str:
             return _catalog()[key]["title_ar"]
     entry = _catalog().get(key)
     if entry and entry.get("title"):
-        return entry["title"].split(" — ")[0]
+        short = entry["title"].split(" — ")[0]
+        # two books of one name (al-Amali of al-Saduq and of al-Mufid, Kitab al-Ghayba of al-Nu'mani and of al-Tusi)
+        # keep their compiler, or the lists show the same title twice
+        return entry["title"] if short in _shared_short() else short
     return fallback or key
+
+
+@lru_cache(maxsize=1)
+def _shared_short() -> set[str]:
+    """The short titles (before the dash) that more than one book of the catalog has."""
+    seen: dict[str, int] = {}
+    for e in _catalog().values():
+        if e.get("title"):
+            short = e["title"].split(" — ")[0]
+            seen[short] = seen.get(short, 0) + 1
+    return {t for t, n in seen.items() if n > 1}
 
 
 @lru_cache(maxsize=1)

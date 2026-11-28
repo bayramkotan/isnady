@@ -387,7 +387,7 @@ def prophet_hadith(conn: sqlite3.Connection, node_id: str, limit: int = 60) -> d
     from isnady.core import books as core_books
 
     order = {b["key"]: i for i, b in enumerate(core_books.all_books(conn, include_inactive=True))}
-    off = set(core_books.disabled())
+    off = {b["key"] for b in core_books.all_books(conn, include_inactive=True) if not b["active"]}
     items = sorted(((v[3], order.get(v[0], 999), v[2], hid, v[0], v[1]) for hid, v in found.items() if v[0] not in off))
     out["total"] = len(items)
     for road, _o, _s, hid, key, number in items:

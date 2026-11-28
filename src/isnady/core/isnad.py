@@ -2771,10 +2771,11 @@ def book_stats(conn: sqlite3.Connection) -> list[dict]:
     """Per book: chains read, split into narrators, reaching the Prophet (on road B: a Ma'sum), and why the rest
     were not split. Counted once per change of the database and kept (core.cache); the books' names follow the
     interface language."""
-    from isnady.core import cache, titles
+    from isnady.core import books, cache, titles
 
     rows = cache.kept(conn, "book-stats", _book_stats_counted)
-    return [{**r, "name": titles.book(r["key"], r["name"])} for r in rows]
+    off, on = books.disabled(), books.enabled()       # a book switched off, or a second edition, is not shown
+    return [{**r, "name": titles.book(r["key"], r["name"])} for r in rows if not books.is_off(r["key"], off, on)]
 
 
 def _book_stats_counted(conn: sqlite3.Connection) -> list[dict]:

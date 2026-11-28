@@ -3,6 +3,15 @@
 Every release of isnady carries one version number on GitHub, PyPI and npm. The text of each GitHub Release
 is taken from its section here.
 
+## [Unreleased]
+
+- **Each book once (Bayram, 2026-11-28: "Sahih Buhari'nin sadece bir tane kopyası olması lazım").** A second edition
+  of a book isnady-data already has (Sahih al-Bukhari of the LK corpus, of Open Hadith Data, of sunnah.com …: key
+  `bukhari-lk`, `bukhari-ohd`) is off until switched on in Settings → Books (`books.enabled`): it is left out of
+  searches, book lists, the chains overview, statistics and the count at the foot of the window, and stays in the
+  database. Two books of one name keep their compiler in English: "al-Amali — al-Saduq" and "al-Amali — al-Mufid",
+  "Kitab al-Ghayba — al-Nu'mani" and "Kitab al-Ghayba — al-Tusi".
+
 ## [0.8.2] — 2026-11-24
 
 - **The rest of the Four Books (Bayram, 2026-11-24: "Kütüb-i Erbaa kalanı").** al-Saduq's *Man La Yahduruhu

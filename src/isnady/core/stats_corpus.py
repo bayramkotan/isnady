@@ -241,7 +241,9 @@ def fingerprint(conn: sqlite3.Connection, collection: str | None) -> str:
     one = lambda sql: tuple(conn.execute(sql).fetchone())  # noqa: E731
     from isnady.core import books as core_books
 
-    parts = [METHOD, collection or "*", sorted(core_books.disabled()) if not collection else [], one("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM hadiths"),
+    # the books left out of "all books" (switched off, and second editions not switched on)
+    off = sorted(b["key"] for b in core_books.all_books(conn, include_inactive=True) if not b["active"])
+    parts = [METHOD, collection or "*", off if not collection else [], one("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM hadiths"),
              one("SELECT COUNT(*), SUM(person_id IS NOT NULL), SUM(COALESCE(person_id, 0)) FROM isnad_links"),
              one("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM verdicts"),
              one("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM grades"),
@@ -255,7 +257,7 @@ def cache_name(prefix: str, collection: str | None) -> str:
     switching a book off and on again reads the earlier result instead of computing it again."""
     from isnady.core import books as core_books
 
-    off = sorted(core_books.disabled())
+    off = core_books.state()
     tail = "" if collection not in (None, SHIA_SCOPE) or not off else "-" + hashlib.md5(",".join(off).encode()).hexdigest()[:8]
     scope = {None: "all_sunni_books", SHIA_SCOPE: "all_shia_books"}.get(collection) or core_books.full_name(collection)
     return f"{prefix}-{scope}{tail}.json"

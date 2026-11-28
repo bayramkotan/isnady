@@ -82,6 +82,7 @@ def defaults() -> dict:
          "view.language_order": "",           # the languages after Arabic, in the order chosen; empty: A to Z
          "sources.repository": "",            # the data repository chosen (core.repositories); empty: isnady's own
          "books.disabled": "",                # collections switched off (core.books), comma-separated keys
+         "books.enabled": "",                 # second editions switched on (core.books), comma-separated keys
          "view.other_languages": "fold",      # texts in languages not chosen: "fold" behind an arrow, or "omit"
          "view.sidebar": "",                  # the order of the sidebar (SIDEBAR); empty: isnady's
          "log.level": "info"}                 # how much the log says (core.log): info, or debug for more
@@ -173,7 +174,7 @@ def validate(key: str, value):
         if value not in LANGUAGES:
             raise ConfigError("view.ui_language must be one of: " + ", ".join(LANGUAGES))
         return value
-    if key == "books.disabled":
+    if key in ("books.disabled", "books.enabled"):
         return ",".join(sorted({p.strip() for p in str(value).split(",") if p.strip()}))
     if key == "view.other_languages":
         if value not in ("fold", "omit"):

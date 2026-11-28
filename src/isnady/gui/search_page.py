@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 )
 
 from isnady import config
+from isnady.core import books as core_books
 from isnady.core import isnad as core_isnad
 from isnady.core import narrators as core_narrators
 from isnady.core import recent as core_recent
@@ -667,8 +668,9 @@ class SearchPage(QWidget):
         self.__dict__.pop("_person_cache", None)
         self.data_changed.emit()
         self._fill_filters()
-        hadith = self._conn.execute("SELECT COUNT(*) FROM hadiths").fetchone()[0]
-        books = self._conn.execute("SELECT COUNT(*) FROM collections").fetchone()[0]
+        # the books searched (a second edition or a book switched off is not counted): each book once
+        active = core_books.all_books(self._conn)
+        hadith, books = sum(b["count"] for b in active), len(active)
         self._status(n_("{hadith:,} hadith in {n} book", "{hadith:,} hadith in {n} books", books, hadith=hadith))
         if not self._page:
             self._show_start()

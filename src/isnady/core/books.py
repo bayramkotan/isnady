@@ -6,6 +6,9 @@ and only the ones he keeps active.
              Shia collections after all Sunni ones, al-Kafi first.
   active     a book can be switched off in Settings → Books (`books.disabled`): it stays in the database but is
              left out of searches, book lists and statistics until switched on again.
+  editions   a second edition of a book isnady-data already has (Sahih al-Bukhari of the LK corpus, of Open Hadith
+             Data, of sunnah.com …: key "bukhari-lk", "bukhari-ohd") is off until switched on (`books.enabled`), so
+             each book is searched, listed and counted once; it stays in Settings → Books to be switched on.
 
 Qt-free: the window, the command line and the statistics read the same list.
 """
@@ -39,23 +42,57 @@ def _key(row: dict) -> tuple:
     return order, rank, sort_name(row.get("source_name") or row["name"]), row["key"]
 
 
+def _keys(name: str) -> set[str]:
+    return {k for k in str(config.get(name) or "").split(",") if k}
+
+
 def disabled() -> set[str]:
-    return {k for k in str(config.get("books.disabled") or "").split(",") if k}
+    """The books switched off by hand."""
+    return _keys("books.disabled")
+
+
+def enabled() -> set[str]:
+    """The second editions switched on by hand."""
+    return _keys("books.enabled")
+
+
+def second_edition(key: str) -> bool:
+    """A second edition of a book of isnady-data ("bukhari-lk" beside "bukhari"): its key is the book's key and a
+    dash and the source's mark, and the key itself is no book of the catalog ("amali-saduq" is a book of its own)."""
+    from isnady.core import titles
+
+    base, dash, _rest = key.partition("-")
+    return bool(dash) and base in titles._catalog() and key not in titles._catalog()
+
+
+def is_off(key: str, off: set[str] | None = None, on: set[str] | None = None) -> bool:
+    """Whether a book is left out: switched off by hand, or a second edition not switched on."""
+    off = disabled() if off is None else off
+    on = enabled() if on is None else on
+    return key in off or (second_edition(key) and key not in on)
+
+
+def state() -> list[str]:
+    """What was switched by hand, for the names and fingerprints of the statistics ("-key" off, "+key" on)."""
+    return sorted("-" + k for k in disabled()) + sorted("+" + k for k in enabled())
 
 
 def set_active(key: str, active: bool) -> None:
-    off = disabled()
+    off, on = disabled(), enabled()
     off.discard(key) if active else off.add(key)
+    if second_edition(key):
+        on.add(key) if active else on.discard(key)
     config.set("books.disabled", ",".join(sorted(off)))
+    config.set("books.enabled", ",".join(sorted(on)))
 
 
 def is_active(key: str) -> bool:
-    return key not in disabled()
+    return not is_off(key)
 
 
 def all_books(conn: sqlite3.Connection, include_inactive: bool = False) -> list[dict]:
     """Every collection that has texts: key, name, tradition, hadith count, active — in reading order."""
-    off = disabled()
+    off, on = disabled(), enabled()
     from isnady.core import titles
 
     # "name": the title in the interface language (core.titles); "source_name": as the import named it
@@ -67,7 +104,7 @@ def all_books(conn: sqlite3.Connection, include_inactive: bool = False) -> list[
            WHERE EXISTS (SELECT 1 FROM texts t WHERE t.hadith_id = h.id)
            GROUP BY c.id""")])
     rows = [{"key": k, "name": titles.book(k, n), "source_name": n, "tradition": t or "sunni", "count": c,
-             "active": k not in off}
+             "active": not is_off(k, off, on)}
             for k, n, t, c in counted]
     rows.sort(key=_key)
     return rows if include_inactive else [r for r in rows if r["active"]]
@@ -88,10 +125,10 @@ def order_sql(conn: sqlite3.Connection, column: str = "c.key") -> str:
 
 def active_keys(conn: sqlite3.Connection) -> list[str] | None:
     """The keys to search when "all books" is asked for: None when every book is active (no filter needed)."""
-    off = disabled()
-    if not off:
+    rows = all_books(conn, include_inactive=True)
+    if all(r["active"] for r in rows):
         return None
-    return [r["key"] for r in all_books(conn)]
+    return [r["key"] for r in rows if r["active"]]
 
 
 def grouped(conn: sqlite3.Connection, include_inactive: bool = False) -> list[tuple[str, str, list[dict]]]:
